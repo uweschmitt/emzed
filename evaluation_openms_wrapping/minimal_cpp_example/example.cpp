@@ -1,114 +1,74 @@
-#include <list>
-#include <string>
 #include <iostream>
+#include <sstream>
+#include "example.h"
 
-class Item 
+
+
+std::string Item::getD()  const
 {
-    private:
-        std::string d;
-        int    i;
-    public:
-
-
-        const std::string getD() { return d; }
-        const int     getI() { return i; }
-
-        Item(std::string d, int i): d(d), i(i) { 
-            std::cout << "construct Item(" << d << ", " << i << ") " << this << std::endl;
-        }
-
-        Item (const Item &o)
-        {
-            if (this == &o) return;
-            d = o.d;
-            i = o.i;
-
-            std::cout << "copy construct Item(" << d << ", " << i << ") " << this << " from " << &o << std::endl;
-        }
-        ~Item()
-        {
-            std::cout << "destruct Item(" << d << ", " << i << ") " << this << std::endl;
-        }
-        Item& operator=(const Item &other)
-        {
-            std::cout << "operator " <<this << " = " << &other << std::endl;
-            d = other.d;
-            i = other.i;
-            return *this;
-        }
-
-
-
-};
-
-class Container
-{
-    private:
-        std::list<Item> items;
-
-    public:
-        Container() {
-            std::cout << "constructor Container called" << std::endl;
-            items = std::list<Item>();
-        }
-
-        ~Container()
-        {
-            std::cout << "destructor Container called" << std::endl;
-        }
-
-        std::list<Item> getItemsCopy()
-        {
-            return items;
-        }
-
-        std::list<Item>& getItemsRef()
-        {
-            return items;
-        }
-
-        void addItemByRef(Item &it)
-        {
-            items.push_back(it);
-        }
-
-        void addItemByCopy(Item it)
-        {
-            items.push_back(it);
-        }
-
-};
-
-class Filler
-{
-    public:
-        static void filler(std::string source, Container& cont)
-        {
-            std::cout << __LINE__ << std::endl;
-            Item it = Item("item0", 1);
-            std::cout << __LINE__ << std::endl;
-            cont.addItemByRef(it);
-            std::cout << __LINE__ << std::endl;
-            it = Item("item1", 2);
-            std::cout << __LINE__ << std::endl;
-            cont.addItemByCopy(it);
-            std::cout << __LINE__ << std::endl;
-            std::cout << "filler done" << std::endl;
-        }
-
-        static void throwException() throw (int)
-        {
-            throw 20;
-        }
-};
-
-int testfun()
-{
-    Contaitestfun cont = Container();
-    Filler::filler("test source", cont);
-    std::cout << "DONE" << std::endl;
-    Filler::throwException();
+    return d;
 }
+
+
+Item::Item (const Item &o)
+{
+    if (this == &o) return;
+    d = o.d;
+}
+
+Item& Item::operator=(const Item &other)
+{
+    std::cout << "operator " <<this << " = " << &other << std::endl;
+    d = other.d;
+    return *this;
+}
+
+
+const std::list<Item>& Container::getItems() const
+{
+    return items;
+}
+
+int Container::size() const
+{
+	return items.size();
+}
+
+
+const Item& Container::getFront()  const
+{
+    return items.front();
+}
+
+const Item& Container::getBack()  const
+{
+    return items.back();
+}
+
+void Container::addItem(Item &it)
+{
+    items.push_back(it);
+}
+
+void Filler::filler(int anzahl, Container& cont)
+{
+	
+    for (int i=0; i<anzahl; ++i)
+	{
+		std::ostringstream os;
+		os << "ITEM " << i;	
+		Item it(os.str());
+		cont.addItem(it);
+	}
+
+}
+
+void Filler::throwException() 
+{
+    throw 20;
+}
+
+
 
 
 
