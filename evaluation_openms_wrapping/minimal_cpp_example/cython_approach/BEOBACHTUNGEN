@@ -1,0 +1,7 @@
+
+- fühlt sich besser an als der ctypes versuch,
+  ist ja auch ein direktes wrapping zu den Python.h objekten
+
+- Wrapping-Klassen von Hand schreiben erfordert ab und zu Tricks,
+  auch das Wrappen von Python string zu std::string
+  

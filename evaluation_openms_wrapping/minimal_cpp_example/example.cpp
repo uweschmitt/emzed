@@ -10,6 +10,13 @@ std::string Item::getD()  const
 }
 
 
+Item::Item (std::string d_) 
+{
+        this->d = d_;
+           
+}
+
+
 Item::Item (const Item &o)
 {
     if (this == &o) return;
@@ -55,6 +62,7 @@ void Filler::filler(int anzahl, Container& cont)
     for (int i=0; i<anzahl; ++i)
 	{
 		std::ostringstream os;
+        os << "item " << i;
 		Item it(os.str());
 		cont.addItem(it);
 	}

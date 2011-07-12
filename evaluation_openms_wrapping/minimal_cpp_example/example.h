@@ -1,5 +1,6 @@
 #include <list>
 #include <string>
+#include <iostream>
 
 #if defined (_WIN32)
   #if defined (ExampleLib_EXPORTS)
@@ -20,7 +21,7 @@ class Item
 
 	EXPORT Item(const Item &o);
         EXPORT std::string getD() const;
-        EXPORT Item(std::string d): d(d) {}
+        EXPORT Item(std::string d_);
         EXPORT Item& operator=(const Item &other);
 };
 
@@ -38,7 +39,7 @@ class Container
         EXPORT const std::list<Item>& getItems() const;
         EXPORT const Item& getFront() const;
         EXPORT const Item& getBack() const;
-        EXPORT void addItem(Item &it);
+        EXPORT void  addItem(Item &it);
 	EXPORT int   size() const;
 };
 

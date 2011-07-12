@@ -6,7 +6,9 @@ int main()
 {
 	Container cont = Container();
 
-	Item it = Item("test");
+	std::string *name = new std::string("test");
+
+	Item it = Item(*name);
 	cont.addItem(it);
 	std::cout << "num items = " << cont.size() << std::endl;
 	
