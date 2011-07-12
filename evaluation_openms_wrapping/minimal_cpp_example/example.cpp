@@ -18,7 +18,6 @@ Item::Item (const Item &o)
 
 Item& Item::operator=(const Item &other)
 {
-    std::cout << "operator " <<this << " = " << &other << std::endl;
     d = other.d;
     return *this;
 }
@@ -56,7 +55,6 @@ void Filler::filler(int anzahl, Container& cont)
     for (int i=0; i<anzahl; ++i)
 	{
 		std::ostringstream os;
-		os << "ITEM " << i;	
 		Item it(os.str());
 		cont.addItem(it);
 	}
