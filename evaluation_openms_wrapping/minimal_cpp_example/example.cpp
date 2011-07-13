@@ -9,10 +9,16 @@ std::string Item::getD()  const
     return d;
 }
 
-
-Item::Item (std::string d_) 
+void Item::setD(std::string d)
 {
-        this->d = d_;
+    this->d = d; 
+}
+
+Item::Item() { }
+
+Item::Item (std::string d) 
+{
+        this->d = d;
            
 }
 

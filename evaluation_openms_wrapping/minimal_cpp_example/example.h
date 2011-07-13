@@ -19,9 +19,12 @@ class Item
         std::string d;
     public:
 
-	EXPORT Item(const Item &o);
-        EXPORT std::string getD() const;
+        EXPORT Item();
         EXPORT Item(std::string d_);
+	EXPORT Item(const Item &o);
+
+        EXPORT void setD(std::string d);
+        EXPORT std::string getD() const;
         EXPORT Item& operator=(const Item &other);
 };
 

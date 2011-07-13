@@ -9,7 +9,13 @@ int main()
 	std::string *name = new std::string("test");
 
 	Item it = Item(*name);
+
 	cont.addItem(it);
+
+    it = Item();
+    it.setD("test2");
+    cont.addItem(it);
+
 	std::cout << "num items = " << cont.size() << std::endl;
 	
 	std::cout << "front = " << cont.getFront().getD() << std::endl;
