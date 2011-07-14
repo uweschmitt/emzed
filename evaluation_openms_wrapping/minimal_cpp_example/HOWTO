@@ -5,6 +5,6 @@ cmd
 vcvarsall.bat
 cmake -G"NMake Makefiles" ..
 nmake
+nmake install
 exit
 
-main.exe
