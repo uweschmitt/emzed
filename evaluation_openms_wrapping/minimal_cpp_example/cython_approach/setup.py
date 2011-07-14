@@ -8,7 +8,7 @@ ext = Extension(
     ["wrap.pyx"],
     language="c++",
     include_dirs=[".."], 
-    library_dirs=["../build"],
+    library_dirs=[".."],
     libraries=["ExampleLib"],
 )
 
