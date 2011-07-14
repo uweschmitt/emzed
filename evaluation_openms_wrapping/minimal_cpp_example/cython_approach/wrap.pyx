@@ -34,29 +34,16 @@ def test_excption():
         throwException()
 
 
-cdef class StringWrapper:
-    
-    cdef string *s
-
-    def __cinit__(self, char *ss):
-         self.s = new string(ss)
-
-    def __dealloc__(self):
-         del self.s
-    
-    cdef c_str(self):
-        return self.s.c_str()
-
-    cdef string getS(self):
-        return deref(self.s)
-    
-
 cdef class PyItem:
 
     cdef Item *it  
 
-    def __cinit__(self) : 
-        self.it = new Item()
+    def __cinit__(self, *flags) : 
+        # default argument like "init=True" did not work !
+        # so this is a workaround for indicating that a new
+        # C++ Item is constructed:
+        if not flags:
+           self.it = new Item()
 
     def __dealloc__(self):
         del self.it
@@ -71,8 +58,7 @@ cdef class PyItem:
 
 
 cdef PyItemFromItem(Item *i):
-     rv = PyItem()
-     del rv.it
+     rv = PyItem(False)
      rv.it = i
      return rv
 
