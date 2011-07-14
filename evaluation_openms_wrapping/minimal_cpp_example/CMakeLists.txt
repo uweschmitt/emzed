@@ -5,6 +5,12 @@ SET(CMAKE_BUILD_TYPE release)
 MESSAGE("build type is ${CMAKE_BUILD_TYPE}")
 add_library(ExampleLib SHARED example.cpp)
 
+INSTALL(TARGETS ExampleLib 
+        RUNTIME DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}
+        LIBRARY DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}
+        ARCHIVE DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}                
+       )
+
 
 
 

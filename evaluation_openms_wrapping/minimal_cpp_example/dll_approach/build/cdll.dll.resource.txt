@@ -1,1 +1,0 @@
-2 /* CREATEPROCESS_MANIFEST_RESOURCE_ID */ 24 /* RT_MANIFEST */ "C:/Dokumente und Einstellungen/Administrator/Eigene Dateien/msExpert/evaluation_openms_wrapping/minimal_cpp_example/dll_approach/build/cdll.dll.embed.manifest"

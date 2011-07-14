@@ -10,5 +10,16 @@ add_executable(main main.cpp)
 target_link_libraries(main ${FOUND_LIB})
 
 
+INSTALL(TARGETS main
+        RUNTIME DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}
+        LIBRARY DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}
+        ARCHIVE DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}                
+       )
+
+INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../ExampleLib.dll DESTINATION ${CMAKE_CURRENT_SOURCE_DIR})
+
+
+
+
 
 

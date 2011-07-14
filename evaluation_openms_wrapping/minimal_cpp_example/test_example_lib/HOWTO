@@ -1,0 +1,10 @@
+mkdir build
+cd build
+
+cmd
+vcvarsall.bat
+cmake -G"NMake Makefiles" ..
+build
+exit
+
+main.exe
