@@ -38,11 +38,11 @@ cdef class PyItem:
 
     cdef Item *it  
 
-    def __cinit__(self, *flags) : 
+    def __cinit__(self, init=True) : 
         # default argument like "init=True" did not work !
         # so this is a workaround for indicating that a new
         # C++ Item is constructed:
-        if not flags:
+        if init:
            self.it = new Item()
 
     def __dealloc__(self):
@@ -99,7 +99,5 @@ def runalot():
     for i in range(1000):
         cc = PyContainer()
         fill(1000, cc)
-
-
 
 
