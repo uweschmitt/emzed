@@ -2,3 +2,4 @@ OpenMS.dll
 *.pyd
 build
 *.pyc
+wrap.cpp
