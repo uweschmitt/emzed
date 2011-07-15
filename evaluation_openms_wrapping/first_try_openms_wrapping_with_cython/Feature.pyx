@@ -1,0 +1,11 @@
+from Feature cimport *
+
+cdef class _Feature:
+
+    cdef Feature *inst
+
+    def __cinit__(self):
+        self.inst = new Feature()
+
+    def __dealloc__(self):
+        del self.inst

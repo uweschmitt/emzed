@@ -1,3 +1,4 @@
+from MSExperiment cimport *
 
 cdef extern from "<OpenMS/KERNEL/MSExperiment.h>" namespace "OpenMS":
     cdef cppclass Peak1D:

@@ -6,7 +6,7 @@ from Cython.Distutils import build_ext
 ext = Extension(
     "_pyOpenMS",
     #sources = [ "helpers.cpp", "wrap.pyx", ],
-    sources = [ "wrap.pyx", ],
+    sources = [ "pyOpenMS.pyx", ],
     language="c++",
     include_dirs=["e:/OpenMS-1.8/include", 
                   "e:/OpenMS-1.8/contrib_build/include",
