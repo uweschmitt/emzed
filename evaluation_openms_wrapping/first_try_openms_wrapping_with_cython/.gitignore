@@ -1,0 +1,4 @@
+OpenMS.dll
+*.pyd
+build
+*.pyc

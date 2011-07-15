@@ -18,3 +18,23 @@ fm.push_back(f)
 print "Now FeatureMap has ",
 print len(fm),
 print "elements"
+
+print "create spectrum: ",
+spec = MSSpectrum()
+print spec
+
+print "RT is ", spec.getRT()
+print "setRT(3.2)"
+spec.setRT(3.2)
+print "RT is ", spec.getRT()
+
+print "MSLevel is ", spec.getMSLevel()
+print "setMSLevel(32)"
+spec.setMSLevel(32)
+print "MSLevel is ", spec.getMSLevel()
+
+print "Name is ", spec.getName()
+print "setName('test')"
+spec.setName('test')
+print "Name is ", spec.getName()
+
