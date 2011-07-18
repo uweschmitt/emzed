@@ -1,0 +1,32 @@
+
+cdef class _MSSpectrum1D:
+
+    cdef MSSpectrum[Peak1D] * inst
+
+    def __cinit__(self):
+        self.inst = new MSSpectrum[Peak1D] ()
+
+    def getRT(self):
+        return self.inst.getRT()
+
+    def setRT(self, double value):
+        self.inst.setRT(value)
+
+    def getMSLevel(self):
+        return self.inst.getRT()
+
+    def setMSLevel(self, unsigned int value):
+        self.inst.setMSLevel(value)
+
+    def setName(self, char *name):
+        cdef string* sname = new string(name)
+        self.inst.setName(deref(sname))
+        del sname
+        
+    def getName(self):
+        return self.inst.getName().c_str()
+
+    def __str__(self):
+        #toString(deref(self.inst))
+        return "<dummy>"
+        #pass

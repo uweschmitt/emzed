@@ -1,2 +1,5 @@
 *.cpp
 *.pyd
+build
+_pyOpenMS.*
+*.pyc
