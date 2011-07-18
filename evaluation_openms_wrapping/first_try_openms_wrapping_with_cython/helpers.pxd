@@ -1,4 +1,8 @@
 
 cdef extern from "helpers.h": 
 
-    cdef char* toString(MSSpectrum[Peak1D])
+    pass 
+    # cdef char* toString(MSSpectrum[Peak1D])
+    
+    #// cdef cppclass ContainerPeak1D:
+        #// pass

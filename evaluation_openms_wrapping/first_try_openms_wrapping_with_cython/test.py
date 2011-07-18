@@ -20,7 +20,7 @@ print len(fm),
 print "elements"
 
 print "create spectrum: ",
-spec = MSSpectrum()
+spec = MSSpectrum1D()
 print spec
 
 print "RT is ", spec.getRT()
@@ -38,3 +38,5 @@ print "setName('test')"
 spec.setName('test')
 print "Name is ", spec.getName()
 
+mse = MSExperiment1D()
+mse.get2DData()

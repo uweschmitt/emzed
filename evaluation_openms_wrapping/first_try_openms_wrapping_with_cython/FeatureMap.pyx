@@ -1,21 +1,4 @@
-from libcpp.list   cimport list
-from libcpp.vector cimport vector
-
-from cython.operator cimport dereference as deref, address
-
 from Feature cimport *
-from FeatureMap cimport *
-
-cdef class _Feature:
-
-    cdef Feature *inst
-
-    def __cinit__(self):
-        self.inst = new Feature()
-
-    def __dealloc__(self):
-        del self.inst
-
 
 cdef class _FeatureMap:
 
