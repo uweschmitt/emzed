@@ -4,9 +4,16 @@ from Cython.Distutils import build_ext
 
 import glob
 
+mergedModule = "pyOpenMS_"
+
 def merge_and_setup_files():
 
-    with file("_pyOpenMS.pyx", "w") as fp:
+
+    def filesToMerge():
+        for p in glob.glob("_*.pyx"):
+            yield p
+
+    with file(mergedModule+".pyx", "w") as fp:
 
         print >> fp, "from cython.operator cimport address, dereference as deref"
 
@@ -14,21 +21,22 @@ def merge_and_setup_files():
             print >> fp, "from %s cimport *" % (p[:-4])
 
         print >> fp
-        for p in glob.glob("*.pyxp"):
+        for p in filesToMerge():
             for line in file(p):
                 print >> fp, line
             print >> fp
 
     with file("pyOpenMS.py", "w") as fp:
 
-        print >> fp, "from _pyOpenMS import \\"
+        print >> fp, "from %s import \\" % mergedModule
 
         def classnames():
-            for p in glob.glob("*.pyxp"):
+            for p in filesToMerge():
                 yield  p[:-5]
 
         lines = ( "_%s as %s \\" % (cn,cn) for cn in \
-                                   ( p[:-5] for p in glob.glob("*.pyxp")))
+                                   ( p[:-4] for p in filesToMerge() ) \
+                )
 
         print >> fp, "\n,      ".join(lines)
     
@@ -54,7 +62,7 @@ r"c:/QtSDK/Desktop/Qt/4.7.3/msvc2008/lib"],
     )
 
 
-ext_modules = [ ext("_pyOpenMS", ["_pyOpenMS.pyx"]) ]
+ext_modules = [ ext(mergedModule, [mergedModule+".pyx"]) ]
 
 setup(
   name = 'minimal open ms wrapper',
