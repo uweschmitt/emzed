@@ -7,6 +7,38 @@ cdef class _MSExperiment1D:
         if init:
            self.inst = new MSExperiment[Peak1D, ChromatogramPeak] ()
 
+    def __dealloc__(self):
+        del self.inst
+
+    def getMinMZ(self):
+        return self.inst.getMinMZ()
+
+    def getMaxMZ(self):
+        return self.inst.getMaxMZ()
+
+    def getMinRT(self):
+        return self.inst.getMinRT()
+
+    def getMaxRT(self):
+        return self.inst.getMaxRT()
+
+    def sortSpectraByRT(self):
+        self.inst.sortSpectra(False)
+        return self
+
+    def sortSpectraByRTAndMZ(self):
+        self.inst.sortSpectra(True)
+        return self
+
+    def __len__(self):
+        return self.inst.size()
+
+    def __getitem__(self, int index):
+        cdef MSSpectrum[Peak1D] spec = deref(self.inst)[index]
+        rv = _MSSpectrum1D(False)
+        rv.inst = addr(spec)
+        return rv
+
     #def get2DData(self):
         #self._get2DData()    
 

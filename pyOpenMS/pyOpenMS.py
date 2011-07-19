@@ -1,3 +1,4 @@
-from pyOpenMS_ import \ 
-__MSExperiment1D as _MSExperiment1D \
-,      __MzXMLFile as _MzXMLFile \
+from pyOpenMS_ import \
+_MSExperiment1D as MSExperiment1D \
+,      loadMzXMLFile  \
+

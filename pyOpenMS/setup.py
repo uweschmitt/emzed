@@ -15,7 +15,7 @@ def merge_and_setup_files():
 
     with file(mergedModule+".pyx", "w") as fp:
 
-        print >> fp, "from cython.operator cimport address, dereference as deref"
+        print >> fp, "from cython.operator cimport address as addr, dereference as deref"
 
         for p in glob.glob("*.pxd"):
             print >> fp, "from %s cimport *" % (p[:-4])
@@ -26,6 +26,9 @@ def merge_and_setup_files():
                 print >> fp, line
             print >> fp
 
+    return
+
+    # inaktiv:
     with file("pyOpenMS.py", "w") as fp:
 
         print >> fp, "from %s import \\" % mergedModule
@@ -34,7 +37,7 @@ def merge_and_setup_files():
             for p in filesToMerge():
                 yield  p[:-5]
 
-        lines = ( "_%s as %s \\" % (cn,cn) for cn in \
+        lines = ( "%s as %s \\" % (cn,cn[1:]) for cn in \
                                    ( p[:-4] for p in filesToMerge() ) \
                 )
 
