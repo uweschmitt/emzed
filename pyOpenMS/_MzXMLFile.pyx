@@ -5,7 +5,7 @@ cpdef loadMzXMLFile( char * path):
     cdef MzXMLFile * inst = new MzXMLFile()
     inst.load(deref(s), deref(exp))
     del s
-    rv = _MSExperiment1D(False)
+    rv = _PeakMap(False)
     rv.inst = exp
     del inst
     return rv

@@ -1,5 +1,5 @@
 
-cdef class _MSExperiment1D:
+cdef class _PeakMap:
 
     cdef MSExperiment[Peak1D, ChromatogramPeak] * inst
     
@@ -38,7 +38,7 @@ cdef class _MSExperiment1D:
             index = self.inst.size()+index
         # create new instance via copy constructor
         cdef MSSpectrum[Peak1D] * spec = new MSSpectrum[Peak1D](deref(self.inst)[index])
-        rv = _MSSpectrum1D(False)
+        rv = _PeakSpectrum(False)
         rv.inst = spec
         return rv
 

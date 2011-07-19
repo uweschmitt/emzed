@@ -1,5 +1,5 @@
 
-cdef class _MSSpectrum1D:
+cdef class _PeakSpectrum:
 
     cdef MSSpectrum[Peak1D] * inst
 

@@ -10,7 +10,7 @@ def dump(path):
     print "dataset has", len(dataset), "specs"
     print
 
-    for spec in dataset:
+    for i, spec in enumerate(dataset):
         print "%3d  RT=%f  MSLevel=%d" %( i, spec.getRT(), spec.getMSLevel())
         print "     from %s   to %s " % ( spec[0], spec[-1])
         if spec.getMSLevel()>1:
