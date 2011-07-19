@@ -8,6 +8,7 @@ cdef extern from "<OpenMS/KERNEL/MSSpectrum.h>" namespace "OpenMS":
 
     cdef cppclass MSSpectrum[PeakT]:
         MSSpectrum()
+        MSSpectrum(MSSpectrum)
         double getRT()
         void   setRT(double)
         unsigned int getMSLevel()
@@ -20,6 +21,7 @@ cdef extern from "<OpenMS/KERNEL/MSSpectrum.h>" namespace "OpenMS":
         PeakT operator[](int)
 
         InstrumentSettings getInstrumentSettings()
+        int findNearest(double) except+
 
         
 

@@ -34,9 +34,10 @@ cdef class _MSExperiment1D:
         return self.inst.size()
 
     def __getitem__(self, int index):
-        cdef MSSpectrum[Peak1D] spec = deref(self.inst)[index]
+        # create new instance via copy constructor
+        cdef MSSpectrum[Peak1D] * spec = new MSSpectrum[Peak1D](deref(self.inst)[index])
         rv = _MSSpectrum1D(False)
-        rv.inst = addr(spec)
+        rv.inst = spec
         return rv
 
     #def get2DData(self):

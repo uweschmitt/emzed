@@ -32,13 +32,16 @@ cdef class _MSSpectrum1D:
     def __getitem__(self, int index):
         
         cdef Peak1D p = deref(self.inst)[index]
-        return p.getMZ()
+        return (p.getMZ(), p.getIntensity())
 
     def getInstrumentSettings(self):
         cdef InstrumentSettings * inss = new InstrumentSettings(self.inst.getInstrumentSettings()) # copy
         rv = _InstrumentSettings(False)
         rv.inst = inss
         return rv
+
+    def findNearest(self, double mz):
+        return self.inst.findNearest(mz)
 
     
 
