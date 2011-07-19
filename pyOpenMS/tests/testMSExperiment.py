@@ -23,7 +23,7 @@ def test_loadMzXMLFile():
     for k in range(len(spec0)):
         print k, spec0[k]
 
-    
+    print spec0.getPrecursors()
 
 
     msExp.sortSpectraByRT()
