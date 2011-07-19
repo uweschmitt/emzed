@@ -10,9 +10,9 @@ cdef extern from "<OpenMS/DATASTRUCTURES/Param.h>" namespace "OpenMS":
         Param()
         Param(Param)
         void setValue(string, DataValue)
-        DataValue getValue(string)
-        void store(string)
-        void load(string)
+        DataValue getValue(string) except+
+        void store(string) except+
+        void load(string) except+
 
         
 
