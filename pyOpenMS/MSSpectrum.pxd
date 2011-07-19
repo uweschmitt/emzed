@@ -1,5 +1,7 @@
 from string cimport *
+from libcpp.vector cimport *
 from InstrumentSettings cimport *
+from Precursor cimport *
 
 cdef extern from "<OpenMS/KERNEL/MSSpectrum.h>" namespace "OpenMS":
 
@@ -22,6 +24,7 @@ cdef extern from "<OpenMS/KERNEL/MSSpectrum.h>" namespace "OpenMS":
 
         InstrumentSettings getInstrumentSettings()
         int findNearest(double) except+
+        vector[Precursor] getPrecursors()
 
         
 

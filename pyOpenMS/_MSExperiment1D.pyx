@@ -34,15 +34,32 @@ cdef class _MSExperiment1D:
         return self.inst.size()
 
     def __getitem__(self, int index):
+        if index<0:
+            index = self.inst.size()+index
         # create new instance via copy constructor
         cdef MSSpectrum[Peak1D] * spec = new MSSpectrum[Peak1D](deref(self.inst)[index])
         rv = _MSSpectrum1D(False)
         rv.inst = spec
         return rv
 
-    #def get2DData(self):
-        #self._get2DData()    
 
-    #cdef _get2DData(self):
-         #cdef ContainerPeak1D * pl = new ContainerPeak1D()
-         #self.inst.get2DData(deref(pl))
+    def __iter__(self):
+        return IterWrapper(self)
+
+
+class IterWrapper:
+
+    def __init__(self, container):
+        self.container = container
+        self.i = 0
+
+    def __iter__(self): 
+        return self
+
+    def next(self):
+        if self.i == len(self.container):
+            raise StopIteration()
+        rv = self.container[self.i]
+        self.i+=1
+        return rv
+         

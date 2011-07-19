@@ -1,0 +1,11 @@
+from string cimport *
+from InstrumentSettings cimport *
+
+cdef extern from "<OpenMS/METADATA/Precursor.h>" namespace "OpenMS":
+
+
+    cdef cppclass Precursor:
+        Precursor()
+        Precursor(Precursor)
+        double getMZ()
+        double getIntensity()
