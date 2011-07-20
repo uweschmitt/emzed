@@ -22,9 +22,7 @@ def merge_and_setup_files():
 
         print >> fp
         for p in filesToMerge():
-            for line in file(p):
-                print >> fp, line
-            print >> fp
+            print >> fp, """include "%s" """ % p
 
     return
 
