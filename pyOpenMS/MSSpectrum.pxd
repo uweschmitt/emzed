@@ -5,9 +5,6 @@ from Precursor cimport *
 
 cdef extern from "<OpenMS/KERNEL/MSSpectrum.h>" namespace "OpenMS":
 
-    cdef cppclass PeakT:
-        pass
-
     cdef cppclass MSSpectrum[PeakT]:
         MSSpectrum()
         MSSpectrum(MSSpectrum)

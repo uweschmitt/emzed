@@ -1,5 +1,6 @@
 
 from MSExperiment  cimport *
+from ChromatogramPeak cimport *
 from Peak cimport *
 from string cimport *
 
@@ -7,4 +8,5 @@ cdef extern from "<OpenMS/FORMAT/MzXMLFile.h>" namespace "OpenMS":
 
     cdef cppclass MzXMLFile:
         MzXMLFile()
+        # hier muss leider spezialisert werden:
         void load(string, MSExperiment[Peak1D, ChromatogramPeak]) except+
