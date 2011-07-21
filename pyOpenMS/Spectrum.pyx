@@ -3,6 +3,9 @@ from Peak1D cimport *
 
 from Spectrum import Spectrum
 
+import numpy as np
+cimport numpy as np
+
 
 cdef vector[Peak1D] OpenMSPeaksFromPy(peaks):
         cdef vector[Peak1D] rv
@@ -14,13 +17,27 @@ cdef vector[Peak1D] OpenMSPeaksFromPy(peaks):
         return rv
 
 cdef OpenMsSpecToPy(MSSpectrum[Peak1D] spec_):
-        RT = spec_.getRT()
-        peaks = [ ( spec_[i].getMZ(), spec_[i].getIntensity()) for i in range(spec_.size()) ]
-        polarization = "0+-"[spec_.getInstrumentSettings().getPolarity()]
-        msLevel = spec_.getMSLevel()
+
+        cdef double RT = spec_.getRT()
+
+        # this was the bottleneck !!!
+        #peaks = [ ( spec_[i].getMZ(), spec_[i].getIntensity()) for i in range(spec_.size()) ]
+
+        # now with numpy: MUCH faster !
+        cdef unsigned int n = spec_.size()
+        cdef np.ndarray[np.float32_t, ndim=2] peaks = np.zeros( [n,2], dtype=np.float32)
+        cdef Peak1D p
+        for i in range(n):
+            p = spec_[i]
+            peaks[i,0] = p.getMZ()
+            peaks[i,1] = p.getIntensity()
+    
+        cdef str polarization = "0+-"[spec_.getInstrumentSettings().getPolarity()]
+        cdef int msLevel = spec_.getMSLevel()
         cdef vector[Precursor] pcs_ = spec_.getPrecursors()
         cdef pcs = []
-        for i in range(pcs_.size()):
+        cdef unsigned int len_ = pcs_.size()
+        for i in range(len_):
             pcs.append((pcs_[i].getMZ(), pcs_[i].getIntensity()))
         return Spectrum(RT, peaks, (polarization, msLevel, pcs))
        

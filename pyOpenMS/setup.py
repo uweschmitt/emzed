@@ -5,55 +5,13 @@ from Cython.Distutils import build_ext
 
 import glob
 
-mergedModule = "pyOpenMS"
-
-def merge_and_setup_files():
-
-
-    def filesToMerge():
-        # global_functions.pyx must be the last one, such that all
-        # classes are known at this point:
-        for p in glob.glob("_*.pyx"):  # class def files start with "_"
-                yield p
-        yield "global_functions.pyx"
-
-    with file(mergedModule+".pyx", "w") as fp:
-
-        print >> fp, "from cython.operator cimport address as addr, dereference as deref"
-
-        for p in glob.glob("*.pxd"):
-            print >> fp, "from %s cimport *" % (p[:-4])
-
-        print >> fp
-        for p in filesToMerge():
-            print >> fp, """include "%s" """ % p
-
-    return
-
-    # inaktiv:
-    with file("pyOpenMS.py", "w") as fp:
-
-        print >> fp, "from %s import \\" % mergedModule
-
-        def classnames():
-            for p in filesToMerge():
-                yield  p[:-5]
-
-        lines = ( "%s as %s \\" % (cn,cn[1:]) for cn in \
-                                   ( p[:-4] for p in filesToMerge() ) \
-                )
-
-        print >> fp, "\n,      ".join(lines)
-    
 
 
 def ext(name, sources):
 
-    #merge_and_setup_files()
 
-    return Extension(
+    rv = Extension(
         name,
-        #sources = [ "wrap.pyx", ],
         sources = sources,
         language="c++",
         include_dirs=[
@@ -61,6 +19,7 @@ def ext(name, sources):
                       r"C:\QtSDK\Desktop\Qt\4.7.3\msvc2008\include\QtCore",
                       "e:/OpenMS-1.8/contrib_build/include",
                     "e:/OpenMS-1.8/include", 
+r"C:\Python26\Lib\site-packages\numpy\core\include\\",
                      ],
         library_dirs=["e:/OpenMS-1.8_BUILD", r"e:\OpenMS-1.8\contrib_build\lib",
 r"c:/QtSDK/Desktop/Qt/4.7.3/msvc2008/lib"],
@@ -88,9 +47,11 @@ r"c:/QtSDK/Desktop/Qt/4.7.3/msvc2008/lib"],
         extra_compile_args = [ "/EHs"]  
      
     )
+    rv.pyrex_directives = {"boundscheck": False}
+    return rv
 
 
-ext_modules = [ ext(mergedModule, [ "pyOpenMS.pyx" ]) ]
+ext_modules = [ ext("pyOpenMS", [ "pyOpenMS.pyx" ]) ]
 
 setup(
   name = 'minimal open ms wrapper',
