@@ -1,12 +1,14 @@
 
 class Spectrum(object):
 
-    def __init__(self, data=None):
+    def __init__(self, RT, peaks, data=None):
+        self.RT = RT
+        self.peaks = peaks
         if data:
-            self.RT, self.peaks, self.polarization, self.msLevel = data
+                self.polarization, self.msLevel, self.precursors = data
         else:
-            self.RT, self.peaks, self.polarization, self.msLevel=  None, [], None, None
+                self.polarization, self.msLevel, self.precursors = None, 1, []
 
     def __str__(self):
-        return str((self.RT, self.peaks, self.polarization, self.msLevel ))
+        return str((self.RT, self.peaks, self.polarization, self.msLevel, self.precursors ))
         

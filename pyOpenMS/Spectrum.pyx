@@ -14,12 +14,15 @@ cdef vector[Peak1D] OpenMSPeaksFromPy(peaks):
         return rv
 
 cdef OpenMsSpecToPy(MSSpectrum[Peak1D] spec_):
-        spec = Spectrum()
-        spec.peaks = [ ( spec_[i].getMZ(), spec_[i].getIntensity()) for i in range(spec_.size()) ]
-        spec.polarization = "0+-"[spec_.getInstrumentSettings().getPolarity()]
-        spec.msLevel = spec_.getMSLevel()
-        spec.RT = spec_.getRT()
-        return spec
+        RT = spec_.getRT()
+        peaks = [ ( spec_[i].getMZ(), spec_[i].getIntensity()) for i in range(spec_.size()) ]
+        polarization = "0+-"[spec_.getInstrumentSettings().getPolarity()]
+        msLevel = spec_.getMSLevel()
+        cdef vector[Precursor] pcs_ = spec_.getPrecursors()
+        cdef pcs = []
+        for i in range(pcs_.size()):
+            pcs.append((pcs_[i].getMZ(), pcs_[i].getIntensity()))
+        return Spectrum(RT, peaks, (polarization, msLevel, pcs))
        
 cdef MSSpectrum[Peak1D] OpenMsSpecFromPy(spec):
         assert isinstance(spec, Spectrum)
@@ -30,6 +33,16 @@ cdef MSSpectrum[Peak1D] OpenMsSpecFromPy(spec):
         spec_.getInstrumentSettings().setPolarity(<Polarity> code)
         spec_.setMSLevel(spec.msLevel)
         spec_.setRT(spec.RT)
+        cdef vector[Precursor] pcs 
+        cdef Precursor * pc
+        for (mz, I) in spec.precursors:
+            pc = new Precursor()
+            pc.setMZ(mz)
+            pc.setIntensity(I)
+            pcs.push_back(deref(pc))
+            del pc
+
+        spec_.setPrecursors(pcs)
         spec_.updateRanges()
         return spec_
         

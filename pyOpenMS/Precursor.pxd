@@ -9,3 +9,5 @@ cdef extern from "<OpenMS/METADATA/Precursor.h>" namespace "OpenMS":
         Precursor(Precursor)
         double getMZ()
         double getIntensity()
+        void setMZ(double )
+        void setIntensity(double )

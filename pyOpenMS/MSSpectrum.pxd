@@ -26,6 +26,7 @@ cdef extern from "<OpenMS/KERNEL/MSSpectrum.h>" namespace "OpenMS":
         InstrumentSettings getInstrumentSettings()
         int findNearest(double) except+
         vector[Precursor] getPrecursors()
+        void setPrecursors(vector[Precursor])
 
         void assign(vector[Peak1D].iterator, vector[Peak1D].iterator)
 
