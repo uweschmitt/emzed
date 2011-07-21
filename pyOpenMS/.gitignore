@@ -1,4 +1,4 @@
-*.cpp
+pyOpenMS.cpp
 *.pyd
 build
 _pyOpenMS.*
