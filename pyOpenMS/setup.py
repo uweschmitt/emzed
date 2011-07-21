@@ -5,7 +5,7 @@ from Cython.Distutils import build_ext
 
 import glob
 
-mergedModule = "pyOpenMS_"
+mergedModule = "pyOpenMS"
 
 def merge_and_setup_files():
 
@@ -49,7 +49,7 @@ def merge_and_setup_files():
 
 def ext(name, sources):
 
-    merge_and_setup_files()
+    #merge_and_setup_files()
 
     return Extension(
         name,
@@ -90,7 +90,7 @@ r"c:/QtSDK/Desktop/Qt/4.7.3/msvc2008/lib"],
     )
 
 
-ext_modules = [ ext(mergedModule, [mergedModule+".pyx"]) ]
+ext_modules = [ ext(mergedModule, [ "pyOpenMS.pyx" ]) ]
 
 setup(
   name = 'minimal open ms wrapper',

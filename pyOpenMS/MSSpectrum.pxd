@@ -2,6 +2,7 @@ from string cimport *
 from libcpp.vector cimport *
 from InstrumentSettings cimport *
 from Precursor cimport *
+from Peak1D cimport *
 
 cdef extern from "<OpenMS/KERNEL/MSSpectrum.h>" namespace "OpenMS":
 
@@ -19,9 +20,14 @@ cdef extern from "<OpenMS/KERNEL/MSSpectrum.h>" namespace "OpenMS":
         int size()
         PeakT operator[](int)
 
+        void updateRanges()
+
+    
         InstrumentSettings getInstrumentSettings()
         int findNearest(double) except+
         vector[Precursor] getPrecursors()
+
+        void assign(vector[Peak1D].iterator, vector[Peak1D].iterator)
 
         
 

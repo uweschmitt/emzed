@@ -6,4 +6,5 @@ cdef extern from "<OpenMS/METADATA/InstrumentSettings.h>" namespace "OpenMS":
         
         InstrumentSettings()
         InstrumentSettings(InstrumentSettings)
-        Polarity getPolarity()
+        int getPolarity()
+        void setPolarity(int)
