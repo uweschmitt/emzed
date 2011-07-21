@@ -11,8 +11,11 @@ def merge_and_setup_files():
 
 
     def filesToMerge():
-        for p in glob.glob("_*.pyx"):
-            yield p
+        # global_functions.pyx must be the last one, such that all
+        # classes are known at this point:
+        for p in glob.glob("_*.pyx"):  # class def files start with "_"
+                yield p
+        yield "global_functions.pyx"
 
     with file(mergedModule+".pyx", "w") as fp:
 
