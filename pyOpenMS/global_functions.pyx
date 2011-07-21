@@ -7,9 +7,9 @@ cdef _WaveletFeatureFinder(MSExperiment[Peak1D, ChromatogramPeak] * in_, Feature
     cdef FeatureMap[Feature] seeds
     cdef FeatureFinder ff #  = new FeatureFinder()
     cdef string * typ = new string("typ")
+    in_.updateRanges()
     ff.run(deref(typ), deref(in_), deref(out), p, seeds)
     del typ 
-    #return out
 
 def WaveletFeatureFinder(_PeakMap in_, _Param p):
     cdef FeatureMap[Feature] * out = new FeatureMap[Feature]()
