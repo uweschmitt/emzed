@@ -34,13 +34,6 @@ cdef MSSpectrum[Peak1D] OpenMsSpecFromPy(spec):
         return spec_
         
 
-def test():
-    spec = Spectrum( ([ (0,1) ], "+", 1) )
-    back = OpenMsSpecToPy(OpenMsSpecFromPy(spec))
-    assert spec.peaks == back.peaks
-    assert spec.polarization == back.polarization
-    assert spec.msLevel == back.msLevel
-    
     
 
     

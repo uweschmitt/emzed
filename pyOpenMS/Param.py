@@ -1,0 +1,2 @@
+class Param(dict):
+    pass
