@@ -11,15 +11,19 @@ cdef paramToDict(Param p):
     cdef DataValue val
     while it != keys.end():
         skey = deref(it)
-        val = p.getValue(skey)
-        if val.valueType() == STRING_VALUE:
-            rv[skey.c_str()] =  val.toChar()
-        elif val.valueType() == INT_VALUE:
-            rv[skey.c_str()] = <int> val
-        elif val.valueType() == DOUBLE_VALUE:
-            rv[skey.c_str()] = <double> val
+        try:
+            val = p.getValue(skey)
+        except:
+            rv[skey.c_str()] =  None
         else:
-            raise "not implemented !"
+            if val.valueType() == STRING_VALUE:
+                rv[skey.c_str()] =  val.toChar()
+            elif val.valueType() == INT_VALUE:
+                rv[skey.c_str()] = <int> val
+            elif val.valueType() == DOUBLE_VALUE:
+                rv[skey.c_str()] = <double> val
+            else:
+                raise "not implemented !"
         it = next(it)
         
     return rv

@@ -15,13 +15,22 @@ list<string> getKeys(Param &p)
     // keine template klasse ist.
     // -> http://groups.google.com/group/cython-users/msg/74f76f92b5305470
     list<string> rv;
-    for (Param::ParamIterator pit = p.begin(); pit != p.end(); ++pit)
+    list<string> path;
+    for (Param::ParamIterator param_it = p.begin(); param_it != p.end(); ++param_it)
     {
+        vector<Param::ParamIterator::TraceInfo> tr = param_it.getTrace();
+        for (vector<Param::ParamIterator::TraceInfo>::iterator trace_it = tr.begin(); trace_it != tr.end(); ++trace_it)
+        {
+            if (trace_it->opened)
+                path.push_back(trace_it->name);
+            else
+                path.pop_back();
+        }
+
         ostringstream trace;
-        vector<Param::ParamIterator::TraceInfo> tr = pit.getTrace();
-        for (vector<Param::ParamIterator::TraceInfo>::iterator tit = tr.begin(); tit != tr.end(); ++tit)
-            trace << tit->name<< ":";
-        trace << pit->name;
+        for (list<string>::iterator path_it = path.begin(); path_it != path.end(); ++path_it)
+            trace << *path_it << ":" ;
+        trace << param_it->name;
         rv.push_back(trace.str());
     }
     return rv;
