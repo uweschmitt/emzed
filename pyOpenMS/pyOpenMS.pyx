@@ -12,4 +12,6 @@ include "PeakMap.pyx"
 include "Feature.pyx"
 include "FeatureMap.pyx"
 
+include "FeatureFinder.pyx"
+
 include "tests.pyx"

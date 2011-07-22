@@ -10,3 +10,7 @@ class PeakMap(object):
 
     def __iter__(self):
         return iter(self.specs)
+
+    def filter(self, predicate):
+
+        return PeakMap( [ s for s in self.specs if predicate(s) ] )

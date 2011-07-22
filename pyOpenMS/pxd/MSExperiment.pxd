@@ -1,6 +1,8 @@
 from cython.operator cimport dereference as deref, address
 
 from MSSpectrum cimport *
+from Peak1D cimport *
+from ChromatogramPeak cimport *
 
 cdef extern from "<OpenMS/KERNEL/MSExperiment.h>" namespace "OpenMS":
 

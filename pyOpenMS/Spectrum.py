@@ -11,4 +11,7 @@ class Spectrum(object):
 
     def __str__(self):
         return str((self.RT, self.peaks, self.polarization, self.msLevel, self.precursors ))
+
+
+     
         
