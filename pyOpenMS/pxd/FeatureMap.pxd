@@ -1,3 +1,4 @@
+from libcpp.vector cimport vector
 
 cdef extern from "<OpenMS/KERNEL/FeatureMap.h>" namespace "OpenMS":
 
@@ -5,6 +6,7 @@ cdef extern from "<OpenMS/KERNEL/FeatureMap.h>" namespace "OpenMS":
         FeatureMap()
         T operator[](int)
         int size()
+        void push_back(T)
         void assign(vector[T].iterator, vector[T].iterator)
         void sortByIntensity(bool)
         void updateRanges()

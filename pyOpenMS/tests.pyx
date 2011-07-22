@@ -42,9 +42,19 @@ def testPeakMap():
     
 def testFeature():
     feat = Feature(1.0, 2.0)
-    back = OpenMSFeatureToPy(OpenMSFeatureFromPy(feat))
+    back = OpenMsFeatureToPy(OpenMsFeatureFromPy(feat))
     assert feat.MZ == back.MZ
     assert feat.RT == back.RT
 
+def testFeatureMap():
+    feat1 = Feature(1.0, 2.0)
+    feat2 = Feature(3.0, 4.0)
+    fm = FeatureMap([feat1, feat2])
+    back = OpenMsFeatureMapToPy(OpenMsFeatureMapFromPy(fm))
+    assert len(fm.features) == len(back.features)
+    for f1, f2 in zip (fm.features, back.features):
+        assert f1.RT == f2.RT
+        assert f1.MZ == f2.MZ
+    
     
         

@@ -6,3 +6,4 @@ def test_converters():
     P.testSpectrum()
     P.testPeakMap()
     P.testFeature()
+    P.testFeatureMap()

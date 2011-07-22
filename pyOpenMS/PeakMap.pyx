@@ -3,7 +3,7 @@ from pxd.MSExperiment cimport *
 from pxd.ChromatogramPeak cimport *
 from pxd.Peak1D cimport *
 
-from pxd.PeakMap import PeakMap
+from PeakMap import PeakMap
 
 
 cdef OpenMsPeakMapToPy(MSExperiment[Peak1D, ChromatogramPeak] map_):

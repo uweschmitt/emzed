@@ -1,7 +1,7 @@
 
 class PeakMap(object):
 
-    def __init__(self, specs = None):
+    def __init__(self, specs = []):
         self.specs = specs
 
     def __len__(self):

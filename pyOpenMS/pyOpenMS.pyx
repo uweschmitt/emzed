@@ -10,4 +10,6 @@ include "Spectrum.pyx"
 include "PeakMap.pyx"
 
 include "Feature.pyx"
+include "FeatureMap.pyx"
+
 include "tests.pyx"
