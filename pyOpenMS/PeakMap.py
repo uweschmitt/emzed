@@ -14,3 +14,7 @@ class PeakMap(object):
     def filter(self, predicate):
 
         return PeakMap( [ s for s in self.specs if predicate(s) ] )
+
+    def removeZeroIntensities(self):
+        for spec in self.specs:
+            spec.removeZeroIntensities()

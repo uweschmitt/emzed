@@ -12,6 +12,10 @@ def dump(path):
     print "loading needed %.1f secs" % (ended-started)
     print "dataset has", len(dataset), "specs"
     print
+    dataset.removeZeroIntensities()
+    ended2 = time.time()
+    print "zero intensity removal needed %.1f secs" % (ended2-ended)
+    print
 
     for i, spec in enumerate(dataset):
         print "%3d  RT=%f  MSLevel=%d,  polarity %s " %( i, spec.RT, spec.msLevel, spec.polarization)
