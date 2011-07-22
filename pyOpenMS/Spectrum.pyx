@@ -1,5 +1,5 @@
-from MSSpectrum cimport *
-from Peak1D cimport *
+from pxd.MSSpectrum cimport *
+from pxd.Peak1D cimport *
 
 from Spectrum import Spectrum
 

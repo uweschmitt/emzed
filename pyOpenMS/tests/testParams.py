@@ -16,7 +16,7 @@ class tempFileName(object):
         return self.name
 
     def __exit__(self, *a):
-        os.remove(self.name)
+        pass #os.remove(self.name)
 
 
 

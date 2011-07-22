@@ -40,7 +40,11 @@ def testPeakMap():
     assert back.specs[1].precursors == pm.specs[1].precursors
     
     
+def testFeature():
+    feat = Feature(1.0, 2.0)
+    back = OpenMSFeatureToPy(OpenMSFeatureFromPy(feat))
+    assert feat.MZ == back.MZ
+    assert feat.RT == back.RT
 
-    
     
         

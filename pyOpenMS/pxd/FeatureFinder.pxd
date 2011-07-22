@@ -12,7 +12,9 @@ cdef extern from "<OpenMS/TRANSFORMATIONS/FEATUREFINDER/FeatureFinder.h>" namesp
 
     cdef cppclass FeatureFinder:
         FeatureFinder()
-        void run(string, MSExperiment[Peak1D, ChromatogramPeak], FeatureMap[Feature] out, Param, FeatureMap[Feature] seeds)
+        void run(string, MSExperiment[Peak1D, ChromatogramPeak], FeatureMap[Feature] out, Param, FeatureMap[Feature] seeds) except+
+        Param getParameters(string) except+
+        Param getParameters(string) except+
 
         
 # Implentierung nicht in DLL, sondern in FeatureFinder_impl.h, muss also included werden damit

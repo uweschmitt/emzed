@@ -1,9 +1,9 @@
-from MSSpectrum cimport *
-from MSExperiment cimport *
-from ChromatogramPeak cimport *
-from Peak1D cimport *
+from pxd.MSSpectrum cimport *
+from pxd.MSExperiment cimport *
+from pxd.ChromatogramPeak cimport *
+from pxd.Peak1D cimport *
 
-from PeakMap import PeakMap
+from pxd.PeakMap import PeakMap
 
 
 cdef OpenMsPeakMapToPy(MSExperiment[Peak1D, ChromatogramPeak] map_):

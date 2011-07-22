@@ -1,6 +1,5 @@
-from MzXMLFile cimport *
-from MSExperiment cimport *
-import time
+from pxd.MzXMLFile cimport *
+from pxd.MSExperiment cimport *
 
 def loadMzXMLFile(char *path):
     cdef MSExperiment[Peak1D, ChromatogramPeak] mse 

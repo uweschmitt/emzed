@@ -8,4 +8,6 @@ include "MzXMLFile.pyx"
 include "Param.pyx"
 include "Spectrum.pyx"
 include "PeakMap.pyx"
+
+include "Feature.pyx"
 include "tests.pyx"

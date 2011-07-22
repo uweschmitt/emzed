@@ -1,7 +1,19 @@
 from libcpp.vector cimport *
-from DataValue cimport *
-from DataValue cimport *
-from Param cimport *
+from pxd.DataValue cimport *
+from pxd.Param cimport *
+
+
+cdef class _ParamInstance:
+
+    cdef Param * p
+
+    def __cinit__(self):
+        self.p = new Param()
+    
+    def __dealloc__(self):
+        del self.p
+
+
 
 cdef paramToDict(Param p):
     cdef list[string] keys = getKeys(p)
@@ -49,4 +61,16 @@ cdef Param dictToParam(dict dd):
 
 
 
+def writeParam(dict dd, char * fname):
+    cdef Param pp = dictToParam(dd)
+    cdef string * stemp = new string(fname)
+    pp.store(deref(stemp))
+    del stemp
+
+def readParam(char * fname):
+    cdef Param pp 
+    cdef string * stemp = new string(fname)
+    pp.load(deref(stemp))
+    del stemp
+    return paramToDict(pp) 
 
