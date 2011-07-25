@@ -18,7 +18,8 @@ def dump(path):
     print
 
     for i, spec in enumerate(dataset):
-        print "%3d  RT=%f  MSLevel=%d,  polarity %s " %( i, spec.RT, spec.msLevel, spec.polarization)
+        print "%3d  RT=%f  MSLevel=%d,  polarity %s " %( i, spec.RT, 
+                                         spec.msLevel, spec.polarization)
         print "     from %s   to %s" % ( spec.peaks[0], spec.peaks[-1], )
         if spec.msLevel > 1:
             print "      PRECURSORS: ",

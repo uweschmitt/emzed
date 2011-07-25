@@ -28,7 +28,8 @@ cdef class FeatureFinder:
 
     def run(self, pm):
         assert isinstance(pm, PeakMap)
-        cdef MSExperiment[Peak1D, ChromatogramPeak] pm_ = OpenMsPeakMapFromPy(pm)
+        cdef MSExperiment[Peak1D, ChromatogramPeak] pm_     
+        pm_= OpenMsPeakMapFromPy(pm)
         pm_.updateRanges()
         cdef Param p = dictToParam(self.params)
         cdef FeatureMap_[Feature_] seeds

@@ -1,15 +1,16 @@
 from Feature import Feature
 
-cimport pxd.Feature as F
+from  pxd.Feature cimport Feature as Feature_
 
-cdef F.Feature OpenMsFeatureFromPy(feat):
-        cdef F.Feature feat_
+cdef Feature_ OpenMsFeatureFromPy(feat):
+
+        cdef Feature_ feat_
         feat_.setMZ(feat.MZ)
         feat_.setRT(feat.RT)
         return feat_
 
 
-cdef OpenMsFeatureToPy(F.Feature feat_):
+cdef OpenMsFeatureToPy(Feature_ feat_):
         return Feature(feat_.getRT(), feat_.getMZ())
         
 

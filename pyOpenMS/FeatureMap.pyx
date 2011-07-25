@@ -5,7 +5,8 @@ from FeatureMap import FeatureMap
 
 
 cdef OpenMsFeatureMapToPy(FeatureMap_[Feature_] map_):
-        return FeatureMap( [ OpenMsFeatureToPy(map_[i]) for i in range(map_.size()) ])
+        return FeatureMap( [ OpenMsFeatureToPy(map_[i]) 
+                             for i in range(map_.size()) ])
        
 cdef FeatureMap_[Feature_] OpenMsFeatureMapFromPy(fm):
         assert isinstance(fm, FeatureMap)
