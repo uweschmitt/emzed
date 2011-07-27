@@ -14,6 +14,9 @@ class Spectrum(object):
         return str((self.RT, self.peaks, self.polarization, 
                     self.msLevel, self.precursors ))
 
+    def __len__(self):
+        return self.peaks.shape[0]
+
     def removeZeroIntensities(self):
         MZ, I = 0, 1
         self.peaks = self.peaks[self.peaks[:,I]>0]

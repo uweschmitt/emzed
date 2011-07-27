@@ -10,3 +10,4 @@ cdef extern from "<OpenMS/FORMAT/MzXMLFile.h>" namespace "OpenMS":
         MzXMLFile()
         # hier muss leider spezialisert werden:
         void load(string, MSExperiment[Peak1D, ChromatogramPeak]) except+
+        void store(string, MSExperiment[Peak1D, ChromatogramPeak]) except+
