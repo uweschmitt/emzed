@@ -15,7 +15,7 @@ from PyQt4.QtCore import SIGNAL
 #---Import plot widget base class
 from guiqwt.plot import CurveWidget, BaseCurveWidget, PlotManager, SubplotWidget
 from guiqwt.builder import make
-from guiqwt.curve import CurvePlot
+from guiqwt.curve import CurvePlot, CurveItem
 from guiqwt.signals import SIG_RANGE_CHANGED
 from guiqwt.shapes import XRangeSelection
 from guidata.configtools import get_icon
@@ -28,21 +28,31 @@ import new
 sys.path.insert(0, "../../pyOpenMS")
 
 
-class R(XRangeSelection):
+class SnappingSelection(XRangeSelection):
 
     def __init__(self, min_, max_, xvals):
-        super(R, self).__init__(min_, max_)
-        self.xvals = np.array(xvals)
+        super(SnappingSelection, self).__init__(min_, max_)
 
     def move_local_point_to(self, hnd, pos, ctrl=None):
         val = self.plot().invTransform(self.xAxis(), pos.x())
         self.move_point_to(hnd, (val, 0), ctrl)
 
+
+    def get_xvals(self):
+        xvals = []
+        for item in self.plot().get_items():
+            if isinstance(item, CurveItem):
+                xvals.append(np.array(item.get_data()[0]))
+        
+        return np.sort(np.hstack(xvals))
+        
+
     def move_point_to(self, hnd, pos, ctrl=None):
         val, y = pos
-        imin = np.argmin(np.fabs(val-self.xvals))
-        pos = self.xvals[imin], y
-        print "move to ", pos[0]
+        xvals = self.get_xvals()
+
+        imin = np.argmin(np.fabs(val-xvals))
+        pos = xvals[imin], y
         if self._min == self._max and not ctrl: 
             XRangeSelection.move_point_to(self, 0, pos, ctrl)
             XRangeSelection.move_point_to(self, 1, pos, ctrl)
@@ -57,7 +67,7 @@ class R(XRangeSelection):
 
 class MzSelectTool(InteractiveTool):
     """
-    Graphical Object Selection Tool
+        modified SelectTool from guiqwt.
     """
     TITLE = "mZ Selection"
     ICON = "selection.png"
@@ -83,6 +93,10 @@ class MzSelectTool(InteractiveTool):
                          baseplot.do_space_pressed, start_state)
 
         filter.add_event(start_state,
+                         KeyEventMatch((Qt.Key_Backspace,)),
+                         baseplot.do_backspace_pressed, start_state)
+
+        filter.add_event(start_state,
                          KeyEventMatch(((Qt.Key_A, Qt.ControlModifier),)),
                          self.select_all_items, start_state)
 
@@ -92,50 +106,68 @@ class MzSelectTool(InteractiveTool):
         pass
 
 
-class OnlyXZoomCurvePlot(CurvePlot):
+class ModifiedCurvePlot(CurvePlot):
 
     
     def do_zoom_view(self, dx, dy, lock_aspect_ratio=False):
-        """
-        Change the scale of the active axes (zoom/dezoom) according to dx, dy
-        dx, dy are tuples composed of (initial pos, dest pos)
-        We try to keep initial pos fixed on the canvas as the scale changes
-        """
+        """ modified do_zoom_view such that only zooming in x-direction happens """
    
         dy = dy[2],dy[2],dy[2],dy[3]
-        return super(OnlyXZoomCurvePlot, self).do_zoom_view(dx, dy, lock_aspect_ratio)
+        return super(ModifiedCurvePlot, self).do_zoom_view(dx, dy, lock_aspect_ratio)
 
     def do_pan_view(self, dx, dy):
+        """ modified do_zoom_view such that only panning in x-direction happens """
 
         dy = dy[2],dy[2],dy[2],dy[3]
 
-        return super(OnlyXZoomCurvePlot, self).do_pan_view(dx, dy)
+        return super(ModifiedCurvePlot, self).do_pan_view(dx, dy)
 
     def do_space_pressed(self, filter, evt):
+        """ zoom to limits of snapping selection tool """
 
+        count=0
         for item in self.items:
-            if isinstance(item, R):
+            if isinstance(item, SnappingSelection):
+                if count>0:
+                    raise "more than one SnappingSelection among CurvePlots items !"
+                count+=1
                 if item._min != item._max:
-                    xmin, xmax, ymin, ymax= self.get_plot_limits() 
-                    min_ = min(item._min, item._max)
-                    max_ = max(item._min, item._max)
-                    self.set_plot_limits(min_, max_, ymin, ymax)
-                    self.replot()
+                    min_neu = min(item._min, item._max)
+                    max_neu = max(item._min, item._max)
+                    self.update_plot_xlimits(min_neu, max_neu)
         
     def do_enter_pressed(self, filter, evt):
-        print filter, evt
+        """ set snapping selection tool to center of actual x-range """
 
         xmin, xmax, _, _ = self.get_plot_limits() 
         mid = (xmin+xmax)/2.0
         print mid
         
         for item in self.items:
-            if isinstance(item, R):
+            if isinstance(item, SnappingSelection):
                 item.move_point_to(0, (mid, 0), None)
                 item.move_point_to(1, (mid, 0), None)
                 filter.plot.replot()
                 
-                
+    def do_backspace_pressed(self, filter, evt):
+        """ reset axes of plot """
+
+        xvals = []
+        for item in self.items:
+            if isinstance(item, CurveItem):
+                x, _ = item.get_data()
+                xvals.extend(list(x))
+
+        xmin, xmax = min(xvals), max(xvals)
+        self.update_plot_xlimits(xmin, xmax)
+
+    def update_plot_xlimits(self, xmin, xmax):
+        _, _, ymin, ymax= self.get_plot_limits() 
+        self.set_plot_limits(xmin, xmax, ymin, ymax)
+        self.replot()
+            
+
+                    
         
 
 
@@ -158,8 +190,9 @@ class TestWindow(QDialog):
         self.widget2 = CurveWidget(xlabel="m/z", ylabel="log I")
 
 
-        self.widget1.plot.__class__ = OnlyXZoomCurvePlot
-        self.widget2.plot.__class__ = OnlyXZoomCurvePlot
+        # inject mofified behaviour:
+        self.widget1.plot.__class__ = ModifiedCurvePlot
+        self.widget2.plot.__class__ = ModifiedCurvePlot
 
 
         self.curve_item1 = make.curve([], [], color='b')
@@ -177,10 +210,8 @@ class TestWindow(QDialog):
         t = self.pm.add_tool(MzSelectTool)
         self.pm.set_default_tool(t)
         t.activate()
-        #self.pm.add_tool(RectZoomTool)
-        #self.pm.register_standard_tools()
 
-        range_ = R(self.minRT, self.maxRT, self.rts)
+        range_ = SnappingSelection(self.minRT, self.maxRT, self.rts)
         self.widget1.plot.add_item(range_)
 
         def release(evt):
