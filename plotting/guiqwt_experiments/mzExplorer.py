@@ -42,6 +42,7 @@ class R(XRangeSelection):
         val, y = pos
         imin = np.argmin(np.fabs(val-self.xvals))
         pos = self.xvals[imin], y
+        print "move to ", pos[0]
         if self._min == self._max and not ctrl: 
             XRangeSelection.move_point_to(self, 0, pos, ctrl)
             XRangeSelection.move_point_to(self, 1, pos, ctrl)
@@ -54,7 +55,41 @@ class R(XRangeSelection):
     def move_shape(self, old_pos, new_pos):
         return
 
+class MzSelectTool(InteractiveTool):
+    """
+    Graphical Object Selection Tool
+    """
+    TITLE = "mZ Selection"
+    ICON = "selection.png"
+    CURSOR = Qt.ArrowCursor
 
+
+    def setup_filter(self, baseplot):
+        filter = baseplot.filter
+        # Initialisation du filtre
+        start_state = filter.new_state()
+        # Bouton gauche :
+        ObjectHandler(filter, Qt.LeftButton, start_state=start_state)
+        ObjectHandler(filter, Qt.LeftButton, mods=Qt.ControlModifier,
+                      start_state=start_state, multiselection=True)
+
+        filter.add_event(start_state,
+                         KeyEventMatch((Qt.Key_Enter, Qt.Key_Return,)),
+
+                         baseplot.do_enter_pressed, start_state)
+
+        filter.add_event(start_state,
+                         KeyEventMatch((Qt.Key_Space,)),
+                         baseplot.do_space_pressed, start_state)
+
+        filter.add_event(start_state,
+                         KeyEventMatch(((Qt.Key_A, Qt.ControlModifier),)),
+                         self.select_all_items, start_state)
+
+        return setup_standard_tool_filter(filter, start_state)
+
+    def select_all_items(self, filter, event):
+        pass
 
 
 class OnlyXZoomCurvePlot(CurvePlot):
@@ -75,6 +110,33 @@ class OnlyXZoomCurvePlot(CurvePlot):
         dy = dy[2],dy[2],dy[2],dy[3]
 
         return super(OnlyXZoomCurvePlot, self).do_pan_view(dx, dy)
+
+    def do_space_pressed(self, filter, evt):
+
+        for item in self.items:
+            if isinstance(item, R):
+                if item._min != item._max:
+                    xmin, xmax, ymin, ymax= self.get_plot_limits() 
+                    min_ = min(item._min, item._max)
+                    max_ = max(item._min, item._max)
+                    self.set_plot_limits(min_, max_, ymin, ymax)
+                    self.replot()
+        
+    def do_enter_pressed(self, filter, evt):
+        print filter, evt
+
+        xmin, xmax, _, _ = self.get_plot_limits() 
+        mid = (xmin+xmax)/2.0
+        print mid
+        
+        for item in self.items:
+            if isinstance(item, R):
+                item.move_point_to(0, (mid, 0), None)
+                item.move_point_to(1, (mid, 0), None)
+                filter.plot.replot()
+                
+                
+        
 
 
     
@@ -99,8 +161,6 @@ class TestWindow(QDialog):
         self.widget1.plot.__class__ = OnlyXZoomCurvePlot
         self.widget2.plot.__class__ = OnlyXZoomCurvePlot
 
-        #self.widget1.plot.do_zoom_view = OnlyXZoomCurvePlot.do_zoom_view
-        #self.widget2.plot.do_zoom_view = OnlyXZoomCurvePlot.do_zoom_view
 
         self.curve_item1 = make.curve([], [], color='b')
         self.curve_item2 = make.curve([], [], color='b', curvestyle="Sticks")
@@ -114,7 +174,7 @@ class TestWindow(QDialog):
         self.pm.add_plot(self.widget2.plot)
         self.pm.set_default_plot(self.widget1.plot)
 
-        t = self.pm.add_tool(SelectTool)
+        t = self.pm.add_tool(MzSelectTool)
         self.pm.set_default_tool(t)
         t.activate()
         #self.pm.add_tool(RectZoomTool)
@@ -141,7 +201,7 @@ class TestWindow(QDialog):
     def sighandler(self, obj, min_, max_):
         # right handle might be to the left of the left one !
         self.minRT, self.maxRT = sorted((min_, max_))
-        
+        self.updateMZ()
 
     def updateMZ(self):
 
