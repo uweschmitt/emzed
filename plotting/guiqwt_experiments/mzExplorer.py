@@ -61,6 +61,13 @@ class SnappingSelection(XRangeSelection):
 
         self.plot().emit(SIG_RANGE_CHANGED, self, self._min, self._max)
 
+    def get_neighbour_xvals(self, x):
+        xvals = self.get_xvals()
+        imin = np.argmin(np.fabs(x-xvals))
+        if imin == 0: return xvals[0], xvals[1]
+        if imin == len(xvals)-1 : return xvals[imin-1], xvals[imin] 
+        return xvals[imin-1], xvals[imin+1]
+
         
     def move_shape(self, old_pos, new_pos):
         return
@@ -93,6 +100,15 @@ class MzSelectTool(InteractiveTool):
                          baseplot.do_space_pressed, start_state)
 
         filter.add_event(start_state,
+                         KeyEventMatch((Qt.Key_Right,)),
+                         baseplot.do_right_pressed, start_state)
+
+
+        filter.add_event(start_state,
+                         KeyEventMatch((Qt.Key_Left,)),
+                         baseplot.do_left_pressed, start_state)
+
+        filter.add_event(start_state,
                          KeyEventMatch((Qt.Key_Backspace,)),
                          baseplot.do_backspace_pressed, start_state)
 
@@ -122,6 +138,9 @@ class ModifiedCurvePlot(CurvePlot):
 
         return super(ModifiedCurvePlot, self).do_pan_view(dx, dy)
 
+    def do_move_marker(self, evt):
+        pass
+
     def do_space_pressed(self, filter, evt):
         """ zoom to limits of snapping selection tool """
 
@@ -141,7 +160,6 @@ class ModifiedCurvePlot(CurvePlot):
 
         xmin, xmax, _, _ = self.get_plot_limits() 
         mid = (xmin+xmax)/2.0
-        print mid
         
         for item in self.items:
             if isinstance(item, SnappingSelection):
@@ -152,18 +170,120 @@ class ModifiedCurvePlot(CurvePlot):
     def do_backspace_pressed(self, filter, evt):
         """ reset axes of plot """
 
+        self.reset_x_limits()
+
+    def do_shift_right_pressed(self, filter, evt):
+
+        print "shift right"
+        print evt.modifiers()
+
+        count=0
+        for item in self.items:
+            if isinstance(item, SnappingSelection):
+                if count>0:
+                    raise "more than one SnappingSelection among CurvePlots items !"
+                count+=1
+                _, xneu = item.get_neighbour_xvals(max(item._max, item._min))
+                item.move_point_to(1, (xneu, 0), True)
+                filter.plot.replot()
+
+    def do_shift_left_pressed(self, filter, evt):
+
+        count=0
+        for item in self.items:
+            if isinstance(item, SnappingSelection):
+                if count>0:
+                    raise "more than one SnappingSelection among CurvePlots items !"
+                count+=1
+                xneu, _ = item.get_neighbour_xvals(min(item._max, item._min))
+                item.move_point_to(1, (xneu, 0), True)
+                filter.plot.replot()
+
+    def do_alt_right_pressed(self, filter, evt):
+
+        count=0
+        for item in self.items:
+            if isinstance(item, SnappingSelection):
+                if count>0:
+                    raise "more than one SnappingSelection among CurvePlots items !"
+                count+=1
+                _, xneu = item.get_neighbour_xvals(max(item._max, item._min))
+                item.move_point_to(0, (xneu, 0), True)
+                filter.plot.replot()
+
+    def do_alt_left_pressed(self, filter, evt):
+
+        count=0
+        for item in self.items:
+            if isinstance(item, SnappingSelection):
+                if count>0:
+                    raise "more than one SnappingSelection among CurvePlots items !"
+                count+=1
+                xneu, _ = item.get_neighbour_xvals(min(item._max, item._min))
+                item.move_point_to(0, (xneu, 0), True)
+                filter.plot.replot()
+
+    def do_right_pressed(self, filter, evt):
+
+        shift_pressed =  evt.modifiers() == Qt.ShiftModifier
+        alt_pressed =  evt.modifiers() == Qt.AltModifier
+
+        count=0
+        for item in self.items:
+            if isinstance(item, SnappingSelection):
+                if count>0:
+                    raise "more than one SnappingSelection among CurvePlots items !"
+                count+=1
+
+                if not alt_pressed:
+                    _, xneu = item.get_neighbour_xvals(max(item._max, item._min))
+                    item.move_point_to(1, (xneu, 0), True)
+                if not shift_pressed:
+                    _, xneu = item.get_neighbour_xvals(min(item._min, item._max))
+                    item.move_point_to(0, (xneu, 0), True)
+                filter.plot.replot()
+                    
+    def do_left_pressed(self, filter, evt):
+
+        shift_pressed =  evt.modifiers() == Qt.ShiftModifier
+        alt_pressed =  evt.modifiers() == Qt.AltModifier
+        count=0
+        for item in self.items:
+            if isinstance(item, SnappingSelection):
+                if count>0:
+                    raise "more than one SnappingSelection among CurvePlots items !"
+                count+=1
+                if not alt_pressed:
+                    xneu,_ = item.get_neighbour_xvals(max(item._min, item._max))
+                    item.move_point_to(1, (xneu, 0), None)
+                if not shift_pressed:
+                    xneu,_ = item.get_neighbour_xvals(min(item._min, item._max))
+                    item.move_point_to(0, (xneu, 0), None)
+                filter.plot.replot()
+                
+
+    
+
+    def reset_x_limits(self):
+
         xvals = []
+        Delta = 0
         for item in self.items:
             if isinstance(item, CurveItem):
                 x, _ = item.get_data()
                 xvals.extend(list(x))
 
         xmin, xmax = min(xvals), max(xvals)
+
+        #xmin -= 0.01 * abs(xmin)
+        #xmax += 0.01 * abs(xmax)
         self.update_plot_xlimits(xmin, xmax)
 
     def update_plot_xlimits(self, xmin, xmax):
         _, _, ymin, ymax= self.get_plot_limits() 
         self.set_plot_limits(xmin, xmax, ymin, ymax)
+        self.setAxisAutoScale(0)
+        self.updateAxes()
         self.replot()
             
 
@@ -243,6 +363,7 @@ class TestWindow(QDialog):
 
         self.curve_item2.set_data(all_sorted[:,0], all_sorted[:,1])
 
+        self.curve_item2.plot().updateAxes()
         self.curve_item2.plot().replot()
         
         
