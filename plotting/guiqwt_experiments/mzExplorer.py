@@ -9,15 +9,20 @@
 
 SHOW = True # Show test in GUI-based test launcher
 
-from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QDialog
+from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QDialog 
 from PyQt4.QtCore import SIGNAL
 
 #---Import plot widget base class
 from guiqwt.plot import CurveWidget, BaseCurveWidget, PlotManager, SubplotWidget
 from guiqwt.builder import make
+from guiqwt.baseplot import IBasePlotItem
+from guiqwt.label import ObjectInfo
 from guiqwt.curve import CurvePlot, CurveItem
 from guiqwt.signals import SIG_RANGE_CHANGED
-from guiqwt.shapes import XRangeSelection
+from guiqwt.config import CONF
+from guiqwt.shapes import XRangeSelection, Marker
+from guiqwt.transitional import QwtSymbol
+
 from guidata.configtools import get_icon
 from guiqwt.tools import *
 #---
@@ -45,6 +50,9 @@ class SnappingRangeSelection(XRangeSelection):
                 xvals.append(np.array(item.get_data()[0]))
         
         return np.sort(np.hstack(xvals))
+
+
+# TODO: hit_test ?!?!??!
         
 
     def move_point_to(self, hnd, pos, ctrl=None):
@@ -126,16 +134,15 @@ class ModifiedCurvePlot(CurvePlot):
 
     
     def do_zoom_view(self, dx, dy, lock_aspect_ratio=False):
-        """ modified do_zoom_view such that only zooming in x-direction happens """
+        """ modified do_zoom_view such that y=0 stays at bottom of plot """
    
-        dy = dy[2],dy[2],dy[2],dy[3]
+        dy = dy[0],dy[1], self.transform(0,0) ,dy[3]
         return super(ModifiedCurvePlot, self).do_zoom_view(dx, dy, lock_aspect_ratio)
 
     def do_pan_view(self, dx, dy):
         """ modified do_zoom_view such that only panning in x-direction happens """
 
         dy = dy[2],dy[2],dy[2],dy[3]
-
         return super(ModifiedCurvePlot, self).do_pan_view(dx, dy)
 
     def do_move_marker(self, evt):
@@ -174,8 +181,8 @@ class ModifiedCurvePlot(CurvePlot):
 
     def get_unique_item(self, clz):
         items = list(self.get_items_of_class(clz))
-        if len(items)>1:
-            raise "more than one %s among CurvePlots items !" % clz
+        if len(items) != 1:
+            raise "%d %s among CurvePlots items !" % (len(items), clz)
         return items[0]
 
 
@@ -226,13 +233,68 @@ class ModifiedCurvePlot(CurvePlot):
     def update_plot_xlimits(self, xmin, xmax):
         _, _, ymin, ymax= self.get_plot_limits() 
         self.set_plot_limits(xmin, xmax, ymin, ymax)
-        self.setAxisAutoScale(0)
+        self.setAxisAutoScale(self.yLeft) # y-achse
         self.updateAxes()
         self.replot()
             
 
-                    
+class RtPlot(ModifiedCurvePlot):
+        pass
+
+
+class MzPlot(ModifiedCurvePlot):
+
+        def p(self, marker, x, y):
+            return None 
+            return "m/z = %.5f<br/>I=%.1f" % (x, y)
+                
+            
+
+        def on_plot(self, curve, x, y):
+            item = self.get_unique_item(CurveItem)
+            xs, ys = item.get_data()
+            # scale + avoid zero division
+            xmin, xmax, ymin, ymax = self.get_plot_limits()
+            xss = (xs-x) / (xmax-xmin)
+            yss = (ys-y) / (ymax-ymin)
+            imin = np.argmin(xss**2 + yss**2)
+            return xs[imin], ys[imin]
+            
+
+        def do_move_marker(self, evt):
+            
+            #x = self.invTransform(self.xBottom, evt.x())
+            if not getattr(self, "marker", False) :
+                self.marker = self.get_unique_item(Marker)
+
+            self.marker.move_local_point_to(0, evt.pos())
+            self.marker.setVisible(True)
+            self.replot()
+
+            #self.marker.setValue(xs[imin], ys[imin])
+            #print self.marker
+            
+            
+            
         
+            
+
+            
+            
+                    
+       
+class RTComps(ObjectInfo):
+
+    def __init__(self, range_):
+        self.range_ = range_ 
+
+    def get_text(self):
+        
+        rtmin, rtmax = self.range_.get_range()
+        if rtmin != rtmax:
+            return u"RT: %.3f ... %.3f" %  (rtmin, rtmax)
+        else:
+            return u"RT: %.3f" %  rtmin
 
 
     
@@ -250,44 +312,87 @@ class TestWindow(QDialog):
         vlayout = QVBoxLayout()
         self.setLayout(vlayout)
 
-        self.widget1 = CurveWidget(xlabel="RT", ylabel="log I")
-        self.widget2 = CurveWidget(xlabel="m/z", ylabel="log I")
+        self.widgetRt = CurveWidget(xlabel="RT", ylabel="I")
+        self.widgetRt.setMinimumSize(600, 300)
+
+        self.widgetMz = CurveWidget(xlabel="m/z", ylabel="I")
+        self.widgetMz.setMinimumSize(600, 300)
 
 
         # inject mofified behaviour:
-        self.widget1.plot.__class__ = ModifiedCurvePlot
-        self.widget2.plot.__class__ = ModifiedCurvePlot
+        self.widgetRt.plot.__class__ = RtPlot
+        self.widgetMz.plot.__class__ = MzPlot
 
 
         self.curve_item1 = make.curve([], [], color='b')
+
         self.curve_item2 = make.curve([], [], color='b', curvestyle="Sticks")
 
-        self.widget1.plot.add_item(self.curve_item1)
-        self.widget2.plot.add_item(self.curve_item2)
+        self.widgetRt.plot.add_item(self.curve_item1)
+        self.widgetMz.plot.add_item(self.curve_item2)
 
 
-        self.pm = PlotManager(self.widget1)
-        self.pm.add_plot(self.widget1.plot)
-        self.pm.add_plot(self.widget2.plot)
-        self.pm.set_default_plot(self.widget1.plot)
+        self.pm = PlotManager(self.widgetRt)
+        self.pm.add_plot(self.widgetRt.plot)
+        self.pm.add_plot(self.widgetMz.plot)
+        self.pm.set_default_plot(self.widgetRt.plot)
 
         t = self.pm.add_tool(MzSelectTool)
         self.pm.set_default_tool(t)
         t.activate()
 
         range_ = SnappingRangeSelection(self.minRT, self.maxRT, self.rts)
-        self.widget1.plot.add_item(range_)
+        self.widgetRt.plot.add_item(range_)
 
-        cc = make.computation(range_, "TL", "label %s", self.curve_item1, lambda x : x)
-        #self.widget1.plot.add_item(cc)
 
-        def release(evt):
-            self.updateMZ()
+        cc = make.info_label("TL", [ RTComps(range_) ])
+        self.widgetRt.plot.add_item(cc)
+
+        marker = Marker(label_cb = self.widgetMz.plot.p, constraint_cb = self.widgetMz.plot.on_plot)
+        marker.attach(self.widgetMz.plot)
+
+        params = { 
+          "marker/cross/symbol/marker" : 'Rect',
+          "marker/cross/symbol/edgecolor" : "black",
+          "marker/cross/symbol/facecolor" : "red",
+          "marker/cross/symbol/alpha" : 0.8,
+          "marker/cross/symbol/size" : 5,
+          "marker/cross/text/font/family" : "default",
+          "marker/cross/text/font/size" : 8,
+          "marker/cross/text/font/bold" : False,
+          "marker/cross/text/font/italic" : False,
+          "marker/cross/text/textcolor" : "black",
+          "marker/cross/text/background_color" : "#ffffff",
+          "marker/cross/text/background_alpha" : 0.8,
+          "marker/cross/pen/style" : "DashLine",
+          "marker/cross/pen/color" : "red",
+          "marker/cross/pen/width" : 0,
+          "marker/cross/linestyle" : 0,
+          "marker/cross/spacing" : 7
+        }
+
+        CONF.update_defaults(dict(plot= params))
+        marker.markerparam.read_config(CONF, "plot", "marker/cross")
+        marker.markerparam.update_marker(marker)
+        self.widgetMz.plot.add_item(marker)
+
+        class MZInfo(ObjectInfo):
+            def __init__(self, marker):
+                self.marker = marker
+
+            def get_text(self):
+                mz, I = self.marker.xValue(), self.marker.yValue()
+                return "mz=%.6f<br/>I=%.0f" % (mz, I)
+
+        self.widgetMz.plot.add_item(make.info_label("TR", [MZInfo(marker)]))
+
+        #def release(evt):
+            #self.updateMZ()
             
-        self.widget1.plot.mouseReleaseEvent = release
+        #self.widgetRt.plot.mouseReleaseEvent = release
         
-        self.layout().addWidget(self.widget1)
-        self.layout().addWidget(self.widget2)
+        self.layout().addWidget(self.widgetRt)
+        self.layout().addWidget(self.widgetMz)
 
         self.curve_item1.set_data(self.rts, self.chromatogram)
         self.curve_item1.plot().replot()
