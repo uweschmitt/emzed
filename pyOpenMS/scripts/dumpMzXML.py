@@ -1,14 +1,14 @@
 import sys
 sys.path.insert(0, "..")
 
-from pyOpenMS import *
+import pyOpenMS
 
 import sys, time
 
 def dump(path):
 
     started = time.time()
-    dataset = loadMzXMLFile(path)
+    dataset = pyOpenMS.loadMzXMLFile(path)
     ended = time.time()
 
     print

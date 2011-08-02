@@ -1,10 +1,10 @@
 import sys
 sys.path.insert(0, "..")
 
-from pyOpenMS import *
+import pyOpenMS 
 
-ff = FeatureFinder("centroided").updateParams(dict(debug="false"))
-ds=loadMzXMLFile(r"tests\data\READW_MS2_dataset.mzXML")
+ff = pyOpenMS.FeatureFinder("centroided").updateParams(dict(debug="false"))
+ds = pyOpenMS.loadMzXMLFile(r"tests\data\READW_MS2_dataset.mzXML")
 
 print "got data"
 print len(ds), "specs"

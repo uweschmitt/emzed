@@ -1,14 +1,14 @@
 import sys
 sys.path.insert(0, "..")
 
-from pyOpenMS import *
+import pyOpenMS 
 import sys
 
 fileNameIn, fileNameOut = sys.argv[1:3]
 
 print
 print "load file"
-peakMap = loadMzXMLFile(fileNameIn)
+peakMap = pyOpenMS.loadMzXMLFile(fileNameIn)
 
 print "file loaded"
 
@@ -25,7 +25,7 @@ print "peaks before zero removal :", peaksBefore
 print "peaks after zero removal  :", peaksAfter
 print
     
-saveMzXMLFile(peakMap, fileNameOut)   
+pyOpenMS.saveMzXMLFile(peakMap, fileNameOut)   
 print "file saved"
 
     

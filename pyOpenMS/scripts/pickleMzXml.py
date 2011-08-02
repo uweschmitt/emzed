@@ -1,14 +1,14 @@
 import sys, cPickle
 sys.path.insert(0, "..")
 
-from pyOpenMS import *
+import pyOpenMS 
 
 
 fileNameIn, fileNameOut = sys.argv[1:3]
 
 print
 print "load file"
-peakMap = loadMzXMLFile(fileNameIn)
+peakMap = pyOpenMS.loadMzXMLFile(fileNameIn)
 
 print "file loaded"
 
