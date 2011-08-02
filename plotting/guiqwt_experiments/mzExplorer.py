@@ -144,7 +144,7 @@ class ModifiedCurvePlot(CurvePlot):
     def do_space_pressed(self, filter, evt):
         """ zoom to limits of snapping selection tool """
 
-        item = get_unique_item(SnappingRangeSelection)
+        item = self.get_unique_item(SnappingRangeSelection)
         if item._min != item._max:
             min_neu = min(item._min, item._max)
             max_neu = max(item._min, item._max)
@@ -156,7 +156,7 @@ class ModifiedCurvePlot(CurvePlot):
         xmin, xmax, _, _ = self.get_plot_limits() 
         mid = (xmin+xmax)/2.0
         
-        item = get_unique_item(SnappingRangeSelection)
+        item = self.get_unique_item(SnappingRangeSelection)
         item.move_point_to(0, (mid, 0), None)
         item.move_point_to(1, (mid, 0), None)
         filter.plot.replot()
