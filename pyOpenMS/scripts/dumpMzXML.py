@@ -1,3 +1,6 @@
+import sys
+sys.path.insert(0, "..")
+
 from pyOpenMS import *
 
 import sys, time

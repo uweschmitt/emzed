@@ -1,6 +1,7 @@
+import sys, cPickle
+sys.path.insert(0, "..")
 
 from pyOpenMS import *
-import sys, cPickle
 
 
 fileNameIn, fileNameOut = sys.argv[1:3]

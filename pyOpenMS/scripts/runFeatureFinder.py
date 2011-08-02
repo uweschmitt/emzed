@@ -1,3 +1,6 @@
+import sys
+sys.path.insert(0, "..")
+
 from pyOpenMS import *
 
 ff = FeatureFinder("centroided").updateParams(dict(debug="false"))
