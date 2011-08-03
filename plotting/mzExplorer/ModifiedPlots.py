@@ -37,7 +37,6 @@ class ModifiedCurvePlot(CurvePlot):
     def do_backspace_pressed(self, filter, evt):
         """ reset axes of plot """
 
-        print "backspace"
         self.reset_x_limits()
 
     @memoize
@@ -132,6 +131,7 @@ class RtPlot(ModifiedCurvePlot):
 class MzPlot(ModifiedCurvePlot):
 
     def label_info(self, curve, x, y):
+        # label next to cursor
         return None
         return "m/z=%.6f<br/>I=%.f" % (x,y)
 
@@ -178,7 +178,6 @@ class MzPlot(ModifiedCurvePlot):
         x = self.invTransform(self.xBottom, evt.x())
         y = self.invTransform(self.yLeft, evt.y())
         self.start_coord = self.next_peak_to(x,y)
-        print "started"
 
     def move_drag(self,filter_,evt):
 
@@ -187,17 +186,13 @@ class MzPlot(ModifiedCurvePlot):
         current_coord = self.next_peak_to(x, y)
 
         line = self.get_unique_item(SegmentShape)
-        #print line
         line.set_rect(self.start_coord[0], self.start_coord[1], current_coord[0], current_coord[1])
         line.setVisible(1)
 
         self.replot()
 
-
-
     def stop_drag(self,filter_,evt):
 
         line = self.get_unique_item(SegmentShape)
         line.setVisible(0)
-        print "stop", line
         self.replot()

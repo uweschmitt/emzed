@@ -19,6 +19,8 @@ from SelectTools import RtSelectionTool, MzSelectionTool
 
 sys.path.insert(0, "../../pyOpenMS")
 
+import pyOpenMS
+
 class ModifiedCurveItem(CurveItem):
     def can_select(self):
         return False
@@ -70,11 +72,12 @@ class ModifiedSegment(SegmentShape):
 
 
 class RtRangeSelectionInfo(ObjectInfo):
+    
     def __init__(self, range_):
         self.range_ = range_
 
     def get_text(self):
-        rtmin, rtmax = self.range_.get_range()
+        rtmin, rtmax = sorted(self.range_.get_range())
         if rtmin != rtmax:
             return u"RT: %.3f ... %.3f" % (rtmin, rtmax)
         else:
@@ -88,9 +91,8 @@ class MzCursorInfo(ObjectInfo):
 
     def get_text(self):
         mz, I = self.marker.xValue(), self.marker.yValue()
-        txt = "mz=%.6f<br/>I=%.0e" % (mz, I)
+        txt = "mz=%.6f<br/>I=%.1f" % (mz, I)
         if self.line.isVisible():
-            print self.line.get_rect()
             _, _ , mz2, I2 = self.line.get_rect()
             txt += "<br/><br/>dmz=%.6f<br/>rI=%.3f" % (mz2-mz, I2/I)
         return txt
@@ -189,8 +191,8 @@ class MzExplorer(QDialog):
         markerSymbol = "Rect"
         edgeColor = "black"
         faceColor = "red"
-        alpha = 0.8
-        size = 5
+        alpha = 0.6
+        size = 3
 
         params = {
             "marker/cross/symbol/marker": markerSymbol,
@@ -233,6 +235,7 @@ class MzExplorer(QDialog):
         self.rTCurveItem.plot().replot()
 
     def plotMz(self):
+        
         peaks_in_range = np.vstack(( s.peaks for s in self.peakmap if self.minRT <= s.RT <= self.maxRT ))
         self.mZCurveItem.set_data(peaks_in_range[:, 0], peaks_in_range[:, 1])
 
@@ -244,7 +247,9 @@ def test():
     """Testing this simple Qt/guiqwt example"""
     from PyQt4.QtGui import QApplication
 
-    peakmap = cPickle.load(file("peakmap.pickled", "rb"))
+    #peakmap = cPickle.load(file("peakmap.pickled", "rb"))
+    print dir(pyOpenMS)
+    peakmap = pyOpenMS.loadMzXMLFile("test.mzXML")
 
     app = QApplication([])
     win = MzExplorer(peakmap)
