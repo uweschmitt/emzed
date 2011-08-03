@@ -1,13 +1,5 @@
 # -*- coding: utf-8 -*-
-#
-# Copyright © 2009-2010 CEA
-# Pierre Raybaut
-# Licensed under the terms of the CECILL License
-# (see guiqwt/__init__.py for details)
 
-"""Simple filter testing application based on PyQt and guiqwt"""
-
-SHOW = True # Show test in GUI-based test launcher
 
 from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QDialog 
 from PyQt4.QtCore import SIGNAL
@@ -31,6 +23,18 @@ import sys, cPickle
 import new
 
 sys.path.insert(0, "../../pyOpenMS")
+
+def memoize(function):
+  memo = {}
+  def wrapper(*args):
+    if args in memo:
+      return memo[args]
+    else:
+      rv = function(*args)
+      memo[args] = rv
+      return rv
+  return wrapper
+
 
 
 class SnappingRangeSelection(XRangeSelection):
@@ -124,6 +128,15 @@ class MzSelectTool(InteractiveTool):
                          KeyEventMatch(((Qt.Key_A, Qt.ControlModifier),)),
                          self.select_all_items, start_state)
 
+        # Bouton gauche :
+        #start_state = filter.new_state()
+        #handler = QtDragHandler(filter, Qt.LeftButton, start_state=start_state)
+        #self.connect(handler, SIG_START_TRACKING, baseplot.start_drag)
+        #self.connect(handler, SIG_MOVE, baseplot.move_drag)
+        #self.connect(handler, SIG_STOP_NOT_MOVING, baseplot.stop_drag)
+        #self.connect(handler, SIG_STOP_MOVING, baseplot.stop_drag)
+
+
         return setup_standard_tool_filter(filter, start_state)
 
     def select_all_items(self, filter, event):
@@ -145,8 +158,48 @@ class ModifiedCurvePlot(CurvePlot):
         dy = dy[2],dy[2],dy[2],dy[3]
         return super(ModifiedCurvePlot, self).do_pan_view(dx, dy)
 
-    def do_move_marker(self, evt):
-        pass
+                
+    def do_backspace_pressed(self, filter, evt):
+        """ reset axes of plot """
+
+        self.reset_x_limits()
+
+    @memoize
+    def get_items_of_class(self, clz):
+        for item in self.items:
+            if isinstance(item, clz):
+                yield item
+
+    @memoize
+    def get_unique_item(self, clz):
+        items = list(self.get_items_of_class(clz))
+        if len(items) != 1:
+            raise Exception("%d instance(s) of %s among CurvePlots items !" % (len(items), clz))
+        return items[0]
+
+
+    def reset_x_limits(self):
+
+        xvals = []
+        Delta = 0
+        for item in self.items:
+            if isinstance(item, CurveItem):
+                x, _ = item.get_data()
+                xvals.extend(list(x))
+
+        xmin, xmax = min(xvals), max(xvals)
+        self.update_plot_xlimits(xmin, xmax)
+
+    def update_plot_xlimits(self, xmin, xmax):
+        _, _, ymin, ymax= self.get_plot_limits() 
+        self.set_plot_limits(xmin, xmax, ymin, ymax)
+        self.setAxisAutoScale(self.yLeft) # y-achse
+        self.updateAxes()
+        self.replot()
+
+            
+
+class RtPlot(ModifiedCurvePlot):
 
     def do_space_pressed(self, filter, evt):
         """ zoom to limits of snapping selection tool """
@@ -167,24 +220,9 @@ class ModifiedCurvePlot(CurvePlot):
         item.move_point_to(0, (mid, 0), None)
         item.move_point_to(1, (mid, 0), None)
         filter.plot.replot()
-                
-    def do_backspace_pressed(self, filter, evt):
-        """ reset axes of plot """
 
-        self.reset_x_limits()
-
-    
-    def get_items_of_class(self, clz):
-        for item in self.items:
-            if isinstance(item, clz):
-                yield item
-
-    def get_unique_item(self, clz):
-        items = list(self.get_items_of_class(clz))
-        if len(items) != 1:
-            raise "%d %s among CurvePlots items !" % (len(items), clz)
-        return items[0]
-
+    def do_move_marker(self, evt):
+        pass
 
     def move_selection_bounds(self, evt, filter_, selector):
 
@@ -213,70 +251,85 @@ class ModifiedCurvePlot(CurvePlot):
     def do_right_pressed(self, filter_, evt):
         self.move_selection_bounds(evt, filter_, lambda (a,b): b)
 
+    def start_drag(self,filter_,evt):
+        super(RtPlot, self).start(filter_, evt)
+
+    def move_drag(self,filter_,evt):
+        print "move"
+        super(RtPlot, self).move(filter_, evt)
+        pass
     
-
-    def reset_x_limits(self):
-
-        xvals = []
-        Delta = 0
-        for item in self.items:
-            if isinstance(item, CurveItem):
-                x, _ = item.get_data()
-                xvals.extend(list(x))
-
-        xmin, xmax = min(xvals), max(xvals)
-
-        #xmin -= 0.01 * abs(xmin)
-        #xmax += 0.01 * abs(xmax)
-        self.update_plot_xlimits(xmin, xmax)
-
-    def update_plot_xlimits(self, xmin, xmax):
-        _, _, ymin, ymax= self.get_plot_limits() 
-        self.set_plot_limits(xmin, xmax, ymin, ymax)
-        self.setAxisAutoScale(self.yLeft) # y-achse
-        self.updateAxes()
-        self.replot()
-            
-
-class RtPlot(ModifiedCurvePlot):
+    def stop_drag(self,filter_,evt):
+        super(RtPlot, self).end(filter_, evt)
+        print "end"
         pass
 
 
 class MzPlot(ModifiedCurvePlot):
 
-        def p(self, marker, x, y):
-            return None 
-            return "m/z = %.5f<br/>I=%.1f" % (x, y)
-                
-            
-
-        def on_plot(self, curve, x, y):
-            item = self.get_unique_item(CurveItem)
-            xs, ys = item.get_data()
-            # scale + avoid zero division
-            xmin, xmax, ymin, ymax = self.get_plot_limits()
-            xss = (xs-x) / (xmax-xmin)
-            yss = (ys-y) / (ymax-ymin)
-            imin = np.argmin(xss**2 + yss**2)
-            return xs[imin], ys[imin]
-            
-
-        def do_move_marker(self, evt):
-            
-            #x = self.invTransform(self.xBottom, evt.x())
-            if not getattr(self, "marker", False) :
-                self.marker = self.get_unique_item(Marker)
-
-            self.marker.move_local_point_to(0, evt.pos())
-            self.marker.setVisible(True)
-            self.replot()
-
-            #self.marker.setValue(xs[imin], ys[imin])
-            #print self.marker
-            
-            
+    def p(self, marker, x, y):
+        return None 
+        return "m/z = %.5f<br/>I=%.1f" % (x, y)
             
         
+
+    def on_plot(self, curve, x, y):
+        item = self.get_unique_item(CurveItem)
+        xs, ys = item.get_data()
+        # scale + avoid zero division
+        xmin, xmax, ymin, ymax = self.get_plot_limits()
+        xss = (xs-x) / (xmax-xmin)
+        yss = (ys-y) / (ymax-ymin)
+        imin = np.argmin(xss**2 + yss**2)
+        return xs[imin], ys[imin]
+        
+
+    def do_move_marker(self, evt):
+        
+        marker = self.get_unique_item(Marker)
+        marker.move_local_point_to(0, evt.pos())
+        marker.setVisible(True)
+        self.replot()
+
+        #self.marker.setValue(xs[imin], ys[imin])
+        #print self.marker
+
+    def do_space_pressed(self, filter, evt):
+
+        marker = self.get_unique_item(Marker)
+        xs, _ = self.get_unique_item(CurveItem).get_data()
+        xm = marker.xValue()
+        
+        isort = np.argsort(np.abs(xs-xm))
+        xsel  = xs[isort[:10]]
+        xmin, xmax = np.min(xsel), np.max(xsel)
+        print xmin, xmax
+        self.update_plot_xlimits(xmin, xmax)
+        
+        
+
+    def do_enter_pressed(self, filter, evt):
+        pass
+        
+    def do_right_pressed(self, filter, evt):
+        pass
+        
+    def do_left_pressed(self, filter, evt):
+        pass
+        
+        
+    def start_drag(self,filter_,evt):
+        print "start"
+        pass
+
+    def move_drag(self,filter_,evt):
+        print "move"
+        pass
+    
+    def stop_drag(self,filter_,evt):
+        print "end"
+        pass
+
             
 
             
@@ -332,13 +385,15 @@ class TestWindow(QDialog):
         self.widgetMz.plot.add_item(self.curve_item2)
 
 
-        self.pm = PlotManager(self.widgetRt)
-        self.pm.add_plot(self.widgetRt.plot)
-        self.pm.add_plot(self.widgetMz.plot)
-        self.pm.set_default_plot(self.widgetRt.plot)
+        self.pm1 = PlotManager(self.widgetRt)
+        self.pm1.add_plot(self.widgetRt.plot)
 
-        t = self.pm.add_tool(MzSelectTool)
-        self.pm.set_default_tool(t)
+        
+        self.pm2 = PlotManager(self.widgetMz)
+        self.pm2.add_plot(self.widgetMz.plot)
+
+        t = self.pm1.add_tool(MzSelectTool)
+        self.pm1.set_default_tool(t)
         t.activate()
 
         range_ = SnappingRangeSelection(self.minRT, self.maxRT, self.rts)
