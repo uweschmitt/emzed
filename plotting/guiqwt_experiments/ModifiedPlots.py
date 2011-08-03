@@ -3,7 +3,7 @@ from PyQt4.QtCore import Qt
 from guiqwt.curve import CurvePlot, CurveItem
 
 from SnappingRangeSelection import SnappingRangeSelection
-from guiqwt.shapes import Marker
+from guiqwt.shapes import Marker, SegmentShape
 import numpy as np
 
 def memoize(function):
@@ -37,6 +37,7 @@ class ModifiedCurvePlot(CurvePlot):
     def do_backspace_pressed(self, filter, evt):
         """ reset axes of plot """
 
+        print "backspace"
         self.reset_x_limits()
 
     @memoize
@@ -136,7 +137,11 @@ class MzPlot(ModifiedCurvePlot):
 
     def on_plot(self, curve, x, y):
         """ callback for marker: dtermine marked point based on cursors coordinates """
-        
+
+        return self.next_peak_to(x, y)
+
+    def next_peak_to(self, x, y):
+
         item = self.get_unique_item(CurveItem)
         xs, ys = item.get_data()
         # scale + avoid zero division
@@ -164,20 +169,35 @@ class MzPlot(ModifiedCurvePlot):
         isort = np.argsort(np.abs(xs-xm))
         xsel  = xs[isort[:10]]
         xmin, xmax = np.min(xsel), np.max(xsel)
-        print xmin, xmax
+        
         self.update_plot_xlimits(xmin, xmax)
 
 
-
-
     def start_drag(self,filter_,evt):
-        print "start"
-        pass
+
+        x = self.invTransform(self.xBottom, evt.x())
+        y = self.invTransform(self.yLeft, evt.y())
+        self.start_coord = self.next_peak_to(x,y)
+        print "started"
 
     def move_drag(self,filter_,evt):
-        print "move"
-        pass
+
+        x = self.invTransform(self.xBottom, evt.x())
+        y = self.invTransform(self.yLeft, evt.y())
+        current_coord = self.next_peak_to(x, y)
+
+        line = self.get_unique_item(SegmentShape)
+        #print line
+        line.set_rect(self.start_coord[0], self.start_coord[1], current_coord[0], current_coord[1])
+        line.setVisible(1)
+
+        self.replot()
+
+
 
     def stop_drag(self,filter_,evt):
-        print "end"
-        pass
+
+        line = self.get_unique_item(SegmentShape)
+        line.setVisible(0)
+        print "stop", line
+        self.replot()

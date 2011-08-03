@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from PyQt4.QtGui import  QVBoxLayout, QDialog
+from PyQt4.QtGui import  QVBoxLayout, QDialog, QPainter
 
 from guiqwt.plot import CurveWidget, PlotManager
 from guiqwt.builder import make
@@ -8,7 +8,7 @@ from guiqwt.label import ObjectInfo
 from guiqwt.curve import  CurveItem
 from guiqwt.signals import SIG_RANGE_CHANGED
 from guiqwt.config import CONF
-from guiqwt.shapes import Marker
+from guiqwt.shapes import Marker, SegmentShape
 
 import numpy as np
 import sys, cPickle
@@ -24,6 +24,51 @@ class ModifiedCurveItem(CurveItem):
         return False
 
 
+class ModifiedSegment(SegmentShape):
+     def set_rect(self, x1, y1, x2, y2):
+        """
+        Set the start point of this segment to (x1, y1)
+        and the end point of this line to (x2, y2)
+        """
+        # the original shape has a extra point in the middle
+        # of the line, which I moved to the beginning:
+
+        self.set_points([(x1, y1), (x2, y2), (x1, y1) ])
+
+     def draw(self, painter, xMap, yMap, canvasRect):
+
+         # code copied and rearanged such that line has antialiasing,
+         # but symbols have not.
+         pen, brush, symbol = self.get_pen_brush(xMap, yMap)
+
+         painter.setPen(pen)
+         painter.setBrush(brush)
+
+         points = self.transform_points(xMap, yMap)
+         if self.ADDITIONNAL_POINTS:
+             shape_points = points[:-self.ADDITIONNAL_POINTS]
+             other_points = points[-self.ADDITIONNAL_POINTS:]
+         else:
+             shape_points = points
+             other_points = []
+
+         for i in xrange(points.size()):
+             symbol.draw(painter, points[i].toPoint())
+
+         painter.setRenderHint(QPainter.Antialiasing)
+         if self.closed:
+             painter.drawPolygon(shape_points)
+         else:
+             painter.drawPolyline(shape_points)
+
+         if self.LINK_ADDITIONNAL_POINTS and other_points:
+             pen2 = painter.pen()
+             pen2.setStyle(Qt.DotLine)
+             painter.setPen(pen2)
+             painter.drawPolyline(other_points)
+
+
+
 class RtRangeSelectionInfo(ObjectInfo):
     def __init__(self, range_):
         self.range_ = range_
@@ -37,12 +82,18 @@ class RtRangeSelectionInfo(ObjectInfo):
 
 
 class MzCursorInfo(ObjectInfo):
-    def __init__(self, marker):
+    def __init__(self, marker, line):
         self.marker = marker
+        self.line   = line
 
     def get_text(self):
         mz, I = self.marker.xValue(), self.marker.yValue()
-        return "mz=%.6f<br/>I=%.0f" % (mz, I)
+        txt = "mz=%.6f<br/>I=%.0e" % (mz, I)
+        if self.line.isVisible():
+            print self.line.get_rect()
+            _, _ , mz2, I2 = self.line.get_rect()
+            txt += "<br/><br/>dmz=%.6f<br/>rI=%.3f" % (mz2-mz, I2/I)
+        return txt
 
 
 class MzExplorer(QDialog):
@@ -134,33 +185,48 @@ class MzExplorer(QDialog):
     def addMzItems(self):
         marker = Marker(label_cb=self.widgetMz.plot.label_info, constraint_cb=self.widgetMz.plot.on_plot)
         marker.attach(self.widgetMz.plot)
+        
+        markerSymbol = "Rect"
+        edgeColor = "black"
+        faceColor = "red"
+        alpha = 0.8
+        size = 5
+
         params = {
-            "marker/cross/symbol/marker": 'Rect',
-            "marker/cross/symbol/edgecolor": "black",
-            "marker/cross/symbol/facecolor": "red",
-            "marker/cross/symbol/alpha": 0.8,
-            "marker/cross/symbol/size": 5,
-            #"marker/cross/text/font/family": "default",
-            #"marker/cross/text/font/size": 8,
-            #"marker/cross/text/font/bold": False,
-            #"marker/cross/text/font/italic": False,
-            #"marker/cross/text/textcolor": "black",
-            #"marker/cross/text/background_color": "#ffffff",
-            #"marker/cross/text/background_alpha": 0.8,
-            #"marker/cross/pen/style": "DashLine",
-            #"marker/cross/pen/color": "red",
+            "marker/cross/symbol/marker": markerSymbol,
+            "marker/cross/symbol/edgecolor": edgeColor,
+            "marker/cross/symbol/facecolor": faceColor,
+            "marker/cross/symbol/alpha": alpha,
+            "marker/cross/symbol/size": size,
             "marker/cross/pen/width": 0,
             "marker/cross/linestyle": 0,
-            #"marker/cross/spacing": 7
         }
         CONF.update_defaults(dict(plot=params))
         marker.markerparam.read_config(CONF, "plot", "marker/cross")
         marker.markerparam.update_marker(marker)
 
-        label = make.info_label("TR", [MzCursorInfo(marker)])
+
+
+        line   = make.segment(0, 0, 0, 0)
+        line.__class__ = ModifiedSegment
+        line.setVisible(0)
+        params = {
+                         "shape/drag/symbol/marker" : markerSymbol,
+                         "shape/drag/symbol/size" : size,
+                         "shape/drag/symbol/edgecolor" : edgeColor,
+                         "shape/drag/symbol/facecolor" : faceColor,
+                         "shape/drag/symbol/alpha" : alpha,
+
+        }
+        CONF.update_defaults(dict(plot=params))
+        line.shapeparam.read_config(CONF, "plot", "shape/drag")
+        line.shapeparam.update_shape(line)
+
+        label = make.info_label("TR", [MzCursorInfo(marker, line)])
 
         self.widgetMz.plot.add_item(marker)
         self.widgetMz.plot.add_item(label)
+        self.widgetMz.plot.add_item(line)
 
     def plotChromatogramm(self):
         self.rTCurveItem.set_data(self.rts, self.chromatogram)
