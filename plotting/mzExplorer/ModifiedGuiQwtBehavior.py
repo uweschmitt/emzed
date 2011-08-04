@@ -379,6 +379,8 @@ class SnappingRangeSelection(XRangeSelection):
         xvals = self.get_xvals()
 
         # modify pos to the next x-value
+        # may be binary search for val in xvals ? -> cython
+        #imin = np.searchsorted(xvals, val)
         imin = np.argmin(np.fabs(val-xvals))
         pos = xvals[imin], y
 

@@ -161,14 +161,11 @@ class MzExplorer(QDialog):
 
     
 
-def test():
+def show(peakmap):
     """Testing this simple Qt/guiqwt example"""
     from PyQt4.QtGui import QApplication
 
-    #peakmap = cPickle.load(file("peakmap.pickled", "rb"))
-    print dir(pyOpenMS)
-    peakmap = pyOpenMS.loadMzXMLFile("test.mzXML")
-
+    
     app = QApplication([])
     win = MzExplorer(peakmap)
 
@@ -177,5 +174,8 @@ def test():
 
 
 if __name__ == '__main__':
-    test()
+    #peakmap = cPickle.load(file("peakmap.pickled", "rb"))
+    print dir(pyOpenMS)
+    peakmap = pyOpenMS.loadMzXMLFile("test.mzXML")
+
     
