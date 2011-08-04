@@ -13,62 +13,13 @@ from guiqwt.shapes import Marker, SegmentShape
 import numpy as np
 import sys, cPickle
 
-from SnappingRangeSelection import SnappingRangeSelection
-from ModifiedPlots import RtPlot, MzPlot
-from SelectTools import RtSelectionTool, MzSelectionTool
+from ModifiedGuiQwtBehavior import *
+from Config import setupCommonStyle
+
 
 sys.path.insert(0, "../../pyOpenMS")
 
 import pyOpenMS
-
-class ModifiedCurveItem(CurveItem):
-    def can_select(self):
-        return False
-
-
-class ModifiedSegment(SegmentShape):
-     def set_rect(self, x1, y1, x2, y2):
-        """
-        Set the start point of this segment to (x1, y1)
-        and the end point of this line to (x2, y2)
-        """
-        # the original shape has a extra point in the middle
-        # of the line, which I moved to the beginning:
-
-        self.set_points([(x1, y1), (x2, y2), (x1, y1) ])
-
-     def draw(self, painter, xMap, yMap, canvasRect):
-
-         # code copied and rearanged such that line has antialiasing,
-         # but symbols have not.
-         pen, brush, symbol = self.get_pen_brush(xMap, yMap)
-
-         painter.setPen(pen)
-         painter.setBrush(brush)
-
-         points = self.transform_points(xMap, yMap)
-         if self.ADDITIONNAL_POINTS:
-             shape_points = points[:-self.ADDITIONNAL_POINTS]
-             other_points = points[-self.ADDITIONNAL_POINTS:]
-         else:
-             shape_points = points
-             other_points = []
-
-         for i in xrange(points.size()):
-             symbol.draw(painter, points[i].toPoint())
-
-         painter.setRenderHint(QPainter.Antialiasing)
-         if self.closed:
-             painter.drawPolygon(shape_points)
-         else:
-             painter.drawPolyline(shape_points)
-
-         if self.LINK_ADDITIONNAL_POINTS and other_points:
-             pen2 = painter.pen()
-             pen2.setStyle(Qt.DotLine)
-             painter.setPen(pen2)
-             painter.drawPolyline(other_points)
-
 
 
 class RtRangeSelectionInfo(ObjectInfo):
@@ -168,7 +119,6 @@ class MzExplorer(QDialog):
         self.pmMz.set_default_tool(t)
         t.activate()
 
-
     def addRtItems(self):
         range_ = SnappingRangeSelection(self.minRT, self.maxRT, self.rts)
 
@@ -176,7 +126,7 @@ class MzExplorer(QDialog):
         self.widgetRt.plot.add_item(range_)
         self.connect(range_.plot(), SIG_RANGE_CHANGED, self.rtSelectionHandler)
 
-        cc = make.info_label("TL", [RtRangeSelectionInfo(range_)])
+        cc = make.info_label("TR", [RtRangeSelectionInfo(range_)])
         self.widgetRt.plot.add_item(cc)
 
     def rtSelectionHandler(self, obj, min_, max_):
@@ -185,44 +135,15 @@ class MzExplorer(QDialog):
         self.plotMz()
 
     def addMzItems(self):
+
         marker = Marker(label_cb=self.widgetMz.plot.label_info, constraint_cb=self.widgetMz.plot.on_plot)
         marker.attach(self.widgetMz.plot)
-        
-        markerSymbol = "Rect"
-        edgeColor = "black"
-        faceColor = "red"
-        alpha = 0.6
-        size = 3
-
-        params = {
-            "marker/cross/symbol/marker": markerSymbol,
-            "marker/cross/symbol/edgecolor": edgeColor,
-            "marker/cross/symbol/facecolor": faceColor,
-            "marker/cross/symbol/alpha": alpha,
-            "marker/cross/symbol/size": size,
-            "marker/cross/pen/width": 0,
-            "marker/cross/linestyle": 0,
-        }
-        CONF.update_defaults(dict(plot=params))
-        marker.markerparam.read_config(CONF, "plot", "marker/cross")
-        marker.markerparam.update_marker(marker)
-
-
 
         line   = make.segment(0, 0, 0, 0)
         line.__class__ = ModifiedSegment
         line.setVisible(0)
-        params = {
-                         "shape/drag/symbol/marker" : markerSymbol,
-                         "shape/drag/symbol/size" : size,
-                         "shape/drag/symbol/edgecolor" : edgeColor,
-                         "shape/drag/symbol/facecolor" : faceColor,
-                         "shape/drag/symbol/alpha" : alpha,
 
-        }
-        CONF.update_defaults(dict(plot=params))
-        line.shapeparam.read_config(CONF, "plot", "shape/drag")
-        line.shapeparam.update_shape(line)
+        setupCommonStyle(line, marker)
 
         label = make.info_label("TR", [MzCursorInfo(marker, line)])
 
@@ -242,6 +163,8 @@ class MzExplorer(QDialog):
         self.mZCurveItem.plot().updateAxes()
         self.mZCurveItem.plot().replot()
 
+
+    
 
 def test():
     """Testing this simple Qt/guiqwt example"""
