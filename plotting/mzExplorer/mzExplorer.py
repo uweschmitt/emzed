@@ -5,16 +5,10 @@ from PyQt4.QtGui import  QVBoxLayout, QDialog, QPainter
 from guiqwt.plot import CurveWidget, PlotManager
 from guiqwt.builder import make
 from guiqwt.label import ObjectInfo
-from guiqwt.curve import  CurveItem
-from guiqwt.signals import SIG_RANGE_CHANGED
-from guiqwt.config import CONF
-from guiqwt.shapes import Marker, SegmentShape
-
-import numpy as np
-import sys, cPickle
+import sys
 
 from ModifiedGuiQwtBehavior import *
-from Config import setupCommonStyle
+from Config import *
 
 
 sys.path.insert(0, "../../pyOpenMS")
@@ -121,6 +115,7 @@ class MzExplorer(QDialog):
 
     def addRtItems(self):
         range_ = SnappingRangeSelection(self.minRT, self.maxRT, self.rts)
+        setupStyleRangeMarker(range_)
 
         # you have to register item to plot before you can register the rtSelectionHandler:
         self.widgetRt.plot.add_item(range_)
