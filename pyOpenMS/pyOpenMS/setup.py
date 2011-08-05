@@ -47,18 +47,12 @@ def ext(name, sources):
     rv.pyrex_directives = {"boundscheck": False, "annotate": True }
     return rv
 
-# I did not manage to find an optimal setup.py configuration for
-# combining the bulding of extension modules and pure python
-# modules in one package.
-# the solutino below copies pyOpenMS.pyd to ../site-packages
-# to ../site-package/pyOpenMS/ and to ../site-packages/pyOpenMS/pyOpenMS/
-# which is not too bad, but not optimal.
-
-ext_modules = [ ext("pyOpenMS", [ "pyOpenMS/pyOpenMS.pyx" ]) ]
+ext_modules = [ ext("pyOpenMS", [ "pyOpenMS.pyx" ]) ]
 
 setup(
   name = "pyOpenMS",
   packages = ["pyOpenMS"],
+  package_dir = { "pyOpenMS" : "." },
   ext_package = "pyOpenMS",
   cmdclass = {'build_ext': build_ext},
   package_data = { "pyOpenMS": [ "OpenMS.dll"] },
