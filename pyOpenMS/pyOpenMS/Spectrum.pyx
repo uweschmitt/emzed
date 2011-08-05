@@ -1,5 +1,5 @@
-from pxd.MSSpectrum cimport *
-from pxd.Peak1D cimport *
+from pyOpenMS.pxd.MSSpectrum cimport *
+from pyOpenMS.pxd.Peak1D cimport *
 
 from Spectrum import Spectrum
 

@@ -7,7 +7,15 @@ import Cython.Compiler.Options
 Cython.Compiler.Options.annotate = True
 
 
-import glob
+import glob, os
+
+
+
+library_dirs=["e:/OpenMS-1.8_BUILD", r"e:\OpenMS-1.8\contrib_build\lib",
+              r"c:/QtSDK/Desktop/Qt/4.7.3/msvc2008/lib"]
+libraries=["OpenMS", "xerces-c_3", "QtCore4", "gsl",
+                    "cblas",
+          ]
 
 
 
@@ -25,11 +33,8 @@ def ext(name, sources):
                     "e:/OpenMS-1.8/include", 
                     r"C:\Python26\Lib\site-packages\numpy\core\include\\",
                      ],
-        library_dirs=["e:/OpenMS-1.8_BUILD", r"e:\OpenMS-1.8\contrib_build\lib",
-                      r"c:/QtSDK/Desktop/Qt/4.7.3/msvc2008/lib"],
-        libraries=["OpenMS", "xerces-c_3", "QtCore4", "gsl",
-                            "cblas",
-                  ],
+        library_dirs = library_dirs,
+        libraries = libraries,
         # folgendes ist wichtig:    
         # /EHs impliziert _CPPUNWIND,
         # was in <boost/config/compiler/visualc.hpp> BOOST_NO_EXCEPTION
@@ -42,12 +47,21 @@ def ext(name, sources):
     rv.pyrex_directives = {"boundscheck": False, "annotate": True }
     return rv
 
+# I did not manage to find an optimal setup.py configuration for
+# combining the bulding of extension modules and pure python
+# modules in one package.
+# the solutino below copies pyOpenMS.pyd to ../site-packages
+# to ../site-package/pyOpenMS/ and to ../site-packages/pyOpenMS/pyOpenMS/
+# which is not too bad, but not optimal.
 
-ext_modules = [ ext("pyOpenMS", [ "pyOpenMS.pyx" ]) ]
+ext_modules = [ ext("pyOpenMS", [ "pyOpenMS/pyOpenMS.pyx" ]) ]
 
 setup(
-  name = 'minimal open ms wrapper',
+  name = "pyOpenMS",
+  packages = ["pyOpenMS"],
+  ext_package = "pyOpenMS",
   cmdclass = {'build_ext': build_ext},
-  ext_modules = ext_modules
+  package_data = { "pyOpenMS": [ "OpenMS.dll"] },
+  ext_modules = ext_modules,
 )
 
