@@ -47,12 +47,12 @@ def ext(name, sources):
     rv.pyrex_directives = {"boundscheck": False, "annotate": True }
     return rv
 
-ext_modules = [ ext("pyOpenMS", [ "pyOpenMS.pyx" ]) ]
+ext_modules = [ ext("_pyOpenMS", [ "pyOpenMS/_pyOpenMS.pyx" ]) ]
 
 setup(
   name = "pyOpenMS",
   packages = ["pyOpenMS"],
-  package_dir = { "pyOpenMS" : "." },
+  #package_dir = { "pyOpenMS" : "pyOpenMS" },
   ext_package = "pyOpenMS",
   cmdclass = {'build_ext': build_ext},
   package_data = { "pyOpenMS": [ "OpenMS.dll"] },
