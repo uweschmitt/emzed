@@ -48,6 +48,7 @@ def ext(name, sources):
     return rv
 
 ext_modules = [ ext("_pyOpenMS", [ "pyOpenMS/_pyOpenMS.pyx" ]) ]
+ext_modules = [ ext("_pyOpenMS", [ "_pyOpenMS.pyx" ]) ]
 
 setup(
 
