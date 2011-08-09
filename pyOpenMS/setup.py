@@ -57,11 +57,11 @@ setup(
   author="uwe schmitt",
   author_email="uschmitt@mineway.de",
 
-  packages = ["pyOpenMS"],
+  #packages = ["pyOpenMS"],
 
-  ext_package = "pyOpenMS",
+  #ext_package = "pyOpenMS",
   ext_modules = ext_modules,
   cmdclass = {'build_ext': build_ext},
-  package_data = { "pyOpenMS": [ "OpenMS.dll"] },
+  #package_data = { "pyOpenMS": [ "OpenMS.dll", "msvcr90.dll", "xerces-c_3_0.dll"] },
 )
 
