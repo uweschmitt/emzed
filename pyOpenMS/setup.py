@@ -50,12 +50,18 @@ def ext(name, sources):
 ext_modules = [ ext("_pyOpenMS", [ "pyOpenMS/_pyOpenMS.pyx" ]) ]
 
 setup(
+
   name = "pyOpenMS",
+  version="0.1",
+  url="http://github.com/uweschmitt/msExpert",
+  author="uwe schmitt",
+  author_email="uschmitt@mineway.de",
+
   packages = ["pyOpenMS"],
-  #package_dir = { "pyOpenMS" : "pyOpenMS" },
+
   ext_package = "pyOpenMS",
+  ext_modules = ext_modules,
   cmdclass = {'build_ext': build_ext},
   package_data = { "pyOpenMS": [ "OpenMS.dll"] },
-  ext_modules = ext_modules,
 )
 
