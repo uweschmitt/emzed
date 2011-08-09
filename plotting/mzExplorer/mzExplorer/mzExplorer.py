@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from PyQt4.QtGui import  QVBoxLayout, QDialog, QPainter, QMainWindow
+from PyQt4.QtCore import Qt
 
 from guiqwt.plot import CurveWidget, PlotManager
 from guiqwt.builder import make
@@ -46,10 +47,18 @@ class MzCursorInfo(ObjectInfo):
 
 class MzExplorer(QDialog):
 
-    def __init__(self, peakmap):
+    def __init__(self):
         QDialog.__init__(self)
         
         self.manager = PlotManager(self)
+        self.setWindowFlags(Qt.Window)
+
+
+
+        
+    
+
+    def setup(self, peakmap):
 
         self.processPeakmap(peakmap)
         self.setupPlotting()
@@ -169,24 +178,15 @@ class MzExplorer(QDialog):
 
 def show(peakmap):
     """Testing this simple Qt/guiqwt example"""
-    #from PyQt4.QtGui import QApplication
 
-    
-    #app = QApplication([])
-    
-    win = MzExplorer(peakmap)
-    
-
-    win.show()
-    print "show called, start mainloop"
     app = guidata.qapplication()
-    app.exec_()
-    print "done"
-
+    
+    win = MzExplorer()
+    win.setup(peakmap)
+    win.exec_()
+    
 
 if __name__ == '__main__':
-    #peakmap = cPickle.load(file("peakmap.pickled", "rb"))
-    print dir(pyOpenMS)
     peakmap = pyOpenMS.loadMzXMLFile("test.mzXML")
     print "got data"
     show(peakmap)
