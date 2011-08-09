@@ -176,7 +176,7 @@ class MzExplorer(QDialog):
 
     
 
-def show(peakmap):
+def inspect(peakmap):
     """Testing this simple Qt/guiqwt example"""
 
     app = guidata.qapplication()
@@ -189,6 +189,6 @@ def show(peakmap):
 if __name__ == '__main__':
     peakmap = pyOpenMS.loadMzXMLFile("test.mzXML")
     print "got data"
-    show(peakmap)
+    inspect(peakmap)
 
     
