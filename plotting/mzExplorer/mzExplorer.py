@@ -1,17 +1,18 @@
 # -*- coding: utf-8 -*-
 
-from PyQt4.QtGui import  QVBoxLayout, QDialog, QPainter
+from PyQt4.QtGui import  QVBoxLayout, QDialog, QPainter, QMainWindow
 
 from guiqwt.plot import CurveWidget, PlotManager
 from guiqwt.builder import make
 from guiqwt.label import ObjectInfo
+import guidata
 import sys
 
 from ModifiedGuiQwtBehavior import *
 from Config import *
 
 
-sys.path.insert(0, "../../pyOpenMS")
+#sys.path.insert(0, "../../pyOpenMS")
 
 import pyOpenMS
 
@@ -47,6 +48,8 @@ class MzExplorer(QDialog):
 
     def __init__(self, peakmap):
         QDialog.__init__(self)
+        
+        self.manager = PlotManager(self)
 
         self.processPeakmap(peakmap)
         self.setupPlotting()
@@ -54,6 +57,9 @@ class MzExplorer(QDialog):
 
         self.plotChromatogramm()
         self.plotMz()
+        
+    def closeEvent(self, evt):
+        print "closeEvent", evt
 
     def processPeakmap(self, peakmap):
         self.peakmap = peakmap
@@ -163,19 +169,26 @@ class MzExplorer(QDialog):
 
 def show(peakmap):
     """Testing this simple Qt/guiqwt example"""
-    from PyQt4.QtGui import QApplication
+    #from PyQt4.QtGui import QApplication
 
     
-    app = QApplication([])
+    #app = QApplication([])
+    
     win = MzExplorer(peakmap)
+    
 
     win.show()
+    print "show called, start mainloop"
+    app = guidata.qapplication()
     app.exec_()
+    print "done"
 
 
 if __name__ == '__main__':
     #peakmap = cPickle.load(file("peakmap.pickled", "rb"))
     print dir(pyOpenMS)
     peakmap = pyOpenMS.loadMzXMLFile("test.mzXML")
+    print "got data"
+    show(peakmap)
 
     
