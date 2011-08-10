@@ -1,4 +1,3 @@
 pyOpenMS.cpp
-*.pyd
 build
 *.pyc
