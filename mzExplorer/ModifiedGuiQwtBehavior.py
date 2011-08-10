@@ -236,11 +236,11 @@ class MzPlot(ModifiedCurvePlot):
             - showing information about current peak and distances if in drag mode
     """
 
-    def label_info(self, curve, x, y):
+    def label_info(self, x, y):
         # label next to cursor turned off:
         return None
 
-    def on_plot(self, curve, x, y):
+    def on_plot(self, x, y):
         """ callback for marker: determine marked point based on cursors coordinates """
         return self.next_peak_to(x, y)
 

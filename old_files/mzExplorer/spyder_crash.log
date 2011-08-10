@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "msWorkbench.py", line 1744, in main
+    mainwindow = run_spyder(app, options)
+  File "msWorkbench.py", line 1662, in run_spyder
+    main.setup()
+  File "msWorkbench.py", line 773, in setup
+    for mod in get_spyderplugins_mods(prefix='p_', extension='.py'):
+  File "c:\Dokumente und Einstellungen\Administrator\Eigene Dateien\msExpert\spyderlib\otherplugins.py", line 37, in get_spyderplugins_mods
+    for modname in get_spyderplugins(prefix, extension)]
+  File "c:\Python26\lib\site-packages\spyderplugins\p_pylint.py", line 23, in <module>
+    from spyderlib.utils.translations import get_translation
+ImportError: No module named translations

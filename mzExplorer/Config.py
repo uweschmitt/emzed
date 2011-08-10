@@ -15,8 +15,9 @@ def setupCommonStyle(line, marker):
        "marker/cross/symbol/facecolor": faceColor,
        "marker/cross/symbol/alpha": alpha,
        "marker/cross/symbol/size": size,
-       "marker/cross/pen/width": 0,
-       "marker/cross/linestyle": 0,
+       "marker/cross/line/color" : "#000000",
+       #"marker/cross/line/width": 0.0,
+       "marker/cross/line/style": "NoPen",
        }
    CONF.update_defaults(dict(plot=params))
    marker.markerparam.read_config(CONF, "plot", "marker/cross")

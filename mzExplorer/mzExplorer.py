@@ -12,6 +12,9 @@ import sys
 from ModifiedGuiQwtBehavior import *
 from Config import *
 
+import guiqwt
+
+assert guiqwt.__version__ == "2.1.4"
 
 #sys.path.insert(0, "../../pyOpenMS")
 
@@ -187,7 +190,7 @@ def inspect(peakmap):
     
 
 if __name__ == '__main__':
-    peakmap = pyOpenMS.loadMzXMLFile("test.mzXML")
+    peakmap = pyOpenMS.loadMzXMLFile("../test.mzXML")
     print "got data"
     inspect(peakmap)
 
