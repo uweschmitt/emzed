@@ -1087,7 +1087,8 @@ class PlotItemBuilder(object):
         basename = _("Computation")
         param = LabelParam(basename, icon='label.png')
         param.read_config(CONF, "plot", "info_label")
-        if title:
+
+        if title or title is None:  # now we can switch to no title
             param.label = title
         else:
             global LABEL_COUNT

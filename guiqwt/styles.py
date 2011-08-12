@@ -798,7 +798,8 @@ class LabelParam(DataSet):
             obj.C = self.xc, self.yc
             obj.anchor = self.anchor
             obj.move_anchor = self.move_anchor
-            obj.setTitle(self.label)
+            if self.label is not None:      # modified for having no title
+                obj.setTitle(self.label)
         obj.marker = self.symbol.build_symbol()
         obj.border_pen = self.border.build_pen()
         obj.set_text_style(self.font.build_font(), self.color)
