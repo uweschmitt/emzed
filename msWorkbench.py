@@ -29,13 +29,24 @@ import os.path as osp
 import platform
 import re
 
+import pyOpenMS
+import mzExplorer
 # MONKEYPATCHINNG
 
 import spyderlib.widgets.objecteditor as oe
 
-#oe._dialog_for = od.dialog_for
-#@monkeypathc(od.dialog_for)
-#def dialog_for_extendencd
+from local_utils.patch_decorator import  patch
+
+@patch(oe.dialog_for, verbose=True)
+def do_before_call(orig_fun, obj, obj_name):
+
+    if isinstance(obj, pyOpenMS.PeakMap):
+        dlg = mzExplorer.MzExplorer()
+        dlg.setup(obj)
+        return dlg, lambda x: x
+
+    return orig_fun(obj, obj_name)
+
 
 
 # Keeping a reference to the original sys.exit before patching it
