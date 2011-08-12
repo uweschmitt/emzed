@@ -41,10 +41,10 @@ class MzCursorInfo(ObjectInfo):
 
     def get_text(self):
         mz, I = self.marker.xValue(), self.marker.yValue()
-        txt = "mz=%.6f<br/>I=%.1f" % (mz, I)
+        txt = "mz=%.6f<br/>I=%.1e" % (mz, I)
         if self.line.isVisible():
             _, _ , mz2, I2 = self.line.get_rect()
-            txt += "<br/><br/>dmz=%.6f<br/>rI=%.3f" % (mz2-mz, I2/I)
+            txt += "<br/><br/>dmz=%.6f<br/>rI=%.3e" % (mz2-mz, I2/I)
         return txt
 
 
@@ -56,10 +56,6 @@ class MzExplorer(QDialog):
         self.manager = PlotManager(self)
         self.setWindowFlags(Qt.Window)
 
-
-
-        
-    
 
     def setup(self, peakmap):
 
@@ -139,7 +135,7 @@ class MzExplorer(QDialog):
         self.widgetRt.plot.add_item(range_)
         self.connect(range_.plot(), SIG_RANGE_CHANGED, self.rtSelectionHandler)
 
-        cc = make.info_label("TR", [RtRangeSelectionInfo(range_)])
+        cc = make.info_label("TR", [RtRangeSelectionInfo(range_)], title=None)
         self.widgetRt.plot.add_item(cc)
 
     def rtSelectionHandler(self, obj, min_, max_):
@@ -158,7 +154,7 @@ class MzExplorer(QDialog):
 
         setupCommonStyle(line, marker)
 
-        label = make.info_label("TR", [MzCursorInfo(marker, line)])
+        label = make.info_label("TR", [MzCursorInfo(marker, line)], title=None)
 
         self.widgetMz.plot.add_item(marker)
         self.widgetMz.plot.add_item(label)
