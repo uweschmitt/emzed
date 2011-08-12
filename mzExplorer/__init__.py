@@ -1,1 +1,1 @@
-from mzExplorer import inspect
+from mzExplorer import inspect, MzExplorer
