@@ -447,7 +447,7 @@ class ExternalPythonShell(ExternalShellBase):
         scpath = osp.dirname(osp.abspath(__file__))
         pathlist.append(scpath)
         
-        # Adding Spyder path
+        # Adding Spyder path, -> siztecustomize.py will be loaded at external shells startup
         pathlist += self.path
         
         # Adding path list to PYTHONPATH environment variable

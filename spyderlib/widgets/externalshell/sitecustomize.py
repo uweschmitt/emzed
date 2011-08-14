@@ -3,7 +3,7 @@
 
 import sys, os, os.path as osp
 
-# Prepending this spyderlib package's path to sys.path to be sure 
+# Prepending this spyderlib package's path to sys.path to be sure
 # that another version of spyderlib won't be imported instead:
 spyderlib_path = osp.dirname(__file__)
 while not osp.isdir(osp.join(spyderlib_path, 'spyderlib')):
@@ -16,6 +16,12 @@ if not spyderlib_path.startswith(sys.prefix):
         sys.path.remove(spyderlib_path)
     sys.path.insert(0, spyderlib_path)
 os.environ['SPYDER_PARENT_DIR'] = spyderlib_path
+
+
+
+import msWorkbenchPatches
+msWorkbenchPatches.patch_external_shell()
+
 
 if os.environ.get("MATPLOTLIB_PATCH", "").lower() == "true":
     try:

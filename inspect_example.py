@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import mzExplorer
-import pyOpenMS
+import load_ds
 
-ds = pyOpenMS.loadMzXMLFile("test.mzXML")
-print "loaded ", len(ds), "specs"
 mzExplorer.inspect(ds)
