@@ -8,7 +8,7 @@ import sys, time
 def dump(path):
 
     started = time.time()
-    dataset = pyOpenMS.loadMzXMLFile(path)
+    dataset = pyOpenMS.loadMzXmlFile(path)
     ended = time.time()
 
     print

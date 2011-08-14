@@ -8,7 +8,7 @@ fileNameIn, fileNameOut = sys.argv[1:3]
 
 print
 print "load file"
-peakMap = pyOpenMS.loadMzXMLFile(fileNameIn)
+peakMap = pyOpenMS.loadMzXmlFile(fileNameIn)
 
 print "file loaded"
 

@@ -8,7 +8,7 @@ fileNameIn, fileNameOut = sys.argv[1:3]
 
 print
 print "load file"
-peakMap = pyOpenMS.loadMzXMLFile(fileNameIn)
+peakMap = pyOpenMS.loadMzXmlFile(fileNameIn)
 
 print "file loaded"
 
@@ -25,7 +25,7 @@ print "peaks before zero removal :", peaksBefore
 print "peaks after zero removal  :", peaksAfter
 print
     
-pyOpenMS.saveMzXMLFile(peakMap, fileNameOut)   
+pyOpenMS.saveMzXmlFile(peakMap, fileNameOut)   
 print "file saved"
 
     

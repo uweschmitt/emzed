@@ -11,7 +11,7 @@ assert scanMinIdx <= scanMaxIdx
 
 print
 print "load file"
-peakMap = pyOpenMS.loadMzXMLFile(fileNameIn)
+peakMap = pyOpenMS.loadMzXmlFile(fileNameIn)
 
 print "file loaded"
 
@@ -19,7 +19,7 @@ print "file loaded"
 peakMap.specs = peakMap.specs[scanMinIdx:scanMaxIdx+1]
 
     
-pyOpenMS.saveMzXMLFile(peakMap, fileNameOut)   
+pyOpenMS.saveMzXmlFile(peakMap, fileNameOut)   
 print "file saved"
 
     
