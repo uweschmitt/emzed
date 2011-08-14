@@ -3,6 +3,7 @@ class PeakMap(object):
 
     def __init__(self, specs = []):
         self.specs = specs
+        self.meta  = dict()
 
     def __len__(self):
         return len(self.specs)
