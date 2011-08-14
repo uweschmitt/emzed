@@ -19,7 +19,6 @@ from spyderlib import qt #@UnusedImport
 
 # Check requirements
 from spyderlib import requirements
-print requirements.__file__
 requirements.check_path()
 requirements.check_qt()
 

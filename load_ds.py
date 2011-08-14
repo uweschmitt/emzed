@@ -6,5 +6,5 @@ Created on Sun Aug 14 16:43:24 2011
 
 import pyOpenMS
 
-ds = pyOpenMS.loadMzXMLFile("test.mzXML")
+ds = pyOpenMS.loadMzXmlFile("test.mzXML")
 print "loaded ", len(ds), "specs"
