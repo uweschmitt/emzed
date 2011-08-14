@@ -1,7 +1,13 @@
 #input-encoding: utf-8
 from distutils.core import setup
 from distutils.extension import Extension
+
+import Cython
+
+assert Cython.__version__ == "0.15"
+
 from Cython.Distutils import build_ext
+
 
 import Cython.Compiler.Options
 Cython.Compiler.Options.annotate = True
