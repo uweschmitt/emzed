@@ -239,8 +239,6 @@ class UserConfig(ConfigParser):
         for section, options in self.defaults.items():
             for option in options:
                 value = options[ option ]
-                if option=="marker/cross/line/width":
-                    print value
                 self.__set(section, option, value, verbose)
         if save:
             self.__save()
