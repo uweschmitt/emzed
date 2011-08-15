@@ -16,7 +16,9 @@ import guiqwt
 
 assert guiqwt.__version__ == "2.1.4"
 
+sys.path.insert(0, "..")
 #sys.path.insert(0, "../../pyOpenMS")
+
 
 import pyOpenMS
 
@@ -182,11 +184,13 @@ def inspect(peakmap):
     
     win = MzExplorer()
     win.setup(peakmap)
+    win.activateWindow()
+    win.raise_()
     win.exec_()
     
 
 if __name__ == '__main__':
-    peakmap = pyOpenMS.loadMzXMLFile("../test.mzXML")
+    peakmap = pyOpenMS.loadMzXmlFile("../test.mzXML")
     print "got data"
     inspect(peakmap)
 
