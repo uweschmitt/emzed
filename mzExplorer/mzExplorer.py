@@ -67,7 +67,7 @@ class MzExplorer(QDialog):
         self.plotMz()
         
     def closeEvent(self, evt):
-        print "closeEvent", evt
+        pass
 
     def processPeakmap(self, peakmap):
         self.peakmap = peakmap

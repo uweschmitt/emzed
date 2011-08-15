@@ -1,6 +1,6 @@
 import functools, inspect, sys
 
-def patch( orig_func, target=None, verbose=False):
+def replace( orig_func, target=None, verbose=False):
    
     def decorator(new_func, target=target):
 
@@ -27,5 +27,16 @@ def patch( orig_func, target=None, verbose=False):
             raise Exception("can not wrap %s " % orig_func)
 
         return wrapper # not needed as new_func is not modified at all
+
+    return decorator
+
+
+def add(target, verbose=False):
+
+    def decorator(new_func, target=target):
+
+        if verbose:
+            print "add ", new_func, "to", target
+        setattr(target, new_func.__name__, new_func)
 
     return decorator

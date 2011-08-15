@@ -341,7 +341,7 @@ class NamespaceBrowser(QWidget):
     def copy_value(self, orig_name, new_name):
         monitor_copy_global(self._get_sock(), orig_name, new_name)
         self.refresh_table()
-        
+
     def is_list(self, name):
         """Return True if variable is a list or a tuple"""
         return communicate(self._get_sock(),
@@ -522,4 +522,4 @@ class NamespaceBrowser(QWidget):
                             _("<b>Unable to save current workspace</b>"
                               "<br><br>Error message:<br>%s") % error_message)
         self.save_button.setEnabled(self.filename is not None)
-        
+
