@@ -1,10 +1,24 @@
 
 import _winreg, os, glob, tempfile
+from   os.path import dirname, abspath, join
+
+# all installled libs will get to local folder
+R_LIBS=join(dirname(abspath(__file__)), "libs")
+os.environ["R_LIBS"] = R_LIBS
+if not os.path.exists(R_LIBS):
+    os.mkdir(R_LIBS)
+    
 
 
 class RExecutor(object):
 
     def __init__(self):
+
+        self.rHome = RExecutor.findRHome()
+        self.rExe  = RExecutor.findRExe(self.rHome)
+
+    @staticmethod
+    def findRHome():
 
         pathToR = None
 
@@ -21,13 +35,17 @@ class RExecutor(object):
 
         if pathToR is None:
             raise Exception("install dir of R not found, neither in registry, nor is R_HOME set.")
+    
+        return pathToR
 
+    @staticmethod
+    def findRExe(rHome):
 
-        found = glob.glob("%s/bin/R.exe" % pathToR)
+        found = glob.glob("%s/bin/R.exe" % rHome)
         if found:
-            self.path_to_exe = found[0]
+            return found[0]
         else:
-            found = glob.glob("%s/bin/*/R.exe" % path)
+            found = glob.glob("%s/bin/*/R.exe" % rHome)
             if not found:
                 raise Exception("could not find R.exe")
             if len(found)>1:
@@ -36,7 +54,7 @@ class RExecutor(object):
                     print "    ", p
                 print "I will take the first one !"
 
-            self.path_to_exe = found[0]
+            return found[0]
         
 
     @staticmethod
@@ -45,13 +63,15 @@ class RExecutor(object):
         key = _winreg.OpenKey(regsection, "Software\\R-core\\R")
         return _winreg.QueryValueEx(key, "InstallPath")[0]
 
+    
+
 
     def run_test(self):
         assert self.run_commands("q(status=4711);") == 4711
 
 
     def run_script(self, path):
-        return os.system("%s --vanilla < %s" % (self.path_to_exe, path))
+        return os.system("%s --vanilla < %s" % (self.rExe, path))
 
     
     def run_commands(self, *commands):
