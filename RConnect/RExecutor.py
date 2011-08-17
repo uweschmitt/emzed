@@ -1,5 +1,5 @@
 
-import _winreg, os, glob, tempfile
+import _winreg, os, glob, tempfile, subprocess
 from   os.path import dirname, abspath, join
 
 # all installled libs will get to local folder
@@ -72,19 +72,27 @@ class RExecutor(object):
 
 
     def run_script(self, path):
-        return os.system("%s --vanilla >> r.log < %s" % (self.rExe, path))
+        cmd = "%s --vanilla --silent < %s" % (self.rExe, path)
+        hasIpython = False
+        try:
+            __IPYTHON__  # check if run from IPython
+            hasIpython = True
+        except:
+            pass
+        
+        if hasIpython:
+            print "run ", cmd
+            print __IPYTHON__.getoutput(cmd)
+        else:
+            return os.system(cmd)
 
     
-    def run_commands(self, command, silent=False):
+    def run_commands(self, command):
 
         fp = tempfile.NamedTemporaryFile(delete=False) 
         try:
             print >> fp, command
-            if not silent:
-                print ">>> ", command
-
             fp.close()
-
             return self.run_script(fp.name)
         finally:
             os.remove(fp.name)
