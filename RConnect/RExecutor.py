@@ -24,11 +24,12 @@ class RExecutor(object):
 
         for finder in  [ lambda : RExecutor.path_from(_winreg.HKEY_CURRENT_USER),
                          lambda : RExecutor.path_from(_winreg.HKEY_LOCAL_MACHINE),
-                         lambda : os.environ["R_HOME"],
+                         lambda : os.environ.get("R_HOME"),
                        ]:
             try:
                 pathToR = finder()
-                break
+                if pathToR != None:
+                   break
             except (KeyError, WindowsError):
                 pass 
 
@@ -71,15 +72,16 @@ class RExecutor(object):
 
 
     def run_script(self, path):
-        return os.system("%s --vanilla < %s" % (self.rExe, path))
+        return os.system("%s --vanilla >> r.log < %s" % (self.rExe, path))
 
     
-    def run_commands(self, *commands):
+    def run_commands(self, command, silent=False):
 
         fp = tempfile.NamedTemporaryFile(delete=False) 
         try:
-            for command in commands:
-                print >> fp, command
+            print >> fp, command
+            if not silent:
+                print ">>> ", command
 
             fp.close()
 
