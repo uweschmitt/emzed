@@ -77,11 +77,13 @@ class RExecutor(object):
 
 
     def run_test(self):
-        assert self.run_commands("q(status=4711);") == 4711
+        assert self.run_command("q(status=4711);") == 4711
 
 
     def run_script(self, path):
-        cmd = "%s --vanilla --silent < %s 2>log.err" % (self.rExe, path)
+        # hyphens are needed as pathes may contain spaces
+        cmd = '"%s" --vanilla --silent < %s 2>log.err' % (self.rExe, path)
+        print cmd
         hasIpython = False
 
         try:
