@@ -8,9 +8,18 @@ os.environ["R_LIBS"] = R_LIBS
 if not os.path.exists(R_LIBS):
     os.mkdir(R_LIBS)
     
+from utils import TemporaryDirectoryWithBackup
 
 
 class RExecutor(object):
+
+    # RExecutor is a Singleton:
+    _instance = None
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = super(RExecutor, cls).__new__(
+                                cls, *args, **kwargs)
+        return cls._instance
 
     def __init__(self):
 
@@ -72,31 +81,42 @@ class RExecutor(object):
 
 
     def run_script(self, path):
-        cmd = "%s --vanilla --silent < %s" % (self.rExe, path)
+        cmd = "%s --vanilla --silent < %s 2>log.err" % (self.rExe, path)
         hasIpython = False
+
         try:
             __IPYTHON__  # check if run from IPython
             hasIpython = True
         except:
             pass
         
-        if hasIpython:
-            print "run ", cmd
+        # for developping it is better to use os.system which opens a new window and
+        # shows progress
+        if 0 and hasIpython:
             print __IPYTHON__.getoutput(cmd)
+            return None # how to get return status ?
         else:
             return os.system(cmd)
 
     
-    def run_commands(self, command):
+    def run_command(self, command, dir_=None):
 
-        fp = tempfile.NamedTemporaryFile(delete=False) 
-        try:
+        if dir_ is not None:
+
+            fp = file(os.path.join(dir_, "script.R"), "w")
             print >> fp, command
             fp.close()
             return self.run_script(fp.name)
-        finally:
-            os.remove(fp.name)
-        
+
+        else:
+
+            with TemporaryDirectoryWithBackup() as td:
+
+                fp = file(os.path.join(td, "script.R"), "w")
+                print >> fp, command
+                fp.close()
+                return self.run_script(fp.name)
+            
 
 
 if __name__ == "__main__":
