@@ -1,7 +1,7 @@
 from XCMSConnector import *
-installXCMSIfNeeded()
+installXcmsIfNeeded()
 
 print
-print "ENTER  lookForXcmsUpgrades()    for information about upgrades"
-print "       doXcmsUpgrade()          for upgrading XCMS"
+#print "ENTER  lookForXcmsUpgrades()    for information about upgrades"
+print "ENTER       doXcmsUpgrade()          for upgrading XCMS"
 print

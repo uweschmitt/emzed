@@ -1,12 +1,13 @@
 from RExecutor import RExecutor
 from pyOpenMS  import *
+from DataStructures import *
 
 import os
 
 from utils import TemporaryDirectoryWithBackup
 
 
-def installXCMSIfNeeded():
+def installXcmsIfNeeded():
 
     R_LIBS = os.environ.get("R_LIBS")
     if R_LIBS == None:
@@ -26,7 +27,7 @@ def installXCMSIfNeeded():
     RExecutor().run_command(script)
 
 
-def lookForXmcsUpgrades():
+def lookForXcmsUpgrades():
 
     script = """
                  source("http://bioconductor.org/biocLite.R")
@@ -39,7 +40,7 @@ def lookForXmcsUpgrades():
     else:
         print num, "updates found"
 
-def doXmcsUpgrade():
+def doXcmsUpgrade():
 
     script = """
                  source("http://bioconductor.org/biocLite.R")
@@ -69,6 +70,6 @@ def XCMSPeakDetector(peakMap):
         if RExecutor().run_command(script, td) != 4711:
             raise Exception("R opreation failed")
 
-        return file(temp_output).readlines()
+        return XCMSFeatureParser.parse(file(temp_output).readlines())
 
         
