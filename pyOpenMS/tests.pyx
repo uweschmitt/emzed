@@ -8,7 +8,6 @@ def testParam():
     p.store(deref(name))
     back = paramToDict(p)
     assert back==orig
-    print "testParam(): ok"
 
 def testSpectrum():
     spec = Spectrum( 1.23, [ (0,1) ], ( "+", 1, [ (700.1, 100) ] ) )
@@ -18,7 +17,6 @@ def testSpectrum():
     assert spec.msLevel == back.msLevel
     assert spec.RT == back.RT
     assert spec.precursors == back.precursors
-    print "testSpectrum(): ok"
     
   
 def testPeakMap():
@@ -40,7 +38,6 @@ def testPeakMap():
     assert np.all(back.specs[1].peaks == pm.specs[1].peaks)
     assert back.specs[0].precursors == pm.specs[0].precursors
     assert back.specs[1].precursors == pm.specs[1].precursors
-    print "testPeakMap(): ok"
     
     
 def testFeature():
@@ -48,7 +45,6 @@ def testFeature():
     back = OpenMsFeatureToPy(OpenMsFeatureFromPy(feat))
     assert feat.MZ == back.MZ
     assert feat.RT == back.RT
-    print "testFeature(): ok"
 
 def testFeatureMap():
     feat1 = Feature(1.0, 2.0)
@@ -59,7 +55,6 @@ def testFeatureMap():
     for f1, f2 in zip (fm.features, back.features):
         assert f1.RT == f2.RT
         assert f1.MZ == f2.MZ
-    print "testFeatureMap(): ok"
 
 def run_tests():
     testParam()
@@ -67,6 +62,7 @@ def run_tests():
     testPeakMap()
     testFeature()
     testFeatureMap()
+    return True
     
     
     

@@ -61,13 +61,13 @@ cdef Param dictToParam(dict dd):
 
 
 
-def writeParam(dict dd, char * fname):
+def saveParam(dict dd, char * fname):
     cdef Param pp = dictToParam(dd)
     cdef string * stemp = new string(fname)
     pp.store(deref(stemp))
     del stemp
 
-def readParam(char * fname):
+def loadParam(char * fname):
     cdef Param pp 
     cdef string * stemp = new string(fname)
     pp.load(deref(stemp))
