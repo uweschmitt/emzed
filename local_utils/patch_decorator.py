@@ -1,5 +1,10 @@
 import functools, inspect, sys
 
+try:
+    LLL
+except:
+    LLL = lambda s: None
+
 def replace( orig_func, target=None, verbose=False):
    
     def decorator(new_func, target=target):
@@ -12,15 +17,13 @@ def replace( orig_func, target=None, verbose=False):
         if inspect.ismethod(orig_func):
             if target is None:
                 target =  orig_func.im_class
-            if verbose:
-                print "replace method", orig_func, "in", target, "with", new_func
+            LLL.debug("replace method %s in %s with %s" %( orig_func, target, new_func))
             setattr(target, orig_func.__name__, wrapper)
             setattr(target, "_orig_%s" % orig_func.__name__, orig_func)
         elif inspect.isfunction(orig_func):
             if target is None:
                 target = sys.modules[orig_func.__module__]
-            if verbose:
-                print "replace function", orig_func, "in", target, "with", new_func
+            LLL.debug("replace function %s in %s with %s" %( orig_func, target, new_func))
             setattr(target, orig_func.func_name, wrapper)
             setattr(target, "_orig_%s" % orig_func.__name__, orig_func)
         else:
@@ -35,8 +38,7 @@ def add(target, verbose=False):
 
     def decorator(new_func, target=target):
 
-        if verbose:
-            print "add ", new_func, "to", target
+        LLL.debug("add %s to %s" % (new_func, target))
         setattr(target, new_func.__name__, new_func)
 
     return decorator

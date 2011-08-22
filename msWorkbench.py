@@ -28,6 +28,9 @@ import os.path as osp
 import platform
 import re
 
+import config_logger
+config_logger.do_config()
+
 import msWorkbenchPatches
 msWorkbenchPatches.patch_spyder()
 
