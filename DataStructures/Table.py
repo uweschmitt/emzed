@@ -46,6 +46,9 @@ class Table(object):
             rows.append( [ row[self.colIndizes[name]] for name in names ])
             
         return Table(colNames, colTypes, rows)
+
+    def __len__(self):
+        return len(self.rows)
              
             
             
