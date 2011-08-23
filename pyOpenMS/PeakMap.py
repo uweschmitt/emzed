@@ -19,3 +19,9 @@ class PeakMap(object):
     def removeZeroIntensities(self):
         for spec in self.specs:
             spec.removeZeroIntensities()
+        return self
+
+    def sortByMz(self):
+        for spec in self.specs:
+            spec.sortByMz()
+        return self

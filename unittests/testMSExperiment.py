@@ -14,7 +14,7 @@ def test_loadMzXMLFile():
     assert spec0.polarization == "+"
     assert spec0.precursors == []
     assert spec0.msLevel == 1
-    assert len(spec0) == 61
+    assert len(spec0) == 21
 
 
     spec0 = msExp.specs[40]
@@ -22,6 +22,6 @@ def test_loadMzXMLFile():
     assert len(spec0.precursors) == 1
     assert len(spec0.precursors[0]) == 2
     assert spec0.msLevel == 2
-    assert len(spec0) == 305
+    assert len(spec0) == 121 
 
 

@@ -20,6 +20,12 @@ class Spectrum(object):
     def removeZeroIntensities(self):
         MZ, I = 0, 1
         self.peaks = self.peaks[self.peaks[:,I]>0]
+        return self
+
+    def sortByMz(self):
+        perm = np.argsort(self.peaks[:,0])
+        self.peaks = self.peaks[perm,:]
+        return self
 
      
         

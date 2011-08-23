@@ -4,13 +4,17 @@ from Spectrum import Spectrum
 cimport cpython
 
 
-def loadMzXmlFile(char *path):
+def loadMzXmlFile(char *path, cpython.bool sortByMz=True, cpython.bool removeZeroIntensities = True):
     cdef MSExperiment[Peak1D, ChromatogramPeak] mse = MSExperiment[Peak1D, ChromatogramPeak]()
     cdef MzXMLFile f = MzXMLFile()
     cdef string * s_path = new string(path)
     f.load(deref(s_path), mse)
     del s_path
     pm = OpenMsPeakMapToPy(mse) 
+    if sortByMz:
+        pm.sortByMz()
+    if removeZeroIntensities:
+        pm.removeZeroIntensities()
     pm.meta["source"] = cpython.PyString_FromString(path)
     return pm
 
