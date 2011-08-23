@@ -5,7 +5,7 @@ from  spyderlib.widgets import dicteditorutils
 from  spyderlib.widgets.dicteditor import RemoteDictEditorTableView
 from  spyderlib.widgets.externalshell.namespacebrowser import NamespaceBrowser
 
-from local_utils.patch_decorator import  replace, add
+from utils.patch_decorator import  replace, add
 
 import pyOpenMS
 
