@@ -1,2 +1,2 @@
 set PYTHONPATH=.
-python msWorkbench.py
+python msWorkbench.py --debug
