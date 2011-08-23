@@ -25,9 +25,9 @@ class RExecutor(object):
     def __init__(self):
 
         self.rHome = RExecutor.findRHome()
-        LLL.DEBUG("found R home at "+self.rHome)
+        LLL.debug("found R home at "+self.rHome)
         self.rExe  = RExecutor.findRExe(self.rHome)
-        LLL.DEBUG("found R.exe at "+self.rExe)
+        LLL.debug("found R.exe at "+self.rExe)
 
     @staticmethod
     def findRHome():
@@ -79,7 +79,7 @@ class RExecutor(object):
 
     def run_script(self, path):
         # hyphens are needed as pathes may contain spaces
-        cmd = '"%s" --vanilla --silent < %s 2>log.err' % (self.rExe, path)
+        cmd = '"%s" --vanilla --silent < %s' % (self.rExe, path)
         print cmd
         hasIpython = False
 
