@@ -7,7 +7,8 @@ R_LIBS=join(dirname(abspath(__file__)), "libs")
 os.environ["R_LIBS"] = R_LIBS
 if not os.path.exists(R_LIBS):
     os.mkdir(R_LIBS)
-    
+
+
 from utils import TemporaryDirectoryWithBackup
 
 
@@ -24,7 +25,9 @@ class RExecutor(object):
     def __init__(self):
 
         self.rHome = RExecutor.findRHome()
+        LLL.DEBUG("found R home at "+self.rHome)
         self.rExe  = RExecutor.findRExe(self.rHome)
+        LLL.DEBUG("found R.exe at "+self.rExe)
 
     @staticmethod
     def findRHome():
@@ -38,7 +41,7 @@ class RExecutor(object):
             try:
                 pathToR = finder()
                 if pathToR != None:
-                   break
+                    break
             except (KeyError, WindowsError):
                 pass 
 
@@ -66,19 +69,13 @@ class RExecutor(object):
 
             return found[0]
         
-
     @staticmethod
     def path_from(regsection):
-
         key = _winreg.OpenKey(regsection, "Software\\R-core\\R")
         return _winreg.QueryValueEx(key, "InstallPath")[0]
 
-    
-
-
     def run_test(self):
         assert self.run_command("q(status=4711);") == 4711
-
 
     def run_script(self, path):
         # hyphens are needed as pathes may contain spaces
@@ -100,7 +97,6 @@ class RExecutor(object):
         else:
             return os.system(cmd)
 
-    
     def run_command(self, command, dir_=None):
 
         if dir_ is not None:

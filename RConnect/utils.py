@@ -11,9 +11,11 @@ class TemporaryDirectoryWithBackup(object):
         return self.d
 
     def __exit__(self, a, b, c):
+        
+        backupdir = "logs/last_temp_dir"
 
-        rmtree("last_temp_dict", ignore_errors = True) # might not exist
-        copytree(self.d, "last_temp_dict")
+        rmtree(backupdir, ignore_errors = True) # might not exist
+        copytree(self.d, backupdir)
         
         if not self.keep:
             rmtree(self.d) 

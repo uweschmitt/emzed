@@ -1,9 +1,12 @@
 import functools, inspect, sys
 
+
 try:
     LLL
 except:
-    LLL = lambda s: None
+    from dummylogging import NullLogger
+    LLL = NullLogger()
+
 
 def replace( orig_func, target=None, verbose=False):
    

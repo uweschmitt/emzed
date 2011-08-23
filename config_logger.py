@@ -2,7 +2,7 @@ import logging
 
 def do_config():
 
-    logger = logging.getLogger('root')
+    logger = logging.getLogger('de.mineway.msworkbench')
     logger.setLevel(logging.DEBUG)
 
     # create file handler which logs even debug messages
