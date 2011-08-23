@@ -31,6 +31,9 @@ import re
 import config_logger
 config_logger.do_config()
 
+# all modules/packages below the dir of this file will be found
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 import msWorkbenchPatches
 msWorkbenchPatches.patch_spyder()
 
