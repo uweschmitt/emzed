@@ -30,5 +30,8 @@ cdef extern from "<OpenMS/KERNEL/MSSpectrum.h>" namespace "OpenMS":
 
         void assign(vector[Peak1D].iterator, vector[Peak1D].iterator)
 
+        string getNativeID()
+        void   setNativeID(string)
+
         
 

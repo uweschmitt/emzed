@@ -1,5 +1,8 @@
 from pyOpenMS.pxd.MSSpectrum cimport *
 from pyOpenMS.pxd.Peak1D cimport *
+from pyOpenMS.pxd.string cimport *
+
+cimport cpython
 
 from Spectrum import Spectrum
 
@@ -64,7 +67,7 @@ cdef OpenMsSpecToPy(MSSpectrum[Peak1D] spec_):
         for i in range(len_):
             pcs.append((pcs_[i].getMZ(), pcs_[i].getIntensity()))
 
-        return Spectrum(RT, peaks, (polarization, msLevel, pcs))
+        return Spectrum(RT, peaks, (polarization, msLevel, pcs, cpython.PyString_FromString(spec_.getNativeID().c_str())))
        
 cdef MSSpectrum[Peak1D] OpenMsSpecFromPy(spec):
 
@@ -80,6 +83,12 @@ cdef MSSpectrum[Peak1D] OpenMsSpecFromPy(spec):
         spec_.getInstrumentSettings().setPolarity(<Polarity> code)
         spec_.setMSLevel(spec.msLevel)
         spec_.setRT(spec.RT)
+        
+        cdef string * id = new string(spec.id)
+
+        spec_.setNativeID(deref(id))
+
+        del  id
 
         cdef vector[Precursor] pcs 
         cdef Precursor * pc
