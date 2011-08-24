@@ -3,12 +3,14 @@ sys.path.insert(0, "..")
 from pyOpenMS import *
 from RConnect import *
 
-def testFeatureDetector():
+def testCentwaveFeatureDetector():
+
     ds = loadMzXmlFile("data/test.mzXML")
-    table = XCMSPeakDetector(ds)
-    assert len(table) == 44
-    assert len(table.colNames) ==  13
-    assert len(table.colTypes) ==  13
-    assert set(table.colNames) == set(XCMSFeatureParser.headlines[0].split() )
+    det = CentWaveFeatureDetector(ppm=3, peakwidth=(8, 13), snthresh=40, prefilter=(8, 10000), mzdiff=1.5 )
+    assert det.__doc__ != None
+    table = det.process(ds)
+    assert len(table) == 17, len(table)
+    assert len(table.colNames) ==  11
+    assert len(table.colTypes) ==  11
     
     

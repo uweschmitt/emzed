@@ -50,32 +50,78 @@ def doXcmsUpgrade():
              """
     return RExecutor().run_command(script)
 
-def XCMSPeakDetector(peakMap):
+class CentWaveFeatureDetector(object):
 
-    assert isinstance(peakMap, PeakMap)
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "centwave.txt")
+
+    __doc__ = """ CentWaveFeatureDetector
+
+    usage:
+
+           print CentWaveFeatureDetector.standardConfig  
+
+           detector = CentWaveFeatureDetector(param1=val1, ....)
+           detector.process(peakmap)
+
     
-    with TemporaryDirectoryWithBackup() as td:
+    Docs from XCMS library:
 
-        temp_input = os.path.join(td, "input.mzData")
-        temp_output = os.path.join(td, "output.csv")
+    """
 
-        saveMzDataFile(peakMap, temp_input)
-    
-        script = """
-                    library(xcms)
-                    xs <- xcmsSet(%r, method="centWave", 
-                                      ppm=3, 
-                                      peakwidth=c(5,100),
-                                      prefilter=c(3,10),
-                                      snthresh = 10
-                                 )
-                    write.table(xs@peaks, file=%r)
-                    q(status=4711)
-                 """ % (temp_input, temp_output)
+    __doc__ += "".join(file(path).readlines())
 
-        if RExecutor().run_command(script, td) != 4711:
-            raise Exception("R opreation failed")
+    standardConfig = dict(   ppm=25, 
+                             peakwidth=(20,50), 
+                             prefilter=(3,100), 
+                             snthresh = 10, 
+                             integrate = 1,
+                             mzdiff=-0.001, 
+                             noise=0,
+                             mzCenterFun="wMean",
+                             fitgauss=False,
+                             verbose_columns = False )
 
-        return XCMSFeatureParser.parse(file(temp_output).readlines())
+    def __init__(self, **kw):
+        self.config = self.standardConfig.copy()
+        self.config.update(kw)
 
+    def process(self, peakMap):
+        assert isinstance(peakMap, PeakMap)
         
+        with TemporaryDirectoryWithBackup() as td:
+
+            temp_input = os.path.join(td, "input.mzData")
+            temp_output = os.path.join(td, "output.csv")
+
+            saveMzDataFile(peakMap, temp_input)
+
+            dd = self.config.copy()
+            dd["temp_input"] = temp_input
+            dd["temp_output"] = temp_output
+            dd["fitgauss"] = str(dd["fitgauss"]).upper()
+            dd["verbose_columns"] = str(dd["verbose_columns"]).upper()
+        
+            script = """
+                        library(xcms)
+                        xs <- xcmsSet(%(temp_input)r, method="centWave", 
+                                          ppm=%(ppm)d, 
+                                          peakwidth=c%(peakwidth)r,
+                                          prefilter=c%(prefilter)r,
+                                          snthresh = %(snthresh)f,
+                                          integrate= %(integrate)d,
+                                          mzdiff   = %(mzdiff)f,
+                                          noise    = %(noise)f,
+                                          fitgauss = %(fitgauss)s,
+                                          verbose.columns = %(verbose_columns)s,
+                                          mzCenterFun = %(mzCenterFun)r
+                                     )
+                        write.table(xs@peaks, file=%(temp_output)r)
+                        q(status=4711)
+                     """ % dd
+
+            if RExecutor().run_command(script, td) != 4711:
+                raise Exception("R opreation failed")
+
+            return XCMSFeatureParser.parse(file(temp_output).readlines())
+
+            

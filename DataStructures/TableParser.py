@@ -81,13 +81,17 @@ class XCMSFeatureParser(object):
     @classmethod
     def parse(clz, lines):
         columnNames = [ n.strip('"') for n in lines[0].split() ]
+        numCol = len(columnNames)
         rows = []
         for line in lines[1:]:
             row= [XCMSFeatureParser.bestConvert(c) for c in line.split()[1:]]
             rows.append(row)
 
-        columns     = ( (row[i] for row in rows) for i in range(len(columnNames)))
-        columnTypes = [XCMSFeatureParser.commonTypeOfColumn(col) for col in columns ]
+        if rows:
+            columns     = ( (row[i] for row in rows) for i in range(numCol) )
+            columnTypes = [XCMSFeatureParser.commonTypeOfColumn(col) for col in columns ] 
+        else:
+            columnTypes = numCol * (str, )
         return Table(columnNames, columnTypes, rows)
 
    
