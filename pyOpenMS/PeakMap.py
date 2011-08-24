@@ -1,3 +1,4 @@
+import numpy as np
 
 class PeakMap(object):
 
@@ -25,3 +26,11 @@ class PeakMap(object):
         for spec in self.specs:
             spec.sortByMz()
         return self
+
+    def testSorted(self):
+        for i, spec in enumerate(self.specs):
+            idx = np.where(np.diff(np.argsort(spec.peaks[:,0]))!=1)
+            if idx[0].size:
+                return False
+        return True
+            

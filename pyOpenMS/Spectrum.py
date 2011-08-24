@@ -23,8 +23,10 @@ class Spectrum(object):
         return self
 
     def sortByMz(self):
-        perm = np.argsort(self.peaks[:,0])
+        MZ, I  = 0, 1
+        perm = np.argsort(self.peaks[:,MZ])
         self.peaks = self.peaks[perm,:]
+        assert self.peaks.base is None
         return self
 
      

@@ -11,16 +11,16 @@ def loadMzXmlFile(char *path, cpython.bool sortByMz=True, cpython.bool removeZer
     f.load(deref(s_path), mse)
     del s_path
     pm = OpenMsPeakMapToPy(mse) 
-    if sortByMz:
-        pm.sortByMz()
     if removeZeroIntensities:
         pm.removeZeroIntensities()
+    if sortByMz:
+        pm.sortByMz()
     pm.meta["source"] = cpython.PyString_FromString(path)
     return pm
 
 def saveMzXmlFile(peakMap, char *path):
     assert isinstance(peakMap, PeakMap)
-    cdef MSExperiment[Peak1D, ChromatogramPeak] peakMap_ = MSExperiment[Peak1D, ChromatogramPeak]() 
+    cdef MSExperiment[Peak1D, ChromatogramPeak] peakMap_ # = MSExperiment[Peak1D, ChromatogramPeak]() 
     peakMap_ = OpenMsPeakMapFromPy(peakMap) 
     cdef MzXMLFile f = MzXMLFile()
     cdef string * s = new string(path)
