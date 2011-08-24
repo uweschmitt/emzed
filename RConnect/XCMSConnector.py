@@ -56,14 +56,19 @@ def XCMSPeakDetector(peakMap):
     
     with TemporaryDirectoryWithBackup() as td:
 
-        temp_input = os.path.join(td, "input.mzXml")
+        temp_input = os.path.join(td, "input.mzData")
         temp_output = os.path.join(td, "output.csv")
 
-        saveMzXmlFile(peakMap, temp_input)
+        saveMzDataFile(peakMap, temp_input)
     
         script = """
                     library(xcms)
-                    xs <- xcmsSet(%r)
+                    xs <- xcmsSet(%r, method="centWave", 
+                                      ppm=3, 
+                                      peakwidth=c(5,100),
+                                      prefilter=c(3,10),
+                                      snthresh = 10
+                                 )
                     write.table(xs@peaks, file=%r)
                     q(status=4711)
                  """ % (temp_input, temp_output)

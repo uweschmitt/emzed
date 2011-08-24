@@ -42,7 +42,7 @@ class TableParser(object):
         return Table(columnNames, clz.types, data)
 
 
-class XCMSFeatureParser(TableParser):
+class OldXCMSFeatureParser(TableParser):
 
      separator = " "
         
@@ -56,6 +56,44 @@ class XCMSFeatureParser(TableParser):
      def checkHeadlineFields(h, f):
          # h is colname from specified headline, f is colname from file
          return h == f.strip('"')
+
+class XCMSFeatureParser(object):
+
+    
+    typePrecedences = { int: (0, int) , float: (1, float), str: (2, str) }
+
+    @classmethod
+    def commonTypeOfColumn(clz, col):
+        precedences = ( clz.typePrecedences[type(c)] for c in col )
+        minprecedence=  min(precedences)
+        return minprecedence[1]
+
+    @classmethod
+    def bestConvert(clz, val):
+        try:
+            return int(val)
+        except ValueError:
+            try:
+                return float(val)
+            except ValueError:
+                return str(val)
+  
+    @classmethod
+    def parse(clz, lines):
+        columnNames = [ n.strip('"') for n in lines[0].split() ]
+        rows = []
+        for line in lines[1:]:
+            row= [XCMSFeatureParser.bestConvert(c) for c in line.split()[1:]]
+            rows.append(row)
+
+        columns     = ( (row[i] for row in rows) for i in range(len(columnNames)))
+        columnTypes = [XCMSFeatureParser.commonTypeOfColumn(col) for col in columns ]
+        return Table(columnNames, columnTypes, rows)
+
+   
+
+
+
 
      
 if __name__ == "__main__":

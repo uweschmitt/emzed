@@ -7,6 +7,7 @@ from cython.operator cimport address as addr, dereference as deref
 
 include "MzMLFile.pyx"
 include "MzXMLFile.pyx"
+include "MzDataFile.pyx"
 include "Param.pyx"
 include "Spectrum.pyx"
 include "PeakMap.pyx"
