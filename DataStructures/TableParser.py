@@ -50,6 +50,7 @@ class OldXCMSFeatureParser(TableParser):
 
      types = [ float, float, float, float, float, float, float, float, float, float, int, float, int ]
 
+
      columnOffset = 1
 
      @staticmethod
@@ -61,6 +62,20 @@ class XCMSFeatureParser(object):
 
     
     typePrecedences = { int: (0, int) , float: (1, float), str: (2, str) }
+
+    typeDefaults = dict( mz= float, mzmin= float, mzmax=float,
+                      rt= float, rtmin= float, rtmax=float,
+                      into= float, intb= float,
+                      maxo= float, sn= float,
+                      sample= int )
+
+    standardFormats = { int: "%d", float : "%.2f", str: "%s" }
+
+    formatDefaults = dict( mz= "%10.5f", mzmin= "%10.5f", mzmax= "%10.5f",
+                           rt= "%6.2f", rtmin= "%6.2f", rtmax= "%6.2f",
+                           into= "%.2e", intb= "%.2e",
+                           maxo= "%.2e", sn= "%5.1f",
+                           sample= "%2d" )
 
     @classmethod
     def commonTypeOfColumn(clz, col):
@@ -84,15 +99,32 @@ class XCMSFeatureParser(object):
         numCol = len(columnNames)
         rows = []
         for line in lines[1:]:
-            row= [XCMSFeatureParser.bestConvert(c) for c in line.split()[1:]]
+            row= [clz.bestConvert(c) for c in line.split()[1:]]
             rows.append(row)
 
         if rows:
             columns     = ( (row[i] for row in rows) for i in range(numCol) )
-            columnTypes = [XCMSFeatureParser.commonTypeOfColumn(col) for col in columns ] 
+            columnTypes = [clz.commonTypeOfColumn(col) for col in columns ] 
+            
+            knownTypes = [ (i, clz.typeDefaults.get(columnNames[i] )) for i in range(numCol) ]
+
+            for i, type_ in knownTypes:
+                if type_ is not None:
+                    columnTypes[i] = type_
+
+            formats     = [clz.standardFormats[type_] for type_ in columnTypes]
+
+            knownFormats = [ (i, clz.formatDefaults.get(columnNames[i] )) for i in range(numCol) ]
+
+            for i, format_ in knownFormats:
+                if format_ is not None:
+                    formats[i] = format_
+            
         else:
             columnTypes = numCol * (str, )
-        return Table(columnNames, columnTypes, rows)
+            formats     = numCol * ("%r", )
+
+        return Table(columnNames, columnTypes, rows, formats)
 
    
 

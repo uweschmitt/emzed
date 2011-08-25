@@ -1,7 +1,7 @@
 
 class Table(object):
 
-    def __init__(self, colNames, colTypes, rows = None):
+    def __init__(self, colNames, colTypes, rows = None, colFormats = None):
         assert len(colNames) == len(colTypes)
         if rows is not None:
             for row in rows:
@@ -9,6 +9,7 @@ class Table(object):
         self.colNames = colNames
         self.colTypes = colTypes
         self.rows     = rows
+        self.colFormats = colFormats
 
         self.colIndizes = dict( (n, i) for i, n in enumerate(colNames)) 
 
