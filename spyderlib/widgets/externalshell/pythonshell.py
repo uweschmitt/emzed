@@ -428,6 +428,8 @@ class ExternalPythonShell(ExternalShellBase):
         env.append('REMOVE_PYQT_INPUTHOOK=%s' % self.remove_pyqt_inputhook)
         env.append('IGNORE_SIP_SETAPI_ERRORS=%s'
                    % self.ignore_sip_setapi_errors)
+
+        env.append("PYTHONIOENCODING=%s" % sys.stdin.encoding)
         
         # User Module Deleter
         if self.interpreter:
