@@ -28,11 +28,20 @@ import os.path as osp
 import platform
 import re
 
+#from pyOpenMS import *
+#from RConnect import *
+#from FeatureExplorer import *
+
 import config_logger
 config_logger.do_config()
 
 # all modules/packages below the dir of this file will be found
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+os.environ["MSWORKBENCH_HOME"] = os.path.dirname(os.path.abspath(__file__))
+ 
+import logging
+getattr(LLL, logging.getLevelName(LLL.level).lower())("this is internal")
 
 import msWorkbenchPatches
 msWorkbenchPatches.patch_spyder()
@@ -667,6 +676,7 @@ class MainWindow(QMainWindow):
         else:
             self.set_splash(_("Loading external console..."))
         self.extconsole = ExternalConsole(self, light_mode=self.light)
+
         self.extconsole.register_plugin()
         
         # Namespace browser
