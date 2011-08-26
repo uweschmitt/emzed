@@ -7,7 +7,7 @@ from  spyderlib.widgets.externalshell.namespacebrowser import NamespaceBrowser
 
 from utils.patch_decorator import  replace, add
 
-import pyOpenMS
+import ms
 
 
 
@@ -15,13 +15,12 @@ def patch_oedit():
     """
 
     """
-    import mzExplorer
 
     @replace(objecteditor.dialog_for, verbose=True)
     def dialog_for(obj, obj_name):
 
-        if isinstance(obj, pyOpenMS.PeakMap):
-            dlg = mzExplorer.MzExplorer()
+        if isinstance(obj, ms.PeakMap):
+            dlg = ms.mzExplorer.MzExplorer()
             dlg.setup(obj)
             return dlg, lambda x: x
         return objecteditor._orig_dialog_for(obj, obj_name)
@@ -39,7 +38,7 @@ def patch_spyder():
     def is_peakmap(self, name):
         """Return True if variable is a PeakMap"""
         return communicate(self._get_sock(),
-                   "isinstance(globals()['%s'], (pyOpenMS.PeakMap))" % name)
+                   "isinstance(globals()['%s'], (ms.PeakMap))" % name)
 
 
     @replace(NamespaceBrowser.setup, verbose=True)
@@ -54,24 +53,24 @@ def patch_external_shell():
     
     @replace(dicteditorutils.is_supported, verbose=True)
     def is_supported( value, *a, **kw):
-        return dicteditorutils._orig_is_supported(value, *a, **kw) or isinstance(value, pyOpenMS.PeakMap)
+        return dicteditorutils._orig_is_supported(value, *a, **kw) or isinstance(value, ms.PeakMap)
 
     @replace(dicteditorutils.get_size, verbose=True)
     def get_size( item ):
-        if isinstance(item, pyOpenMS.PeakMap):
+        if isinstance(item, ms.PeakMap):
             return len(item)
         return dicteditorutils._orig_get_size(item)
 
     @replace(dicteditorutils.get_type_string, verbose=True)
     def get_type_string( item ):
-        if isinstance(item, pyOpenMS.PeakMap):
-            return "pyOpenMS.PeakMap"
+        if isinstance(item, ms.PeakMap):
+            return "ms.PeakMap"
         return dicteditorutils._orig_get_type_string(item)
 
 
     @replace(dicteditorutils.value_to_display, verbose=True)
     def  value_to_display(value, *a, **kw):
-        if isinstance(value, pyOpenMS.PeakMap):
+        if isinstance(value, ms.PeakMap):
             return  "%s" % value.meta
         return dicteditorutils._orig_value_to_display(value, *a, **kw)
 

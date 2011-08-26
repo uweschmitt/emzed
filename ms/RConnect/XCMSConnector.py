@@ -1,6 +1,6 @@
 from RExecutor import RExecutor
-from pyOpenMS  import *
-from DataStructures import *
+from ..pyOpenMS  import *
+from ..DataStructures import *
 
 import os
 

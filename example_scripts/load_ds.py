@@ -4,7 +4,8 @@ Created on Sun Aug 14 16:43:24 2011
 @author: uwe schmitt
 """
 
-import pyOpenMS
+import ms
 
-ds = pyOpenMS.loadMzXmlFile("test.mzXML")
+ds = ms.loadMzXmlFile("test.mzXML")
+
 print "loaded ", len(ds), "specs"

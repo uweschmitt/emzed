@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import mzExplorer
-import load_ds
+import ms
 
-mzExplorer.inspect(ds)
+ds = ms.loadMzXmlFile("test.mzXML")
+ms.mzExplorer.inspect(ds)

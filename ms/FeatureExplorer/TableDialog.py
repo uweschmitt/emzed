@@ -1,4 +1,4 @@
-from DataStructures import Table
+from ..DataStructures import Table
 
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *

@@ -20,7 +20,7 @@ sys.path.insert(0, "..")
 #sys.path.insert(0, "../../pyOpenMS")
 
 
-import pyOpenMS
+from .. import pyOpenMS
 
 
 class RtRangeSelectionInfo(ObjectInfo):
