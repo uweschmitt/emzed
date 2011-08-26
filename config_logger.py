@@ -1,4 +1,4 @@
-import logging
+import logging, os
 
 def do_config():
 
@@ -6,6 +6,12 @@ def do_config():
     logger.setLevel(logging.DEBUG)
 
     # create file handler which logs even debug messages
+    op = os.path
+    try:
+        os.mkdir("logs")
+    except:
+        pass
+
     fh = logging.FileHandler('logs/msworkbench.log')
     fh.setLevel(logging.DEBUG)
 
@@ -14,7 +20,7 @@ def do_config():
     ch.setLevel(logging.WARN)
 
     # create formatter and add it to the handlers
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter('%(asctime)s - %(process)s - %(levelname)s - %(message)s')
     ch.setFormatter(formatter)
     fh.setFormatter(formatter)
     # add the handlers to logger
