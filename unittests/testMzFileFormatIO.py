@@ -10,7 +10,7 @@ def test_loadMzXMLFile():
 
     assert msExp != None
 
-    assert len(msExp) == 41 # 2884 # 2005
+    assert len(msExp) == 41 
     
     spec0 = msExp.specs[0]
     assert spec0.id=="scan=1"
@@ -35,7 +35,7 @@ def test_loadMzMLFile():
 
     assert msExp != None
 
-    assert len(msExp) == 41 # 2884 # 2005
+    assert len(msExp) == 41 
     
     spec0 = msExp.specs[0]
     assert spec0.id=="spectrum=1"
@@ -54,11 +54,12 @@ def test_loadMzMLFile():
     assert len(spec0) == 121 
 
 def test_loadMzDataFile():
-    msExp =loadMzDataFile("data/SHORT_MS2_FILE.mzData")
+    saveMzDataFile(loadMzDataFile("data/SHORT_MS2_FILE.mzData"), "temp_output/short.mzData")
+    msExp =loadMzDataFile("temp_output/short.mzData")
 
     assert msExp != None
 
-    assert len(msExp) == 41 # 2884 # 2005
+    assert len(msExp) == 41 
     
     spec0 = msExp.specs[0]
     assert spec0.id=="spectrum=1"
