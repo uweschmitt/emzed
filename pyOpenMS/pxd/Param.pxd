@@ -16,7 +16,7 @@ cdef extern from "<OpenMS/DATASTRUCTURES/Param.h>" namespace "OpenMS":
         void load(string) except+
 
 
-cdef extern from "helper.h":
+cdef extern from "HelperFunctions.h":
     list[string] getKeys(Param)
     list[string].iterator next(list[string].iterator)
 

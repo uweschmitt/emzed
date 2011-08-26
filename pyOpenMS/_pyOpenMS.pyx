@@ -17,4 +17,4 @@ include "FeatureMap.pyx"
 
 include "FeatureFinder.pyx"
 
-include "tests.pyx"
+include "InternTests.pyx"
