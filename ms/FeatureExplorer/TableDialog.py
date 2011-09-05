@@ -3,6 +3,8 @@ from ..DataStructures import Table
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
+import guidata
+
 class TableDialog(QDialog):
 
     def __init__(self, table, parent=None):
@@ -64,7 +66,8 @@ class TableDialog(QDialog):
 def viewTable(table):
     assert isinstance(table, Table)
 
-    app = QApplication([])
+    #app = QApplication([])
+    app = guidata.qapplication()
 
     tb = TableDialog(table)
     tb.activateWindow()
