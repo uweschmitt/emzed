@@ -10,4 +10,3 @@ def testCentwaveFeatureDetector():
     assert len(table.colNames) ==  11
     assert len(table.colTypes) ==  11
     
-    

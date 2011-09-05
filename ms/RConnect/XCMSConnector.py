@@ -125,3 +125,71 @@ class CentWaveFeatureDetector(object):
             return XCMSFeatureParser.parse(file(temp_output).readlines())
 
             
+class MatchedFilterFeatureDetector(object):
+
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "matchedFilter.txt")
+
+    __doc__ = """ MatchedFilterFeatureDetector
+
+    usage:
+
+           print MatchedFilterFeatureDetector.standardConfig  
+
+           detector = MatchedFilterFeatureDetector(param1=val1, ....)
+           detector.process(peakmap)
+
+    
+    Docs from XCMS library:
+
+    """
+
+    __doc__ += "".join(file(path).readlines())
+
+    standardConfig = dict(   fwhm = 30,
+                             sigma = 30/2.3548,
+                             max_ = 5,
+                             snthresh = 10,
+                             step = 0.1,
+                             steps = 2,
+                             mzdiff = 0.8 - 2*2,
+                             index = False )
+
+    def __init__(self, **kw):
+        self.config = self.standardConfig.copy()
+        self.config.update(kw)
+
+    def process(self, peakMap):
+        assert isinstance(peakMap, PeakMap)
+        
+        with TemporaryDirectoryWithBackup() as td:
+
+            temp_input = os.path.join(td, "input.mzData")
+            temp_output = os.path.join(td, "output.csv")
+
+            saveMzDataFile(peakMap, temp_input)
+
+            dd = self.config.copy()
+            dd["temp_input"] = temp_input
+            dd["temp_output"] = temp_output
+            dd["index"] = str(dd["index"]).upper()
+        
+            script = """
+                        library(xcms)
+                        xs <- xcmsSet(%(temp_input)r, method="matchedFilter", 
+                                       fwhm = %(fwhm)f, sigma = %(sigma)f,
+                                       max = %(max_)d,
+                                       snthresh = %(snthresh)f,
+                                       step = %(step)f, steps=%(steps)d,
+                                       mzdiff = %(mzdiff)f,
+                                       index = %(index)s,
+                                       sleep=0
+                                     )
+                        write.table(xs@peaks, file=%(temp_output)r)
+                        q(status=4711)
+                     """ % dd
+
+            if RExecutor().run_command(script, td) != 4711:
+                raise Exception("R opreation failed")
+
+            return XCMSFeatureParser.parse(file(temp_output).readlines())
+
