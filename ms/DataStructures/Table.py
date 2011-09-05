@@ -50,6 +50,12 @@ class Table(object):
 
     def __len__(self):
         return len(self.rows)
+
+    def saveCSV(self, path):
+        with file(path, "w") as fp:
+            print >> fp, "; ".join(self.colNames)
+            for row in self.rows:
+                print >> fp, "; ".join(map(str, row))
              
             
             
