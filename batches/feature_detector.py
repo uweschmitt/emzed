@@ -2,7 +2,7 @@
 def runCentwave(pattern, destination=None):
 
     # local import in order to keep namespaces clean
-    import libms, utils
+    import libms, ms
     import configs 
     import glob, os.path
 
@@ -13,7 +13,7 @@ def runCentwave(pattern, destination=None):
 
         try:
             print "read ", path
-            ds = utils.loadMap(path)
+            ds = ms.loadMap(path)
         except:
             print "reading FAILED"
             continue

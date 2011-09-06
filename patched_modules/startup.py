@@ -183,9 +183,9 @@ if __name__ == "__main__":
             pyreadline.GetOutputFile = lambda: None
         del __is_ipython
         import libms
-        import utils
+        import ms
         import batches
-        user_ns = dict(runfile = runfile, debugfile=debugfile, libms=libms, b=batches, u=utils)
+        user_ns = dict(runfile = runfile, debugfile=debugfile, libms=libms, b=batches, ms=ms)
         try:
             # IPython >=v0.11
             # Support for these recent versions of IPython is limited:
