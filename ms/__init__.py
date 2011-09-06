@@ -7,3 +7,4 @@ from RConnect import *
 from FeatureExplorer import *
 from mzExplorer import *
 from DataStructures import *
+from utils import *
