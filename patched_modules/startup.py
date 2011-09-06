@@ -4,7 +4,8 @@
 # Licensed under the terms of the MIT License
 # (see spyderlib/__init__.py for details)
 
-"""Startup file used by ExternalPythonShell"""
+"""modified msworkbench Startup file used by ExternalPythonShell"""
+
 
 import sys
 
@@ -140,6 +141,7 @@ def debugfile(filename, args=None, wdir=None):
 
 
 if __name__ == "__main__":
+
     __remove_from_syspath__()
     
     if not __is_ipython():
@@ -162,6 +164,7 @@ if __name__ == "__main__":
     __name__ = '__main__'
 
     if __is_ipython():
+
         import os
         if os.name == 'nt':
             # Windows platforms: monkey-patching *pyreadline* module
@@ -179,6 +182,10 @@ if __name__ == "__main__":
             import pyreadline
             pyreadline.GetOutputFile = lambda: None
         del __is_ipython
+        import ms
+        import utils
+        import batches
+        user_ns = dict(runfile = runfile, debugfile=debugfile, ms=ms, b=batches, u=utils)
         try:
             # IPython >=v0.11
             # Support for these recent versions of IPython is limited:
@@ -200,9 +207,8 @@ if __name__ == "__main__":
 Spyder does not support GUI interactions with IPython >=v0.11
 on Windows platforms (only IPython v0.10 is fully supported).
 """
-            __ipythonshell__ = InteractiveShellEmbed(user_ns={
-                                                     'runfile': runfile,
-                                                     'debugfile': debugfile},
+
+            __ipythonshell__ = InteractiveShellEmbed(user_ns= user_ns,
                                                      banner2=banner2)#,
 #                                                     display_banner=False)
 #            __ipythonshell__.shell.show_banner()
@@ -214,9 +220,7 @@ on Windows platforms (only IPython v0.10 is fully supported).
         except ImportError:
             # IPython v0.10
             import IPython.Shell
-            __ipythonshell__ = IPython.Shell.start(user_ns={
-                                                   'runfile': runfile,
-                                                   'debugfile': debugfile})
+            __ipythonshell__ = IPython.Shell.start(user_ns=user_ns)
             __ipythonshell__.IP.stdin_encoding = os.environ['SPYDER_ENCODING']
         
         # Workaround #2 to make the HDF5 I/O variable explorer plugin work:

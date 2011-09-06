@@ -8,8 +8,13 @@ from  spyderlib.widgets.externalshell.namespacebrowser import NamespaceBrowser
 from ms.intern_utils.patch_decorator import  replace, add
 
 import ms
+import sys
 
-
+def patch_startup_file():
+    from patched_modules import startup
+    patched_mod = sys.modules["patched_modules.startup"]
+    sys.modules["spyderlib.widgets.externalshell"].startup = patched_mod
+    
 
 def patch_oedit():
     """
@@ -26,6 +31,7 @@ def patch_oedit():
         return objecteditor._orig_dialog_for(obj, obj_name)
 
 def patch_spyder():
+
     patch_oedit()
 
     @replace(RemoteDictEditorTableView.oedit_possible, verbose=True)
@@ -46,6 +52,7 @@ def patch_spyder():
         NamespaceBrowser._orig_setup(self, *a, **kw)
         self.editor.is_peakmap = self.is_peakmap
 
+    patch_startup_file()
 
 
 
