@@ -1,9 +1,9 @@
-import ms
+import libms
 
 def testCentwaveFeatureDetector():
 
-    ds = ms.loadMzXmlFile("data/test.mzXML")
-    det = ms.CentWaveFeatureDetector(ppm=3, peakwidth=(8, 13), snthresh=40, prefilter=(8, 10000), mzdiff=1.5 )
+    ds = libms.loadMzXmlFile("data/test.mzXML")
+    det = libms.CentWaveFeatureDetector(ppm=3, peakwidth=(8, 13), snthresh=40, prefilter=(8, 10000), mzdiff=1.5 )
     assert det.__doc__ != None
     table = det.process(ds)
     assert len(table) == 17, len(table)

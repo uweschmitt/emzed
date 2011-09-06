@@ -4,12 +4,12 @@ def loadMap(path):
 
     # local import in order to keep namespaces clean
     import os.path
-    import ms
+    import libms
     _, ext = os.path.splitext(path)
 
-    method = dict(MZXML = ms.loadMzXmlFile, 
-                  MZML =  ms.loadMzMlFile, 
-                  MZDATA= ms.loadMzDataFile).get(ext.upper()[1:])
+    method = dict(MZXML = libms.loadMzXmlFile, 
+                  MZML =  libms.loadMzMlFile, 
+                  MZDATA= libms.loadMzDataFile).get(ext.upper()[1:])
 
     if method is None:
         raise Exception("unknown extension '%s' " % ext)

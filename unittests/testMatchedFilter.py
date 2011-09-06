@@ -1,11 +1,11 @@
-import ms
+import libms
 
     
     
 def testMatchedFilterFeatureDetector():
 
-    ds = ms.loadMzXmlFile("data/test.mzXML")
-    det = ms.MatchedFilterFeatureDetector()
+    ds = libms.loadMzXmlFile("data/test.mzXML")
+    det = libms.MatchedFilterFeatureDetector()
     assert det.__doc__ != None
     table = det.process(ds)
     assert len(table) == 742, len(table)

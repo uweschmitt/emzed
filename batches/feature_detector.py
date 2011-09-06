@@ -2,11 +2,11 @@
 def runCentwave(pattern, destination=None):
 
     # local import in order to keep namespaces clean
-    import ms, utils
+    import libms, utils
     import configs 
     import glob, os.path
 
-    det = ms.CentWaveFeatureDetector(**configs.centwaveConfig)
+    det = libms.CentWaveFeatureDetector(**configs.centwaveConfig)
     
     count = 0
     for path in glob.glob(pattern):
@@ -33,6 +33,6 @@ def runCentwave(pattern, destination=None):
         count += 1
 
     print
-    print "converted %d datasets" % count
+    print "analyzed %d datasets" % count
     print
 
