@@ -80,7 +80,7 @@ class RExecutor(object):
     def run_script(self, path):
         # hyphens are needed as pathes may contain spaces
         cmd = '"%s" --vanilla --silent < %s' % (self.rExe, path)
-        print cmd
+
         hasIpython = False
 
         try:
