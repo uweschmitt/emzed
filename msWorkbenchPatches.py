@@ -5,7 +5,7 @@ from  spyderlib.widgets import dicteditorutils
 from  spyderlib.widgets.dicteditor import RemoteDictEditorTableView
 from  spyderlib.widgets.externalshell.namespacebrowser import NamespaceBrowser
 
-from ms.utils.patch_decorator import  replace, add
+from ms.intern_utils.patch_decorator import  replace, add
 
 import ms
 

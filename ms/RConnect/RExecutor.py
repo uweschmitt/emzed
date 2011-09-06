@@ -9,7 +9,7 @@ if not os.path.exists(R_LIBS):
     os.mkdir(R_LIBS)
 
 
-from ..utils import TemporaryDirectoryWithBackup
+from ..intern_utils import TemporaryDirectoryWithBackup
 
 
 class RExecutor(object):

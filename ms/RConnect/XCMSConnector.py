@@ -4,7 +4,7 @@ from ..DataStructures import *
 
 import os
 
-from ..utils import TemporaryDirectoryWithBackup
+from ..intern_utils import TemporaryDirectoryWithBackup
 
 
 def installXcmsIfNeeded():
