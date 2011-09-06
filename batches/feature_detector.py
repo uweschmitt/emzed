@@ -1,15 +1,28 @@
 
-def runCentwave(pattern, destination=None):
+def runCentwave(pattern=None, destination=None):
 
     # local import in order to keep namespaces clean
     import libms, ms
     import configs 
     import glob, os.path
 
+    if pattern is None:
+        files = ms.askForMultipleFiles(extensions=["mzXML", "mzData", "mzML"])
+        if not files:
+            print "aborted"
+            return
+        destination = ms.askForDirectory()
+        if not destination:
+            print "aborted"
+            return
+
+    else:
+        files = glob.glob(pattern)
+
     det = libms.CentWaveFeatureDetector(**configs.centwaveConfig)
     
     count = 0
-    for path in glob.glob(pattern):
+    for path in files:
 
         try:
             print "read ", path

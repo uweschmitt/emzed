@@ -2,6 +2,8 @@
 
 def loadMap(path):
 
+    """ loads mzXML, mzML and mzData files """
+
     # local import in order to keep namespaces clean
     import os.path
     import libms
