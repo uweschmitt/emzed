@@ -1,9 +1,10 @@
-import ms
-
-import glob
 
 
 def run_centwave(pattern):
+
+    # local import in order to keep namespaces clean
+    import ms
+    import glob
 
     for path in glob.glob(pattern):
 
