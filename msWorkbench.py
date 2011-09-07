@@ -617,11 +617,12 @@ class MainWindow(QMainWindow):
             
             # Outline explorer widget
             if CONF.get('outline_explorer', 'enable'):
-                self.set_splash(_("Loading outline explorer..."))
-                fullpath_sorting = CONF.get('editor', 'fullpath_sorting', True)
-                self.outlineexplorer = OutlineExplorer(self,
-                                            fullpath_sorting=fullpath_sorting)
-                self.outlineexplorer.register_plugin()
+                pass
+                #self.set_splash(_("Loading outline explorer..."))
+                #fullpath_sorting = CONF.get('editor', 'fullpath_sorting', True)
+                #self.outlineexplorer = OutlineExplorer(self,
+                                            #fullpath_sorting=fullpath_sorting)
+                #self.outlineexplorer.register_plugin()
             
             # Editor plugin
             self.set_splash(_("Loading editor..."))
@@ -664,9 +665,10 @@ class MainWindow(QMainWindow):
                 
             # Project explorer widget
             if CONF.get('project_explorer', 'enable'):
-                self.set_splash(_("Loading project explorer..."))
-                self.projectexplorer = ProjectExplorer(self)
-                self.projectexplorer.register_plugin()
+                #self.set_splash(_("Loading project explorer..."))
+                #self.projectexplorer = ProjectExplorer(self)
+                #self.projectexplorer.register_plugin()
+                pass
             
         # External console
         if self.light:
@@ -779,13 +781,13 @@ class MainWindow(QMainWindow):
             self.help_menu_actions.append(web_resources)
 
             # Third-party plugins
-            for mod in get_spyderplugins_mods(prefix='p_', extension='.py'):
-                try:
-                    plugin = mod.PLUGIN_CLASS(self)
-                    self.thirdparty_plugins.append(plugin)
-                    plugin.register_plugin()
-                except AttributeError, error:
-                    print >>STDERR, "%s: %s" % (mod, str(error))
+            #for mod in get_spyderplugins_mods(prefix='p_', extension='.py'):
+                #try:
+                    #plugin = mod.PLUGIN_CLASS(self)
+                    #self.thirdparty_plugins.append(plugin)
+                    #plugin.register_plugin()
+                #except AttributeError, error:
+                    #print >>STDERR, "%s: %s" % (mod, str(error))
                                 
             # View menu
             self.view_menu = self.createPopupMenu()
@@ -826,11 +828,11 @@ class MainWindow(QMainWindow):
                                       self.view_menu)
             
             # Adding external tools action to "Tools" menu
-            external_tools_act = create_action(self, _("External Tools"),
-                                               icon="ext_tools.png")
-            external_tools_act.setMenu(self.external_tools_menu)
-            self.tools_menu_actions.append(external_tools_act)
-            self.main_toolbar_actions.append(external_tools_act)
+            #external_tools_act = create_action(self, _("External Tools"),
+                                               #icon="ext_tools.png")
+            #external_tools_act.setMenu(self.external_tools_menu)
+            #self.tools_menu_actions.append(external_tools_act)
+            #self.main_toolbar_actions.append(external_tools_act)
             
             # Filling out menu/toolbar entries:
             add_actions(self.file_menu, self.file_menu_actions)
@@ -839,8 +841,8 @@ class MainWindow(QMainWindow):
             add_actions(self.source_menu, self.source_menu_actions)
             add_actions(self.run_menu, self.run_menu_actions)
             add_actions(self.tools_menu, self.tools_menu_actions)
-            add_actions(self.external_tools_menu,
-                        self.external_tools_menu_actions)
+            #add_actions(self.external_tools_menu,
+                        #self.external_tools_menu_actions)
             add_actions(self.help_menu, self.help_menu_actions)
             
             add_actions(self.main_toolbar, self.main_toolbar_actions)
