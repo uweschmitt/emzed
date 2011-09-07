@@ -1,28 +1,43 @@
 
-def runCentwave(pattern=None, destination=None):
+def runCentwave(pattern=None, destination=None, **params):
 
     """
          runs centwave algorithm from xcms in batch mode.
          input files are map files (mzXML, mxML, mzData),
          ouput files are csv files
 
+         you can add modifications to the standard pamaeters, eg ppm,
+         as named arguments.
+
          examples:
                 
               runCentwave():
                      asks for source files and target directory
 
+              runCentwave(ppm=13):
+                     asks for source files and target directory
+                     runs centwave with modified ppm=13 parameter.
+                     
+
               runCentwave(pattern):
                      looks for map files matching pattern
                      resulting csv files are stored next to input map file
+
+              runCentwave(pattern, msDiff=0.003):
+                     looks for map files matching pattern
+                     resulting csv files are stored next to input map file
+                     runs centwave with modified msDiff parameter
 
               runCentwave(pattern, destination):
                      looks for map files matching pattern
                      resulting csv files are stored at destination directory
                     
+              runCentwave(pattern, destination, ppm=17, peakwidth=(5,100) ):
+                     looks for map files matching pattern
+                     resulting csv files are stored at destination directory
+                     runs centwave with modified ppm and peakwidth parameters.
 
     """
-
-        
 
     # local import in order to keep namespaces clean
     import libms, ms
@@ -42,7 +57,9 @@ def runCentwave(pattern=None, destination=None):
     else:
         files = glob.glob(pattern)
 
-    det = libms.CentWaveFeatureDetector(**configs.centwaveConfig)
+    config = configs.centwaveConfig
+    config.update(params)
+    det = libms.CentWaveFeatureDetector(**config)
     
     count = 0
     for path in files:
