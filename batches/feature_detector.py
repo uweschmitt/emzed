@@ -1,5 +1,5 @@
 
-def runCentwave(pattern=None, destination=None, **params):
+def runCentwave(pattern=None, destination=None, configid=None, **params):
 
     """
          runs centwave algorithm from xcms in batch mode.
@@ -9,16 +9,26 @@ def runCentwave(pattern=None, destination=None, **params):
          you can add modifications to the standard pamaeters, eg ppm,
          as named arguments.
 
+         if you have multiple configs for centwave, you can give an
+         configid as defined in configs.py, or you are asked to choose
+         a config.
+
+         if you have a single config this one is used automatically
+
          examples:
                 
               runCentwave():
                      asks for source files and target directory
+                     asks for config if multiple configs are defined
+
+              runCentwave(configid="std", ppm=17)
+                     uses config with id "std", overwrites ppm parameter
+                     with ppm=17.
 
               runCentwave(ppm=13):
                      asks for source files and target directory
                      runs centwave with modified ppm=13 parameter.
                      
-
               runCentwave(pattern):
                      looks for map files matching pattern
                      resulting csv files are stored next to input map file
@@ -53,11 +63,22 @@ def runCentwave(pattern=None, destination=None, **params):
         if not destination:
             print "aborted"
             return
-
     else:
         files = glob.glob(pattern)
 
-    config = configs.centwaveConfig
+    if configid is not None:
+        for id_, _, config in configs.centwaveConfig:
+            if id_ == configid:
+                break
+        else:
+            print "invalid configid %r" % configid
+            return
+                
+    elif len(configs.centwaveConfig) > 1:
+        config = ms.chooseConfig(configs.centwaveConfig, params)
+    else:
+        config = configs.centwaveConfig[0]
+
     config.update(params)
     det = libms.CentWaveFeatureDetector(**config)
     

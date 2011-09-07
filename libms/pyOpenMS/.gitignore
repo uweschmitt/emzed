@@ -1,4 +1,6 @@
-pyOpenMS.cpp
+_pyOpenMS.cpp
+_pyOpenMS.html
+MANIFEST
 build
 *.pyc
 _pyOpenMS.pyd

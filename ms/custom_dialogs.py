@@ -84,6 +84,22 @@ def askForMultipleFiles(startAt=None, extensions=None):
           or None if the user aborts the dialog.
     """
     return __fileDialog(startAt, multipleFiles=True, extensions=extensions)
+
+
+def chooseConfig(configs, params):
+    
+    from libms.gui.ConfigChooseDialog import ConfigChooseDialog
+    import guidata
+
+    app = guidata.qapplication()
+    dlg = ConfigChooseDialog(configs, params)
+    dlg.activateWindow()
+    dlg.raise_()
+    dlg.exec_()
+
+    return dlg.result
+    
+    
     
 
 if __name__ == "__main__":

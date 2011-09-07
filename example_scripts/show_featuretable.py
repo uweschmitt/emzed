@@ -1,7 +1,7 @@
-import ms
+import libms
 
 data=file("xcms_output.csv").readlines()
-tab = ms.XCMSFeatureParser().parse(data)
+tab = libms.XCMSFeatureParser().parse(data)
 
 print tab.colNames
 print
@@ -13,4 +13,4 @@ print tab.rows[0]
 print
 print tab.rows[-1]
 print
-ms.viewTable(tab)
+libms.viewTable(tab)

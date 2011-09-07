@@ -1,4 +1,5 @@
 from ..DataStructures import Table
+from ..gui import helpers
 
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
@@ -22,11 +23,10 @@ class TableDialog(QDialog):
         self.populate()
 
         sizePolicy = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        #sizePolicy.setHeightForWidth(Dialog.sizePolicy().hasHeightForWidth())
         self.setSizePolicy(sizePolicy)
         self.setSizeGripEnabled(True)
+        
+        self.setMinimumWidth(helpers.widthOfTableWidget(self.tw))
 
 
        
