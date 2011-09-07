@@ -135,6 +135,10 @@ from spyderlib.userconfig import NoDefault, NoOptionError
 
 TEMP_SESSION_PATH = get_conf_path('.temp.session.tar')
 
+flags = CONF.get("console", "ipython_options").split()
+if u"-pylab" in flags:
+    flags.remove(u"-pylab")
+    CONF.set("console", "ipython_options", u" ".join(flags))
 
 def get_python_doc_path():
     """
