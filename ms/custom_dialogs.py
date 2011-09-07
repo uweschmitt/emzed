@@ -100,22 +100,22 @@ def chooseConfig(configs, params):
     return dlg.result
 
 
-def show(what):
+#def show(what):
     
-    import guidata
-    from   libms.gui.TableDialog import showTable
-    from   libms.DataStructures import Table
-    from   libms.pyOpenMS import PeakMap
-    from   libms.mzExplorer import inspectMap
+#    import guidata
+#    from   libms.gui.TableDialog import showTable
+#    from   libms.DataStructures import Table
+#    from   libms.pyOpenMS import PeakMap
+#    from   libms.mzExplorer import inspectMap
 
-    if isinstance(what, Table):
-        showTable(what)
+#    if isinstance(what, Table):
+#        showTable(what)
 
-    elif isinstance(what, PeakMap):
-        inspectMap(what)
+#    elif isinstance(what, PeakMap):
+#        inspectMap(what)
 
-    else:
-        print "do not now how to show %r" % what
+#    else:
+#        print "do not now how to show %r" % what
         
 
     
