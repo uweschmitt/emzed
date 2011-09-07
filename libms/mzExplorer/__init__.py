@@ -1,1 +1,1 @@
-from mzExplorer import inspect, MzExplorer
+from mzExplorer import inspectMap

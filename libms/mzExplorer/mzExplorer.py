@@ -177,7 +177,7 @@ class MzExplorer(QDialog):
 
     
 
-def inspect(peakmap):
+def inspectMap(peakmap):
     """Testing this simple Qt/guiqwt example"""
 
     app = guidata.qapplication()

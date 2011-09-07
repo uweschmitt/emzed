@@ -83,6 +83,7 @@ def runCentwave(pattern=None, destination=None, configid=None, **params):
     det = libms.CentWaveFeatureDetector(**config)
     
     count = 0
+    tables = []
     for path in files:
 
         try:
@@ -103,10 +104,12 @@ def runCentwave(pattern=None, destination=None, configid=None, **params):
         savePath = os.path.join(destinationDir, fname+".csv")
         print "save to ", savePath
         table.saveCSV(savePath)
+        tables.append(table)
 
         count += 1
 
     print
     print "analyzed %d datasets" % count
     print
+    return tables
 
