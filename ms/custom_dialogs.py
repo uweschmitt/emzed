@@ -4,6 +4,7 @@ def __fileDialog(startAt=None, onlyDirectories=False, multipleFiles=True, extens
     import guidata
     from PyQt4.QtGui import QFileDialog
     from PyQt4.QtCore import Qt
+
     import os
 
     if startAt is None:

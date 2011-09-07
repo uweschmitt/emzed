@@ -80,7 +80,7 @@ def runCentwave(pattern=None, destination=None, configid=None, **params):
         config = configs.centwaveConfig[0]
 
     config.update(params)
-    det = libms.CentWaveFeatureDetector(**config)
+    det = libms.RConnect.CentWaveFeatureDetector(**config)
     
     count = 0
     tables = []

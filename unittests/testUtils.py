@@ -1,10 +1,11 @@
-import ms, libms
+import ms
+from libms.pyOpenMS import *
 
 def testLoadMap():
     ds = ms.loadMap("data\SHORT_MS2_FILE.mzXML")
 
-    libms.saveMzMlFile(ds, "temp_output/utilstest.mzML")
+    saveMzMlFile(ds, "temp_output/utilstest.mzML")
     ds = ms.loadMap("temp_output/utilstest.mzML")
 
-    libms.saveMzDataFile(ds, "temp_output/utilstest.mzData")
+    saveMzDataFile(ds, "temp_output/utilstest.mzData")
     ds = ms.loadMap("temp_output/utilstest.mzData")

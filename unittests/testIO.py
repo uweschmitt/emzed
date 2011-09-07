@@ -1,8 +1,8 @@
-import libms
+from libms.pyOpenMS import *
 
 def test_loadMzXMLFile():
-    libms.saveMzXmlFile(libms.loadMzDataFile("data/SHORT_MS2_FILE.mzData"), "temp_output/short.mzXML")
-    msExp = libms.loadMzXmlFile("temp_output/short.mzXML")
+    saveMzXmlFile(loadMzDataFile("data/SHORT_MS2_FILE.mzData"), "temp_output/short.mzXML")
+    msExp = loadMzXmlFile("temp_output/short.mzXML")
 
     assert msExp != None
 
@@ -26,8 +26,8 @@ def test_loadMzXMLFile():
 
 
 def test_loadMzMLFile():
-    libms.saveMzMlFile(libms.loadMzDataFile("data/SHORT_MS2_FILE.mzData"), "temp_output/short.mzML")
-    msExp = libms.loadMzMlFile("temp_output/short.mzML")
+    saveMzMlFile(loadMzDataFile("data/SHORT_MS2_FILE.mzData"), "temp_output/short.mzML")
+    msExp = loadMzMlFile("temp_output/short.mzML")
 
     assert msExp != None
 
@@ -50,8 +50,8 @@ def test_loadMzMLFile():
     assert len(spec0) == 121 
 
 def test_loadMzDataFile():
-    libms.saveMzDataFile(libms.loadMzDataFile("data/SHORT_MS2_FILE.mzData"), "temp_output/short.mzData")
-    msExp =libms.loadMzDataFile("temp_output/short.mzData")
+    saveMzDataFile(loadMzDataFile("data/SHORT_MS2_FILE.mzData"), "temp_output/short.mzData")
+    msExp =loadMzDataFile("temp_output/short.mzData")
 
     assert msExp != None
 
