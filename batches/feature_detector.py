@@ -1,6 +1,29 @@
 
 def runCentwave(pattern=None, destination=None):
 
+    """
+         runs centwave algorithm from xcms in batch mode.
+         input files are map files (mzXML, mxML, mzData),
+         ouput files are csv files
+
+         examples:
+                
+              runCentwave():
+                     asks for source files and target directory
+
+              runCentwave(pattern):
+                     looks for map files matching pattern
+                     resulting csv files are stored next to input map file
+
+              runCentwave(pattern, destination):
+                     looks for map files matching pattern
+                     resulting csv files are stored at destination directory
+                    
+
+    """
+
+        
+
     # local import in order to keep namespaces clean
     import libms, ms
     import configs 
