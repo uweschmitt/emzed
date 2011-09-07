@@ -98,6 +98,26 @@ def chooseConfig(configs, params):
     dlg.exec_()
 
     return dlg.result
+
+
+def show(what):
+    
+    import guidata
+    from   libms.gui.TableDialog import showTable
+    from   libms.DataStructures import Table
+    from   libms.pyOpenMS import PeakMap
+    from   libms.mzExplorer import inspectMap
+
+    if isinstance(what, Table):
+        showTable(what)
+
+    elif isinstance(what, PeakMap):
+        inspectMap(what)
+
+    else:
+        print "do not now how to show %r" % what
+        
+
     
     
     

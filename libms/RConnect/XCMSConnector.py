@@ -14,7 +14,6 @@ def installXcmsIfNeeded():
         LLL.error("R_LIBS not set in environment")
         raise Exception("inconsistent system: R_LIBS not set.")
 
-    print os.path.join(R_LIBS, "xcms")
     if os.path.exists(os.path.join(R_LIBS, "xcms")):  
         return
     

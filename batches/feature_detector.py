@@ -94,6 +94,8 @@ def runCentwave(pattern=None, destination=None, configid=None, **params):
             continue
         
         table = det.process(ds)
+        table.title = path
+
         print len(table), "features found"
 
         if destination is None:

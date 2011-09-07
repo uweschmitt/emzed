@@ -14,7 +14,12 @@ class TableDialog(QDialog):
         assert isinstance(table, Table)
 
         self.setWindowFlags(Qt.Window)
-        self.setWindowTitle("Feature Explorer")
+
+        if table.title is None:
+            self.setWindowTitle("Table Explorer")
+
+        else:
+            self.setWindowTitle(table.title)
 
         self.table = table
 
@@ -59,11 +64,7 @@ class TableDialog(QDialog):
         self.tw.setSortingEnabled(True)
 
    
-
-
-
-
-def viewTable(table):
+def showTable(table):
     assert isinstance(table, Table)
 
     #app = QApplication([])
