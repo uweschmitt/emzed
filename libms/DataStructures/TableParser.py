@@ -126,6 +126,14 @@ class XCMSFeatureParser(object):
 
         return Table(columnNames, columnTypes, rows, formats)
 
+    @classmethod
+    def fromCSV(clz, path):
+        lines = [ l.replace(";", " ") for l in file(path).readlines() ]
+        modlines = [ '"%d" %s' % (i+1, l) for i, l in enumerate(lines[1:]) ]
+        modlines.insert(0, lines[0])
+        return clz.parse(modlines)
+
+
    
 
 

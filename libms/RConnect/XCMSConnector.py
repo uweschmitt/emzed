@@ -86,6 +86,8 @@ class CentwaveFeatureDetector(object):
 
     def process(self, peakMap):
         assert isinstance(peakMap, PeakMap)
+        if len(peakMap) == 0:
+            raise Exception("empty peakmap")
         
         with TemporaryDirectoryWithBackup() as td:
 
@@ -160,6 +162,8 @@ class MatchedFilterFeatureDetector(object):
 
     def process(self, peakMap):
         assert isinstance(peakMap, PeakMap)
+        if len(peakMap) == 0:
+            raise Exception("empty peakmap")
         
         with TemporaryDirectoryWithBackup() as td:
 
