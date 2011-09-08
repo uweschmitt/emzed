@@ -49,69 +49,41 @@ def runCentwave(pattern=None, destination=None, configid=None, **params):
 
     """
 
-    # local import in order to keep namespaces clean
-    import libms, ms
-    import configs 
-    import glob, os.path
+    from BatchRunner import BatchRunner
+    import configs
+    import libms.RConnect
+    import ms
+    import os.path
 
-    if pattern is None:
-        files = ms.askForMultipleFiles(extensions=["mzXML", "mzData", "mzML"])
-        if not files:
-            print "aborted"
-            return
-        destination = ms.askForDirectory()
-        if not destination:
-            print "aborted"
-            return
-    else:
-        files = glob.glob(pattern)
+    class P(BatchRunner):
 
-    if configid is not None:
-        for id_, _, config in configs.centwaveConfig:
-            if id_ == configid:
-                break
-        else:
-            print "invalid configid %r" % configid
-            return
-                
-    elif len(configs.centwaveConfig) > 1:
-        config = ms.chooseConfig(configs.centwaveConfig, params)
-    else:
-        config = configs.centwaveConfig[0]
+        def setup(self, config):
+            self.det = libms.RConnect.CentwaveFeatureDetector(**config)
 
-    config.update(params)
-    det = libms.RConnect.CentWaveFeatureDetector(**config)
-    
-    count = 0
-    tables = []
-    for path in files:
+        def process(self, path):
+            
 
-        try:
-            print "read ", path
-            ds = ms.loadMap(path)
-        except:
-            print "reading FAILED"
-            continue
-        
-        table = det.process(ds)
-        table.title = path
+            try:
+                print "read ", path
+                ds = ms.loadMap(path)
+            except Exception, e:
+                print e
+                print "reading FAILED"
+                return None
+            
+            table = self.det.process(ds)
+            table.title = path
 
-        print len(table), "features found"
+            print len(table), "features found"
+            return table
 
-        if destination is None:
-            destinationDir = os.path.dirname(path)
-        else:
-            destinationDir = destination
-        fname, ext = os.path.splitext(os.path.basename(path))
-        savePath = os.path.join(destinationDir, fname+".csv")
-        print "save to ", savePath
-        table.saveCSV(savePath)
-        tables.append(table)
+        def write(self, result, destinationDir, path):
+            basename, ext = os.path.splitext(os.path.basename(path))
+            savePath = os.path.join(destinationDir, basename+".csv")
+            print "save to ", savePath
+            result.saveCSV(savePath)
 
-        count += 1
 
-    print
-    print "analyzed %d datasets" % count
-    print
-    return tables
+    return P(configs.centwaveConfig, True).run(pattern, destination, configid, **params)
+            
 

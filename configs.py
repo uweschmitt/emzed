@@ -1,13 +1,13 @@
 #encoding: utf-8
 
-from libms.RConnect.XCMSConnector import CentWaveFeatureDetector
+from libms.RConnect.XCMSConnector import CentwaveFeatureDetector
 
 def union(d1, d2):
     d = d1.copy()
     d.update(d2)
     return d
 
-cwfstd = CentWaveFeatureDetector.standardConfig
+cwfstd = CentwaveFeatureDetector.standardConfig
 
 centwaveConfigStd = dict( ppm=5, 
                           peakwidth=(15, 200),
@@ -27,3 +27,4 @@ centwaveConfig = [   ("std", "standard config orbitrap", union(cwfstd, centwaveC
                  ]
 
 
+pathToProteoWizard = r"C:\Dokumente und Einstellungen\Administrator\Eigene Dateien\proteowizard"

@@ -49,17 +49,17 @@ def doXcmsUpgrade():
              """
     return RExecutor().run_command(script)
 
-class CentWaveFeatureDetector(object):
+class CentwaveFeatureDetector(object):
 
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "centwave.txt")
 
-    __doc__ = """ CentWaveFeatureDetector
+    __doc__ = """ CentwaveFeatureDetector
 
     usage:
 
-           print CentWaveFeatureDetector.standardConfig  
+           print CentwaveFeatureDetector.standardConfig  
 
-           detector = CentWaveFeatureDetector(param1=val1, ....)
+           detector = CentwaveFeatureDetector(param1=val1, ....)
            detector.process(peakmap)
 
     
