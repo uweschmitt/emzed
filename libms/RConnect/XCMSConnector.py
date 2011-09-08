@@ -121,7 +121,8 @@ class CentwaveFeatureDetector(object):
             if RExecutor().run_command(script, td) != 4711:
                 raise Exception("R opreation failed")
 
-            return XCMSFeatureParser.parse(file(temp_output).readlines())
+            table = XCMSFeatureParser.parse(file(temp_output).readlines())
+            return FeatureTable.fromTableAndMap(table, peakMap)
 
             
 class MatchedFilterFeatureDetector(object):
@@ -190,5 +191,6 @@ class MatchedFilterFeatureDetector(object):
             if RExecutor().run_command(script, td) != 4711:
                 raise Exception("R opreation failed")
 
-            return XCMSFeatureParser.parse(file(temp_output).readlines())
+            table = XCMSFeatureParser.parse(file(temp_output).readlines())
+            return FeatureTable.fromTableAndMap(table, peakMap)
 

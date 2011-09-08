@@ -60,6 +60,13 @@ class Table(object):
                 print >> fp, "; ".join(map(str, row))
              
             
-            
-            
 
+class FeatureTable(Table):
+
+    def __init__(self, ds, colNames, colTypes, rows = None, colFormats = None, title=None):
+        super(FeatureTable, self).__init__(colNames, colTypes, rows, colFormats, title)
+        self.ds = ds
+
+    @staticmethod
+    def fromTableAndMap(table, ds):
+        return FeatureTable(ds, table.colNames, table.colTypes, table.rows, table.colNames, table.title) 
