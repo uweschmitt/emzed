@@ -6,7 +6,7 @@ def loadMap(path=None):
 
     # local import in order to keep namespaces clean
     import os.path
-    import libms, ms
+    import libms.pyOpenMS, ms
 
     if path is None:
         path = ms.askForSingleFile(extensions="mzML mzXML mzData".split())
