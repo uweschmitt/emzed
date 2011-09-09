@@ -1,6 +1,4 @@
 
-import libms.RConnect
-
 def runCentwave(pattern=None, destination=None, configid=None, **params):
 
     """
@@ -85,10 +83,10 @@ def runCentwave(pattern=None, destination=None, configid=None, **params):
             print "save to ", savePath
             result.saveCSV(savePath)
 
-
     return P(configs.centwaveConfig, True).run(pattern, destination, configid, **params)
             
-runCentwave.__doc__ += libms.RConnect.CentwaveFeatureDetector.__doc__
+import libms.RConnect as __libmsrconnect
+runCentwave.__doc__ += __libmsrconnect.CentwaveFeatureDetector.__doc__
 
 def runMatchedFilter(pattern=None, destination=None, configid=None, **params):
 
@@ -176,6 +174,4 @@ def runMatchedFilter(pattern=None, destination=None, configid=None, **params):
 
     return P(configs.matchedFilterConfig, True).run(pattern, destination, configid, **params)
             
-runMatchedFilter.__doc__ += libms.RConnect.MatchedFilterFeatureDetector.__doc__
-
-del libms.RConnect # avoid namepsace clutter
+runMatchedFilter.__doc__ += __libmsrconnect.MatchedFilterFeatureDetector.__doc__
