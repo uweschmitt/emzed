@@ -1,5 +1,5 @@
 
-def __fileDialog(startAt=None, onlyDirectories=False, multipleFiles=True, extensions=None):
+def __fileDialog(startAt=None, onlyDirectories=False, anyFile=False, multipleFiles=True, extensions=None, caption=None):
 
     import guidata
     from PyQt4.QtGui import QFileDialog
@@ -11,7 +11,10 @@ def __fileDialog(startAt=None, onlyDirectories=False, multipleFiles=True, extens
         startAt = os.getcwd()
 
     app = guidata.qapplication()
-    di=QFileDialog(directory=startAt)
+    if caption is not None:
+        di=QFileDialog(directory=startAt, caption=caption)
+    else:
+        di=QFileDialog(directory=startAt)
 
     if extensions is not None:
         filter_ = "(%s)" % " ".join( "*."+e for e in extensions)
@@ -21,6 +24,8 @@ def __fileDialog(startAt=None, onlyDirectories=False, multipleFiles=True, extens
         di.setFileMode(QFileDialog.DirectoryOnly)
     elif multipleFiles:
         di.setFileMode(QFileDialog.ExistingFiles)
+    elif anyFile:
+        di.setFileMode(QFileDialog.AnyFile)
     else:
         di.setFileMode(QFileDialog.ExistingFile)
 
@@ -50,6 +55,23 @@ def askForDirectory(startAt=None):
           or None if the user aborts the dialog.
     """
     return __fileDialog(startAt, onlyDirectories=True)
+
+def askForSave(startAt=None, extensions=None):
+
+    """ 
+          asks for a single file, which needs not to exist.
+
+          you can provide a startup directory with parameter startAt.
+          you can restrict the files by providing a list of extensions.
+          eg
+              askForSave(extensions=["csv"])
+          or
+              askForSave(extensions=["mzXML", "mxData"])
+
+          returns the path of the selected file as a unicode string,
+          or None if the user aborts the dialog.
+    """
+    return __fileDialog(startAt, anyFile=True, multipleFiles=False, extensions=extensions, caption="Save As")
 
 def askForSingleFile(startAt=None, extensions=None):
 
@@ -127,5 +149,6 @@ if __name__ == "__main__":
 
     #print askForDirectory()
     #print askForSingleFile()
-    print askForMultipleFiles(extensions=["py", "pyc"])
+    #print askForMultipleFiles(extensions=["py", "pyc"])
+    print askForSave(extensions=["py", "pyc"])
     
