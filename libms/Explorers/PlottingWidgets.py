@@ -117,14 +117,17 @@ class MzCursorInfo(ObjectInfo):
 
 class MzPlotter(PlotterBase):
 
-    def __init__(self, peakmap):
+    def __init__(self, peakmap, c_callback):
         super(MzPlotter, self).__init__("m/z", "I")
         self.peakmap = peakmap 
+
+        self.c_callback = c_callback
 
         widget = self.widget
 
         # inject mofified behaviour of wigets plot attribute:
         widget.plot.__class__ = MzPlot
+        widget.plot.register_c_callback(self.handle_c_pressed)
 
 
         self.pm = PlotManager(widget)
@@ -153,6 +156,10 @@ class MzPlotter(PlotterBase):
         widget.plot.add_item(marker)
         widget.plot.add_item(label)
         widget.plot.add_item(line)
+
+    def handle_c_pressed(self, p):
+        self.c_callback(p)
+        
 
 
     def plot(self, peaks):

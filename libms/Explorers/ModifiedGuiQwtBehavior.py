@@ -104,6 +104,10 @@ class MzSelectionTool(InteractiveTool):
                          KeyEventMatch((Qt.Key_Backspace,)),
                          baseplot.do_backspace_pressed, start_state)
 
+        filter.add_event(start_state,
+                         KeyEventMatch((Qt.Key_C,)),
+                         baseplot.do_c_pressed, start_state)
+
         self.connect(handler, SIG_MOVE, baseplot.move_in_drag_mode)
         self.connect(handler, SIG_START_TRACKING, baseplot.start_drag_mode)
         self.connect(handler, SIG_STOP_NOT_MOVING, baseplot.stop_drag_mode)
@@ -268,7 +272,8 @@ class MzPlot(ModifiedCurvePlot):
 
     def on_plot(self, x, y):
         """ callback for marker: determine marked point based on cursors coordinates """
-        return self.next_peak_to(x, y)
+        self.current_peak = self.next_peak_to(x, y)
+        return self.current_peak
 
     def next_peak_to(self, mz, I):
         item = self.get_unique_item(CurveItem)
@@ -299,6 +304,18 @@ class MzPlot(ModifiedCurvePlot):
         xmin, xmax = np.min(xsel), np.max(xsel)
 
         self.update_plot_xlimits(xmin, xmax)
+
+    def register_c_callback(self, cb):
+        self.c_call_back = cb
+
+    def do_c_pressed(self, filter, evt):
+        try:
+            self.current_peak
+            self.c_call_back
+        except:
+            return
+
+        self.c_call_back(self.current_peak)
 
     def start_drag_mode(self, filter_, evt):
         mz = self.invTransform(self.xBottom, evt.x())
