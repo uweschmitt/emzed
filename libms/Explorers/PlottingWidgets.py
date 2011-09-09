@@ -1,3 +1,5 @@
+import guiqwt
+assert guiqwt.__version__ == "2.1.4"
 
 from guiqwt.plot import CurveWidget, PlotManager
 from guiqwt.builder import make
@@ -32,21 +34,25 @@ class PlotterBase(object):
         self.widget.setMinimumSize(a,b)
 
     def reset_x_limits(self, xmin=None, xmax=None, fac=1.0):
-        self.widget.plot.reset_x_limits(fac)
+        self.widget.plot.reset_x_limits(xmin, xmax, fac)
 
     def reset_y_limits(self, ymin=None, ymax=None, fac=1.0):
-        self.widget.plot.reset_y_limits(fac)
+        self.widget.plot.reset_y_limits(ymin, ymax, fac)
+
+    def set_limit(self, ix, value):
+        self.widget.plot.set_limit(ix, value)
+
+    def replot(self):
+        self.widget.plot.replot()
 
 class RtPlotter(PlotterBase):
 
-    def __init__(self, rtvalues, mzNotifier = None):
+    def __init__(self, mzNotifier = None):
         super(RtPlotter, self).__init__("RT", "I")
 
-        self.rtvalues = np.array(rtvalues)
+        
         self.mzNotifier = mzNotifier
 
-        self.minRT = np.min(self.rtvalues)
-        self.maxRT = self.minRT
 
         widget = self.widget
         widget.plot.__class__ = RtPlot
@@ -63,21 +69,29 @@ class RtPlotter(PlotterBase):
         self.pm.set_default_tool(t)
         t.activate()
 
+
+    def setRtValues(self, rtvalues):
+
+        self.rtvalues = rtvalues
+        self.minRT = np.min(rtvalues)
+        self.maxRT = self.minRT
+
         range_ = SnappingRangeSelection(self.minRT, self.maxRT, self.rtvalues)
         setupStyleRangeMarker(range_)
         self.range_ = range_
 
         # you have to register item to plot before you can register the rtSelectionHandler:
-        widget.plot.add_item(range_)
-        widget.connect(range_.plot(), SIG_RANGE_CHANGED, self.rangeSelectionHandler)
+        self.widget.plot.add_item(range_)
+        self.widget.connect(range_.plot(), SIG_RANGE_CHANGED, self.rangeSelectionHandler)
 
         cc = make.info_label("TR", [RtRangeSelectionInfo(range_)], title=None)
-        widget.plot.add_item(cc)
+        self.widget.plot.add_item(cc)
 
     def notifyMZ(self):
 
         if self.mzNotifier is not None:
             self.mzNotifier(self.minRT, self.maxRT)
+            
 
 
     def setRangeSelectionLimits(self, xleft, xright):

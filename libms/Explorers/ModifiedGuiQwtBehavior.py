@@ -154,6 +154,16 @@ class ModifiedCurvePlot(CurvePlot):
         return items[0]
 
 
+    def set_limit(self, ix, value):
+        limits = list(self.get_plot_limits())
+        print "limits before", limits
+        limits[ix] = value
+        print "limits after", limits
+        print
+        
+        self.set_plot_limits(*limits)
+
+
     def reset_x_limits(self, xmin=None, xmax=None, fac=1.0):
         xvals = []
         Delta = 0

@@ -24,6 +24,7 @@ class TableDialog(QDialog):
         self.table = table
 
         self.tw = QTableWidget()
+        self.tw.verticalHeader().setResizeMode(QHeaderView.ResizeToContents)
         self.setupLayout()
         self.populate()
 

@@ -120,7 +120,8 @@ class MzExplorer(QDialog):
         self.inputMZ.setText("%.6f" % mz)
 
     def setupPlotWidgets(self):
-        self.rtPlotter = RtPlotter(self.rts , self.plotMz)
+        self.rtPlotter = RtPlotter(self.plotMz)
+        self.rtPlotter.setRtValues(self.rts)
         self.mzPlotter = MzPlotter(self.peakmap, self.handleCPressed)
 
 

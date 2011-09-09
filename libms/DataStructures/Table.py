@@ -15,6 +15,16 @@ class Table(object):
 
         self.title = title
 
+    def requireColumn(self, name):
+        return name in self.colNames
+
+    def get(self, rowIdx, colName):
+        ix = self.colNames.index(colName)
+        return self.rows[rowIdx][ix]
+
+    def getIndex(self, colName):
+        return self.colNames.index(colName)
+
 
     def addColumn(self, name, type_, value=None):
         for row in self.rows:
