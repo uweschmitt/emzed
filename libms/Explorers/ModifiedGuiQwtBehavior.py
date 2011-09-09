@@ -134,7 +134,6 @@ class ModifiedCurvePlot(CurvePlot):
 
     def do_backspace_pressed(self, filter, evt):
         """ reset axes of plot """
-
         self.reset_x_limits()
 
     @memoize
@@ -151,7 +150,7 @@ class ModifiedCurvePlot(CurvePlot):
         return items[0]
 
 
-    def reset_x_limits(self):
+    def reset_x_limits(self, xmin=None, xmax=None, fac=1.0):
         xvals = []
         Delta = 0
         for item in self.items:
@@ -159,13 +158,40 @@ class ModifiedCurvePlot(CurvePlot):
                 x, _ = item.get_data()
                 xvals.extend(list(x))
 
-        xmin, xmax = min(xvals), max(xvals)
+        if xmin is None:
+            xmin = min(xvals)/fac
+        if xmax is None:
+            xmax = max(xvals)*fac
+        
         self.update_plot_xlimits(xmin, xmax)
+
+    def reset_y_limits(self, ymin=None, ymax=None, fac=1.0):
+        yvals = []
+        Delta = 0
+        for item in self.items:
+            if isinstance(item, CurveItem):
+                _, y = item.get_data()
+                yvals.extend(list(y))
+
+        if ymin is None:
+            ymin = min(yvals)/fac
+        if ymax is None:
+            ymax = max(yvals)*fac
+        
+        self.update_plot_ylimits(ymin, ymax)
 
     def update_plot_xlimits(self, xmin, xmax):
         _, _, ymin, ymax = self.get_plot_limits()
         self.set_plot_limits(xmin, xmax, ymin, ymax)
         self.setAxisAutoScale(self.yLeft) # y-achse
+        self.updateAxes()
+        self.replot()
+
+    def update_plot_ylimits(self, ymin, ymax):
+        xmin, xmax, _, _ = self.get_plot_limits()
+        self.set_plot_limits(xmin, xmax, ymin, ymax)
+        #self.setAxisAutoScale(self.yLeft) # y-achse
+
         self.updateAxes()
         self.replot()
 

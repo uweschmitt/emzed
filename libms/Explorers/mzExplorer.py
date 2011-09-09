@@ -48,8 +48,11 @@ class MzExplorer(QDialog):
 
 
     def updateChromatogram(self):
+
         min_, max_ = self.minMZ, self.maxMZ
+
         cc =[np.sum(spec.peaks[(spec.peaks[:,0] >= min_) * (spec.peaks[:,0] <= max_)][:, 1]) for spec in self.peakmap]
+
         self.chromatogram = np.array(cc)
 
 
@@ -60,8 +63,10 @@ class MzExplorer(QDialog):
 
     def selectButtonPressed(self):
         try:
-            self.minMZ=float(self.inputMin.text())
-            self.maxMZ=float(self.inputMax.text())
+            mz  = float(self.inputMZ.text())
+            w2  = float(self.inputW2.text())
+            self.minMZ= mz-w2
+            self.maxMZ= mz+w2
             self.mzPlotter.setXAxisLimits(self.minMZ, self.maxMZ)
             self.updateChromatogram()
             self.plotChromatogramm()
@@ -75,8 +80,10 @@ class MzExplorer(QDialog):
         self.minMZ = self.absMinMZ
         self.maxMZ = self.absMaxMZ
         self.mzPlotter.setXAxisLimits(self.minMZ, self.maxMZ)
-        self.inputMin.setText("%.6f" % self.absMinMZ)
-        self.inputMax.setText("%.6f" % self.absMaxMZ)
+        #mzentral = 0.5*(self.minMZ+self.maxMZ)
+        #w2 = 0.5*(self.maxMZ-self.minMZ)
+        #self.inputMZ.setText("%.6f" % mzentral)
+        #self.inputW2.setText("%.6f" % w2)
 
         self.updateChromatogram()
         self.plotChromatogramm()
@@ -89,9 +96,9 @@ class MzExplorer(QDialog):
 
         hlayout = QHBoxLayout()
         hlayout.addWidget(self.labelMin)
-        hlayout.addWidget(self.inputMin)
+        hlayout.addWidget(self.inputMZ)
         hlayout.addWidget(self.labelMax)
-        hlayout.addWidget(self.inputMax)
+        hlayout.addWidget(self.inputW2)
         hlayout.addWidget(self.selectButton)
         hlayout.addWidget(self.resetButton)
 
@@ -101,42 +108,17 @@ class MzExplorer(QDialog):
         vlayout.addWidget(self.mzPlotter.widget)
 
     def setupInputWidgets(self):
-        self.labelMin = QLabel("minrz")
-        self.labelMax = QLabel("maxrz")
-        self.inputMin = QLineEdit()
-        self.inputMax = QLineEdit()
+        self.labelMin = QLabel("mz")
+        self.labelMax = QLabel("w/2")
+        self.inputMZ = QLineEdit()
+        self.inputW2 = QLineEdit()
         self.selectButton = QPushButton()
         self.selectButton.setText("Select")
         self.resetButton = QPushButton()
         self.resetButton.setText("Reset")
 
-        self.inputMin.setText("%.6f" % self.absMinMZ)
-        self.inputMax.setText("%.6f" % self.absMaxMZ)
-
-
-
-        """
-        self.horizontalLayout = QtGui.QHBoxLayout()
-        self.horizontalLayout.setObjectName(_fromUtf8("horizontalLayout"))
-
-        self.label_2 = QtGui.QLabel(self.verticalLayoutWidget)
-        self.label_2.setObjectName(_fromUtf8("label_2"))
-        self.horizontalLayout.addWidget(self.label_2)
-        self.label = QtGui.QLabel(self.verticalLayoutWidget)
-        self.label.setObjectName(_fromUtf8("label"))
-        self.horizontalLayout.addWidget(self.label)
-        self.pushButton = QtGui.QPushButton(self.verticalLayoutWidget)
-        self.pushButton.setObjectName(_fromUtf8("pushButton"))
-        self.horizontalLayout.addWidget(self.pushButton)
-        self.lineEdit_2 = QtGui.QLineEdit(self.verticalLayoutWidget)
-        self.lineEdit_2.setObjectName(_fromUtf8("lineEdit_2"))
-        self.horizontalLayout.addWidget(self.lineEdit_2)
-        self.lineEdit = QtGui.QLineEdit(self.verticalLayoutWidget)
-        self.lineEdit.setObjectName(_fromUtf8("lineEdit"))
-        self.horizontalLayout.addWidget(self.lineEdit)
-
-        self.verticalLayout.addLayout(self.horizontalLayout)
-        """
+        #self.inputMZ.setText("%.6f" % self.absMinMZ)
+        self.inputW2.setText("0.05")
 
 
 
@@ -150,6 +132,7 @@ class MzExplorer(QDialog):
 
     def plotChromatogramm(self):
         self.rtPlotter.plot(self.chromatogram)
+        self.rtPlotter.reset_y_limits(ymin=0, fac=1.2)
 
     def plotMz(self, minRT = None, maxRT = None):
         

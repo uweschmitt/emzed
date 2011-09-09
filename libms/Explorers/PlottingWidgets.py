@@ -31,6 +31,12 @@ class PlotterBase(object):
     def setMinimumSize(self, a, b):
         self.widget.setMinimumSize(a,b)
 
+    def reset_x_limits(self, xmin=None, xmax=None, fac=1.0):
+        self.widget.plot.reset_x_limits(fac)
+
+    def reset_y_limits(self, ymin=None, ymax=None, fac=1.0):
+        self.widget.plot.reset_y_limits(fac)
+
 class RtPlotter(PlotterBase):
 
     def __init__(self, rtvalues, mzNotifier = None):
@@ -154,3 +160,4 @@ class MzPlotter(PlotterBase):
 
         self.curve.plot().updateAxes()
         self.curve.plot().replot()
+
