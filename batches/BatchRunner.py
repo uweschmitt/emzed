@@ -53,7 +53,7 @@ class BatchRunner(object):
             elif len(self.config) > 1:
                 config = ms.chooseConfig(self.config,  params)
             else:
-                config = self.config[0]
+                config = self.config[0][2]
 
             config.update(params)
 
@@ -71,6 +71,10 @@ class BatchRunner(object):
                 destinationDir = os.path.dirname(path)
             else:
                 destinationDir = destination
+                try:
+                    os.makedirs(destinationDir)
+                except:
+                    pass # verzeichnisse schon vorhanden
 
             self.write(result, destinationDir, path)
             if self.collectResults:
