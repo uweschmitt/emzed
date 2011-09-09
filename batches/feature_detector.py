@@ -1,4 +1,6 @@
 
+import libms.RConnect
+
 def runCentwave(pattern=None, destination=None, configid=None, **params):
 
     """
@@ -49,9 +51,9 @@ def runCentwave(pattern=None, destination=None, configid=None, **params):
 
     """
 
+
     from BatchRunner import BatchRunner
     import configs
-    import libms.RConnect
     import ms
     import os.path
 
@@ -86,6 +88,7 @@ def runCentwave(pattern=None, destination=None, configid=None, **params):
 
     return P(configs.centwaveConfig, True).run(pattern, destination, configid, **params)
             
+runCentwave.__doc__ += libms.RConnect.CentwaveFeatureDetector.__doc__
 
 def runMatchedFilter(pattern=None, destination=None, configid=None, **params):
 
@@ -139,7 +142,6 @@ def runMatchedFilter(pattern=None, destination=None, configid=None, **params):
 
     from BatchRunner import BatchRunner
     import configs
-    import libms.RConnect
     import ms
     import os.path
 
@@ -174,4 +176,6 @@ def runMatchedFilter(pattern=None, destination=None, configid=None, **params):
 
     return P(configs.matchedFilterConfig, True).run(pattern, destination, configid, **params)
             
+runMatchedFilter.__doc__ += libms.RConnect.MatchedFilterFeatureDetector.__doc__
 
+del libms.RConnect # avoid namepsace clutter
