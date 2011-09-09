@@ -7,10 +7,6 @@ import guidata
 import sys
 
 
-import guiqwt
-assert guiqwt.__version__ == "2.1.4"
-
-
 from PlottingWidgets import RtPlotter, MzPlotter
 import numpy as np
 
@@ -67,7 +63,7 @@ class MzExplorer(QDialog):
             w2  = float(self.inputW2.text())
             self.minMZ= mz-w2
             self.maxMZ= mz+w2
-            self.mzPlotter.setXAxisLimits(self.minMZ, self.maxMZ)
+            #self.mzPlotter.setXAxisLimits(self.minMZ, self.maxMZ)
             self.updateChromatogram()
             self.plotChromatogramm()
         except Exception, e:
@@ -79,7 +75,7 @@ class MzExplorer(QDialog):
     def resetMzLimits(self):
         self.minMZ = self.absMinMZ
         self.maxMZ = self.absMaxMZ
-        self.mzPlotter.setXAxisLimits(self.minMZ, self.maxMZ)
+        #self.mzPlotter.setXAxisLimits(self.minMZ, self.maxMZ)
         #mzentral = 0.5*(self.minMZ+self.maxMZ)
         #w2 = 0.5*(self.maxMZ-self.minMZ)
         #self.inputMZ.setText("%.6f" % mzentral)
