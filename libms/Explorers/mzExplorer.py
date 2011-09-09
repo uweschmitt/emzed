@@ -42,6 +42,9 @@ class MzExplorer(QDialog):
         self.setupLayout()
 
         self.plotChromatogramm()
+        self.rtPlotter.notifyMZ()
+
+        self.rtPlotter.setXAxisLimits(10, 20)
         
     def closeEvent(self, evt):
         pass
@@ -64,9 +67,6 @@ class MzExplorer(QDialog):
 
         self.rtPlotter.setMinimumSize(600, 300)
         self.mzPlotter.setMinimumSize(600, 300)
-
-        self.rtPlotter.refresh()
-
 
     def plotChromatogramm(self):
         self.rtPlotter.plot(self.chromatogram)

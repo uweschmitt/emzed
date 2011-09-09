@@ -20,19 +20,30 @@ class RtRangeSelectionInfo(ObjectInfo):
         else:
             return u"RT: %.3f" % rtmin
 
+class PlotterBase(object):
 
-class RtPlotter(object):
+    def __init__(self, xlabel, ylabel):
+        self.widget = CurveWidget(xlabel=xlabel, ylabel=ylabel)
 
-    def __init__(self, rtvalues, selectionNotifier = None):
+    def setXAxisLimits(self, xmin, xmax):
+        self.widget.plot.update_plot_xlimits(xmin, xmax)
+
+    def setMinimumSize(self, a, b):
+        self.widget.setMinimumSize(a,b)
+
+class RtPlotter(PlotterBase):
+
+    def __init__(self, rtvalues, mzNotifier = None):
+        super(RtPlotter, self).__init__("RT", "I")
+
         self.rtvalues = np.array(rtvalues)
-        self.selectionNotifier = selectionNotifier
+        self.mzNotifier = mzNotifier
 
         self.minRT = np.min(self.rtvalues)
         self.maxRT = self.minRT
 
-        widget = CurveWidget(xlabel="RT", ylabel="I")
+        widget = self.widget
         widget.plot.__class__ = RtPlot
-        self.widget = widget
 
         self.pm = PlotManager(widget)
         self.pm.add_plot(widget.plot)
@@ -48,27 +59,37 @@ class RtPlotter(object):
 
         range_ = SnappingRangeSelection(self.minRT, self.maxRT, self.rtvalues)
         setupStyleRangeMarker(range_)
+        self.range_ = range_
 
         # you have to register item to plot before you can register the rtSelectionHandler:
         widget.plot.add_item(range_)
-        widget.connect(range_.plot(), SIG_RANGE_CHANGED, self.selectionHandler)
+        widget.connect(range_.plot(), SIG_RANGE_CHANGED, self.rangeSelectionHandler)
 
         cc = make.info_label("TR", [RtRangeSelectionInfo(range_)], title=None)
         widget.plot.add_item(cc)
 
-    def refresh(self):
+    def notifyMZ(self):
 
-        if self.selectionNotifier is not None:
-            self.selectionNotifier(self.minRT, self.maxRT)
+        if self.mzNotifier is not None:
+            self.mzNotifier(self.minRT, self.maxRT)
 
 
-    def selectionHandler(self, obj, min_, max_):
-        self.minRT, self.maxRT = sorted((min_, max_))
-        if self.selectionNotifier is not None:
-            self.selectionNotifier(self.minRT, self.maxRT)
+    def setRangeSelectionLimits(self, xleft, xright):
+        self.range_.move_point_to(0, (xleft,0))  # left bar of range marker
+        self.range_.move_point_to(1, (xright,0)) # right bar
 
-    def setMinimumSize(self, a, b):
-        self.widget.setMinimumSize(a,b)
+    def setXAxisLimits(self, xmin, xmax):
+        super(RtPlotter, self).setXAxisLimits(xmin, xmax)
+        mid = 0.5*(xmin+xmax)
+        self.setRangeSelectionLimits(mid, mid)
+    
+    def setRtHighlightInterval(self, min_, max_):
+        self.minRT, self.maxRT = min_, max_
+        self.notifyMZ()
+
+    def rangeSelectionHandler(self, obj, min_, max_):
+        self.setRtHighlightInterval(*sorted((min_, max_)))
+
     
     def plot(self, chromatogram):
         self.curve.set_data(self.rtvalues, chromatogram)
@@ -88,16 +109,16 @@ class MzCursorInfo(ObjectInfo):
             txt += "<br/><br/>dmz=%.6f<br/>rI=%.3e" % (mz2-mz, I2/I)
         return txt
 
-class MzPlotter(object):
+class MzPlotter(PlotterBase):
 
     def __init__(self, peakmap):
+        super(MzPlotter, self).__init__("m/z", "I")
         self.peakmap = peakmap 
 
-        widget = CurveWidget(xlabel="m/z", ylabel="I")
+        widget = self.widget
 
         # inject mofified behaviour of wigets plot attribute:
         widget.plot.__class__ = MzPlot
-        self.widget = widget
 
 
         self.pm = PlotManager(widget)
@@ -127,8 +148,6 @@ class MzPlotter(object):
         widget.plot.add_item(label)
         widget.plot.add_item(line)
 
-    def setMinimumSize(self, a, b):
-        self.widget.setMinimumSize(a,b)
 
     def plot(self, peaks):
         self.curve.set_data(peaks[:, 0], peaks[:, 1])

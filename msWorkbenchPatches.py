@@ -8,7 +8,7 @@ from  spyderlib.widgets.externalshell.namespacebrowser import NamespaceBrowser
 from libms.intern_utils.patch_decorator import  replace, add
 
 import libms.pyOpenMS
-import libms.mzExplorer
+import libms.Explorers
 from  libms.gui.TableDialog import TableDialog
 import libms.DataStructures
 
@@ -29,7 +29,7 @@ def patch_oedit():
     def dialog_for(obj, obj_name):
 
         if isinstance(obj, libms.pyOpenMS.PeakMap):
-            dlg = libms.mzExplorer.MzExplorer()
+            dlg = libms.Explorers.MzExplorer()
             dlg.setup(obj)
             return dlg, lambda x: x
 
