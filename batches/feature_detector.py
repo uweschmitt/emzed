@@ -56,6 +56,7 @@ def runCentwave(pattern=None, destination=None, configid=None, **params):
     import configs
     import ms
     import os.path
+    import libms.RConnect
 
     class P(BatchRunner):
 
@@ -64,7 +65,6 @@ def runCentwave(pattern=None, destination=None, configid=None, **params):
 
         def process(self, path):
             
-
             try:
                 print "read ", path
                 ds = ms.loadMap(path)
@@ -144,6 +144,7 @@ def runMatchedFilter(pattern=None, destination=None, configid=None, **params):
     import configs
     import ms
     import os.path
+    import libms.RConnect
 
     class P(BatchRunner):
 
@@ -151,7 +152,6 @@ def runMatchedFilter(pattern=None, destination=None, configid=None, **params):
             self.det = libms.RConnect.MatchedFilterFeatureDetector(**config)
 
         def process(self, path):
-            
 
             try:
                 print "read ", path
