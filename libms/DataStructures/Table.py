@@ -64,9 +64,17 @@ class Table(object):
 class FeatureTable(Table):
 
     def __init__(self, ds, colNames, colTypes, rows = None, colFormats = None, title=None):
-        super(FeatureTable, self).__init__(colNames, colTypes, rows, colFormats, title)
+        super(FeatureTable, self).__init__(colNames=colNames, 
+                                           colTypes=colTypes, 
+                                           rows=rows, 
+                                           colFormats=colFormats, 
+                                           title=title)
         self.ds = ds
 
     @staticmethod
     def fromTableAndMap(table, ds):
-        return FeatureTable(ds, table.colNames, table.colTypes, table.rows, table.colNames, table.title) 
+        return FeatureTable(ds, colNames=table.colNames,
+                                colTypes=table.colTypes, 
+                                rows=table.rows, 
+                                colFormats=table.colFormats, 
+                                title=table.title) 
