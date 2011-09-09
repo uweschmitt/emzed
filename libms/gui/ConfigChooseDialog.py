@@ -28,12 +28,16 @@ class ConfigChooseDialog(QDialog):
         self.result = None
 
         self.connect(self.tw, SIGNAL("cellClicked(int,int)"), self.clicked)
-        
+        self.connect(self.tw.verticalHeader(), SIGNAL("sectionClicked(int)"), self.rowClicked)
 
-    def clicked(self, row, col):
+
+    def rowClicked(self, row):
         self.result = self.configs[row][2]
         self.result.update(self.params)
         self.accept()
+        
+    def clicked(self, row, col):
+        self.rowClicked(row)
 
        
     def setupLayout(self):
