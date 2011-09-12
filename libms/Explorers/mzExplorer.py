@@ -26,7 +26,7 @@ class MzExplorer(QDialog):
 
         self.resetMzLimits()
         self.plotChromatogramm()
-        self.rtPlotter.notifyMZ()
+        self.plotMz()
 
     def closeEvent(self, evt):
         pass
@@ -42,15 +42,11 @@ class MzExplorer(QDialog):
         self.maxMZ = self.absMaxMZ
         self.updateChromatogram()
 
-
     def updateChromatogram(self):
 
         min_, max_ = self.minMZ, self.maxMZ
-
         cc =[np.sum(spec.peaks[(spec.peaks[:,0] >= min_) * (spec.peaks[:,0] <= max_)][:, 1]) for spec in self.peakmap]
-
         self.chromatogram = np.array(cc)
-
 
     def connectSignalsAndSlots(self):
 
@@ -75,16 +71,10 @@ class MzExplorer(QDialog):
     def resetMzLimits(self):
         self.minMZ = self.absMinMZ
         self.maxMZ = self.absMaxMZ
-        #self.mzPlotter.setXAxisLimits(self.minMZ, self.maxMZ)
-        #mzentral = 0.5*(self.minMZ+self.maxMZ)
-        #w2 = 0.5*(self.maxMZ-self.minMZ)
-        #self.inputMZ.setText("%.6f" % mzentral)
-        #self.inputW2.setText("%.6f" % w2)
 
         self.updateChromatogram()
         self.plotChromatogramm()
     
-        
 
     def setupLayout(self):
         vlayout = QVBoxLayout()
@@ -113,7 +103,6 @@ class MzExplorer(QDialog):
         self.resetButton = QPushButton()
         self.resetButton.setText("Reset")
 
-        #self.inputMZ.setText("%.6f" % self.absMinMZ)
         self.inputW2.setText("0.05")
 
     def handleCPressed(self, (mz, I)):
@@ -128,24 +117,25 @@ class MzExplorer(QDialog):
         self.rtPlotter.setMinimumSize(600, 300)
         self.mzPlotter.setMinimumSize(600, 300)
 
+        self.rtPlotter.setRangeSelectionLimits(self.rts[0], self.rts[0])
+
     def plotChromatogramm(self):
         self.rtPlotter.plot(self.chromatogram)
-        self.rtPlotter.reset_y_limits(ymin=0, fac=1.2)
+        self.rtPlotter.replot()
+        self.rtPlotter.setYAxisLimits(0, max(self.chromatogram)*1.1)
 
-    def plotMz(self, minRT = None, maxRT = None):
+    def plotMz(self):
+
+        minRT = self.rtPlotter.minRTRangeSelected
+        maxRT = self.rtPlotter.maxRTRangeSelected
         
         if minRT is not None:
             peaks = np.vstack(( s.peaks for s in self.peakmap if minRT <= s.RT <= maxRT ))
         else:
             peaks = np.vstack(( s.peaks for s in self.peakmap ))
 
-        # not sure if sortin speeds up ?
-        #perm = np.argsort(peaks[:,0])
-        #peaks = peaks[perm,:]
         self.mzPlotter.plot(peaks)
-
-
-
+        self.mzPlotter.replot()
 
     
 

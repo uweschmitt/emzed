@@ -1,7 +1,5 @@
 from guiqwt.config import CONF
 
-__author__ = 'Administrator'
-
 def setupCommonStyle(line, marker):
 
    markerSymbol = "Ellipse" # in this case a circle, because we give only one size parameter.

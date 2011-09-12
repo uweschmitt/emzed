@@ -3,7 +3,7 @@ from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QPainter
 from guiqwt.curve import CurvePlot, CurveItem
 from guiqwt.events import ObjectHandler, KeyEventMatch, setup_standard_tool_filter, QtDragHandler
-from guiqwt.signals import SIG_MOVE, SIG_START_TRACKING, SIG_STOP_NOT_MOVING, SIG_STOP_MOVING, SIG_RANGE_CHANGED
+from guiqwt.signals import *
 from guiqwt.tools import InteractiveTool
 
 from guiqwt.shapes import Marker, SegmentShape, XRangeSelection
@@ -113,6 +113,7 @@ class MzSelectionTool(InteractiveTool):
         self.connect(handler, SIG_STOP_NOT_MOVING, baseplot.stop_drag_mode)
         self.connect(handler, SIG_STOP_MOVING, baseplot.stop_drag_mode)
 
+        #self.connect(handler, SIGNAL("doubleClicked()"), baseplot.do_c_pressed)
         return setup_standard_tool_filter(filter, start_state)
 
 
@@ -156,10 +157,7 @@ class ModifiedCurvePlot(CurvePlot):
 
     def set_limit(self, ix, value):
         limits = list(self.get_plot_limits())
-        print "limits before", limits
         limits[ix] = value
-        print "limits after", limits
-        print
         
         self.set_plot_limits(*limits)
 
@@ -191,7 +189,7 @@ class ModifiedCurvePlot(CurvePlot):
             ymin = min(yvals)/fac
         if ymax is None:
             ymax = max(yvals)*fac
-        
+
         self.update_plot_ylimits(ymin, ymax)
 
     def update_plot_xlimits(self, xmin, xmax):
@@ -204,8 +202,6 @@ class ModifiedCurvePlot(CurvePlot):
     def update_plot_ylimits(self, ymin, ymax):
         xmin, xmax, _, _ = self.get_plot_limits()
         self.set_plot_limits(xmin, xmax, ymin, ymax)
-        #self.setAxisAutoScale(self.yLeft) # y-achse
-
         self.updateAxes()
         self.replot()
 
@@ -232,7 +228,7 @@ class RtPlot(ModifiedCurvePlot):
         mid = (xmin + xmax) / 2.0
 
         item = self.get_unique_item(SnappingRangeSelection)
-        item.move_point_to(0, (mid, 0), None)
+        item.move_point_to(0, (mid, 0), None, emitsignal=False)
         item.move_point_to(1, (mid, 0), None)
         filter.plot.replot()
 
@@ -288,6 +284,8 @@ class MzPlot(ModifiedCurvePlot):
     def next_peak_to(self, mz, I):
         item = self.get_unique_item(CurveItem)
         mzs, Is = item.get_data()
+        if len(mzs)==0:
+            return mz, I
         # as xs and ys are on different scales we have to normalize distances
         mzmin, mzmax, Imin, Imax = self.get_plot_limits()
         mzs_scaled = (mzs - mz) / (mzmax - mzmin)
@@ -425,25 +423,33 @@ class SnappingRangeSelection(XRangeSelection):
 
         return np.sort(np.hstack(xvals))
 
-        # TODO: hit_test ?!?!??!
 
-    def move_point_to(self, hnd, pos, ctrl=None):
-        val, y = pos
+    def move_point_to(self, hnd, pos, ctrl=True, emitsignal=True):
         xvals = self.get_xvals()
-
+        x,y = pos
+    
         # modify pos to the next x-value
-        # may be binary search for val in xvals ? -> cython
-        #imin = np.searchsorted(xvals, val)
-        imin = np.argmin(np.fabs(val-xvals))
-        pos = xvals[imin], y
+        # fast enough
+        if len(xvals) > 0:
+            val, y = pos
+            imin = np.argmin(np.fabs(val-xvals))
+            x = xvals[imin]
 
         if self._min == self._max and not ctrl:
-            XRangeSelection.move_point_to(self, 0, pos, ctrl)
-            XRangeSelection.move_point_to(self, 1, pos, ctrl)
+            self._min = x
+            self._max = x
         else:
-            XRangeSelection.move_point_to(self, hnd, pos, ctrl)
+            if hnd == 0:
+                self._min = x
+            elif hnd == 1:
+                self._max =  x
+            elif hnd == 2:
+                move = val-(self._max+self._min)/2
+                self._min += move
+                self._max += move
 
-        self.plot().emit(SIG_RANGE_CHANGED, self, self._min, self._max)
+        if emitsignal:
+            self.plot().emit(SIG_RANGE_CHANGED, self, self._min, self._max)
 
     def get_neighbour_xvals(self, x):
         """ used for moving boundaries """

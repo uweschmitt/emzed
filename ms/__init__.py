@@ -2,7 +2,7 @@ from load_utils import *
 from save_utils import *
 from custom_dialogs import *
 
-from libms.Explorers       import inspectMap
+from libms.Explorers       import inspectMap, inspectFeatures
 from libms.gui.TableDialog import showTable
 
 # remove namespace clutter

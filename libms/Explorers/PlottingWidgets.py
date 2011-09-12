@@ -30,6 +30,9 @@ class PlotterBase(object):
     def setXAxisLimits(self, xmin, xmax):
         self.widget.plot.update_plot_xlimits(xmin, xmax)
 
+    def setYAxisLimits(self, ymin, ymax):
+        self.widget.plot.update_plot_ylimits(ymin, ymax)
+
     def setMinimumSize(self, a, b):
         self.widget.setMinimumSize(a,b)
 
@@ -47,11 +50,11 @@ class PlotterBase(object):
 
 class RtPlotter(PlotterBase):
 
-    def __init__(self, mzNotifier = None):
+    def __init__(self, rangeSelectionCallback = None):
         super(RtPlotter, self).__init__("RT", "I")
 
         
-        self.mzNotifier = mzNotifier
+        self.rangeSelectionCallback = rangeSelectionCallback
 
 
         widget = self.widget
@@ -69,14 +72,17 @@ class RtPlotter(PlotterBase):
         self.pm.set_default_tool(t)
         t.activate()
 
+        self.minRTRangeSelected = None
+        self.maxRTRangeSelected = None
+
 
     def setRtValues(self, rtvalues):
 
         self.rtvalues = rtvalues
-        self.minRT = np.min(rtvalues)
-        self.maxRT = self.minRT
+        self.minRTRangeSelected = 0 
+        self.maxRTRangeSelected = 0 
 
-        range_ = SnappingRangeSelection(self.minRT, self.maxRT, self.rtvalues)
+        range_ = SnappingRangeSelection(self.minRTRangeSelected, self.maxRTRangeSelected, self.rtvalues)
         setupStyleRangeMarker(range_)
         self.range_ = range_
 
@@ -87,32 +93,29 @@ class RtPlotter(PlotterBase):
         cc = make.info_label("TR", [RtRangeSelectionInfo(range_)], title=None)
         self.widget.plot.add_item(cc)
 
-    def notifyMZ(self):
-
-        if self.mzNotifier is not None:
-            self.mzNotifier(self.minRT, self.maxRT)
-            
-
-
     def setRangeSelectionLimits(self, xleft, xright):
-        self.range_.move_point_to(0, (xleft,0))  # left bar of range marker
-        self.range_.move_point_to(1, (xright,0)) # right bar
+        self.minRTRangeSelected = xleft
+        self.maxRTRangeSelected = xright
+        self.range_.move_point_to(0, (xleft,0), emitsignal=False)  # left and right bar of range marker
+        self.range_.move_point_to(1, (xright,0))  # left and right bar of range marker
+        # calls self.rangeSelectionHandler !
 
     def setXAxisLimits(self, xmin, xmax):
         super(RtPlotter, self).setXAxisLimits(xmin, xmax)
         mid = 0.5*(xmin+xmax)
-        self.setRangeSelectionLimits(mid, mid)
+        #self.setRangeSelectionLimits(mid, mid)
     
-    def setRtHighlightInterval(self, min_, max_):
-        self.minRT, self.maxRT = min_, max_
-        self.notifyMZ()
-
-    def rangeSelectionHandler(self, obj, min_, max_):
-        self.setRtHighlightInterval(*sorted((min_, max_)))
-
+    def rangeSelectionHandler(self, obj, left, right):
+        min_, max_ = sorted((left, right))
+        self.minRTRangeSelected = min_
+        self.maxRTRangeSelected = max_
+        if self.rangeSelectionCallback is not None:
+            self.rangeSelectionCallback()
     
     def plot(self, chromatogram):
         self.curve.set_data(self.rtvalues, chromatogram)
+
+    def replot(self): 
         self.curve.plot().replot()
        
 
@@ -131,7 +134,7 @@ class MzCursorInfo(ObjectInfo):
 
 class MzPlotter(PlotterBase):
 
-    def __init__(self, peakmap, c_callback):
+    def __init__(self, peakmap, c_callback=None):
         super(MzPlotter, self).__init__("m/z", "I")
         self.peakmap = peakmap 
 
@@ -172,10 +175,9 @@ class MzPlotter(PlotterBase):
         widget.plot.add_item(line)
 
     def handle_c_pressed(self, p):
-        self.c_callback(p)
+        if self.c_callback:
+            self.c_callback(p)
         
-
-
     def plot(self, peaks):
         self.curve.set_data(peaks[:, 0], peaks[:, 1])
 

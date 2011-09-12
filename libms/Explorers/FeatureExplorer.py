@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from PyQt4.QtGui import  QVBoxLayout, QDialog, QPainter, QMainWindow, QLabel, QLineEdit, QPushButton, QHBoxLayout, QTableWidget, QTableWidgetItem, QHeaderView, QSizePolicy
-from PyQt4.QtCore import Qt, SIGNAL
+from PyQt4.QtGui import  *
+from PyQt4.QtCore import *
 
 import guidata
 import sys
@@ -21,14 +21,14 @@ class FeatureExplorer(QDialog):
         self.ftable = ftable.restrictToColumns("mz", "mzmin", "mzmax", "rt", "rtmin", "rtmax", "into", "intb", "intf", "sn")
 
         self.rts = [ spec.RT for spec in ftable.ds.specs ]
-        self.minRt = min(self.rts)
-        self.maxRt = max(self.rts)
+        self.maxRT = max(self.rts)
 
         self.setupWidgets()
         self.setupLayout()
         self.populateTable()
+        self.setWindowSize() # depends on table size
 
-        self.rtPlotter.notifyMZ()
+        self.plotMz()
 
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.setSizePolicy(sizePolicy)
@@ -58,6 +58,8 @@ class FeatureExplorer(QDialog):
         
         # adjust height of rows (normaly reduces size to a reasonable value)
         self.tw.verticalHeader().setResizeMode(QHeaderView.ResizeToContents)
+
+    def setWindowSize(self):
 
         # the following three steps 1)-3) set the dialog window to an optimal width
         # 
@@ -97,19 +99,20 @@ class FeatureExplorer(QDialog):
         self.setLayout(vlayout)
 
         hlayout = QHBoxLayout()
-        hlayout.addWidget(self.mzPlotter.widget)
         hlayout.addWidget(self.rtPlotter.widget)
+        hlayout.addWidget(self.mzPlotter.widget)
 
         vlayout.addLayout(hlayout)
 
         vlayout.addWidget(self.tw)
 
     def setupWidgets(self):
+
         self.rtPlotter = RtPlotter(self.plotMz)
         rts = [ spec.RT for spec in self.ftable.ds.specs ]
         self.rtPlotter.setRtValues(rts)
 
-        self.mzPlotter = MzPlotter(self.ftable.ds, None)
+        self.mzPlotter = MzPlotter(self.ftable.ds)
 
         self.rtPlotter.setMinimumSize(300, 250)
         self.mzPlotter.setMinimumSize(300, 250)
@@ -119,70 +122,65 @@ class FeatureExplorer(QDialog):
         self.connect(self.tw.verticalHeader(), SIGNAL("sectionClicked(int)"), self.rowClicked)
         self.connect(self.tw, SIGNAL("cellClicked(int, int)"), self.cellClicked)
 
-    def plotMz(self, minRT = None, maxRT = None):
+    def plotMz(self):
+
+        minRT=self.rtPlotter.minRTRangeSelected
+        maxRT=self.rtPlotter.maxRTRangeSelected
+
+        peaks = [spec.peaks for spec in self.ftable.ds.specs if minRT <= spec.RT <= maxRT ]
+        if len(peaks):
+            peaks = np.vstack( peaks )
+            self.mzPlotter.plot(peaks)
+            self.mzPlotter.replot()
+
         
-        if minRT is not None:
-            peaks = np.vstack(( s.peaks for s in self.ftable.ds if minRT <= s.RT <= maxRT ))
-        else:
-            peaks = np.vstack(( s.peaks for s in self.ftable.ds ))
-
-        # not sure if sortin speeds up ?
-        #perm = np.argsort(peaks[:,0])
-        #peaks = peaks[perm,:]
-        self.mzPlotter.plot(peaks)
-
     def cellClicked(self, rowIdx, colIdx):
         name = self.ftable.colNames[colIdx]
         item = self.tw.currentItem()
 
-        mzmin = float(self.tw.item(rowIdx, self.ftable.getIndex("mzmin")).text())
-        mzmax = float(self.tw.item(rowIdx, self.ftable.getIndex("mzmax")).text())
-        rt    = float(self.tw.item(rowIdx, self.ftable.getIndex("rt")).text())
-        rtmin = float(self.tw.item(rowIdx, self.ftable.getIndex("rtmin")).text())
-        rtmax = float(self.tw.item(rowIdx, self.ftable.getIndex("rtmax")).text())
 
-        if name == "mz" or name == "mzmin" or name == "mzmax" :
-            self.mzPlotter.reset_x_limits(mzmin, mzmax)
-            self.mzPlotter.reset_y_limits()
-        elif name == "rt" or name == "rtmin" or name == "rtmax" :
-            self.rtPlotter.reset_x_limits(rtmin, rtmax)
-            if name == "rtmin":
-                self.rtPlotter.setRangeSelectionLimits(rtmin, rtmin)
-            elif name == "rtmax":
-                self.rtPlotter.setRangeSelectionLimits(rtmax, rtmax)
-            elif name == "rt":
-                self.rtPlotter.setRangeSelectionLimits(rt, rt)
+        if name.startswith("mz"):
+            mzmin = float(self.tw.item(rowIdx, self.ftable.getIndex("mzmin")).text())
+            mzmax = float(self.tw.item(rowIdx, self.ftable.getIndex("mzmax")).text())
+            self.mzPlotter.setXAxisLimits(mzmin-0.002, mzmax+0.002)
 
-        # RangeSelection Limits: snap dings spinnt ß?? -> Fehlermedlung COnsole
-        # TODO: setRangeSelectionLImits mit breite > 0
+            # update y-range
+            minRT = self.rtPlotter.minRTRangeSelected
+            maxRT = self.rtPlotter.maxRTRangeSelected
+            specs = [spec for spec in self.ftable.ds.specs if minRT <= spec.RT <= maxRT ]
+            peaks = np.vstack([ spec.peaks[ (spec.peaks[:,0] >= mzmin) * (spec.peaks[:,0] <= mzmax) ] for spec in self.ftable.ds.specs ])
+            maxIntensity =  max(peaks[:,1])
+            self.mzPlotter.setYAxisLimits(0, maxIntensity*1.1)
+
+        elif name.startswith("rtm"):  # rtmin or rtmax
+            rtmin = float(self.tw.item(rowIdx, self.ftable.getIndex("rtmin")).text())
+            rtmax = float(self.tw.item(rowIdx, self.ftable.getIndex("rtmax")).text())
+            self.rtPlotter.setRangeSelectionLimits(rtmin, rtmax)
+            self.rtPlotter.replot()
+
+        elif name.startswith("rt"):  #  rt
+            rt= float(self.tw.item(rowIdx, self.ftable.getIndex("rt")).text())
+            self.rtPlotter.setRangeSelectionLimits(rt, rt)
+            self.rtPlotter.replot()
 
     def rowClicked(self, rowIdx):
 
         mzmin = float(self.tw.item(rowIdx, self.ftable.getIndex("mzmin")).text())
         mzmax = float(self.tw.item(rowIdx, self.ftable.getIndex("mzmax")).text())
-        #rtmin = float(self.tw.item(rowIdx, self.ftable.getIndex("rtmin")).text())
-        #rtmax = float(self.tw.item(rowIdx, self.ftable.getIndex("rtmax")).text())
-    
-        #specs = [ spec for spec in self.ftable.ds.specs if rtmin <= spec.RT <= rtmax ]
-        
+        rt    = float(self.tw.item(rowIdx, self.ftable.getIndex("rt")).text())
+
         peaks = [ spec.peaks[ (spec.peaks[:,0] >= mzmin) * (spec.peaks[:,0] <= mzmax) ] for spec in self.ftable.ds.specs ]
 
         chromatogram = [ np.sum(peak[:,1]) for peak in peaks ]
         self.rtPlotter.plot(chromatogram)
-        self.rtPlotter.reset_x_limits(self.minRt, self.maxRt)
-        self.rtPlotter.reset_y_limits(0, max(chromatogram)*1.1)
-        #self.rtPlotter.widget.plot.replot()
 
-        # TODO: update_plot_xlimist  vs reset_xlimits ...
+        self.rtPlotter.setXAxisLimits(0, self.maxRT)
+        self.rtPlotter.setRangeSelectionLimits(rt, rt)
+        self.rtPlotter.replot()
 
         
 
-
-
-    
-
-
-def show(ftable):
+def inspectFeatures(ftable):
 
     assert ftable.requireColumn("mz")
     assert ftable.requireColumn("mzmin")

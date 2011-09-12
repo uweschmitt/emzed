@@ -73,7 +73,7 @@ class XCMSFeatureParser(object):
 
     formatDefaults = dict( mz= "%10.5f", mzmin= "%10.5f", mzmax= "%10.5f",
                            rt= "%6.2f", rtmin= "%6.2f", rtmax= "%6.2f",
-                           into= "%.2e", intb= "%.2e",
+                           into= "%.2e", intb= "%.2e", intf="%.2e",
                            maxo= "%.2e", sn= "%5.1f",
                            sample= "%2d" )
 
