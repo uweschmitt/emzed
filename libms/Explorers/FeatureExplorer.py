@@ -17,7 +17,8 @@ class FeatureExplorer(QDialog):
     def __init__(self, ftable):
         QDialog.__init__(self)
         self.setWindowFlags(Qt.Window)
-        self.ftable = ftable
+
+        self.ftable = ftable.restrictToColumns("mz", "mzmin", "mzmax", "rt", "rtmin", "rtmax", "into", "intb", "intf", "sn")
 
         self.rts = [ spec.RT for spec in ftable.ds.specs ]
         self.minRt = min(self.rts)
@@ -36,16 +37,14 @@ class FeatureExplorer(QDialog):
     def populateTable(self):
 
         self.tw.clear()
-        self.tw.setSortingEnabled(False)
 
         self.tw.setRowCount(len(self.ftable.rows))
     
-        self.tw.horizontalHeader().setStretchLastSection(True)
-        #self.tw.horizontalHeader().setResizeMode(QHeaderView.Stretch)
-
         headers = self.ftable.colNames
         self.tw.setColumnCount(len(headers))
         self.tw.setHorizontalHeaderLabels(headers)
+
+        self.tw.setSortingEnabled(False)  # needs to be done before filling the table
 
         for i, row in enumerate(self.ftable.rows):
             for j, (value, format_) in enumerate(zip(row, self.ftable.colFormats)):
@@ -54,14 +53,40 @@ class FeatureExplorer(QDialog):
                 font.setFamily("Courier")
                 item.setFont(font)
                 self.tw.setItem(i, j, item)
-
+       
+        self.tw.setSortingEnabled(True)
+        
+        # adjust height of rows (normaly reduces size to a reasonable value)
         self.tw.verticalHeader().setResizeMode(QHeaderView.ResizeToContents)
 
- 
-        self.tw.setSortingEnabled(True)
-        self.tw.setMinimumHeight(500)
+        # the following three steps 1)-3) set the dialog window to an optimal width
+        # 
+        # large table:
+        #              - shrink columns witdts's as much as possible (step 1) 
+        #              - table gives minimal width in step 2)
+        #              - step 3: table columns are stretched to fit the windows width,
+        #                this is a no op in this case, due to 1) and 2)
+        #
+        # small table:
+        #              - shrink columns witdths's as much as possible (step 1) 
+        #              - plots sizes shadow minimal width in step 2)
+        #              - step 3: table columns are stretched to fit the windows width,
+        #                this undoes step 1
 
+        # 1) make columns as small as possible 
+        #    might shrink too much, therefore step 3
+        self.tw.resizeColumnsToContents()
+ 
+        # 2) make windows size fit to tables size
+        #    big table -> expand window
+        #    small table: plots give mim
         self.setMinimumWidth(helpers.widthOfTableWidget(self.tw))
+
+        # 3) now stretch table if needed (plottings dictate a minmum size of the
+        #    window, 2) only sets *mimumum* size)
+        self.tw.horizontalHeader().setResizeMode(QHeaderView.Stretch)
+
+        self.tw.setMinimumHeight(300)
 
     def closeEvent(self, evt):
         pass
@@ -86,8 +111,8 @@ class FeatureExplorer(QDialog):
 
         self.mzPlotter = MzPlotter(self.ftable.ds, None)
 
-        self.rtPlotter.setMinimumSize(300, 300)
-        self.mzPlotter.setMinimumSize(300, 300)
+        self.rtPlotter.setMinimumSize(300, 250)
+        self.mzPlotter.setMinimumSize(300, 250)
 
         self.tw = QTableWidget()
 

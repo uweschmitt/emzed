@@ -25,6 +25,25 @@ class Table(object):
     def getIndex(self, colName):
         return self.colNames.index(colName)
 
+    def restrictToColumns(self, *names):
+        
+        colIndizes = []
+        for i, colName in enumerate(self.colNames):
+            if colName in names:
+                colIndizes.append(i)
+
+        # rebuilt, as there may be names in *names which
+        # are not present in this table
+        colNames = [ self.colNames[i] for i in colIndizes ]
+
+        colTypes = [ self.colTypes[i] for i in colIndizes ]
+        colFormats= [ self.colFormats[i] for i in colIndizes ]
+        
+        rows = [ [ row[i] for i in colIndizes ] for row in self.rows ]
+
+        return Table(colNames, colTypes, rows, colFormats, self.title)
+
+
 
     def addColumn(self, name, type_, value=None):
         for row in self.rows:
@@ -80,6 +99,12 @@ class FeatureTable(Table):
                                            colFormats=colFormats, 
                                            title=title)
         self.ds = ds
+
+
+    def restrictToColumns(self, *colnames):
+        rv = super(FeatureTable, self).restrictToColumns(*colnames)
+        rv.ds = self.ds
+        return rv
 
     @staticmethod
     def fromTableAndMap(table, ds):
