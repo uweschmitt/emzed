@@ -12,6 +12,25 @@ from ..gui import helpers
 from PlottingWidgets import RtPlotter, MzPlotter
 import numpy as np
 
+class NumericQTableWidgetItem(QTableWidgetItem):
+
+    """ using this sublcass allows sorting columns in QTableWidget based on
+        their numerical value 
+    """
+
+
+    def __init__(self, *a, **kw):
+        super(NumericQTableWidgetItem, self).__init__(*a, **kw)
+
+
+    def __lt__(self, other):
+        try:
+            return float(self.text()) <= float(other.text())
+        except:
+            return self.text() <= other.text()
+
+
+
 class FeatureExplorer(QDialog):
 
     def __init__(self, ftable):
@@ -48,7 +67,9 @@ class FeatureExplorer(QDialog):
 
         for i, row in enumerate(self.ftable.rows):
             for j, (value, format_) in enumerate(zip(row, self.ftable.colFormats)):
-                item = QTableWidgetItem(format_ % value)
+                item = NumericQTableWidgetItem(format_ % value)
+                item.setData(Qt.UserRole, value)
+                item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
                 font = item.font()
                 font.setFamily("Courier")
                 item.setFont(font)
@@ -140,8 +161,8 @@ class FeatureExplorer(QDialog):
 
 
         if name.startswith("mz"):
-            mzmin = float(self.tw.item(rowIdx, self.ftable.getIndex("mzmin")).text())
-            mzmax = float(self.tw.item(rowIdx, self.ftable.getIndex("mzmax")).text())
+            mzmin = self.tw.item(rowIdx, self.ftable.getIndex("mzmin")).data(Qt.UserRole).toFloat()[0]
+            mzmax = self.tw.item(rowIdx, self.ftable.getIndex("mzmax")).data(Qt.UserRole).toFloat()[0]
             self.mzPlotter.setXAxisLimits(mzmin-0.002, mzmax+0.002)
 
             # update y-range
@@ -153,21 +174,21 @@ class FeatureExplorer(QDialog):
             self.mzPlotter.setYAxisLimits(0, maxIntensity*1.1)
 
         elif name.startswith("rtm"):  # rtmin or rtmax
-            rtmin = float(self.tw.item(rowIdx, self.ftable.getIndex("rtmin")).text())
-            rtmax = float(self.tw.item(rowIdx, self.ftable.getIndex("rtmax")).text())
+            rtmin = self.tw.item(rowIdx, self.ftable.getIndex("rtmin")).data(Qt.UserRole).toFloat()[0]
+            rtmax = self.tw.item(rowIdx, self.ftable.getIndex("rtmax")).data(Qt.UserRole).toFloat()[0]
             self.rtPlotter.setRangeSelectionLimits(rtmin, rtmax)
             self.rtPlotter.replot()
 
         elif name.startswith("rt"):  #  rt
-            rt= float(self.tw.item(rowIdx, self.ftable.getIndex("rt")).text())
+            rt= self.tw.item(rowIdx, self.ftable.getIndex("rt")).data(Qt.UserRole).toFloat()[0]
             self.rtPlotter.setRangeSelectionLimits(rt, rt)
             self.rtPlotter.replot()
 
     def rowClicked(self, rowIdx):
 
-        mzmin = float(self.tw.item(rowIdx, self.ftable.getIndex("mzmin")).text())
-        mzmax = float(self.tw.item(rowIdx, self.ftable.getIndex("mzmax")).text())
-        rt    = float(self.tw.item(rowIdx, self.ftable.getIndex("rt")).text())
+        mzmin = self.tw.item(rowIdx, self.ftable.getIndex("mzmin")).data(Qt.UserRole).toFloat()[0]
+        mzmax = self.tw.item(rowIdx, self.ftable.getIndex("mzmax")).data(Qt.UserRole).toFloat()[0]
+        rt    = self.tw.item(rowIdx, self.ftable.getIndex("rt")).data(Qt.UserRole).toFloat()[0]
 
         peaks = [ spec.peaks[ (spec.peaks[:,0] >= mzmin) * (spec.peaks[:,0] <= mzmax) ] for spec in self.ftable.ds.specs ]
 
