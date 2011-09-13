@@ -4,8 +4,11 @@ from  spyderlib.widgets import objecteditor
 from  spyderlib.widgets import dicteditorutils
 from  spyderlib.widgets.dicteditor import RemoteDictEditorTableView
 from  spyderlib.widgets.externalshell.namespacebrowser import NamespaceBrowser
+from  spyderlib.widgets.externalshell.monitor import REMOTE_SETTINGS
+
 
 from libms.intern_utils.patch_decorator import  replace, add
+
 
 import libms.pyOpenMS
 import libms.Explorers
@@ -80,6 +83,22 @@ def patch_spyder():
         self.editor.is_peakmap = self.is_peakmap
         self.editor.is_table = self.is_table
         self.editor.is_featureTable = self.is_featureTable
+
+    @add(NamespaceBrowser, verbose=True)
+    def get_remote_view_settings(self):
+        """Return dict editor view settings for the remote process,
+        but return None if this namespace browser is not visible (no need 
+        to refresh an invisible widget...)"""
+        if self.is_visible and self.isVisible():
+            return self.get_view_settings()
+        
+    @add(NamespaceBrowser, verbose=True)
+    def get_view_settings(self):
+        """Return dict editor view settings"""
+        settings = {}
+        for name in REMOTE_SETTINGS:
+            settings[name] = getattr(self, name)
+        return settings
 
     patch_startup_file()
 
