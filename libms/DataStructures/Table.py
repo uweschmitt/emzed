@@ -20,7 +20,8 @@ class Table(object):
         return iter(self.rows)
 
     def __getitem__(self, ix):
-        return self.rows.__getitem__(ix)
+        rows = self.rows.__getitem__(ix)
+        return Table(self.colNames, self.colTypes, rows, self.colFormats, self.title)
 
     def requireColumn(self, name):
         return name in self.colNames
@@ -113,8 +114,18 @@ class FeatureTable(Table):
                                            rows=rows, 
                                            colFormats=colFormats, 
                                            title=title)
+        self.requireColumn("mzmin")
+        self.requireColumn("mzmax")
+        self.requireColumn("mz")
+        self.requireColumn("rt")
+        self.requireColumn("rtmax")
+        self.requireColumn("rtmax")
+
         self.ds = ds
 
+    def __getitem__(self, ix):
+        rows = self.rows.__getitem__(ix)
+        return FeatureTable(self.ds, self.colNames, self.colTypes, rows, self.colFormats, self.title)
 
     def restrictToColumns(self, *colnames):
         rv = super(FeatureTable, self).restrictToColumns(*colnames)

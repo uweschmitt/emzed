@@ -1,8 +1,8 @@
 
-import ms
+import configs, ms
 
 def testPeakIntegration():
-    integrator = ms.PeakIntegrators.get("std_sg")
+    integrator = configs.PeakIntegrators.get("std")
     assert isinstance(integrator.getInfo(), str)
     assert len(integrator.getInfo())>0
 
@@ -23,7 +23,7 @@ def testPeakIntegration():
     assert abs(area-162539.3) < .1,  area
     assert abs(rmse-6856.1) < .1,  rmse
     
-    integrator = ms.PeakIntegrators.get("asym_gauss")
+    integrator = configs.PeakIntegrators.get("asym_gauss")
     assert isinstance(integrator.getInfo(), str)
     assert len(integrator.getInfo())>0
 

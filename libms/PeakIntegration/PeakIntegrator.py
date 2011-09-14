@@ -24,6 +24,11 @@ class PeakIntegrator(object):
         smoothed = self.smoothed(chromatogram)
 
         area = sum(smoothed)
+        missing = len(chromatogram[:,1]) - len(smoothed)
+
+        if missing >0 : # pad zeros for very short eics
+            smoothed = np.hstack( [ np.zeros( ( missing/2, )), smoothed, np.zeros( (  missing - missing/2, )) ] )
+        
         rmse = np.sqrt( np.sum( (chromatogram[:,1]-smoothed)**2) / len(smoothed))
 
         return dict(area=area, rmse=rmse, rts=rts,smoothed=smoothed)

@@ -89,7 +89,7 @@ def askForSingleFile(startAt=None, extensions=None):
           returns the path of the selected file as a unicode string,
           or None if the user aborts the dialog.
     """
-    return __fileDialog(startAt, multipleFiles=False, extensions=extensions)
+    return __fileDialog(startAt, multipleFiles=False, extensions=extensions)[0]
 
 def askForMultipleFiles(startAt=None, extensions=None):
     """ 
