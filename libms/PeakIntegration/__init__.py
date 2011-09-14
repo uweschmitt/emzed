@@ -1,10 +1,7 @@
-from load_utils import *
-from save_utils import *
-from custom_dialogs import *
 
-from libms.Explorers       import inspectMap, inspectFeatures
-from libms.gui.TableDialog import showTable
-from libms.PeakIntegration import SGIntegrator, AssymetricGaussIntegrator
+from SGIntegrator import SGIntegrator
+from AssymetricGaussIntegrator import AssymetricGaussIntegrator
+
 
 PeakIntegrators = dict( std_sg  = SGIntegrator(window_size=11, order=2),
                         sg_21_2 = SGIntegrator(window_size=21, order=2),
@@ -14,7 +11,3 @@ PeakIntegrators = dict( std_sg  = SGIntegrator(window_size=11, order=2),
                       )
 
 
-# remove namespace clutter
-del load_utils
-del save_utils
-del custom_dialogs

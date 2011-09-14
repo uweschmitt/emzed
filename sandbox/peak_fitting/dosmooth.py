@@ -13,7 +13,7 @@ def fun(param, xvec):
 def err(param, xvec, yvec):
     return fun(param, xvec)-yvec
 
-def savitzky_golaycoeff(window_size, order, deriv=0):
+def savitzky_golay_coeff(window_size, order, deriv=0):
 
     try:
         window_size = np.abs(np.int(window_size))
