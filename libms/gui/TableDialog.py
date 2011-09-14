@@ -31,9 +31,12 @@ class TableDialog(QDialog):
         sizePolicy = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
         self.setSizePolicy(sizePolicy)
         self.setSizeGripEnabled(True)
-        
-        self.setMinimumWidth(helpers.widthOfTableWidget(self.tw))
 
+    
+        # set optimal window size in three steps:
+        self.tw.resizeColumnsToContents()     
+        self.setMinimumWidth(helpers.widthOfTableWidget(self.tw))
+        self.tw.horizontalHeader().setResizeMode(QHeaderView.Stretch)
 
        
     def setupLayout(self):
@@ -55,8 +58,8 @@ class TableDialog(QDialog):
         self.tw.setHorizontalHeaderLabels(headers)
 
         for i, row in enumerate(self.table.rows):
-            for j, (value, format_) in enumerate(zip(row, self.table.colFormats)):
-                item = QTableWidgetItem(format_ % value)
+            for j, (value, formatter) in enumerate(zip(row, self.table.colFormatters)):
+                item = QTableWidgetItem(formatter(value))
                 font = item.font()
                 font.setFamily("Courier")
                 item.setFont(font)

@@ -1,8 +1,12 @@
+def __format_array(a):
+    """ declared on module scope, else Table could not be pickled """
+    return "array(%r)" % a.shape
 
-def reintegrate(ftable, integratorid="std"):
+def reintegrate(ftable, integratorid="std", showProgress = True):
     from configs import PeakIntegrators
     from libms.DataStructures import FeatureTable
     import sys
+    import numpy as np
 
     assert isinstance(ftable, FeatureTable)
     integrator = PeakIntegrators.get(integratorid)
@@ -23,18 +27,19 @@ def reintegrate(ftable, integratorid="std"):
           colTypes.append(ftable.colTypes[ftable.colNames.index("sn")])
           colFormats.append(ftable.colFormats[ftable.colNames.index("sn")])
 
-    colNames += [ "intbegin", "intend", "method", "area", "rmse"  ]
-    colTypes += [ float, float, str, float, float ]
-    colFormats += [ "%.2f", "%2.f", "%s", "%.1f", "%.1f" ]
+    colNames += [ "intbegin", "intend", "method", "area", "rmse", "smoothed"  ]
+    colTypes += [ float, float, str, float, float, np.ndarray ]
+    colFormats += [ "%.2f", "%2.f", "%s", "%.1f", "%.1f", __format_array ]
 
     rows = []
     lastcent = -1
     for i, row in enumerate(ftable):
-        cent = i*10/(len(ftable)-1)
-        if cent != lastcent:
-            print cent*10,
-            sys.stdout.flush()
-            lastcent = cent
+        if showProgress:
+            cent = i*10/(len(ftable)-1)
+            if cent != lastcent:
+                print cent*10,
+                sys.stdout.flush()
+                lastcent = cent
         mz = ftable.get(i, "mz")
         mzmin = ftable.get(i, "mzmin")
         mzmax = ftable.get(i, "mzmax")
@@ -52,7 +57,7 @@ def reintegrate(ftable, integratorid="std"):
         row = [mz, mzmin, mzmax, rt, rtmin, rtmax ]
         if hasSN:
             row.append(ftable.get(i, "sn"))
-        row.extend([intbegin, intend, method, result["area"], result["rmse"]])
+        row.extend([intbegin, intend, method, result["area"], result["rmse"], result["smoothed"]])
 
         rows.append(row)
 

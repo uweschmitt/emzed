@@ -37,7 +37,12 @@ class FeatureExplorer(QDialog):
         QDialog.__init__(self)
         self.setWindowFlags(Qt.Window)
 
-        self.ftable = ftable.restrictToColumns("mz", "mzmin", "mzmax", "rt", "rtmin", "rtmax", "into", "intb", "intf", "sn")
+        self.ftable = ftable.requireColumn("mz") \
+                            .requireColumn("mzmin") \
+                            .requireColumn("mzmax") \
+                            .requireColumn("rt") \
+                            .requireColumn("rtmin") \
+                            .requireColumn("rtmax") 
 
         self.rts = [ spec.RT for spec in ftable.ds.specs ]
         self.maxRT = max(self.rts)
@@ -66,8 +71,8 @@ class FeatureExplorer(QDialog):
         self.tw.setSortingEnabled(False)  # needs to be done before filling the table
 
         for i, row in enumerate(self.ftable.rows):
-            for j, (value, format_) in enumerate(zip(row, self.ftable.colFormats)):
-                item = NumericQTableWidgetItem(format_ % value)
+            for j, (value, formatter) in enumerate(zip(row, self.ftable.colFormatters)):
+                item = NumericQTableWidgetItem(formatter(value))
                 item.setData(Qt.UserRole, value)
                 item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
                 font = item.font()
@@ -202,13 +207,6 @@ class FeatureExplorer(QDialog):
         
 
 def inspectFeatures(ftable):
-
-    assert ftable.requireColumn("mz")
-    assert ftable.requireColumn("mzmin")
-    assert ftable.requireColumn("mzmax")
-    assert ftable.requireColumn("rt")
-    assert ftable.requireColumn("rtmin")
-    assert ftable.requireColumn("rtmax")
 
     app = guidata.qapplication()
     fe = FeatureExplorer(ftable)

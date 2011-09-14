@@ -12,9 +12,25 @@ class Table(object):
         self.rows     = rows
         self.colFormats = colFormats
 
-        self.colIndizes = dict( (n, i) for i, n in enumerate(colNames)) 
 
+        self.colIndizes = dict( (n, i) for i, n in enumerate(colNames)) 
         self.title = title
+        self.setupFormatters()
+
+    def setupFormatters(self):
+        self.colFormatters = [ (lambda s,f=f: f % s) if isinstance(f, str) \
+                                              else f for f in self.colFormats ]
+
+
+    def __getstate__(self):
+        """ for pickling. self.colFormatters can not be pickled """
+        dd = self.__dict__.copy()
+        del dd["colFormatters"]
+        return dd
+
+    def __setstate__(self, dd):
+        self.__dict__ = dd
+        self.setupFormatters()
 
     def __iter__(self):
         return iter(self.rows)
@@ -24,14 +40,16 @@ class Table(object):
         return Table(self.colNames, self.colTypes, rows, self.colFormats, self.title)
 
     def requireColumn(self, name):
-        return name in self.colNames
+        if not name in self.colNames:
+            raise Exception("column %r required" % name)
+        return self
 
     def get(self, rowIdx, colName):
-        ix = self.colNames.index(colName)
+        ix = self.colIndizes[colName]
         return self.rows[rowIdx][ix]
 
     def getIndex(self, colName):
-        return self.colNames.index(colName)
+        return self.colIndizes[colName]
 
     def restrictToColumns(self, *names):
         
@@ -53,7 +71,7 @@ class Table(object):
 
 
     def sortBy(self, colName, ascending=True):
-        idx = self.colNames.index(colName)
+        idx = self.colIndizes[colName]
         self.rows.sort(key = operator.itemgetter(idx), reverse=not ascending)
         return self
 
