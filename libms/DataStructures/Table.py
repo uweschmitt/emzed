@@ -1,3 +1,4 @@
+import operator 
 
 class Table(object):
 
@@ -14,6 +15,12 @@ class Table(object):
         self.colIndizes = dict( (n, i) for i, n in enumerate(colNames)) 
 
         self.title = title
+
+    def __iter__(self):
+        return iter(self.rows)
+
+    def __getitem__(self, ix):
+        return self.rows.__getitem__(ix)
 
     def requireColumn(self, name):
         return name in self.colNames
@@ -44,12 +51,18 @@ class Table(object):
         return Table(colNames, colTypes, rows, colFormats, self.title)
 
 
+    def sortBy(self, colName, ascending=True):
+        idx = self.colNames.index(colName)
+        self.rows.sort(key = operator.itemgetter(idx), reverse=not ascending)
+        return self
+
 
     def addColumn(self, name, type_, value=None):
         for row in self.rows:
             row.append(value)
         self.colNames.append(name)
         self.colTypes.append(type_)
+        return self
 
     
     def evaluateMacros(self):
@@ -87,6 +100,8 @@ class Table(object):
             print >> fp, "; ".join(self.colNames)
             for row in self.rows:
                 print >> fp, "; ".join(map(str, row))
+
+        return self
              
             
 
