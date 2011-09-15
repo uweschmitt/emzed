@@ -6,6 +6,8 @@ from PyQt4.QtGui import *
 
 import guidata
 
+
+
 class TableDialog(QDialog):
 
     def __init__(self, table, parent=None):
@@ -33,10 +35,10 @@ class TableDialog(QDialog):
         self.setSizeGripEnabled(True)
 
     
-        # set optimal window size in three steps:
+        # set optimal window size in two steps:
         self.tw.resizeColumnsToContents()     
         self.setMinimumWidth(helpers.widthOfTableWidget(self.tw))
-        self.tw.horizontalHeader().setResizeMode(QHeaderView.Stretch)
+        #self.tw.horizontalHeader().setResizeMode(QHeaderView.Stretch)
 
        
     def setupLayout(self):
@@ -45,27 +47,8 @@ class TableDialog(QDialog):
         vlayout.addWidget(self.tw)
 
     def populate(self):
-        self.tw.clear()
-        self.tw.setSortingEnabled(False)
+        helpers.populateTableWidget(self.tw, self.ftable)
 
-        self.tw.setRowCount(len(self.table.rows))
-    
-        self.tw.horizontalHeader().setStretchLastSection(True)
-        #self.tw.horizontalHeader().setResizeMode(QHeaderView.Stretch)
-
-        headers = self.table.colNames
-        self.tw.setColumnCount(len(headers))
-        self.tw.setHorizontalHeaderLabels(headers)
-
-        for i, row in enumerate(self.table.rows):
-            for j, (value, formatter) in enumerate(zip(row, self.table.colFormatters)):
-                item = QTableWidgetItem(formatter(value))
-                font = item.font()
-                font.setFamily("Courier")
-                item.setFont(font)
-                self.tw.setItem(i, j, item)
- 
-        self.tw.setSortingEnabled(True)
 
    
 def showTable(table):

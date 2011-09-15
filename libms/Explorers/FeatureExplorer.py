@@ -19,8 +19,9 @@ class NumericQTableWidgetItem(QTableWidgetItem):
     """
 
 
-    def __init__(self, *a, **kw):
+    def __init__(self, idx, *a, **kw):
         super(NumericQTableWidgetItem, self).__init__(*a, **kw)
+        self.idx = idx
 
 
     def __lt__(self, other):
@@ -44,6 +45,8 @@ class FeatureExplorer(QDialog):
                             .requireColumn("rtmin") \
                             .requireColumn("rtmax") 
 
+        self.integratedFeatures = "intbegin" in self.ftable.colNames
+
         self.rts = [ spec.RT for spec in ftable.ds.specs ]
         self.maxRT = max(self.rts)
 
@@ -59,31 +62,7 @@ class FeatureExplorer(QDialog):
         self.setSizeGripEnabled(True)
 
     def populateTable(self):
-
-        self.tw.clear()
-
-        self.tw.setRowCount(len(self.ftable.rows))
-    
-        headers = self.ftable.colNames
-        self.tw.setColumnCount(len(headers))
-        self.tw.setHorizontalHeaderLabels(headers)
-
-        self.tw.setSortingEnabled(False)  # needs to be done before filling the table
-
-        for i, row in enumerate(self.ftable.rows):
-            for j, (value, formatter) in enumerate(zip(row, self.ftable.colFormatters)):
-                item = NumericQTableWidgetItem(formatter(value))
-                item.setData(Qt.UserRole, value)
-                item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
-                font = item.font()
-                font.setFamily("Courier")
-                item.setFont(font)
-                self.tw.setItem(i, j, item)
-       
-        self.tw.setSortingEnabled(True)
-        
-        # adjust height of rows (normaly reduces size to a reasonable value)
-        self.tw.verticalHeader().setResizeMode(QHeaderView.ResizeToContents)
+        helpers.populateTableWidget(self.tw, self.ftable)
 
     def setWindowSize(self):
 
@@ -110,9 +89,6 @@ class FeatureExplorer(QDialog):
         #    small table: plots give mim
         self.setMinimumWidth(helpers.widthOfTableWidget(self.tw))
 
-        # 3) now stretch table if needed (plottings dictate a minmum size of the
-        #    window, 2) only sets *mimumum* size)
-        self.tw.horizontalHeader().setResizeMode(QHeaderView.Stretch)
 
         self.tw.setMinimumHeight(300)
 
@@ -126,6 +102,22 @@ class FeatureExplorer(QDialog):
 
         hlayout = QHBoxLayout()
         hlayout.addWidget(self.rtPlotter.widget)
+
+        if self.integratedFeatures:
+
+            vlayout2 = QVBoxLayout()
+            vlayout2.setSpacing(10)
+            vlayout2.setMargin(5)
+            vlayout2.addWidget(self.intLabel)
+            vlayout2.setAlignment(self.intLabel, Qt.AlignTop)
+            vlayout2.addWidget(self.chooseIntMethod)
+            vlayout2.setAlignment(self.chooseIntMethod, Qt.AlignTop)
+            vlayout2.addWidget(self.reintegrateButton)
+            vlayout2.setAlignment(self.reintegrateButton, Qt.AlignTop)
+            vlayout2.addStretch()
+            hlayout.addLayout(vlayout2)
+            
+
         hlayout.addWidget(self.mzPlotter.widget)
 
         vlayout.addLayout(hlayout)
@@ -134,7 +126,8 @@ class FeatureExplorer(QDialog):
 
     def setupWidgets(self):
 
-        self.rtPlotter = RtPlotter(self.plotMz)
+        self.rtPlotter = RtPlotter(rangeSelectionCallback=self.plotMz, numCurves=2)
+
         rts = [ spec.RT for spec in self.ftable.ds.specs ]
         self.rtPlotter.setRtValues(rts)
 
@@ -147,6 +140,20 @@ class FeatureExplorer(QDialog):
 
         self.connect(self.tw.verticalHeader(), SIGNAL("sectionClicked(int)"), self.rowClicked)
         self.connect(self.tw, SIGNAL("cellClicked(int, int)"), self.cellClicked)
+
+        if self.integratedFeatures:
+            self.intLabel = QLabel("Integration")
+            self.chooseIntMethod = QComboBox()
+            self.chooseIntMethod.addItem("std")
+            self.reintegrateButton = QPushButton()
+            self.reintegrateButton.setText("Integrate")
+            self.connect(self.reintegrateButton, SIGNAL("clicked()"), self.doReIntegrate)
+
+    def doReIntegrate(self):
+        intbegin, intend = self.rtPlotter.range_.get_range()
+
+            
+            
 
     def plotMz(self):
 
@@ -163,11 +170,14 @@ class FeatureExplorer(QDialog):
     def cellClicked(self, rowIdx, colIdx):
         name = self.ftable.colNames[colIdx]
         item = self.tw.currentItem()
+        realIdx = item.idx # trotz umsortierung !
+        
+        getIndex = self.ftable.getIndex
 
 
         if name.startswith("mz"):
-            mzmin = self.tw.item(rowIdx, self.ftable.getIndex("mzmin")).data(Qt.UserRole).toFloat()[0]
-            mzmax = self.tw.item(rowIdx, self.ftable.getIndex("mzmax")).data(Qt.UserRole).toFloat()[0]
+            mzmin = self.ftable[realIdx][getIndex("mzmin")]
+            mzmax = self.ftable[realIdx][getIndex("mzmax")]
             self.mzPlotter.setXAxisLimits(mzmin-0.002, mzmax+0.002)
 
             # update y-range
@@ -179,23 +189,33 @@ class FeatureExplorer(QDialog):
             self.mzPlotter.setYAxisLimits(0, maxIntensity*1.1)
 
         elif name.startswith("rtm"):  # rtmin or rtmax
-            rtmin = self.tw.item(rowIdx, self.ftable.getIndex("rtmin")).data(Qt.UserRole).toFloat()[0]
-            rtmax = self.tw.item(rowIdx, self.ftable.getIndex("rtmax")).data(Qt.UserRole).toFloat()[0]
+            rtmin = self.ftable[realIdx][getIndex("rtmin")]
+            rtmax = self.ftable[realIdx][getIndex("rtmax")]
             self.rtPlotter.setRangeSelectionLimits(rtmin, rtmax)
             self.rtPlotter.replot()
 
         elif name.startswith("rt"):  #  rt
-            rt= self.tw.item(rowIdx, self.ftable.getIndex("rt")).data(Qt.UserRole).toFloat()[0]
+            rt= self.ftable[realIdx][getIndex("rt")]
             self.rtPlotter.setRangeSelectionLimits(rt, rt)
             self.rtPlotter.replot()
 
     def rowClicked(self, rowIdx):
 
-        mzmin = self.tw.item(rowIdx, self.ftable.getIndex("mzmin")).data(Qt.UserRole).toFloat()[0]
-        mzmax = self.tw.item(rowIdx, self.ftable.getIndex("mzmax")).data(Qt.UserRole).toFloat()[0]
-        rt    = self.tw.item(rowIdx, self.ftable.getIndex("rt")).data(Qt.UserRole).toFloat()[0]
 
-        peaks = [ spec.peaks[ (spec.peaks[:,0] >= mzmin) * (spec.peaks[:,0] <= mzmax) ] for spec in self.ftable.ds.specs ]
+        realIdx = self.tw.item(rowIdx, 0).idx # trotz umsortierung !
+        ft = self.ftable 
+        getIndex = ft.getIndex
+
+        if self.integratedFeatures:
+            intrts = ft.rows[realIdx][getIndex("intrts")]
+            smoothed = ft.rows[realIdx][getIndex("smoothed")]
+            self.rtPlotter.plot(smoothed, x=intrts, index=1)
+
+        mzmin = self.ftable[realIdx][getIndex("mzmin")]
+        mzmax = self.ftable[realIdx][getIndex("mzmax")]
+        rt    = self.ftable[realIdx][getIndex("rt")]
+
+        peaks = [ spec.peaks[ (spec.peaks[:,0] >= mzmin) * (spec.peaks[:,0] <= mzmax) ] for spec in ft.ds.specs ]
 
         chromatogram = [ np.sum(peak[:,1]) for peak in peaks ]
         self.rtPlotter.plot(chromatogram)

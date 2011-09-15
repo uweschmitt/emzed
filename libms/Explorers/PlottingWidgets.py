@@ -50,7 +50,7 @@ class PlotterBase(object):
 
 class RtPlotter(PlotterBase):
 
-    def __init__(self, rangeSelectionCallback = None):
+    def __init__(self, rangeSelectionCallback = None, numCurves=1):
         super(RtPlotter, self).__init__("RT", "I")
 
         
@@ -62,18 +62,27 @@ class RtPlotter(PlotterBase):
 
         self.pm = PlotManager(widget)
         self.pm.add_plot(widget.plot)
+        
+        self.curves  =[]
+        colors = "bgrkcmG"
 
-        self.curve = make.curve([], [], color='b')
-        self.curve.__class__ = ModifiedCurveItem
-
-        widget.plot.add_item(self.curve)
+        for i in range(numCurves):
+            c = colors[i % len(colors)] # cycle through colors
+            curve = make.curve([], [], color=c)
+            curve.__class__ = ModifiedCurveItem
+            widget.plot.add_item(curve)
+            self.curves.append(curve)
 
         t = self.pm.add_tool(RtSelectionTool)
+        self.addTool(RtSelectionTool)
         self.pm.set_default_tool(t)
-        t.activate()
 
         self.minRTRangeSelected = None
         self.maxRTRangeSelected = None
+
+    def addTool(self, tool):
+        t = self.pm.add_tool(tool)
+        t.activate()
 
 
     def setRtValues(self, rtvalues):
@@ -112,11 +121,18 @@ class RtPlotter(PlotterBase):
         if self.rangeSelectionCallback is not None:
             self.rangeSelectionCallback()
     
-    def plot(self, chromatogram):
-        self.curve.set_data(self.rtvalues, chromatogram)
+    def plot(self, chromatogram, x=None, index=0):
+        if x is None:
+            x = self.rtvalues
+        self.curves[index].set_data(x, chromatogram)
 
-    def replot(self): 
-        self.curve.plot().replot()
+    def replot(self, index=None): 
+        if index is None:
+            indices = range(len(self.curves))
+        else:
+            indices = [index]
+        for i in indices:
+            self.curves[i].plot().replot()
        
 
 class MzCursorInfo(ObjectInfo):

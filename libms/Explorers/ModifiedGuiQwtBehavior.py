@@ -398,6 +398,21 @@ class ModifiedSegment(SegmentShape):
             painter.drawPolyline(other_points)
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 class SnappingRangeSelection(XRangeSelection):
 
     """ modification:
