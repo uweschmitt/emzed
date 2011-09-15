@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.interpolate
 
 class PeakIntegrator(object):
 
@@ -8,33 +9,61 @@ class PeakIntegrator(object):
 
     def setPeakMap(self, peakMap):
         self.peakMap = peakMap
+        self.allrts  = sorted([ spec.RT for spec in self.peakMap.specs ])
 
     def integrate(self, mzmin, mzmax, rtmin, rtmax):
 
         assert self.peakMap is not None
 
         peaksl = [ spec.peaks for spec in self.peakMap.specs if rtmin <= spec.RT <=rtmax ]
-        intensities = [ np.sum( (peaks[ (peaks[:,0] >= mzmin) * (peaks[:,0]<=mzmax)])[:,1]) for peaks in peaksl ]
+        chromatogram = [ np.sum( (peaks[ (peaks[:,0] >= mzmin) * (peaks[:,0]<=mzmax)])[:,1]) for peaks in peaksl ]
         rts  = [ spec.RT for spec in self.peakMap.specs if rtmin <= spec.RT <=rtmax ]
-        chromatogram = np.array(zip(rts, intensities))
         
         if len(rts)==0:
             return dict(area=0, rmse=0)
 
-        smoothed = self.smoothed(chromatogram)
+        usedrts, smoothed = self.smoothed(self.allrts, rts, chromatogram)
 
-        area = sum(smoothed)
-        missing = len(chromatogram[:,1]) - len(smoothed)
+        assert len(usedrts)==len(smoothed)
 
-        if missing >0 : # pad zeros for very short eics
-            smoothed = np.hstack( [ np.zeros( ( missing/2, )), smoothed, np.zeros( (  missing - missing/2, )) ] )
-        
-        rmse = np.sqrt( np.sum( (chromatogram[:,1]-smoothed)**2) / len(smoothed))
+        area = self.trapez(usedrts, smoothed)
 
-        return dict(area=area, rmse=rmse, rts=rts,smoothed=smoothed)
+        # maybe the smoothed() call introduces rts not in self.allrts
+        # so we interpolate the input to the usedrts in order to
+        # get an estimation about the quality of the smoothing
+        peaksl = [ spec.peaks for spec in self.peakMap.specs]
+        fullchromatogram = [ np.sum( (peaks[ (peaks[:,0] >= mzmin) * (peaks[:,0]<=mzmax)])[:,1]) for peaks in peaksl ]
+        cinterpolator = scipy.interpolate.interp1d(self.allrts, fullchromatogram)
+        newc = cinterpolator(usedrts)
+        rmse = np.sqrt( np.sum( (newc-smoothed)**2) / len(smoothed))
 
-    def smoothed(self, chromatogram):
+        return dict(area=area, rmse=rmse, intrts=usedrts,smoothed=smoothed)
+
+    def smoothed(self, *a):
         raise Exception("not implemented")
+
+    
+    def trapez(self, x, y):
+        assert len(x)==len(y), "x, y have different length"
+
+        x = np.array(x)
+        y = np.array(y)
+
+        dx = x[1:] - x[:-1]
+        sy = 0.5*(y[1:] + y[:-1])
+        return np.dot(dx, sy)
+
+
+if __name__ == "__main__":
+
+        pi = PeakIntegrator(None)
+        x = [1,2,5,6,9]
+        y = [1,2,1,4,-7]
+
+        pi.trapez(x,y)
+
+            
+        
 
         
         

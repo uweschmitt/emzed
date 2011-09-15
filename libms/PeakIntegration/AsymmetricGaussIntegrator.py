@@ -2,16 +2,16 @@ from PeakIntegrator import PeakIntegrator
 import numpy as np
 import scipy.optimize as opt
 
-class AssymetricGaussIntegrator(PeakIntegrator):
+class AsymmetricGaussIntegrator(PeakIntegrator):
 
     def __init__(self, **kw):
-        super(AssymetricGaussIntegrator, self).__init__(kw)
+        super(AsymmetricGaussIntegrator, self).__init__(kw)
 
     def getInfo(self):
-        return "AssymetricGaussIntegrator" 
+        return "AsymmetricGaussIntegrator" 
 
 
-    def smoothed(self, chromatogram):
+    def smoothed(self, allrts, rts, chromatogram):
 
         def fun_eval(param, rts):
             A, s1, s2, mu = param
@@ -23,19 +23,16 @@ class AssymetricGaussIntegrator(PeakIntegrator):
             return fun_eval(param, rts) - values
 
         
-        rts = chromatogram[:,0] 
-        values = chromatogram[:,1]
-
-        imax = np.argmax(values)
-        A = values[imax]
+        imax = np.argmax(chromatogram)
+        A = chromatogram[imax]
         mu = rts[imax]
         s1 = s2 = 1.0
 
         param = A, s1, s2, mu
 
-        param, success = opt.leastsq(err, param, args=(rts, values))
+        param, success = opt.leastsq(err, param, args=(rts, chromatogram))
 
-        return fun_eval(param, rts)
+        return allrts, fun_eval(param, allrts)
 
 
         

@@ -49,8 +49,14 @@ class SGIntegrator(PeakIntegrator):
         y = np.concatenate((firstvals, y, lastvals))
         return np.convolve( w, y, mode='valid')
 
-    def smoothed(self, chromatogram):
-        return self._savitzky_golay_smooth(chromatogram[:,1], self.weights)
+    def smoothed(self, allrts, rts, chromatogram):
+        smoothed = self._savitzky_golay_smooth(chromatogram, self.weights)
+        missing = len(rts) - len(smoothed)
+        if missing >0 : # pad zeros for very short eics
+            smoothed = np.hstack( [ np.zeros( ( missing/2, )), smoothed, np.zeros( (  missing - missing/2, )) ] )
+
+        return rts, smoothed
+
         
 
 

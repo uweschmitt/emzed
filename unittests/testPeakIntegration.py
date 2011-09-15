@@ -20,7 +20,7 @@ def testPeakIntegration():
     area=result.get("area")
     rmse=result.get("rmse")
 
-    assert abs(area-162539.3) < .1,  area
+    assert abs(area-118640.8) < .1,  area
     assert abs(rmse-6856.1) < .1,  rmse
     
     integrator = configs.PeakIntegrators.get("asym_gauss")
@@ -34,5 +34,5 @@ def testPeakIntegration():
     area=result.get("area")
     rmse=result.get("rmse")
 
-    assert abs(area-37625.7) < .1,  area
-    assert abs(rmse-6481.1) < .1,  rmse
+    assert abs(area-28764.6) < .1,  area
+    assert abs(rmse-7146.1) < .1,  rmse

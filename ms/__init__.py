@@ -6,7 +6,7 @@ from integration import *
 
 from libms.Explorers       import inspectMap, inspectFeatures
 from libms.gui.TableDialog import showTable
-from libms.PeakIntegration import SGIntegrator, AssymetricGaussIntegrator
+from libms.PeakIntegration import SGIntegrator, AsymmetricGaussIntegrator
 
 
 # remove namespace clutter
