@@ -2,8 +2,6 @@
 
 from libms.RConnect.XCMSConnector import CentwaveFeatureDetector, MatchedFilterFeatureDetector
 
-import ms
-
 def union(d1, d2):
     d = d1.copy()
     d.update(d2)
