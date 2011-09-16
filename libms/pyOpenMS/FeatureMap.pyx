@@ -1,5 +1,5 @@
-from pyOpenMS.pxd.Feature cimport Feature as Feature_
-from pyOpenMS.pxd.FeatureMap cimport FeatureMap as FeatureMap_
+from pxd.Feature cimport Feature as Feature_
+from pxd.FeatureMap cimport FeatureMap as FeatureMap_
 
 from FeatureMap import FeatureMap
 

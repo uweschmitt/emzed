@@ -1,7 +1,7 @@
-from pyOpenMS.pxd.MSSpectrum cimport *
-from pyOpenMS.pxd.MSExperiment cimport *
-from pyOpenMS.pxd.ChromatogramPeak cimport *
-from pyOpenMS.pxd.Peak1D cimport *
+from pxd.MSSpectrum cimport *
+from pxd.MSExperiment cimport *
+from pxd.ChromatogramPeak cimport *
+from pxd.Peak1D cimport *
 
 from PeakMap import PeakMap
 

@@ -1,7 +1,7 @@
-from pyOpenMS.pxd.FeatureFinder cimport FeatureFinder as FeatureFinder_
-from pyOpenMS.pxd.MSExperiment cimport *
-from pyOpenMS.pxd.FeatureMap cimport FeatureMap as FeatureMap_
-from pyOpenMS.pxd.Feature cimport Feature as Feature_
+from pxd.FeatureFinder cimport FeatureFinder as FeatureFinder_
+from pxd.MSExperiment cimport *
+from pxd.FeatureMap cimport FeatureMap as FeatureMap_
+from pxd.Feature cimport Feature as Feature_
 
 
 cdef class FeatureFinder:

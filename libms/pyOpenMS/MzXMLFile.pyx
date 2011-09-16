@@ -1,5 +1,5 @@
-from pyOpenMS.pxd.MzXMLFile cimport *
-from pyOpenMS.pxd.MSExperiment cimport *
+from pxd.MzXMLFile cimport *
+from pxd.MSExperiment cimport *
 from Spectrum import Spectrum
 cimport cpython
 

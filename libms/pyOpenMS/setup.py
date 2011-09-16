@@ -50,11 +50,13 @@ def ext(name, sources):
         extra_compile_args = [ "/EHs"]  
      
     )
-    rv.pyrex_directives = {"boundscheck": False, "annotate": True }
+    rv.pyrex_directives = {"boundscheck": False, "annotate": True, "wraparound": False }
     return rv
 
-ext_modules = [ ext("_pyOpenMS", [ "pyOpenMS/_pyOpenMS.pyx" ]) ]
+#ext_modules = [ ext("_pyOpenMS", [ "pyOpenMS/_pyOpenMS.pyx" ]) ]
 ext_modules = [ ext("_pyOpenMS", [ "_pyOpenMS.pyx" ]) ]
+#ext_modules = [ ext("_pyOpenMS", [ "Spectrum.pyx" ]) ]
+#ext_modules = [ ext("test", [ "test.pyx" ]) ]
 
 setup(
 

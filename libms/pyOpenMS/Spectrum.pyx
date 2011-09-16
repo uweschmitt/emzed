@@ -1,13 +1,17 @@
-from pyOpenMS.pxd.MSSpectrum cimport *
-from pyOpenMS.pxd.Peak1D cimport *
-from pyOpenMS.pxd.string cimport *
+#from MSSpectrum cimport *
+#from Peak1D cimport *
+#from string cimport *
+
+from pxd.MSSpectrum cimport *
+
+
 
 cimport cpython
 
 from Spectrum import Spectrum
 
-import numpy as np
-cimport numpy as np
+import numpy as np           #  load python module
+cimport numpy as np          #  cythons numpy support
 
 
 cdef vector[Peak1D] OpenMSPeaksFromPy(np.ndarray[np.float32_t, ndim=2] peaks):
@@ -31,6 +35,9 @@ cdef vector[Peak1D] OpenMSPeaksFromPy(np.ndarray[np.float32_t, ndim=2] peaks):
                 #print "py->openms: output peaks not sorted ", i
 
         return rv
+
+
+        
 
 cdef OpenMsSpecToPy(MSSpectrum[Peak1D] spec_):
 

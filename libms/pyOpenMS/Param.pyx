@@ -1,6 +1,6 @@
 from libcpp.vector cimport *
-from pyOpenMS.pxd.DataValue cimport *
-from pyOpenMS.pxd.Param cimport *
+from pxd.DataValue cimport *
+from pxd.Param cimport *
 
 
 cdef class _ParamInstance:

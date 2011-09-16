@@ -1,6 +1,6 @@
 from Feature import Feature
 
-from  pyOpenMS.pxd.Feature cimport Feature as Feature_
+from  pxd.Feature cimport Feature as Feature_
 
 cdef Feature_ OpenMsFeatureFromPy(feat):
 
