@@ -31,7 +31,7 @@ class StreamSplitter(object):
         self.collected = []
 
     def write(self, what):
-        self.stream.write(what)
+        # self.stream.write(what)
         if what.endswith("\n"):
             self.qtextedit.append("".join(self.collected)+what.rstrip("\n"))
             self.collected = []
