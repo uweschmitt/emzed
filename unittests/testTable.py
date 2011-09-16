@@ -24,7 +24,7 @@ def testRunnerTable():
     run(t, names, [row1, row2, row3])
 
     #test subtable
-    ts = t.subTable(0,3)
+    ts = t.subTable(slice(0,3))
     assert isinstance( ts  , Table)
     assert len(ts)==3
     run(ts, names, [row1, row2, row3])
@@ -121,7 +121,7 @@ def testRunnerFeatureTable():
     run2(t, names)
 
     #test subtable
-    ts = t.subTable(0,2)
+    ts = t.subTable(slice(0,2))
     assert isinstance( ts  , Table)
     assert len(ts)==2
     run2(ts, names)

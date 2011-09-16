@@ -39,10 +39,11 @@ pathToProteoWizard = r"C:\Dokumente und Einstellungen\Administrator\Eigene Datei
 
 from libms.PeakIntegration import *
 # key "std" must exist !
-PeakIntegrators = dict( std     = SGIntegrator(window_size=11, order=2),
-                        sg_21_2 = SGIntegrator(window_size=21, order=2),
-                        sg_11_1 = SGIntegrator(window_size=11, order=1),
-                        sg_21_1 = SGIntegrator(window_size=21, order=1),
-                        asym_gauss = AsymmetricGaussIntegrator(),
-                      )
+peakIntegrators = [ ( "std",        SGIntegrator(window_size=11, order=2) ) ,
+                    ( "sg_21_2",    SGIntegrator(window_size=21, order=2) ) ,
+                    ( "sg_11_1",    SGIntegrator(window_size=11, order=1) ) ,
+                    ( "sg_21_1",    SGIntegrator(window_size=21, order=1) ) ,
+                    ( "asym_gauss", AsymmetricGaussIntegrator() ) ,
+                   ]
 
+# 

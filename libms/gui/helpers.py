@@ -51,7 +51,7 @@ def populateTableWidget(tWidget, table):
                 item.setData(Qt.UserRole, value)
                 item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
                 if type_ == float:
-                    item.setTextAlignment(Qt.AlignRight)
+                    item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 font = item.font()
                 font.setFamily("Courier")
                 item.setFont(font)

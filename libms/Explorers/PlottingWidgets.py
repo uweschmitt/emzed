@@ -50,7 +50,7 @@ class PlotterBase(object):
 
 class RtPlotter(PlotterBase):
 
-    def __init__(self, rangeSelectionCallback = None, numCurves=1):
+    def __init__(self, rangeSelectionCallback = None, numCurves=1, configs=None):
         super(RtPlotter, self).__init__("RT", "I")
 
         
@@ -64,11 +64,17 @@ class RtPlotter(PlotterBase):
         self.pm.add_plot(widget.plot)
         
         self.curves  =[]
-        colors = "bgrkcmG"
 
+        colors = "bgrkcmG"
         for i in range(numCurves):
             c = colors[i % len(colors)] # cycle through colors
-            curve = make.curve([], [], color=c)
+            if configs is not None:
+                config = configs[i]
+                if config is None:
+                    config = dict(color=c)
+                elif not "color" in config:
+                    config["color"] = c
+            curve = make.curve([], [], **config)
             curve.__class__ = ModifiedCurveItem
             widget.plot.add_item(curve)
             self.curves.append(curve)
