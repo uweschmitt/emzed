@@ -58,8 +58,8 @@ class Table(object):
     def __getitem__(self, ix):
         return self.rows.__getitem__(ix)
 
-    def subTable(self, i=None, j=None, k=None):
-        rows = self.rows.__getitem__(slice(i,j,k))
+    def subTable(self, slice_):
+        rows = self.rows.__getitem__(slice_)
         return Table(self.colNames, self.colTypes, rows, self.colFormats, self.title, self.meta)
 
     def requireColumn(self, name):
@@ -138,8 +138,8 @@ class FeatureTable(Table):
 
         self.ds = ds
 
-    def subTable(self, i=None, j=None, k=None):
-        rv = super(FeatureTable, self).subTable(i,j,k)
+    def subTable(self, slice_):
+        rv = super(FeatureTable, self).subTable(slice_)
         return FeatureTable.fromTableAndMap(rv, self.ds)
 
     def extractColumns(self, *colnames):
