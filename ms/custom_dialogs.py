@@ -35,12 +35,7 @@ def __fileDialog(startAt=None, onlyDirectories=False, anyFile=False, multipleFil
     if di.exec_():
         files= di.selectedFiles()
         res = [unicode(f) for f in files]
-        if onlyDirectories:
-            return res[0]
-        elif multipleFiles:
-            return res
-        else:
-            return res[0]
+        return res
 
     return None
 
@@ -54,7 +49,7 @@ def askForDirectory(startAt=None):
           returns the path to the selected diretory as a string,
           or None if the user aborts the dialog.
     """
-    return __fileDialog(startAt, onlyDirectories=True)
+    return __fileDialog(startAt, onlyDirectories=True)[0]
 
 def askForSave(startAt=None, extensions=None):
 
@@ -71,7 +66,7 @@ def askForSave(startAt=None, extensions=None):
           returns the path of the selected file as a unicode string,
           or None if the user aborts the dialog.
     """
-    return __fileDialog(startAt, anyFile=True, multipleFiles=False, extensions=extensions, caption="Save As")
+    return __fileDialog(startAt, anyFile=True, multipleFiles=False, extensions=extensions, caption="Save As")[0]
 
 def askForSingleFile(startAt=None, extensions=None):
 
