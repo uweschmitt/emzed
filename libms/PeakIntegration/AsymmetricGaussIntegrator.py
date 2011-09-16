@@ -7,7 +7,7 @@ class AsymmetricGaussIntegrator(PeakIntegrator):
     def __init__(self, **kw):
         super(AsymmetricGaussIntegrator, self).__init__(kw)
 
-    def getInfo(self):
+    def __str__(self):
         return "AsymmetricGaussIntegrator" 
 
 

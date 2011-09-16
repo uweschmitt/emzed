@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.interpolate
+from   libms.pyOpenMS import intensityInRange
 
 class PeakIntegrator(object):
 
@@ -10,13 +11,15 @@ class PeakIntegrator(object):
     def setPeakMap(self, peakMap):
         self.peakMap = peakMap
         self.allrts  = sorted([ spec.RT for spec in self.peakMap.specs ])
+        self.allpeaks = [ spec.peaks for spec in self.peakMap.specs]
 
     def integrate(self, mzmin, mzmax, rtmin, rtmax):
 
         assert self.peakMap is not None
 
-        peaksl = [ spec.peaks for spec in self.peakMap.specs if rtmin <= spec.RT <=rtmax ]
-        chromatogram = [ np.sum( (peaks[ (peaks[:,0] >= mzmin) * (peaks[:,0]<=mzmax)])[:,1]) for peaks in peaksl ]
+        peaksl = [ spec.peaks for spec in self.peakMap.specs if rtmin <= spec.RT <=rtmax and spec.msLevel == 1]
+        chromatogram = np.array([ intensityInRange(peaks, mzmin, mzmax) for peaks in peaksl ])
+
         rts  = [ spec.RT for spec in self.peakMap.specs if rtmin <= spec.RT <=rtmax ]
         
         if len(rts)==0:
@@ -31,11 +34,11 @@ class PeakIntegrator(object):
         # maybe the smoothed() call introduces rts not in self.allrts
         # so we interpolate the input to the usedrts in order to
         # get an estimation about the quality of the smoothing
-        peaksl = [ spec.peaks for spec in self.peakMap.specs]
-        fullchromatogram = [ np.sum( (peaks[ (peaks[:,0] >= mzmin) * (peaks[:,0]<=mzmax)])[:,1]) for peaks in peaksl ]
+        fullchromatogram = [ intensityInRange(peaks, mzmin, mzmax) for peaks in self.allpeaks ]
         cinterpolator = scipy.interpolate.interp1d(self.allrts, fullchromatogram)
         newc = cinterpolator(usedrts)
         rmse = np.sqrt( np.sum( (newc-smoothed)**2) / len(smoothed))
+        #rmse = 0
 
         return dict(area=area, rmse=rmse, intrts=usedrts,smoothed=smoothed)
 

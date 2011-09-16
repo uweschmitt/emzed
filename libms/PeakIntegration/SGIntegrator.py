@@ -15,9 +15,9 @@ class SGIntegrator(PeakIntegrator):
 
         self.weights = self._savitzky_golay_coeff(window_size, order)
 
-    def getInfo(self):
+    def __str__(self):
         
-        return "SGFiltering (window_size=%(window_size)d, order=%(order)d) followed by integration" % self.config
+        return "SGIntegrator (window_size=%(window_size)d, order=%(order)d)" % self.config
 
     def _savitzky_golay_coeff(self, window_size, order, deriv=0):
         """ from http://www.scipy.org/Cookbook/SavitzkyGolay """
@@ -51,7 +51,9 @@ class SGIntegrator(PeakIntegrator):
 
     def smoothed(self, allrts, rts, chromatogram):
         smoothed = self._savitzky_golay_smooth(chromatogram, self.weights)
-        missing = len(rts) - len(smoothed)
+        smoothed[smoothed<0]= 0  # clip negative values, result from some spikes
+
+        missing = len(rts) - len(smoothed) 
         if missing >0 : # pad zeros for very short eics
             smoothed = np.hstack( [ np.zeros( ( missing/2, )), smoothed, np.zeros( (  missing - missing/2, )) ] )
 
