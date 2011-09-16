@@ -17,10 +17,12 @@ class PeakIntegrator(object):
 
         assert self.peakMap is not None
 
-        peaksl = [ spec.peaks for spec in self.peakMap.specs if rtmin <= spec.RT <=rtmax and spec.msLevel == 1]
+        ms1specs = [spec for spec in self.peakMap.specs if spec.msLevel == 1]
+
+        peaksl = [ spec.peaks for spec in ms1specs if rtmin <= spec.RT <=rtmax and spec.msLevel == 1]
         chromatogram = np.array([ intensityInRange(peaks, mzmin, mzmax) for peaks in peaksl ])
 
-        rts  = [ spec.RT for spec in self.peakMap.specs if rtmin <= spec.RT <=rtmax ]
+        rts  = [ spec.RT for spec in ms1specs if rtmin <= spec.RT <=rtmax ]
         
         if len(rts)==0:
             return dict(area=0, rmse=0)
