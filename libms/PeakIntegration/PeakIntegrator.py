@@ -1,5 +1,4 @@
 import numpy as np
-import scipy.interpolate
 from   libms.pyOpenMS import intensityInRange
 
 class PeakIntegrator(object):
@@ -27,20 +26,8 @@ class PeakIntegrator(object):
         if len(rts)==0:
             return dict(area=0, rmse=0)
 
-        usedrts, smoothed = self.smoothed(self.allrts, rts, chromatogram)
-
-        assert len(usedrts)==len(smoothed)
-
-        area = self.trapez(usedrts, smoothed)
-
-        # maybe the smoothed() call introduces rts not in self.allrts
-        # so we interpolate the input to the usedrts in order to
-        # get an estimation about the quality of the smoothing
         fullchromatogram = [ intensityInRange(peaks, mzmin, mzmax) for peaks in self.allpeaks ]
-        cinterpolator = scipy.interpolate.interp1d(self.allrts, fullchromatogram)
-        newc = cinterpolator(usedrts)
-        rmse = np.sqrt( np.sum( (newc-smoothed)**2) / len(smoothed))
-        #rmse = 0
+        area, rmse, usedrts, smoothed = self.integrator(self.allrts, fullchromatogram, rts, chromatogram)
 
         return dict(area=area, rmse=rmse, intrts=usedrts,smoothed=smoothed)
 

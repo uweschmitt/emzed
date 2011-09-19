@@ -1,7 +1,30 @@
 from PeakIntegrator import PeakIntegrator
+import scipy.interpolate
 import numpy as np
 
-class SGIntegrator(PeakIntegrator):
+class SmoothedIntegrator(PeakIntegrator):
+
+
+    def integrator(self, allrts, fullchromatogram, rts, chromatogram):
+
+        usedrts, smoothed = self.smooth(allrts, rts, chromatogram)
+        assert len(usedrts)==len(smoothed)
+
+        area = self.trapez(usedrts, smoothed)
+
+        # maybe the smoothed() call introduces rts not in self.allrts
+        # so we interpolate the input to the usedrts in order to
+        # get an estimation about the quality of the smoothing
+        cinterpolator = scipy.interpolate.interp1d(allrts, fullchromatogram)
+        newc = cinterpolator(usedrts)
+        rmse = np.sqrt( np.sum( (newc-smoothed)**2) / len(smoothed))
+
+        return area, rmse, usedrts, smoothed
+
+        
+
+
+class SGIntegrator(SmoothedIntegrator):
 
     def __init__(self, **kw):
 
@@ -49,7 +72,7 @@ class SGIntegrator(PeakIntegrator):
         y = np.concatenate((firstvals, y, lastvals))
         return np.convolve( w, y, mode='valid')
 
-    def smoothed(self, allrts, rts, chromatogram):
+    def smooth(self, allrts, rts, chromatogram):
         smoothed = self._savitzky_golay_smooth(chromatogram, self.weights)
         smoothed[smoothed<0]= 0  # clip negative values, result from some spikes
 
@@ -60,7 +83,7 @@ class SGIntegrator(PeakIntegrator):
             missing = - missing
             rts = np.hstack( [ rts[0]*np.ones( ( missing/2, )), rts, rts[-1]*np.ones( (  missing - missing/2, )) ] )
 
-        return rts, smoothed
+        return rts, smoothed 
 
         
 

@@ -28,7 +28,7 @@ def reintegrate(ftable, integratorid="std", showProgress = True):
 
     colNames += [ "intbegin", "intend", "method", "area", "rmse", "intrts", "smoothed"  ]
     colTypes += [ float, float, str, float, float, np.ndarray, np.ndarray ]
-    colFormats += [ "%8.2f", "%8.2f", "%s", "%.2e", "%9.1f", None , None ]
+    colFormats += [ "%8.2f", "%8.2f", "%s", "%.2e", "%.2e", None , None ]
 
     rows = []
     lastcent = -1

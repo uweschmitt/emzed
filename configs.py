@@ -41,7 +41,8 @@ peakIntegrators = [ ( "std",        SGIntegrator(window_size=11, order=2) ) ,
                     ( "sg_21_2",    SGIntegrator(window_size=21, order=2) ) ,
                     ( "sg_11_1",    SGIntegrator(window_size=11, order=1) ) ,
                     ( "sg_21_1",    SGIntegrator(window_size=21, order=1) ) ,
-                    ( "asym_gauss", AsymmetricGaussIntegrator() ) ,
+                    ( "asym_gauss", AsymmetricGaussIntegrator(gtol=0.1) ) ,
+                    ( "asym_gauss_exakt", AsymmetricGaussIntegrator(gtol=None) ) ,
                    ]
 
 # 
