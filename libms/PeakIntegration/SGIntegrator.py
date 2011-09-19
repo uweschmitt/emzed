@@ -57,7 +57,8 @@ class SGIntegrator(PeakIntegrator):
         if missing >0 : # pad zeros for very short eics
             smoothed = np.hstack( [ np.zeros( ( missing/2, )), smoothed, np.zeros( (  missing - missing/2, )) ] )
         if missing <0 : # pad zeros for very short eics
-            rts = np.hstack( [ np.zeros( ( missing/2, )), rts, np.zeros( (  missing - missing/2, )) ] )
+            missing = - missing
+            rts = np.hstack( [ rts[0]*np.ones( ( missing/2, )), rts, rts[-1]*np.ones( (  missing - missing/2, )) ] )
 
         return rts, smoothed
 
