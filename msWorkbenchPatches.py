@@ -100,6 +100,11 @@ def patch_spyder():
             settings[name] = getattr(self, name)
         return settings
 
+    @replace(NamespaceBrowser.import_data, verbose=True)
+    def import_data(self, filenames=None):
+        NamespaceBrowser._orig_import_data(self, filenames)
+        self.save_button.setEnabled(self.filename is not None)
+
     patch_startup_file()
 
 
