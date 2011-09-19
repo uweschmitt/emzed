@@ -118,42 +118,52 @@ class FeatureExplorer(QDialog):
 
         #hlayout = QHBoxLayout()
 
-        vlayout = QSplitter()
-        vlayout.setOrientation(Qt.Vertical)
-        vlayout.setOpaqueResize(False)
+        vsplitter = QSplitter()
+        vsplitter.setOrientation(Qt.Vertical)
+        vsplitter.setOpaqueResize(False)
 
-        hlayout = QSplitter()
-        hlayout.setOpaqueResize(False)
-        hlayout.addWidget(self.rtPlotter.widget)
+        hsplitter = QSplitter()
+        hsplitter.setOpaqueResize(False)
+        hsplitter.addWidget(self.rtPlotter.widget)
 
         if self.integratedFeatures:
 
-            #vlayout2 = QVBoxLayout()
-            vlayout2 = QSplitter()
-            vlayout2.setOpaqueResize(False)
-            vlayout2.setOrientation(Qt.Vertical)
+
+            #vsplitter2 = QSplitter()
+
+            #vsplitter2.setOpaqueResize(False)
+            #vsplitter2.setOrientation(Qt.Vertical)
+
+
+
+            #vlayout2.addWidget(vsplitter2)
+            #vsplitter2.setLayout(vlayout2)
+            vlayout2 = QVBoxLayout()
+            vlayout2.addWidget(self.intLabel)
+            vlayout2.addWidget(self.chooseIntMethod)
+            vlayout2.addWidget(self.reintegrateButton)
+            vlayout2.addStretch()
 
             vlayout2.setSpacing(10)
             vlayout2.setMargin(5)
-            vlayout2.addWidget(self.intLabel)
             vlayout2.setAlignment(self.intLabel, Qt.AlignTop)
-            vlayout2.addWidget(self.chooseIntMethod)
             vlayout2.setAlignment(self.chooseIntMethod, Qt.AlignTop)
-            vlayout2.addWidget(self.reintegrateButton)
             vlayout2.setAlignment(self.reintegrateButton, Qt.AlignTop)
-            vlayout2.addStretch()
-            hlayout.addLayout(vlayout2)
+
+            frame = QFrame()
+            frame.setLayout(vlayout2)
+            hsplitter.addWidget(frame)
             
 
-        hlayout.addWidget(self.mzPlotter.widget)
+        hsplitter.addWidget(self.mzPlotter.widget)
 
         #vlayout.addLayout(hlayout)
-        vlayout.addWidget(hlayout)
+        vsplitter.addWidget(hsplitter)
 
-        vlayout.addWidget(self.tw)
-        vlayout.addWidget(self.statusMessages) # QTextEdit())
+        vsplitter.addWidget(self.tw)
+        vsplitter.addWidget(self.statusMessages) # QTextEdit())
 
-        vlayouto.addWidget(vlayout)
+        vlayouto.addWidget(vsplitter)
 
     def setupWidgets(self):
 
@@ -198,12 +208,12 @@ class FeatureExplorer(QDialog):
             self.connect(self.chooseIntMethod, SIGNAL("currentIndexChanged(int)"), self.intMethodChanged)
             self.reintegrateButton = QPushButton()
             self.reintegrateButton.setText("Integrate")
-            self.connect(self.reintegrateButton, SIGNAL("clicked()"), self.doReIntegrate)
+            self.connect(self.reintegrateButton, SIGNAL("clicked()"), self.doIntegrate)
 
     def intMethodChanged(self, i):
         print configs.peakIntegrators[i][1], "chosen"
 
-    def doReIntegrate(self):
+    def doIntegrate(self):
         if not self.integratedFeatures:
             return
 
@@ -236,7 +246,7 @@ class FeatureExplorer(QDialog):
         # write values to ftable
         row[getIndex("method")] = method
         row[getIndex("intbegin")] = intBegin
-        row[getIndex("intbegin")] = intEnd
+        row[getIndex("intend")] = intEnd
         row[getIndex("area")] = area
         row[getIndex("rmse")] = rmse
         row[getIndex("intrts")] = intrts
@@ -257,6 +267,7 @@ class FeatureExplorer(QDialog):
         # plot result
         self.rtPlotter.plot(smoothed, x=intrts, index=1)
         self.rtPlotter.replot()
+        print "done"
             
 
     def plotMz(self):
@@ -338,9 +349,6 @@ class FeatureExplorer(QDialog):
             intrts = ft.rows[realIdx][getIndex("intrts")]
             smoothed = ft.rows[realIdx][getIndex("smoothed")]
             self.rtPlotter.plot(smoothed, x=intrts, index=1)
-            self.intBeginItem = self.tw.item(rowIdx, getIndex("intbegin"))
-            self.intEndItem = self.tw.item(rowIdx, getIndex("intend"))
-            self.methodtem = self.tw.item(rowIdx, getIndex("method"))
             method = ft.rows[realIdx][getIndex("method")]
             ix = self.chooseIntMethod.findText(method)
             if ix<0: 
@@ -350,6 +358,7 @@ class FeatureExplorer(QDialog):
             intbegin = self.ftable[realIdx][getIndex("intbegin")]
             intend = self.ftable[realIdx][getIndex("intend")]
             self.rtPlotter.setRangeSelectionLimits(intbegin, intend)
+            print intbegin, "...", intend
         else:
             rtmin = self.ftable[realIdx][getIndex("rtmin")]
             rtmax = self.ftable[realIdx][getIndex("rtmax")]
