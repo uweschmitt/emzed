@@ -64,10 +64,12 @@ class FeatureExplorer(QDialog):
 
         self.plotMz()
 
+        self.setMinimumHeight(600)
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.setSizePolicy(sizePolicy)
         self.setSizeGripEnabled(True)
 
+        
         sys.stdout = StreamSplitter(self.statusMessages, sys.stdout)
         sys.stderr = StreamSplitter(self.statusMessages, sys.stderr)
 
@@ -103,7 +105,7 @@ class FeatureExplorer(QDialog):
         self.setMinimumWidth(helpers.widthOfTableWidget(self.tw))
 
 
-        self.tw.setMinimumHeight(300)
+        self.tw.setMinimumHeight(150)
 
     def closeEvent(self, evt):
         sys.stdout = sys.__stdout__
@@ -111,15 +113,26 @@ class FeatureExplorer(QDialog):
 
 
     def setupLayout(self):
-        vlayout = QVBoxLayout()
-        self.setLayout(vlayout)
+        vlayouto = QVBoxLayout()
+        self.setLayout(vlayouto)
 
-        hlayout = QHBoxLayout()
+        #hlayout = QHBoxLayout()
+
+        vlayout = QSplitter()
+        vlayout.setOrientation(Qt.Vertical)
+        vlayout.setOpaqueResize(False)
+
+        hlayout = QSplitter()
+        hlayout.setOpaqueResize(False)
         hlayout.addWidget(self.rtPlotter.widget)
 
         if self.integratedFeatures:
 
-            vlayout2 = QVBoxLayout()
+            #vlayout2 = QVBoxLayout()
+            vlayout2 = QSplitter()
+            vlayout2.setOpaqueResize(False)
+            vlayout2.setOrientation(Qt.Vertical)
+
             vlayout2.setSpacing(10)
             vlayout2.setMargin(5)
             vlayout2.addWidget(self.intLabel)
@@ -134,10 +147,13 @@ class FeatureExplorer(QDialog):
 
         hlayout.addWidget(self.mzPlotter.widget)
 
-        vlayout.addLayout(hlayout)
+        #vlayout.addLayout(hlayout)
+        vlayout.addWidget(hlayout)
 
         vlayout.addWidget(self.tw)
         vlayout.addWidget(self.statusMessages) # QTextEdit())
+
+        vlayouto.addWidget(vlayout)
 
     def setupWidgets(self):
 
@@ -149,13 +165,27 @@ class FeatureExplorer(QDialog):
 
         self.mzPlotter = MzPlotter(self.ftable.ds)
 
-        self.rtPlotter.setMinimumSize(300, 250)
-        self.mzPlotter.setMinimumSize(300, 250)
+        self.rtPlotter.setMinimumSize(300, 150)
+        self.mzPlotter.setMinimumSize(300, 150)
+
+        pol = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+        pol.setVerticalStretch(5)
+        self.rtPlotter.widget.setSizePolicy(pol)
+        self.mzPlotter.widget.setSizePolicy(pol)
 
         self.tw = QTableWidget()
 
+        pol = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+        pol.setVerticalStretch(5)
+        self.tw.setSizePolicy(pol)
+
         self.statusMessages = QTextEdit()
         self.statusMessages.setReadOnly(True)
+        self.statusMessages.setMinimumHeight(20)
+        pol = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+        pol.setVerticalStretch(1)
+        self.statusMessages.setSizePolicy(pol)
+        
 
         self.connect(self.tw.verticalHeader(), SIGNAL("sectionClicked(int)"), self.rowClicked)
         self.connect(self.tw, SIGNAL("cellClicked(int, int)"), self.cellClicked)
@@ -298,8 +328,6 @@ class FeatureExplorer(QDialog):
 
         mzmin = self.ftable[realIdx][getIndex("mzmin")]
         mzmax = self.ftable[realIdx][getIndex("mzmax")]
-        rtmin = self.ftable[realIdx][getIndex("rtmin")]
-        rtmax = self.ftable[realIdx][getIndex("rtmax")]
 
         peaks = [ spec.peaks[ (spec.peaks[:,0] >= mzmin) * (spec.peaks[:,0] <= mzmax) ] for spec in ft.ds.specs ]
 
@@ -319,10 +347,16 @@ class FeatureExplorer(QDialog):
                 print "INTEGRATOR NOT AVAILABLE"
             else:
                 self.chooseIntMethod.setCurrentIndex(ix)
+            intbegin = self.ftable[realIdx][getIndex("intbegin")]
+            intend = self.ftable[realIdx][getIndex("intend")]
+            self.rtPlotter.setRangeSelectionLimits(intbegin, intend)
+        else:
+            rtmin = self.ftable[realIdx][getIndex("rtmin")]
+            rtmax = self.ftable[realIdx][getIndex("rtmax")]
+            self.rtPlotter.setRangeSelectionLimits(rtmin, rtmax)
             
 
         self.rtPlotter.setXAxisLimits(0, self.maxRT)
-        self.rtPlotter.setRangeSelectionLimits(rtmin, rtmax)
         self.rtPlotter.replot()
 
         

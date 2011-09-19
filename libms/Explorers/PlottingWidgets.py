@@ -68,12 +68,12 @@ class RtPlotter(PlotterBase):
         colors = "bgrkcmG"
         for i in range(numCurves):
             c = colors[i % len(colors)] # cycle through colors
-            if configs is not None:
+            if configs is None or configs[i] is None:
+                config = dict()
+            else:
                 config = configs[i]
-                if config is None:
-                    config = dict(color=c)
-                elif not "color" in config:
-                    config["color"] = c
+            if not "color" in config:
+                 config["color"] = c
             curve = make.curve([], [], **config)
             curve.__class__ = ModifiedCurveItem
             widget.plot.add_item(curve)
