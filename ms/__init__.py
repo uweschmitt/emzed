@@ -14,3 +14,6 @@ del load_utils
 del save_utils
 del custom_dialogs
 del integration
+del shell_helpers
+del AsymmetricGaussIntegrator
+del SGIntegrator
