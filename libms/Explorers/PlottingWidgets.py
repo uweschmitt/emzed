@@ -8,7 +8,10 @@ from guiqwt.label import ObjectInfo
 from ModifiedGuiQwtBehavior import *
 from Config import setupStyleRangeMarker, setupCommonStyle
 
+from PyQt4.Qwt5 import QwtScaleDraw, QwtText
+
 import numpy as np
+import new
 
 class RtRangeSelectionInfo(ObjectInfo):
     
@@ -154,6 +157,8 @@ class MzCursorInfo(ObjectInfo):
             txt += "<br/><br/>dmz=%.6f<br/>rI=%.3e" % (mz2-mz, I2/I)
         return txt
 
+
+
 class MzPlotter(PlotterBase):
 
     def __init__(self, peakmap, c_callback=None):
@@ -167,6 +172,12 @@ class MzPlotter(PlotterBase):
         # inject mofified behaviour of wigets plot attribute:
         widget.plot.__class__ = MzPlot
         widget.plot.register_c_callback(self.handle_c_pressed)
+
+        # todo: refactor as helper
+        a = QwtScaleDraw()
+        label = lambda self, x : QwtText("%s" % x)
+        a.label = new.instancemethod(label, widget.plot, QwtScaleDraw)
+        widget.plot.setAxisScaleDraw(widget.plot.xBottom, a)
 
 
         self.pm = PlotManager(widget)
