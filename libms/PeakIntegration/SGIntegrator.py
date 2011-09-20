@@ -22,6 +22,9 @@ class SmoothedIntegrator(PeakIntegrator):
         return area, rmse, usedrts, smoothed
 
         
+                
+                
+
 
 
 class SGIntegrator(SmoothedIntegrator):

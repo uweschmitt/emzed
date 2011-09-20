@@ -3,7 +3,7 @@ from   libms.pyOpenMS import intensityInRange
 
 class PeakIntegrator(object):
 
-    def __init__(self, config):
+    def __init__(self, config=None):
         self.config = config
         self.peakMap = None
 
@@ -18,7 +18,7 @@ class PeakIntegrator(object):
 
         ms1specs = [spec for spec in self.peakMap.specs if spec.msLevel == 1]
 
-        peaksl = [ spec.peaks for spec in ms1specs if rtmin <= spec.RT <=rtmax and spec.msLevel == 1]
+        peaksl = [ spec.peaks for spec in ms1specs if rtmin <= spec.RT <=rtmax ]
         chromatogram = np.array([ intensityInRange(peaks, mzmin, mzmax) for peaks in peaksl ])
 
         rts  = [ spec.RT for spec in ms1specs if rtmin <= spec.RT <=rtmax ]
