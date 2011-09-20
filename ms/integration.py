@@ -61,7 +61,9 @@ def reintegrate(ftable, integratorid="std", showProgress = True):
         rows.append(row)
 
     title = "" if ftable.title is None else ftable.title
-    return FeatureTable(ftable.ds, colNames, colTypes, rows, colFormats, "reintegrated: "+title, meta=ftable.meta)
+    meta = ftable.meta.copy()
+    meta["reintegrated"]=True
+    return FeatureTable(ftable.ds, colNames, colTypes, rows, colFormats, "reintegrated: "+title, meta=meta)
         
         
     

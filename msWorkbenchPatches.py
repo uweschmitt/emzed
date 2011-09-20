@@ -130,11 +130,11 @@ def patch_external_shell():
     @replace(dicteditorutils.get_type_string, verbose=True)
     def get_type_string( item ):
         if isinstance(item, libms.pyOpenMS.PeakMap):
-            return "libms.pyOpenMS.PeakMap"
+            return "PeakMap"
         if isinstance(item, libms.DataStructures.FeatureTable):
-            return "libms.DataStructures.FeatureTable"
+            return "FeatureTable"
         if isinstance(item, libms.DataStructures.Table):
-            return "libms.DataStructures.Table"
+            return "Table"
         return dicteditorutils._orig_get_type_string(item)
 
 
@@ -143,9 +143,9 @@ def patch_external_shell():
         if isinstance(value, libms.pyOpenMS.PeakMap):
             return  "%s" % value.meta
         if isinstance(value, libms.DataStructures.FeatureTable):
-            return "%r" % value.title
+            return "%r" % value.meta
         if isinstance(value, libms.DataStructures.Table):
-            return "%r" % value.title
+            return "%r" % value.meta
         return dicteditorutils._orig_value_to_display(value, *a, **kw)
 
     patch_oedit()

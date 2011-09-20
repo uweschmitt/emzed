@@ -22,5 +22,9 @@ def loadMap(path=None):
     if method is None:
         raise Exception("unknown extension '%s' " % ext)
 
-    return method(path)
+    peakMap = method(path)
+    source = peakMap.meta.get("source")
+    if source is not None:
+        peakMap.meta["source"] = os.path.basename(source) # for nicer display
     
+    return peakMap
