@@ -2,9 +2,9 @@ import numpy as np
 
 class PeakMap(object):
 
-    def __init__(self, specs = []):
-        self.specs = specs
-        self.meta  = dict()
+    def __init__(self, specs = None, meta = None):
+        self.specs = [] if specs is None else specs
+        self.meta  = dict() if meta is None else meta
 
     def __len__(self):
         return len(self.specs)
@@ -15,7 +15,7 @@ class PeakMap(object):
 
     def filter(self, predicate):
 
-        return PeakMap( [ s for s in self.specs if predicate(s) ] )
+        return PeakMap( [ s for s in self.specs if predicate(s) ], self.meta )
 
     def removeZeroIntensities(self):
         for spec in self.specs:
