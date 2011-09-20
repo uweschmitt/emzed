@@ -27,7 +27,6 @@ class Table(object):
         self.rows     = rows
         self.colFormats = colFormats
 
-
         self.colIndizes = dict( (n, i) for i, n in enumerate(colNames)) 
         self.title = title
         self.meta = copy.deepcopy(meta) if meta is not None else dict()

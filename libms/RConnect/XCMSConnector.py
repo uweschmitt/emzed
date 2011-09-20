@@ -132,6 +132,7 @@ class CentwaveFeatureDetector(object):
                 raise Exception("R opreation failed")
 
             table = XCMSFeatureParser.parse(file(temp_output).readlines())
+            table.meta["xcms_centwave_config"] = dd
             return FeatureTable.fromTableAndMap(table, peakMap)
 
             
@@ -210,5 +211,6 @@ class MatchedFilterFeatureDetector(object):
                 raise Exception("R opreation failed")
 
             table = XCMSFeatureParser.parse(file(temp_output).readlines())
+            table.meta["xcms_matchedfilters_config"] = dd
             return FeatureTable.fromTableAndMap(table, peakMap)
 
