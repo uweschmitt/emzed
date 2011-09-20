@@ -34,7 +34,7 @@ def reintegrate(ftable, integratorid="std", showProgress = True):
     lastcent = -1
     for i, row in enumerate(ftable):
         if showProgress:
-            cent = (i*20)/(len(ftable)-1) # integer div here !
+            cent = ((i+1)*20)/len(ftable) # integer div here !
             if cent != lastcent:
                 print cent*5,
                 sys.stdout.flush()
