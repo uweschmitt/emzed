@@ -1,2 +1,1 @@
 from XCMSConnector import *
-installXcmsIfNeeded()

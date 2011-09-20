@@ -81,6 +81,9 @@ class CentwaveFeatureDetector(object):
                              verbose_columns = False )
 
     def __init__(self, **kw):
+
+        #installXcmsIfNeeded()
+
         self.config = self.standardConfig.copy()
         self.config.update(kw)
 
@@ -103,6 +106,11 @@ class CentwaveFeatureDetector(object):
             dd["verbose_columns"] = str(dd["verbose_columns"]).upper()
         
             script = """
+                        if (require("xcms") == FALSE) 
+                        {
+                            source("http://bioconductor.org/biocLite.R")
+                            biocLite("xcms", dep=T)
+                        }
                         library(xcms)
                         xs <- xcmsSet(%(temp_input)r, method="centWave", 
                                           ppm=%(ppm)d, 
@@ -157,6 +165,7 @@ class MatchedFilterFeatureDetector(object):
                              index = False )
 
     def __init__(self, **kw):
+        #installXcmsIfNeeded()
         self.config = self.standardConfig.copy()
         self.config.update(kw)
 
@@ -178,6 +187,11 @@ class MatchedFilterFeatureDetector(object):
             dd["index"] = str(dd["index"]).upper()
         
             script = """
+                        if (require("xcms") == FALSE) 
+                        {
+                            source("http://bioconductor.org/biocLite.R")
+                            biocLite("xcms", dep=T)
+                        }
                         library(xcms)
                         xs <- xcmsSet(%(temp_input)r, method="matchedFilter", 
                                        fwhm = %(fwhm)f, sigma = %(sigma)f,
