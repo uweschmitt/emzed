@@ -70,6 +70,8 @@ def runCentwave(pattern=None, destination=None, configid=None, **params):
                 print e
                 print "reading FAILED"
                 return None
+
+            ds = ds.filter(lambda spec: spec.msLevel == 1)
             
             table = self.det.process(ds)
             table.title = path
@@ -159,6 +161,7 @@ def runMatchedFilter(pattern=None, destination=None, configid=None, **params):
                 print "reading FAILED"
                 return None
             
+            ds = ds.filter(lambda spec: spec.msLevel == 1)
             table = self.det.process(ds)
             table.title = path
 
