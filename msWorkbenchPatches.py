@@ -143,9 +143,10 @@ def patch_external_shell():
         if isinstance(value, libms.pyOpenMS.PeakMap):
             return  "%s" % value.meta
         if isinstance(value, libms.DataStructures.FeatureTable):
-            return "%r" % value.meta
+            
+            return "%r" %  dict( (k,v) for k, v in value.meta.items() if k in ["source", "reintegrated" ])
         if isinstance(value, libms.DataStructures.Table):
-            return "%r" % value.meta
+            return "%r" % value.meta.get("source")
         return dicteditorutils._orig_value_to_display(value, *a, **kw)
 
     patch_oedit()
