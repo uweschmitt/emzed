@@ -11,7 +11,7 @@ class AsymmetricGaussIntegrator(PeakIntegrator):
         self.gtol = kw.get("gtol")
 
     def __str__(self):
-        return "AsymmetricGaussIntegrator, gtol=%r"  % self.gtol
+        return "AsymmetricGaussIntegrator, gtol=%s"  % ("None" if self.gtol is None else "%.2e" % self.gtol)
 
 
     def integrator(self, allrts, fullchromatogram, rts, chromatogram):
@@ -51,30 +51,27 @@ class AsymmetricGaussIntegrator(PeakIntegrator):
 
 
         if len(rts)<4:
-            return 0, 1e30, allrts, np.zeros_like(allrts)
+            rmse = 1.0/math.sqrt(len(rts))*np.linalg.norm(chromatogram)
+            return 0, rmse, allrts, np.zeros_like(allrts)
             
         imax = np.argmax(chromatogram)
         A = chromatogram[imax]
         mu = rts[imax]
         s1 = s2 = 0.1
-
         param = A, s1, s2, mu
+        if self.gtol is None:
+            (A, s1, s2, mu), success = opt.leastsq(err, (A, s1, s2, mu), args=(rts, chromatogram))
+        else:
+            (A, s1, s2, mu), success = opt.leastsq(err, (A, s1, s2, mu), gtol = self.gtol, args=(rts, chromatogram))
 
-        old_opt = np.seterr(all="ignore")
-        param, success = opt.leastsq(err, param, Dfun = None, gtol = self.gtol, args=(rts, chromatogram))
-        np.seterr(**old_opt)
-        A, s1, s2, mu = param
-
-        smoothed = fun_eval(param, allrts)
-        area = self.trapez(allrts, smoothed)
-        rmse = 1/math.sqrt(len(allrts)) * np.linalg.norm(smoothed - fullchromatogram)
-
-        #import pylab
-        #pylab.plot(allrts, fullchromatogram)
-        #pylab.plot(allrts, smoothed)
-        #pylab.plot(rts, fun_eval(param, rts))
-        #pylab.show()
-        
+        if success not in [1,2,3,4] or s1<0 or s2<0 : # failed
+            area = np.nan
+            rmse = np.nan
+            smoothed = np.zeros((0,))
+        else:
+            smoothed = fun_eval( (A, s1, s2, mu), allrts)
+            area = self.trapez(allrts, smoothed)
+            rmse = 1/math.sqrt(len(allrts)) * np.linalg.norm(smoothed - fullchromatogram)
         return area, rmse, allrts, smoothed
 
 
