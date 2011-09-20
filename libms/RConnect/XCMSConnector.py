@@ -133,6 +133,7 @@ class CentwaveFeatureDetector(object):
 
             table = XCMSFeatureParser.parse(file(temp_output).readlines())
             table.meta["xcms_centwave_config"] = dd
+            table.meta["source"] = peakMap.meta.get("source")
             return FeatureTable.fromTableAndMap(table, peakMap)
 
             
@@ -212,5 +213,6 @@ class MatchedFilterFeatureDetector(object):
 
             table = XCMSFeatureParser.parse(file(temp_output).readlines())
             table.meta["xcms_matchedfilters_config"] = dd
+            table.meta["source"] = peakMap.meta.get("source")
             return FeatureTable.fromTableAndMap(table, peakMap)
 
