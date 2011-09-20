@@ -12,15 +12,15 @@ class BatchRunner(object):
         
     def setup(self, conf):
         """ setup processor with config conf if needed """
-        raise NotImplmetedError("you have to override this method")
+        raise NotImplementedError("you have to override this method")
 
     def process(self, path):
         """ process file denoted by path, returns result object """
-        raise NotImplmetedError("you have to override this method")
+        raise NotImplementedError("you have to override this method")
 
     def write(self, result, destinationDir, path):
         """ writes result to destinationDir. path is the path of the input file"""
-        raise NotImplmetedError("you have to override this method")
+        raise NotImplementedError("you have to override this method")
 
     def run(self, pattern=None, destination=None, configid=None, **params):
 
