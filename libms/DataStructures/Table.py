@@ -149,7 +149,7 @@ class FeatureTable(Table):
     @staticmethod
     def fromTableAndMap(table, ds):
         meta = table.meta.copy()
-        meta[source] = ds.meta.get("source")
+        meta["source"] = ds.meta.get("source")
 
         return FeatureTable(ds, colNames=table.colNames,
                                 colTypes=table.colTypes, 
