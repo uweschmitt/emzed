@@ -31,7 +31,7 @@ class StreamSplitter(object):
         self.collected = []
 
     def write(self, what):
-        # self.stream.write(what)
+        self.stream.write(what)
         if what.endswith("\n"):
             self.qtextedit.append("".join(self.collected)+what.rstrip("\n"))
             self.collected = []
@@ -326,11 +326,9 @@ class FeatureExplorer(QDialog):
 
     def rowClicked(self, rowIdx):
         
-        if self.lastRow is not None:
-            self.setRowBold(self.lastRow, bold=False)
-
-        self.setRowBold(rowIdx, bold=True)
         self.lastRow = rowIdx
+
+        
 
         realIdx = self.tw.item(rowIdx, 0).idx # trotz umsortierung !
         ft = self.ftable 
@@ -359,7 +357,6 @@ class FeatureExplorer(QDialog):
             intbegin = self.ftable[realIdx][getIndex("intbegin")]
             intend = self.ftable[realIdx][getIndex("intend")]
             self.rtPlotter.setRangeSelectionLimits(intbegin, intend)
-            print intbegin, "...", intend
         else:
             rtmin = self.ftable[realIdx][getIndex("rtmin")]
             rtmax = self.ftable[realIdx][getIndex("rtmax")]
