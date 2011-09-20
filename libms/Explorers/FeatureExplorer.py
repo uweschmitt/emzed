@@ -300,8 +300,9 @@ class FeatureExplorer(QDialog):
             maxRT = self.rtPlotter.maxRTRangeSelected
             specs = [spec for spec in self.ftable.ds.specs if minRT <= spec.RT <= maxRT ]
             peaks = np.vstack([ spec.peaks[ (spec.peaks[:,0] >= mzmin) * (spec.peaks[:,0] <= mzmax) ] for spec in self.ftable.ds.specs ])
-            maxIntensity =  max(peaks[:,1])
-            self.mzPlotter.setYAxisLimits(0, maxIntensity*1.1)
+            if len(peaks)>0:            
+                maxIntensity =  max(peaks[:,1])
+                self.mzPlotter.setYAxisLimits(0, maxIntensity*1.1)
 
         elif name.startswith("rtm"):  # rtmin or rtmax
             rtmin = self.ftable[realIdx][getIndex("rtmin")]
