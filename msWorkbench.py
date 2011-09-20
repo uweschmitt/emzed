@@ -341,7 +341,8 @@ class MainWindow(QMainWindow):
         self.setWindowIcon(get_icon(icon_name))
         
         # Showing splash screen
-        pixmap = QPixmap(get_image_path('splash.png'), 'png')
+        #pixmap = QPixmap(get_image_path('splash.png'), 'png')
+        pixmap = QPixmap("splash.png", "png")
         self.splash = QSplashScreen(pixmap)
         font = self.splash.font()
         font.setPixelSize(10)
