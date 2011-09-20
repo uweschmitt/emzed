@@ -1,8 +1,8 @@
 from load_utils import *
 from save_utils import *
 from custom_dialogs import *
-
 from integration import *
+from shell_helpers import *
 
 from libms.Explorers       import inspectMap, inspectFeatures
 from libms.gui.TableDialog import showTable
