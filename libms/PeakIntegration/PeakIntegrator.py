@@ -26,9 +26,6 @@ class PeakIntegrator(object):
         if len(rts)==0:
             return dict(area=0, rmse=0)
 
-        import pprint
-        pprint.pprint(zip(rts,chromatogram))
-
         fullchromatogram = [ intensityInRange(peaks, mzmin, mzmax) for peaks in self.allpeaks ]
         area, rmse, params = self.integrator(self.allrts, fullchromatogram, rts, chromatogram)
 
