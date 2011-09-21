@@ -26,10 +26,13 @@ class PeakIntegrator(object):
         if len(rts)==0:
             return dict(area=0, rmse=0)
 
-        fullchromatogram = [ intensityInRange(peaks, mzmin, mzmax) for peaks in self.allpeaks ]
-        area, rmse, usedrts, smoothed = self.integrator(self.allrts, fullchromatogram, rts, chromatogram)
+        import pprint
+        pprint.pprint(zip(rts,chromatogram))
 
-        return dict(area=area, rmse=rmse, intrts=usedrts,smoothed=smoothed)
+        fullchromatogram = [ intensityInRange(peaks, mzmin, mzmax) for peaks in self.allpeaks ]
+        area, rmse, params = self.integrator(self.allrts, fullchromatogram, rts, chromatogram)
+
+        return dict(area=area, rmse=rmse, params=params)
 
     def smoothed(self, *a):
         raise Exception("not implemented")

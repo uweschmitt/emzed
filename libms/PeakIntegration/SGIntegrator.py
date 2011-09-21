@@ -19,9 +19,11 @@ class SmoothedIntegrator(PeakIntegrator):
         newc = cinterpolator(usedrts)
         rmse = np.sqrt( np.sum( (newc-smoothed)**2) / len(smoothed))
 
-        return area, rmse, usedrts, smoothed
+        return area, rmse, (usedrts, smoothed)
 
         
+    def getSmoothed(self, rtvalues, params):
+        return params
                 
                 
 

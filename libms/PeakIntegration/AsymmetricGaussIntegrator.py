@@ -13,6 +13,17 @@ class AsymmetricGaussIntegrator(PeakIntegrator):
     def __str__(self):
         return "AsymmetricGaussIntegrator, gtol=%s"  % ("None" if self.gtol is None else "%.2e" % self.gtol)
 
+    @staticmethod
+    def __fun_eval(param, rts):
+        A, s1, s2, mu = param
+        isleft = rts < mu
+        svec = s2 + isleft * (s1-s2)
+        rv = np.exp(-(rts-mu)**2 / svec ) 
+        return A*rv
+
+    @staticmethod
+    def __err(param, rts, values):
+        return AsymmetricGaussIntegrator.__fun_eval(param, rts) - values
 
     def integrator(self, allrts, fullchromatogram, rts, chromatogram):
 
@@ -22,33 +33,9 @@ class AsymmetricGaussIntegrator(PeakIntegrator):
 
         """
 
-        def fun_eval(param, rts):
-            A, s1, s2, mu = param
-            isleft = rts < mu
-            svec = s2 + isleft * (s1-s2)
-            rv = np.exp(-(rts-mu)**2 / svec ) 
-            return A*rv
-
-        def err(param, rts, values):
-            return fun_eval(param, rts) - values
-
-
-        def diff(param, rts, values):
-
-            res = np.zeros((len(rts), len(param)))
-            fun = fun_eval(param, rts)
-            
-            A, s1, s2, mu = param
-            isleft = rts < mu
-
-            #area = self.trapez(rts, fun)
-
-            res[:,0] = fun / A
-            res[:,1] = -isleft * fun / s1
-            res[:,2] = -(1-isleft) * fun / s2
-            res[:,3] = 2*(rts-mu) * fun
-            return res
-
+        print 
+        print zip(rts, chromatogram)
+        print 
 
         if len(rts)<4:
             rmse = 1.0/math.sqrt(len(rts))*np.linalg.norm(chromatogram)
@@ -57,22 +44,31 @@ class AsymmetricGaussIntegrator(PeakIntegrator):
         imax = np.argmax(chromatogram)
         A = chromatogram[imax]
         mu = rts[imax]
-        s1 = s2 = 0.1
+        s1 = s2 = 0.5 # 1.0
         param = A, s1, s2, mu
         if self.gtol is None:
-            (A, s1, s2, mu), success = opt.leastsq(err, (A, s1, s2, mu), args=(rts, chromatogram))
+            (A, s1, s2, mu), ok = opt.leastsq(AsymmetricGaussIntegrator.__err, 
+                                              (A, s1, s2, mu), 
+                                              args=(rts, chromatogram))
         else:
-            (A, s1, s2, mu), success = opt.leastsq(err, (A, s1, s2, mu), gtol = self.gtol, args=(rts, chromatogram))
+            (A, s1, s2, mu), ok = opt.leastsq(AsymmetricGaussIntegrator.__err, 
+                                              (A, s1, s2, mu), gtol = self.gtol, 
+                                              args=(rts, chromatogram))
 
-        if success not in [1,2,3,4] or s1<0 or s2<0 : # failed
+        if ok not in [1,2,3,4] or s1<0 or s2<0 : # failed
             area = np.nan
             rmse = np.nan
-            smoothed = np.zeros((0,))
         else:
-            smoothed = fun_eval( (A, s1, s2, mu), allrts)
+            smoothed = AsymmetricGaussIntegrator.__fun_eval( (A, s1, s2, mu), allrts)
             area = self.trapez(allrts, smoothed)
             rmse = 1/math.sqrt(len(allrts)) * np.linalg.norm(smoothed - fullchromatogram)
-        return area, rmse, allrts, smoothed
+
+        print A, s1, s2, mu
+        return area, rmse, (A, s1, s2, mu)
+
+
+    def getSmoothed(self, rtvalues, params):
+        return rtvalues, AsymmetricGaussIntegrator.__fun_eval(params, rtvalues)
 
 
         
