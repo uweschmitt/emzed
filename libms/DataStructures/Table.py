@@ -163,6 +163,10 @@ class FeatureTable(Table):
         rv = super(FeatureTable, self).extractColumns(colnames)
         return FeatureTable.fromTableAndMap(rv, self.ds)
 
+    def extractRows(self, indizes):
+        rv = super(FeatureTable, self).extractRows(indizes)
+        return FeatureTable.fromTableAndMap(rv, self.ds)
+
     def __getitem__(self, slice_):
         rv = super(FeatureTable, self).__getitem__(slice_)
         return FeatureTable.fromTableAndMap(rv, self.ds)

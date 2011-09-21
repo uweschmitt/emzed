@@ -47,7 +47,7 @@ class TableDialog(QDialog):
         vlayout.addWidget(self.tw)
 
     def populate(self):
-        helpers.populateTableWidget(self.tw, self.ftable)
+        helpers.populateTableWidget(self.tw, self.table)
 
 
    
