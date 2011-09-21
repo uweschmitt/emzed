@@ -73,8 +73,6 @@ class FeatureExplorer(QDialog):
         sys.stdout = StreamSplitter(self.statusMessages, sys.stdout)
         sys.stderr = StreamSplitter(self.statusMessages, sys.stderr)
 
-        self.lastRow = None
-
 
     def populateTable(self):
         helpers.populateTableWidget(self.tw, self.ftable)
@@ -240,8 +238,10 @@ class FeatureExplorer(QDialog):
         res = integrator.integrate(mzmin, mzmax, intBegin, intEnd)
         area = res["area"]
         rmse = res["rmse"]
-        intrts = res["intrts"]
-        smoothed = res["smoothed"]
+        params = res["params"]
+        #intrts = res["intrts"]
+        #smoothed = res["smoothed"]
+        intrts, smoothed = integrator.getSmoothed(self.rts, params)
 
         # write values to ftable
         row[getIndex("method")] = method
@@ -249,8 +249,9 @@ class FeatureExplorer(QDialog):
         row[getIndex("intend")] = intEnd
         row[getIndex("area")] = area
         row[getIndex("rmse")] = rmse
-        row[getIndex("intrts")] = intrts
-        row[getIndex("smoothed")] = smoothed
+        row[getIndex("params")] = params
+        #row[getIndex("intrts")] = intrts
+        #row[getIndex("smoothed")] = smoothed
 
         # format and write values to tableWidgetItems
         strIntBegin = ft.colFormatters[getIndex("intbegin")](intBegin)
@@ -263,6 +264,7 @@ class FeatureExplorer(QDialog):
         self.tw.item(widgetRowIdx, getIndex("method")).setText(method)
         self.tw.item(widgetRowIdx, getIndex("area")).setText(strArea)
         self.tw.item(widgetRowIdx, getIndex("rmse")).setText(strRmse)
+
 
         # plot result
         self.rtPlotter.plot(smoothed, x=intrts, index=1)
@@ -326,10 +328,6 @@ class FeatureExplorer(QDialog):
 
     def rowClicked(self, rowIdx):
         
-        self.lastRow = rowIdx
-
-        
-
         realIdx = self.tw.item(rowIdx, 0).idx # trotz umsortierung !
         ft = self.ftable 
         getIndex = ft.getIndex
@@ -345,10 +343,16 @@ class FeatureExplorer(QDialog):
         self.rtPlotter.plot(chromatogram)
 
         if self.integratedFeatures:
-            intrts = ft.rows[realIdx][getIndex("intrts")]
-            smoothed = ft.rows[realIdx][getIndex("smoothed")]
-            self.rtPlotter.plot(smoothed, x=intrts, index=1)
+            #intrts = ft.rows[realIdx][getIndex("intrts")]
+            #smoothed = ft.rows[realIdx][getIndex("smoothed")]
+
             method = ft.rows[realIdx][getIndex("method")]
+            integrator = dict(configs.peakIntegrators)[str(method)] # qstring -> python string
+
+            params = ft.rows[realIdx][getIndex("params")]
+            intrts, smoothed = integrator.getSmoothed(self.rts, params)
+
+            self.rtPlotter.plot(smoothed, x=intrts, index=1)
             ix = self.chooseIntMethod.findText(method)
             if ix<0: 
                 print "INTEGRATOR NOT AVAILABLE"

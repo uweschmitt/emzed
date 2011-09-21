@@ -15,7 +15,7 @@ class XCMSFeatureParser(object):
     standardFormats = { int: "%d", float : "%.2f", str: "%s" }
 
     formatDefaults = dict( mz= "%10.5f", mzmin= "%10.5f", mzmax= "%10.5f",
-                           rt= "%6.2f", rtmin= "%6.2f", rtmax= "%6.2f",
+                           rt= "formatSeconds(o)", rtmin= "formatSeconds(o)", rtmax= "formatSeconds(o)",
                            into= "%.2e", intb= "%.2e", intf="%.2e",
                            maxo= "%.2e", sn= "%.1e",
                            sample= "%2d" )

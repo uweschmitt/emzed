@@ -13,6 +13,25 @@ from PyQt4.Qwt5 import QwtScaleDraw, QwtText
 import numpy as np
 import new
 
+
+def formatSeconds(seconds):
+    
+        hours = int(seconds / 3600)
+        remainder = seconds %  3600   # % works for floating point !
+
+        minutes = int(remainder / 60)
+        seconds = remainder % 60  
+
+        if hours:
+            formatted = "%dh %dm %.1f" % (hours, minutes, seconds)
+        elif minutes:
+            formatted = "%dm %.1f" % (minutes, seconds)
+        else:
+            formatted = "%.1f" % seconds
+                
+        return  formatted.rstrip(".0")+"s"
+        
+
 class RtRangeSelectionInfo(ObjectInfo):
     
     def __init__(self, range_):
@@ -21,9 +40,9 @@ class RtRangeSelectionInfo(ObjectInfo):
     def get_text(self):
         rtmin, rtmax = sorted(self.range_.get_range())
         if rtmin != rtmax:
-            return u"RT: %.3f ... %.3f" % (rtmin, rtmax)
+            return u"RT: %s ... %s" % (formatSeconds(rtmin), formatSeconds(rtmax))
         else:
-            return u"RT: %.3f" % rtmin
+            return u"RT: %s" % formatSeconds(rtmin)
 
 class PlotterBase(object):
 
@@ -53,6 +72,8 @@ class PlotterBase(object):
 
 class RtPlotter(PlotterBase):
 
+
+
     def __init__(self, rangeSelectionCallback = None, numCurves=1, configs=None):
         super(RtPlotter, self).__init__("RT", "I")
 
@@ -63,8 +84,14 @@ class RtPlotter(PlotterBase):
         widget = self.widget
         widget.plot.__class__ = RtPlot
 
+        # todo: refactor as helper
+        a = QwtScaleDraw()
+        a.label = new.instancemethod(lambda self, v: QwtText(formatSeconds(v)), widget.plot, QwtScaleDraw)
+        widget.plot.setAxisScaleDraw(widget.plot.xBottom, a)
+
         self.pm = PlotManager(widget)
         self.pm.add_plot(widget.plot)
+
         
         self.curves  =[]
 

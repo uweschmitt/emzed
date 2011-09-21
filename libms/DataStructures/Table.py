@@ -1,5 +1,23 @@
 import operator, copy
 
+
+def formatSeconds(seconds):
+
+    hours = int(seconds / 3600)
+    remainder = seconds %  3600   # % works for floating point !
+
+    minutes = int(remainder / 60)
+    seconds = remainder % 60  
+
+    if hours:
+        formatted = "%dh %dm %.1fs" % (hours, minutes, seconds)
+    elif minutes:
+        formatted = "%dm %.1fs" % (minutes, seconds)
+    else:
+        formatted = "%.1fs" % seconds
+            
+    return  formatted
+
 def _formatter(f):
     """ toplevel helper for pickling """
 
@@ -13,6 +31,7 @@ def _formatter(f):
         def format(s, f=f):
             return eval(f, globals(), dict(o=s))
     return format
+
 
 class Table(object):
 

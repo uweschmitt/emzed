@@ -1,4 +1,5 @@
 
+
 def reintegrate(ftable, integratorid="std", showProgress = True):
     from configs import peakIntegrators
     from libms.DataStructures import FeatureTable
@@ -20,15 +21,14 @@ def reintegrate(ftable, integratorid="std", showProgress = True):
     colTypes = [ ftable.colTypes[getIndex(name)] for name in colNames ]
     colFormats = [ ftable.colFormats[getIndex(name)] for name in colNames ]
      
-
     if hasSN: 
           colNames.append("sn")
           colTypes.append(ftable.colTypes[getIndex("sn")])
           colFormats.append(ftable.colFormats[getIndex("sn")])
 
-    colNames += [ "intbegin", "intend", "method", "area", "rmse", "intrts", "smoothed"  ]
-    colTypes += [ float, float, str, float, float, np.ndarray, np.ndarray ]
-    colFormats += [ "%8.2f", "%8.2f", "%s", "%.2e", "%.2e", None , None ]
+    colNames += [ "intbegin", "intend", "method", "area", "rmse", "params"]
+    colTypes += [ float, float, str, float, float, object ]
+    colFormats += [ "formatSeconds(o)", "formatSeconds(o)", "%s", "%.2e", "%.2e", None ] 
 
     rows = []
     lastcent = -1
@@ -56,7 +56,7 @@ def reintegrate(ftable, integratorid="std", showProgress = True):
         row = [mz, mzmin, mzmax, rt, rtmin, rtmax ]
         if hasSN:
             row.append(ftable.get(i, "sn"))
-        row.extend([intbegin, intend, method, result["area"], result["rmse"], result["intrts"], result["smoothed"]])
+        row.extend([intbegin, intend, method, result["area"], result["rmse"], result["params"]])
 
         rows.append(row)
 
