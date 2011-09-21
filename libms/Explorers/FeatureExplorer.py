@@ -52,6 +52,8 @@ class FeatureExplorer(QDialog):
                             .requireColumn("rtmin") \
                             .requireColumn("rtmax") 
 
+        self.rows = self.ftable.rows
+
         self.integratedFeatures = "intbegin" in self.ftable.colNames
 
         self.rts = [ spec.RT for spec in ftable.ds.specs ]
@@ -219,17 +221,16 @@ class FeatureExplorer(QDialog):
         if widgetRowIdx < 0:
             return
 
-        ft = self.ftable
-        getIndex = ft.getIndex
+        getIndex = self.ftable.getIndex
 
         # setup integrator
         method = self.chooseIntMethod.currentText()
         integrator = dict(configs.peakIntegrators)[str(method)] # qstring -> python string
-        integrator.setPeakMap(ft.ds)
+        integrator.setPeakMap(self.ftable.ds)
         print str(integrator)
 
         # get eic limits
-        row = ft.rows[self.tw.item(widgetRowIdx, 0).idx] # rowidx may be different to widgets row index due to sorting:
+        row = self.rows[self.tw.item(widgetRowIdx, 0).idx] # rowidx may be different to widgets row index due to sorting:
         mzmin = row[getIndex("mzmin")]
         mzmax = row[getIndex("mzmax")]
         intBegin, intEnd = sorted(self.rtPlotter.range_.get_range())
@@ -254,6 +255,7 @@ class FeatureExplorer(QDialog):
         #row[getIndex("smoothed")] = smoothed
 
         # format and write values to tableWidgetItems
+        ft = self.ftable
         strIntBegin = ft.colFormatters[getIndex("intbegin")](intBegin)
         strIntEnd   = ft.colFormatters[getIndex("intend")](intEnd)
         strArea     = ft.colFormatters[getIndex("area")](area)
@@ -293,8 +295,8 @@ class FeatureExplorer(QDialog):
 
 
         if name.startswith("mz"):
-            mzmin = self.ftable[realIdx][getIndex("mzmin")]
-            mzmax = self.ftable[realIdx][getIndex("mzmax")]
+            mzmin = self.rows[realIdx][getIndex("mzmin")]
+            mzmax = self.rows[realIdx][getIndex("mzmax")]
             self.mzPlotter.setXAxisLimits(mzmin-0.002, mzmax+0.002)
 
             # update y-range
@@ -307,13 +309,13 @@ class FeatureExplorer(QDialog):
                 self.mzPlotter.setYAxisLimits(0, maxIntensity*1.1)
 
         elif name.startswith("rtm"):  # rtmin or rtmax
-            rtmin = self.ftable[realIdx][getIndex("rtmin")]
-            rtmax = self.ftable[realIdx][getIndex("rtmax")]
+            rtmin = self.rows[realIdx][getIndex("rtmin")]
+            rtmax = self.rows[realIdx][getIndex("rtmax")]
             self.rtPlotter.setRangeSelectionLimits(rtmin, rtmax)
             self.rtPlotter.replot()
 
         elif name.startswith("rt"):  #  rt
-            rt= self.ftable[realIdx][getIndex("rt")]
+            rt= self.rows[realIdx][getIndex("rt")]
             self.rtPlotter.setRangeSelectionLimits(rt, rt)
             self.rtPlotter.replot()
 
@@ -329,27 +331,25 @@ class FeatureExplorer(QDialog):
     def rowClicked(self, rowIdx):
         
         realIdx = self.tw.item(rowIdx, 0).idx # trotz umsortierung !
-        ft = self.ftable 
-        getIndex = ft.getIndex
+        getIndex = self.ftable.getIndex
 
-        self.currentRow = self.ftable[realIdx]
+        row = self.rows[realIdx]
 
-        mzmin = self.ftable[realIdx][getIndex("mzmin")]
-        mzmax = self.ftable[realIdx][getIndex("mzmax")]
+        mzmin = row[getIndex("mzmin")]
+        mzmax = row[getIndex("mzmax")]
 
-        peaks = [ spec.peaks[ (spec.peaks[:,0] >= mzmin) * (spec.peaks[:,0] <= mzmax) ] for spec in ft.ds.specs ]
+        specs = self.ftable.ds.specs
+        peaks = [ spec.peaks[ (spec.peaks[:,0] >= mzmin) * (spec.peaks[:,0] <= mzmax) ] for spec in specs ]
 
         chromatogram = [ np.sum(peak[:,1]) for peak in peaks ]
         self.rtPlotter.plot(chromatogram)
 
         if self.integratedFeatures:
-            #intrts = ft.rows[realIdx][getIndex("intrts")]
-            #smoothed = ft.rows[realIdx][getIndex("smoothed")]
 
-            method = ft.rows[realIdx][getIndex("method")]
+            method = row[getIndex("method")]
             integrator = dict(configs.peakIntegrators)[str(method)] # qstring -> python string
 
-            params = ft.rows[realIdx][getIndex("params")]
+            params = row[getIndex("params")]
             intrts, smoothed = integrator.getSmoothed(self.rts, params)
 
             self.rtPlotter.plot(smoothed, x=intrts, index=1)
@@ -358,12 +358,12 @@ class FeatureExplorer(QDialog):
                 print "INTEGRATOR NOT AVAILABLE"
             else:
                 self.chooseIntMethod.setCurrentIndex(ix)
-            intbegin = self.ftable[realIdx][getIndex("intbegin")]
-            intend = self.ftable[realIdx][getIndex("intend")]
+            intbegin = row[getIndex("intbegin")]
+            intend = row[getIndex("intend")]
             self.rtPlotter.setRangeSelectionLimits(intbegin, intend)
         else:
-            rtmin = self.ftable[realIdx][getIndex("rtmin")]
-            rtmax = self.ftable[realIdx][getIndex("rtmax")]
+            rtmin = row[getIndex("rtmin")]
+            rtmax = row[getIndex("rtmax")]
             self.rtPlotter.setRangeSelectionLimits(rtmin, rtmax)
             
 

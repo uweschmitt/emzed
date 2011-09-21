@@ -33,13 +33,9 @@ class AsymmetricGaussIntegrator(PeakIntegrator):
 
         """
 
-        print 
-        print zip(rts, chromatogram)
-        print 
-
         if len(rts)<4:
             rmse = 1.0/math.sqrt(len(rts))*np.linalg.norm(chromatogram)
-            return 0, rmse, allrts, np.zeros_like(allrts)
+            return 0.0, rmse, (0.0, 1.0, 1.0, 0.0)
             
         imax = np.argmax(chromatogram)
         A = chromatogram[imax]
@@ -63,12 +59,11 @@ class AsymmetricGaussIntegrator(PeakIntegrator):
             area = self.trapez(allrts, smoothed)
             rmse = 1/math.sqrt(len(allrts)) * np.linalg.norm(smoothed - fullchromatogram)
 
-        print A, s1, s2, mu
         return area, rmse, (A, s1, s2, mu)
 
 
     def getSmoothed(self, rtvalues, params):
-        return rtvalues, AsymmetricGaussIntegrator.__fun_eval(params, rtvalues)
+        return rtvalues, AsymmetricGaussIntegrator.__fun_eval(params, np.array(rtvalues))
 
 
         
