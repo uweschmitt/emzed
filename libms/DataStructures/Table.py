@@ -73,11 +73,14 @@ class Table(object):
     def __iter__(self):
         return iter(self.rows)
 
-    def __getitem__(self, ix):
-        return self.rows.__getitem__(ix)
-
-    def subTable(self, slice_):
+    def __getitem__(self, slice_):
+        if not isinstance(slice_, slice):
+            raise Exception("Table.[] needs slice as argument, got %r" % slice_)
         rows = self.rows.__getitem__(slice_)
+        return Table(self.colNames, self.colTypes, rows, self.colFormats, self.title, self.meta)
+
+    def extractRows(self, indices):
+        rows = [ self.rows[i] for i in indices ]
         return Table(self.colNames, self.colTypes, rows, self.colFormats, self.title, self.meta)
 
     def requireColumn(self, name):
@@ -108,7 +111,7 @@ class Table(object):
         self.colTypes.append(type_)
         return self
     
-    def extractColumns(self, *names):
+    def extractColumns(self, names):
         
         types = []
         formats  = []
@@ -156,12 +159,12 @@ class FeatureTable(Table):
 
         self.ds = ds
 
-    def subTable(self, slice_):
-        rv = super(FeatureTable, self).subTable(slice_)
+    def extractColumns(self, colnames):
+        rv = super(FeatureTable, self).extractColumns(colnames)
         return FeatureTable.fromTableAndMap(rv, self.ds)
 
-    def extractColumns(self, *colnames):
-        rv = super(FeatureTable, self).extractColumns(*colnames)
+    def __getitem__(self, slice_):
+        rv = super(FeatureTable, self).__getitem__(slice_)
         return FeatureTable.fromTableAndMap(rv, self.ds)
 
     @staticmethod

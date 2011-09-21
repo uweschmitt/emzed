@@ -1,6 +1,7 @@
 #encoding: utf-8
 
 from libms.DataStructures import Table, FeatureTable
+from libms.pyOpenMS import PeakMap
 import numpy as np
 import pickle, copy
 
@@ -24,7 +25,7 @@ def testRunnerTable():
     run(t, names, [row1, row2, row3])
 
     #test subtable
-    ts = t.subTable(slice(0,3))
+    ts = t[0:3]
     assert isinstance( ts  , Table)
     assert len(ts)==3
     run(ts, names, [row1, row2, row3])
@@ -34,6 +35,9 @@ def run(t, colnames, rows):
 
     t = copy.deepcopy(t) # prohibit changes  
 
+    tn = t.extractRows([1,2])
+    assert len(tn) == 2
+
     assert t.get(0,"int") == rows[0][0]
     assert t.get(0,"long") == rows[0][1]
 
@@ -42,8 +46,8 @@ def run(t, colnames, rows):
 
 
     #test indexint
-    assert isinstance(t[0], list)  # list means row
-    assert len(t[0])==6  
+    assert isinstance(t[:1], Table)  # list means row
+    assert len(t[:1])==1  
 
  
 
@@ -91,7 +95,7 @@ def run(t, colnames, rows):
     assert t.get(0, "array").shape == rows[-1][5].shape
 
     # restrct cols
-    tn = t.extractColumns("int", "long")
+    tn = t.extractColumns( ["int", "long"])
     assert len(tn.colNames) == 2, len(t.colNames)
     assert len(tn.colTypes) == 2
     assert len(tn.colFormats) == 2
@@ -100,6 +104,7 @@ def run(t, colnames, rows):
 
     assert tn.meta["why"] == 42
     assert tn.title == "testtabelle"
+
 
     
 def testRunnerFeatureTable():
@@ -113,7 +118,11 @@ def testRunnerFeatureTable():
     row2 = [ 3.0, 2.0, 4.0, 30.0, 20.0, 40.0,  "aa", "bb", "cc" ]
 
     rows = [row1, row2]
-    t=FeatureTable([1,2,3], names, types, rows, formats, "testtabelle", meta=dict(why=42))
+
+
+    ds = PeakMap()
+
+    t=FeatureTable(ds, names, types, rows, formats, "testtabelle", meta=dict(why=42))
 
     run2(t, names)
     # test pickle
@@ -121,7 +130,7 @@ def testRunnerFeatureTable():
     run2(t, names)
 
     #test subtable
-    ts = t.subTable(slice(0,2))
+    ts = t[0:2]
     assert isinstance( ts  , Table)
     assert len(ts)==2
     run2(ts, names)
@@ -135,8 +144,8 @@ def run2(t, colnames):
         assert t.getIndex(name)  == i
 
     #test indexint
-    assert isinstance(t[0], list)  # list means row
-    assert len(t[0])==9  
+    assert isinstance(t[:1], Table)  # list means row
+    assert len(t[:1])==1  
 
 
     # test iteration
@@ -178,12 +187,12 @@ def run2(t, colnames):
     # restrct cols
     ex = None
     try:
-        tn = t.extractColumns(*"a b c".split())
+        tn = t.extractColumns("a b c".split())
     except Exception, e:
         ex = e
     assert ex is not None
 
-    tn = t.extractColumns(*"rt rtmin rtmax mz mzmin mzmax".split())
+    tn = t.extractColumns("rt rtmin rtmax mz mzmin mzmax".split())
     assert len(tn.colNames) == 6, len(t.colNames)
     assert len(tn.colTypes) == 6
     assert len(tn.colFormats) == 6
