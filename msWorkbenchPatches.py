@@ -18,8 +18,8 @@ import libms.DataStructures
 import sys
 
 def patch_startup_file():
-    from patched_modules import startup
-    patched_mod = sys.modules["patched_modules.startup"]
+    from patched_modules import patched_startup
+    patched_mod = sys.modules["patched_modules.patched_startup"]
     sys.modules["spyderlib.widgets.externalshell"].startup = patched_mod
     
 
@@ -45,6 +45,21 @@ def patch_oedit():
             return dlg, lambda x: x
 
         return objecteditor._orig_dialog_for(obj, obj_name)
+
+def patch_baseshell():
+    from spyderlib.widgets.externalshell import baseshell
+    import os.path
+    @replace(baseshell.add_pathlist_to_PYTHONPATH, verbose=True)
+    def patched(env, pathlist):
+        print
+        print "add_pathlist_to_PYTHONPATH"
+        print
+        for i, p in enumerate(pathlist):
+            if "externalshell" in p:
+                startupdir = os.sep.join(p.split(os.sep)[:-3])
+                pathlist[i] = os.path.join(startupdir, "patched_modules")
+        print "PATCHED ", pathlist
+        return baseshell._orig_add_pathlist_to_PYTHONPATH(env, pathlist)
 
 def patch_spyder():
 
@@ -105,6 +120,7 @@ def patch_spyder():
         NamespaceBrowser._orig_import_data(self, filenames)
         self.save_button.setEnabled(self.filename is not None)
 
+    patch_baseshell()
     patch_startup_file()
 
 
@@ -150,6 +166,7 @@ def patch_external_shell():
         return dicteditorutils._orig_value_to_display(value, *a, **kw)
 
     patch_oedit()
+    __builtins__["__msworkbench_patched_applied"] = True
 
 
 

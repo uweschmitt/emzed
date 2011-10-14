@@ -35,6 +35,8 @@ def __remove_sys_argv__():
 def __remove_from_syspath__():
     """Remove this module's path from sys.path"""
     import os.path as osp
+    #sys.path =[ osp.abspath("msWorkbench/patched_modules")] + [ p for p in sys.path if not "externalshell" in p ]
+    #sys.path =[ osp.abspath("msWorkbench") ] + sys.path
     try:
         sys.path.remove(osp.dirname(__file__))
     except ValueError:
