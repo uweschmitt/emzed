@@ -22,15 +22,19 @@ from spyderlib import requirements
 requirements.check_path()
 requirements.check_qt()
 
+# check for pyOpenMS
+try:
+    import pyOpenMS
+except ImportError:
+    requirements.show_warning("can not load pyOpenMS. Is it installed ?")
+    exit(1)
+       
+
 import sys
 import os
 import os.path as osp
 import platform
 import re
-
-#from pyOpenMS import *
-#from RConnect import *
-#from FeatureExplorer import *
 
 import config_logger
 config_logger.do_config()

@@ -10,3 +10,5 @@
 #del FeatureExplorer
 #del mzExplorer
 ##del DataStructures
+
+import pyOpenMS
