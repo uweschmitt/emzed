@@ -254,7 +254,7 @@ class MainWindow(QMainWindow):
                                         _("Load session..."),
                                         None, 'fileopen.png',
                                         triggered=self.load_session,
-                                        tip=_("Load Spyder session"))
+                                        tip=_("Load session"))
         self.save_session_action = create_action(self,
                                         _("Save session and quit..."),
                                         None, 'filesaveas.png',
@@ -333,7 +333,7 @@ class MainWindow(QMainWindow):
         self.run_toolbar_actions = []
         
         # Set Window title and icon
-        title = "Spyder"
+        title = "MS WORKBENCH"
         if self.debug:
             title += " (DEBUG MODE)"
         self.setWindowTitle(title)
@@ -521,7 +521,7 @@ class MainWindow(QMainWindow):
             # Status bar
             status = self.statusBar()
             status.setObjectName("StatusBar")
-            status.showMessage(_("Welcome to Spyder!"), 5000)
+            status.showMessage(_("Welcome to msWorkbench!"), 5000)
             
             
             # Tools + External Tools
@@ -534,7 +534,7 @@ class MainWindow(QMainWindow):
                                         _("PYTHONPATH manager"),
                                         None, 'pythonpath_mgr.png',
                                         triggered=self.path_manager_callback,
-                                        tip=_("Open Spyder path manager"))
+                                        tip=_("Open msWorkbench path manager"))
             update_modules_action = create_action(self,
                                         _("Update module names list"),
                                         None, 'reload.png',
@@ -706,7 +706,7 @@ class MainWindow(QMainWindow):
             
             # ? menu
             about_action = create_action(self,
-                                    _("About %s...") % "Spyder",
+                                    _("About %s...") % "msWorkbench",
                                     icon=get_std_icon('MessageBoxInformation'),
                                     triggered=self.about)
             # Spyder documentation
@@ -720,7 +720,7 @@ class MainWindow(QMainWindow):
                                           'build', 'lib', 'spyderlib', 'doc',
                                           "index.html")
             doc_action = create_bookmark_action(self, spyder_doc,
-                               _("Spyder documentation"), shortcut="F1",
+                               _("msWorkbench documentation"), shortcut="F1",
                                icon=get_std_icon('DialogHelpButton'))
             self.help_menu_actions = [about_action, doc_action]
             # Python documentation
@@ -1532,7 +1532,7 @@ class MainWindow(QMainWindow):
         if filename is None:
             self.redirect_internalshell_stdio(False)
             filename, _selfilter = getopenfilename(self, _("Open session"),
-                        os.getcwdu(), _("Spyder sessions")+" (*.session.tar)")
+                        os.getcwdu(), _("msWorkbench sessions")+" (*.session.tar)")
             self.redirect_internalshell_stdio(True)
             if not filename:
                 return
@@ -1543,7 +1543,7 @@ class MainWindow(QMainWindow):
         """Save session and quit application"""
         self.redirect_internalshell_stdio(False)
         filename, _selfilter = getsavefilename(self, _("Save session"),
-                        os.getcwdu(), _("Spyder sessions")+" (*.session.tar)")
+                        os.getcwdu(), _("msWorkbench sessions")+" (*.session.tar)")
         self.redirect_internalshell_stdio(True)
         if filename:
             if self.close():
