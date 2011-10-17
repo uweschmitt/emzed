@@ -1,5 +1,6 @@
 
-def __fileDialog(startAt=None, onlyDirectories=False, anyFile=False, multipleFiles=True, extensions=None, caption=None):
+def __fileDialog(startAt=None, onlyDirectories=False, anyFile=False, 
+                 multipleFiles=True, extensions=None, caption=None):
 
     import guidata
     from PyQt4.QtGui import QFileDialog
@@ -34,7 +35,7 @@ def __fileDialog(startAt=None, onlyDirectories=False, anyFile=False, multipleFil
     di.raise_()
     if di.exec_():
         files= di.selectedFiles()
-        res = [unicode(f) for f in files]
+        res = [str(f) for f in files]
         return res
 
     return None
@@ -63,10 +64,11 @@ def askForSave(startAt=None, extensions=None):
           or
               askForSave(extensions=["mzXML", "mxData"])
 
-          returns the path of the selected file as a unicode string,
+          returns the path of the selected file as a string,
           or None if the user aborts the dialog.
     """
-    return __fileDialog(startAt, anyFile=True, multipleFiles=False, extensions=extensions, caption="Save As")[0]
+    return __fileDialog(startAt, anyFile=True, multipleFiles=False, 
+                                 extensions=extensions, caption="Save As")[0]
 
 def askForSingleFile(startAt=None, extensions=None):
 
@@ -81,7 +83,7 @@ def askForSingleFile(startAt=None, extensions=None):
           or
               askForSingleFile(extensions=["mzXML", "mxData"])
 
-          returns the path of the selected file as a unicode string,
+          returns the path of the selected file as a string,
           or None if the user aborts the dialog.
     """
     return __fileDialog(startAt, multipleFiles=False, extensions=extensions)[0]
@@ -98,7 +100,7 @@ def askForMultipleFiles(startAt=None, extensions=None):
           or
               askForSingleFile(extensions=["mzXML", "mxData"])
 
-          returns the pathes of the selected files as a list of unicode strings,
+          returns the pathes of the selected files as a list of strings,
           or None if the user aborts the dialog.
     """
     return __fileDialog(startAt, multipleFiles=True, extensions=extensions)
@@ -117,33 +119,6 @@ def chooseConfig(configs, params):
 
     return dlg.result
 
-
-#def show(what):
-    
-#    import guidata
-#    from   libms.gui.TableDialog import showTable
-#    from   libms.DataStructures import Table
-#    from   libms.pyOpenMS import PeakMap
-#    from   libms.mzExplorer import inspectMap
-
-#    if isinstance(what, Table):
-#        showTable(what)
-
-#    elif isinstance(what, PeakMap):
-#        inspectMap(what)
-
-#    else:
-#        print "do not now how to show %r" % what
-        
-
-    
-    
-    
-
 if __name__ == "__main__":
 
-    #print askForDirectory()
-    #print askForSingleFile()
-    #print askForMultipleFiles(extensions=["py", "pyc"])
     print askForSave(extensions=["py", "pyc"])
-    

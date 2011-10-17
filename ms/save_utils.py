@@ -1,26 +1,20 @@
 
 
-def saveMap(ds, path=None):
+def storeExperiment(ds, path=None):
 
-    """ loads mzXML, mzML and mzData files """
+    """ saves mzXML, mzML and mzData files """
 
     # local import in order to keep namespaces clean
     import os.path
-    import libms.pyOpenMS, ms
+    import ms
+    from pyOpenMS import MSExperiment, FileHandler
 
     if path is None:
         path = ms.askForSave(extensions="mzML mzXML mzData".split())
         if path is None:
             return None
 
-    _, ext = os.path.splitext(path)
-
-    method = dict(MZXML = libms.pyOpenMS.saveMzXmlFile, 
-                  MZML =  libms.pyOpenMS.saveMzMlFile, 
-                  MZDATA= libms.pyOpenMS.saveMzDataFile).get(ext.upper()[1:])
-
-    if method is None:
-        raise Exception("unknown extension '%s' " % ext)
-
-    method(ds, path)
+    experiment = MSExperiment()
+    fh  = FileHandler()
+    fh.storeExperiment(path, experiment)
     

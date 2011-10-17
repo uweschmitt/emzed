@@ -1,30 +1,24 @@
 
 
-def loadMap(path=None):
+def loadExperiment(path=None):
 
     """ loads mzXML, mzML and mzData files """
 
     # local import in order to keep namespaces clean
     import os.path
-    import libms.pyOpenMS, ms
+    import ms
+    from   pyOpenMS import String, DataValue, MSExperiment, FileHandler
 
     if path is None:
         path = ms.askForSingleFile(extensions="mzML mzXML mzData".split())
         if path is None:
             return None
 
-    _, ext = os.path.splitext(path)
 
-    method = dict(MZXML = libms.pyOpenMS.loadMzXmlFile, 
-                  MZML =  libms.pyOpenMS.loadMzMlFile, 
-                  MZDATA= libms.pyOpenMS.loadMzDataFile).get(ext.upper()[1:])
-
-    if method is None:
-        raise Exception("unknown extension '%s' " % ext)
-
-    peakMap = method(path)
-    source = peakMap.meta.get("source")
-    if source is not None:
-        peakMap.meta["source"] = os.path.basename(source) # for nicer display
+    experiment = MSExperiment()
+    fh  = FileHandler()
+    fh.loadExperiment(path, experiment)
+    experiment.setMetaValue(String("source"), DataValue(os.path.basename(path)))
+    #experiment.meta["source"] = os.path.basename(source) # for nicer display
     
-    return peakMap
+    return experiment
