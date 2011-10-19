@@ -65,7 +65,7 @@ def runCentwave(pattern=None, destination=None, configid=None, **params):
             
             try:
                 print "read ", path
-                ds = ms.loadMap(path)
+                ds = ms.loadPeakMap(path)
             except Exception, e:
                 print e
                 print "reading FAILED"
@@ -155,7 +155,7 @@ def runMatchedFilter(pattern=None, destination=None, configid=None, **params):
 
             try:
                 print "read ", path
-                ds = ms.loadMap(path)
+                ds = ms.loadPeakMap(path)
             except Exception, e:
                 print e
                 print "reading FAILED"

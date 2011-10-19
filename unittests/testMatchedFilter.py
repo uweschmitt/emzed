@@ -1,12 +1,12 @@
-from  libms.pyOpenMS import *
-from  libms.RConnect import *
+import ms
+import libms
 
-    
-    
 def testMatchedFilterFeatureDetector():
 
-    ds = loadMzXmlFile("data/test.mzXML")
-    det = MatchedFilterFeatureDetector()
+    print "load"
+    ds = ms.loadPeakMap("data/test.mzXML")
+    print "loaded"
+    det = libms.RConnect.MatchedFilterFeatureDetector()
     assert det.__doc__ != None
     table = det.process(ds)
     assert len(table) == 742, len(table)

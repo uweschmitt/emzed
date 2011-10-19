@@ -1,10 +1,10 @@
 from RExecutor import RExecutor
-from ..pyOpenMS  import *
 from ..DataStructures import *
 
 import os
 
 from ..intern_utils import TemporaryDirectoryWithBackup
+from pyOpenMS import MSExperiment, FileHandler, String
 
 
 def installXcmsIfNeeded():
@@ -43,10 +43,10 @@ def lookForXcmsUpgrades():
 def doXcmsUpgrade():
 
     script = """
-                 source("http://bioconductor.org/biocLite.R")
-                 todo <- update.packages(repos=biocinstallRepos(), ask=FALSE, checkBuilt=TRUE)
-                 q(status=length(todo))
-             """
+     source("http://bioconductor.org/biocLite.R")
+     todo <- update.packages(repos=biocinstallRepos(), ask=FALSE, checkBuilt=TRUE)
+     q(status=length(todo))
+    """
     return RExecutor().run_command(script)
 
 class CentwaveFeatureDetector(object):
@@ -97,7 +97,7 @@ class CentwaveFeatureDetector(object):
             temp_input = os.path.join(td, "input.mzData")
             temp_output = os.path.join(td, "output.csv")
 
-            saveMzDataFile(peakMap, temp_input)
+            FileHandler().storeExperiment(temp_input, peakMap.toMSExperiment())
 
             dd = self.config.copy()
             dd["temp_input"] = temp_input
@@ -181,7 +181,7 @@ class MatchedFilterFeatureDetector(object):
             temp_input = os.path.join(td, "input.mzData")
             temp_output = os.path.join(td, "output.csv")
 
-            saveMzDataFile(peakMap, temp_input)
+            FileHandler().storeExperiment(temp_input, peakMap.toMSExperiment())
 
             dd = self.config.copy()
             dd["temp_input"] = temp_input
