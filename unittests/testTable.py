@@ -1,7 +1,6 @@
 #encoding: utf-8
 
-from libms.DataStructures import Table, FeatureTable
-from libms.pyOpenMS import PeakMap
+from libms.DataStructures import Table, FeatureTable, PeakMap
 import numpy as np
 import pickle, copy
 
@@ -120,13 +119,19 @@ def testRunnerFeatureTable():
     rows = [row1, row2]
 
 
-    ds = PeakMap()
+    ds = PeakMap([])
+    print ds
+    print ds.meta
 
     t=FeatureTable(ds, names, types, rows, formats, "testtabelle", meta=dict(why=42))
 
+    print t.ds.meta
     run2(t, names)
+    print t.ds.meta
     # test pickle
-    t = pickle.loads(pickle.dumps(t))
+    dat = pickle.dumps(t)
+    t = pickle.loads(dat)
+    print t.ds.meta
     run2(t, names)
 
     #test subtable
@@ -139,6 +144,7 @@ def testRunnerFeatureTable():
 def run2(t, colnames): 
 
     t = copy.deepcopy(t) # prohibit changes  
+    print t.ds.meta
 
     for i, name in enumerate(colnames):
         assert t.getIndex(name)  == i

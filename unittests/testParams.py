@@ -4,7 +4,6 @@ from libms.pyOpenMS import *
 import tempfile
 
 
-
 def test_load():
     p = loadParam("data/test.ini")
     assert "hallo" == p["uwe:test"]

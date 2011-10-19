@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 # Spyder's ExternalPythonShell sitecustomize
 
+print "patched sitecustomize"
+
 
 import sys, os, os.path as osp
 

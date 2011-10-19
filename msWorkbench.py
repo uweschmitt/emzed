@@ -15,6 +15,7 @@ Licensed under the terms of the MIT License
 (see spyderlib/__init__.py for details)
 """
 
+
 from spyderlib import qt #@UnusedImport
 
 # Check requirements
@@ -49,6 +50,8 @@ getattr(LLL, logging.getLevelName(LLL.level).lower())("this is internal")
 
 import msWorkbenchPatches
 msWorkbenchPatches.patch_spyder()
+
+from spyderlib.widgets.externalshell import baseshell
 
 # Keeping a reference to the original sys.exit before patching it
 ORIGINAL_SYS_EXIT = sys.exit
@@ -139,10 +142,10 @@ from spyderlib.userconfig import NoDefault, NoOptionError
 
 TEMP_SESSION_PATH = get_conf_path('.temp.session.tar')
 
-flags = CONF.get("console", "ipython_options").split()
-if u"-pylab" in flags:
-    flags.remove(u"-pylab")
-    CONF.set("console", "ipython_options", u" ".join(flags))
+#flags = CONF.get("console", "ipython_options").split()
+##if u"-pylab" in flags:
+#    flags.remove(u"-pylab")
+#    CONF.set("console", "ipython_options", u" ".join(flags))
 
 def get_python_doc_path():
     """
@@ -998,7 +1001,8 @@ class MainWindow(QMainWindow):
             for toolbar in (self.run_toolbar, self.edit_toolbar):
                 toolbar.close()
             for plugin in (self.projectexplorer, self.outlineexplorer):
-                plugin.dockwidget.close()
+                if plugin:
+                    plugin.dockwidget.close()
                 
         self.set_window_settings(hexstate, width, height, posx, posy,
                                  is_maximized, is_fullscreen)

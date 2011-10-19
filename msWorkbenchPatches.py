@@ -7,10 +7,10 @@ from  spyderlib.widgets.externalshell.namespacebrowser import NamespaceBrowser
 from  spyderlib.widgets.externalshell.monitor import REMOTE_SETTINGS
 
 
+
 from libms.intern_utils.patch_decorator import  replace, add
 
 
-from libms import pyOpenMS
 import libms.Explorers
 from  libms.gui.TableDialog import TableDialog
 import libms.DataStructures
@@ -22,7 +22,6 @@ def patch_startup_file():
     patched_mod = sys.modules["patched_modules.patched_startup"]
     sys.modules["spyderlib.widgets.externalshell"].startup = patched_mod
     
-
 def patch_oedit():
     """
 
@@ -31,7 +30,7 @@ def patch_oedit():
     @replace(objecteditor.dialog_for, verbose=True)
     def dialog_for(obj, obj_name):
 
-        if isinstance(obj, pyOpenMS.PeakMap):
+        if isinstance(obj, libms.DataStructures.PeakMap):
             dlg = libms.Explorers.MzExplorer()
             dlg.setup(obj)
             return dlg, lambda x: x
@@ -47,7 +46,8 @@ def patch_oedit():
         return objecteditor._orig_dialog_for(obj, obj_name)
 
 def patch_baseshell():
-    from spyderlib.widgets.externalshell import baseshell
+    #from spyderlib.widgets.externalshell import baseshell
+    import spyderlib.widgets.externalshell.baseshell as baseshell
     import os.path
     @replace(baseshell.add_pathlist_to_PYTHONPATH, verbose=True)
     def patched(env, pathlist):
@@ -62,6 +62,18 @@ def patch_baseshell():
         return baseshell._orig_add_pathlist_to_PYTHONPATH(env, pathlist)
 
 def patch_spyder():
+
+    # the following path must appear before patching Externalshell, as the
+    # corresponding import of ExternalConsole implies import of baseshell. So
+    # patching baseshell will not work, as it is registered in sys.modules in
+    # unpatched version !
+    patch_baseshell() 
+    
+
+    patch_startup_file()
+
+
+        
 
     patch_oedit()
 
@@ -78,7 +90,7 @@ def patch_spyder():
     def is_peakmap(self, name):
         """Return True if variable is a PeakMap"""
         return communicate(self._get_sock(),
-                   "isinstance(globals()['%s'], (pyOpenMS.PeakMap))" % name)
+                   "isinstance(globals()['%s'], (libms.DataStructures.PeakMap))" % name)
 
     @add(NamespaceBrowser, verbose=True)
     def is_table(self, name):
@@ -120,22 +132,26 @@ def patch_spyder():
         NamespaceBrowser._orig_import_data(self, filenames)
         self.save_button.setEnabled(self.filename is not None)
 
-    patch_baseshell()
-    patch_startup_file()
 
+    from  spyderlib.plugins.externalconsole import ExternalConsole
+    @replace(ExternalConsole.get_default_ipython_options, verbose=True)
+    def get_default_ipython_options(self):
+        options = ExternalConsole._orig_get_default_ipython_options(self)
+        return options.replace("-pylab", "")
 
 def patch_external_shell():
+
     
     @replace(dicteditorutils.is_supported, verbose=True)
     def is_supported( value, *a, **kw):
         return dicteditorutils._orig_is_supported(value, *a, **kw) \
-            or isinstance(value, pyOpenMS.PeakMap) \
+            or isinstance(value, libms.DataStructures.PeakMap) \
             or isinstance(value, libms.DataStructures.Table) \
             or isinstance(value, libms.DataStructures.FeatureTable)
 
     @replace(dicteditorutils.get_size, verbose=True)
     def get_size( item ):
-        if isinstance(item, pyOpenMS.PeakMap):
+        if isinstance(item, libms.DataStructures.PeakMap):
             return len(item)
         if isinstance(item, libms.DataStructures.Table):
             return len(item)
@@ -145,7 +161,7 @@ def patch_external_shell():
 
     @replace(dicteditorutils.get_type_string, verbose=True)
     def get_type_string( item ):
-        if isinstance(item, pyOpenMS.PeakMap):
+        if isinstance(item, libms.DataStructures.PeakMap):
             return "PeakMap"
         if isinstance(item, libms.DataStructures.FeatureTable):
             return "FeatureTable"
@@ -156,7 +172,7 @@ def patch_external_shell():
 
     @replace(dicteditorutils.value_to_display, verbose=True)
     def  value_to_display(value, *a, **kw):
-        if isinstance(value, pyOpenMS.PeakMap):
+        if isinstance(value, libms.DataStructures.PeakMap):
             return  "%s" % value.meta
         if isinstance(value, libms.DataStructures.FeatureTable):
             

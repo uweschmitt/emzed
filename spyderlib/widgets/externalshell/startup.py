@@ -6,6 +6,8 @@
 
 """Startup file used by ExternalPythonShell"""
 
+print "orig startup"
+
 import sys
 
 def __run_pythonstartup_script():

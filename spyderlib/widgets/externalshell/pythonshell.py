@@ -33,6 +33,8 @@ from spyderlib.widgets.externalshell.baseshell import (ExternalShellBase,
                                                    add_pathlist_to_PYTHONPATH)
 from spyderlib.widgets.dicteditor import DictEditor
 
+print "new", add_pathlist_to_PYTHONPATH
+
 
 class ExtPythonShellWidget(PythonShellWidget):
     def __init__(self, parent, history_filename, debug=False, profile=False):
@@ -379,7 +381,7 @@ class ExternalPythonShell(ExternalShellBase):
 
         #-------------------------Python specific-------------------------------
         # Python arguments
-        p_args = ['-u']
+        p_args = ['-u', ]
         if self.python_args is not None:
             p_args += self.python_args.split()
         if self.interact_action.isChecked():

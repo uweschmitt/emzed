@@ -6,6 +6,8 @@
 
 """modified msworkbench Startup file used by ExternalPythonShell"""
 
+print "patched startup"
+
 
 import sys
 

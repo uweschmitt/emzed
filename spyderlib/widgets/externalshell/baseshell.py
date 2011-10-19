@@ -34,6 +34,8 @@ def add_pathlist_to_PYTHONPATH(env, pathlist):
     # PyQt API 1/2 compatibility-related tests:
     assert isinstance(env, list)
     assert all([isinstance(path, basestring) for path in env])
+
+    print "orig add_pathlist_to_PYTHONPATH"
     
     pypath = "PYTHONPATH"
     pathstr = os.pathsep.join(pathlist)
