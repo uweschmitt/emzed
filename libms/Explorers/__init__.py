@@ -1,2 +1,2 @@
-from mzExplorer import inspectMap, MzExplorer
+from mzExplorer import inspectPeakMap, MzExplorer
 from FeatureExplorer import inspectFeatures, FeatureExplorer

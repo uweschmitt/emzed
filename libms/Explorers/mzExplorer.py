@@ -32,8 +32,9 @@ class MzExplorer(QDialog):
         pass
 
     def processPeakmap(self, peakmap):
-        self.peakmap = peakmap
-        self.rts = np.array([s.RT for s in self.peakmap])
+        print len(peakmap.filter(lambda s: s.msLevel > 1))
+        self.peakmap = peakmap.filter(lambda s: s.msLevel == 1)
+        self.rts = np.array([s.rt for s in self.peakmap])
 
         mzvals = np.hstack([ spec.peaks[:,0] for spec in peakmap ])
         self.absMinMZ = np.min(mzvals)
@@ -130,7 +131,7 @@ class MzExplorer(QDialog):
         maxRT = self.rtPlotter.maxRTRangeSelected
         
         if minRT is not None:
-            peaks = np.vstack(( s.peaks for s in self.peakmap if minRT <= s.RT <= maxRT ))
+            peaks = np.vstack(( s.peaks for s in self.peakmap if minRT <= s.rt <= maxRT ))
         else:
             peaks = np.vstack(( s.peaks for s in self.peakmap ))
 
@@ -139,7 +140,7 @@ class MzExplorer(QDialog):
 
     
 
-def inspectMap(peakmap):
+def inspectPeakMap(peakmap):
     """Testing this simple Qt/guiqwt example"""
 
     if len(peakmap) == 0:
@@ -154,10 +155,5 @@ def inspectMap(peakmap):
     win.exec_()
     
 
-if __name__ == '__main__':
-    import pyOpenMS
-    peakmap = pyOpenMS.loadMzXmlFile("../test.mzXML")
-    print "got data"
-    inspect(peakmap)
 
     

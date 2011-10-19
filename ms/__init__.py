@@ -4,7 +4,7 @@ from custom_dialogs import *
 from integration import *
 from shell_helpers import *
 
-from libms.Explorers       import inspectMap, inspectFeatures
+from libms.Explorers       import inspectPeakMap, inspectFeatures
 from libms.gui.TableDialog import showTable
 from libms.PeakIntegration import SGIntegrator, AsymmetricGaussIntegrator
 
