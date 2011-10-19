@@ -1,0 +1,23 @@
+- im vorfeld clustern:
+   a) m/z verschoben um .996 bis 1.005 oder vielfache davon
+   b) RT von Imax "identisch"
+   c) Intervalleigenschaften:   mz1<=mz2 ==> I1<=I2
+   d) Fuzzy oder nicht ???
+   e) Modellierung Cluster in Hinblick auf c)
+   f) spectral clustring
+
+   g) greedy search bei m-min beginnend ? bzw. topological sorting wegen c)  
+
+
+- Feature-Explorer: Plotten eines Clusters gleichzeitig
+
+- Strukur für Hypothesentabelle
+
+- Tabelle erzeuge: DB, von Hand, 7 golden rules
+
+- Abgleich:
+    - join / left join 
+    - select
+
+- visualisierung eines clusters ? 
+
