@@ -18,6 +18,7 @@ class Spectrum(object):
         assert polarity in "0+-", "polarity must be +, - or 0"
         self.rt = rt
         self.peaks = peaks
+        self.peaks.sort(axis=0) # mz sort
         self.msLevel = msLevel
         self.precursors = precursors
         self.polarity = polarity

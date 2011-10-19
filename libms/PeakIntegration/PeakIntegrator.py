@@ -1,5 +1,4 @@
 import numpy as np
-from   libms.pyOpenMS import intensityInRange
 
 class PeakIntegrator(object):
 
@@ -9,24 +8,22 @@ class PeakIntegrator(object):
 
     def setPeakMap(self, peakMap):
         self.peakMap = peakMap
-        self.allrts  = sorted([ spec.RT for spec in self.peakMap.specs ])
-        self.allpeaks = [ spec.peaks for spec in self.peakMap.specs]
+        self.ms1specs = [spec for spec in self.peakMap.spectra if spec.msLevel == 1]
+        self.allrts  = sorted([ spec.rt for spec in self.ms1specs])
 
     def integrate(self, mzmin, mzmax, rtmin, rtmax):
 
         assert self.peakMap is not None
 
-        ms1specs = [spec for spec in self.peakMap.specs if spec.msLevel == 1]
+        specs_in_range = [ spec for spec in self.ms1specs if rtmin <= spec.rt <=rtmax ]
+        chromatogram = np.array([ spec.intensityInRange(mzmin, mzmax) for spec in specs_in_range ])
 
-        peaksl = [ spec.peaks for spec in ms1specs if rtmin <= spec.RT <=rtmax ]
-        chromatogram = np.array([ intensityInRange(peaks, mzmin, mzmax) for peaks in peaksl ])
-
-        rts  = [ spec.RT for spec in ms1specs if rtmin <= spec.RT <=rtmax ]
+        rts  = [ spec.rt for spec in self.ms1specs if rtmin <= spec.rt <=rtmax ]
         
         if len(rts)==0:
             return dict(area=0, rmse=0)
 
-        fullchromatogram = [ intensityInRange(peaks, mzmin, mzmax) for peaks in self.allpeaks ]
+        fullchromatogram = [ spec.intensityInRange(mzmin, mzmax) for spec in self.ms1specs]
         area, rmse, params = self.integrator(self.allrts, fullchromatogram, rts, chromatogram)
 
         return dict(area=area, rmse=rmse, params=params)
