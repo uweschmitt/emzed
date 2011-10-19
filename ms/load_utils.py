@@ -1,13 +1,14 @@
 
 
-def loadExperiment(path=None):
+def loadPeakMap(path=None):
 
     """ loads mzXML, mzML and mzData files """
 
     # local import in order to keep namespaces clean
-    import os.path
     import ms
-    from   pyOpenMS import String, DataValue, MSExperiment, FileHandler
+    from   pyOpenMS import MSExperiment, FileHandler
+    from   libms.DataStructures import PeakMap
+        
 
     if path is None:
         path = ms.askForSingleFile(extensions="mzML mzXML mzData".split())
@@ -18,7 +19,5 @@ def loadExperiment(path=None):
     experiment = MSExperiment()
     fh  = FileHandler()
     fh.loadExperiment(path, experiment)
-    experiment.setMetaValue(String("source"), DataValue(os.path.basename(path)))
-    #experiment.meta["source"] = os.path.basename(source) # for nicer display
     
-    return experiment
+    return PeakMap.fromMSExperiment(experiment)

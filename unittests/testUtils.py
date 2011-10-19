@@ -1,14 +1,18 @@
 import ms
-from   pyOpenMS import *
 import os.path as osp
 
 def testLoadMap():
     from_ = "data/SHORT_MS2_FILE.mzXML"
-    ds = ms.loadExperiment(from_)
-    assert ds.getMetaValue(String("source")).toString() == osp.basename(from_)
+    ds = ms.loadPeakMap(from_)
+        
+    assert osp.basename(ds.meta.get("source")) ==  osp.basename(from_)
 
-    ms.storeExperiment(ds, "temp_output/utilstest.mzML")
-    ds = ms.loadExperiment("temp_output/utilstest.mzML")
+    ms.storePeakMap(ds, "temp_output/utilstest.mzML")
+    ds2 = ms.loadPeakMap("temp_output/utilstest.mzML")
 
-    ms.storeExperiment(ds, "temp_output/utilstest.mzData")
-    ds = ms.loadExperiment("temp_output/utilstest.mzData")
+    assert len(ds)==len(ds2)
+
+    ms.storePeakMap(ds2, "temp_output/utilstest.mzData")
+    ds3 = ms.loadPeakMap("temp_output/utilstest.mzData")
+
+    assert len(ds)==len(ds3)

@@ -1,0 +1,62 @@
+from libms.DataStructures.MSTypes import *
+from pyOpenMS import *
+import os.path
+
+class TestMSTypes(object):
+
+    def test001(self):
+        exp = MSExperiment()
+        basename = "SHORT_MS2_FILE.mzData"
+        FileHandler().loadExperiment(os.path.join("data", basename), exp)
+        assert exp.size()>0
+
+        pc = Precursor()
+        pc.setMZ(1.0)
+        pc.setIntensity(100)
+        s0 = exp[0]
+        s0.setPrecursors([pc])
+        spec = Spectrum.fromMSSpectrum(s0)
+        settings = InstrumentSettings()
+        settings.setPolarity(Polarity.POSITIVE)
+        s0.setInstrumentSettings(settings)
+
+        self.compare_specs(spec, s0)
+
+        specneu = Spectrum.fromMSSpectrum(spec.toMSSpectrum())
+
+        self.compare_specs(specneu, s0)
+
+        pm = PeakMap.fromMSExperiment(exp)
+        assert os.path.basename(pm.meta["source"]) ==  basename
+
+        self.compare_exp(pm, exp, basename)
+        pm2 = PeakMap.fromMSExperiment(pm.toMSExperiment())
+        self.compare_exp(pm2, exp, basename)
+
+    def compare_exp(self, pm, exp, basename):
+
+        assert len(pm) == exp.size()
+        assert len(list(pm)) == exp.size() # tests __iter__
+
+        assert (pm[0].rt-exp[0].getRT())/exp[0].getRT() < 1e-7
+        assert pm[0].msLevel == exp[0].getMSLevel()
+        assert pm[0].peaks.shape == (exp[0].size(), 2)
+
+    def compare_specs(self, spec, s0):
+
+        assert (spec.rt-s0.getRT())/s0.getRT() < 1e-7
+        assert spec.msLevel == s0.getMSLevel()
+        assert spec.peaks.shape == (s0.size(), 2)
+        assert spec.precursors == [ (1.0, 100) ], spec.precursors
+        assert spec.polarity == "+"
+
+        assert len(list(spec)) == s0.size() # tests __iter__
+        assert len(spec) == s0.size() 
+
+
+    
+
+        
+
+        
+
