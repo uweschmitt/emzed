@@ -1,5 +1,6 @@
 from libms.DataStructures.MSTypes import *
 from pyOpenMS import *
+import numpy as np
 import os.path
 
 class TestMSTypes(object):
@@ -54,6 +55,18 @@ class TestMSTypes(object):
         assert len(spec) == s0.size() 
 
 
+    def testIntensityInRange(self):
+        data = np.array([ 0.0, 1.0, 2.0, 3.0, 4.0, 5.0 ]).reshape(-1,1)
+        ones = np.ones_like(data)
+        peaks = np.hstack((data, ones))
+        assert peaks.shape == (6,2)
+        spec = Spectrum(peaks, 0.0, 1, "0")
+        assert spec.intensityInRange(0.0, 5.0) == 6.0
+        assert spec.intensityInRange(0.1, 5.0) == 5.0
+        assert spec.intensityInRange(0.0, 4.5) == 5.0
+        assert spec.intensityInRange(0.5, 4.5) == 4.0
+        assert spec.intensityInRange(2.0, 2.0) == 1.0
+        assert spec.intensityInRange(2.1, 2.0) == 0.0
     
 
         

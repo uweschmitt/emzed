@@ -40,6 +40,13 @@ class Spectrum(object):
     def __iter__(self):
         return iter(self.peaks)
 
+    def intensityInRange(self, mzmin, mzmax):
+        imin = self.peaks[:,0].searchsorted(mzmin)
+        imax = self.peaks[:,0].searchsorted(mzmax, side='right')
+        rv = np.sum(self.peaks[imin:imax,1])
+        return rv
+
+
     def toMSSpectrum(self):
         spec = pyOpenMS.MSSpectrum()
         spec.setRT(self.rt)
@@ -60,15 +67,14 @@ class Spectrum(object):
         spec.set_peaks(self.peaks)
         return spec
 
-
-        
-
-
 class PeakMap(object):
 
     def __init__(self, spectra, meta=dict()):
         self.spectra = spectra
         self.meta = meta
+
+    def filter(self, condition):
+        return PeakMap([s for s in self.spectra if condition(s)], self.meta)
 
     @classmethod
     def fromMSExperiment(clz, mse):
