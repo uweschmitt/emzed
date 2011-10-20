@@ -1,10 +1,10 @@
 
-from libms.pyOpenMS import *
+#from libms.pyOpenMS import *
 
 import tempfile
 
 
-def test_load():
+def xtest_load():
     p = loadParam("data/test.ini")
     assert "hallo" == p["uwe:test"]
     
@@ -13,7 +13,7 @@ def test_load():
     p2 = loadParam("temp_output/test.ini")
     assert "hallo" == p2["uwe:test"]
 
-def test_all_types():
+def xtest_all_types():
     p = dict()
 
     p["uwe:schmitt"] = "hi"
