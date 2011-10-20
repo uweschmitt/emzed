@@ -1,2 +1,0 @@
-class Param(dict):
-    pass
