@@ -18,13 +18,13 @@ import libms.DataStructures
 import sys
 
 def patch_startup_file():
+    # modifies import in spyderlib\widgets\externalshell\pythonshell.py
     from patched_modules import patched_startup
     patched_mod = sys.modules["patched_modules.patched_startup"]
     sys.modules["spyderlib.widgets.externalshell"].startup = patched_mod
     
 def patch_oedit():
     """
-
     """
 
     @replace(objecteditor.dialog_for, verbose=True)
@@ -46,7 +46,11 @@ def patch_oedit():
         return objecteditor._orig_dialog_for(obj, obj_name)
 
 def patch_baseshell():
-    #from spyderlib.widgets.externalshell import baseshell
+    # modifies assembly of PYTHONPATH before starting the external
+    # shell in spyderlib\widgets\externalshell\pythonshell.py
+    # so the sitecustomize will be loaded from patched_modules\
+    # and not from spyderlib\widgets\externalshell\
+ 
     import spyderlib.widgets.externalshell.baseshell as baseshell
     import os.path
     @replace(baseshell.add_pathlist_to_PYTHONPATH, verbose=True)
@@ -55,7 +59,11 @@ def patch_baseshell():
         print "add_pathlist_to_PYTHONPATH"
         print
         for i, p in enumerate(pathlist):
+            # replace path to ../externalshell/ with path to
+            # patched_modules/
             if "externalshell" in p:
+                # as we do not know "where we are", we take the
+                # path to externalshell/ and walk three levels up:
                 startupdir = os.sep.join(p.split(os.sep)[:-3])
                 pathlist[i] = os.path.join(startupdir, "patched_modules")
         print "PATCHED ", pathlist
@@ -68,13 +76,7 @@ def patch_spyder():
     # patching baseshell will not work, as it is registered in sys.modules in
     # unpatched version !
     patch_baseshell() 
-    
-
     patch_startup_file()
-
-
-        
-
     patch_oedit()
 
     @replace(RemoteDictEditorTableView.oedit_possible, verbose=True)
@@ -140,7 +142,6 @@ def patch_spyder():
         return options.replace("-pylab", "")
 
 def patch_external_shell():
-
     
     @replace(dicteditorutils.is_supported, verbose=True)
     def is_supported( value, *a, **kw):
@@ -183,6 +184,3 @@ def patch_external_shell():
 
     patch_oedit()
     __builtins__["__msworkbench_patched_applied"] = True
-
-
-

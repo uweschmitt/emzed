@@ -1,14 +1,6 @@
-
-"""
-
-   pyOpenMS + some extensions
-
-"""
-
 import pyOpenMS 
 import numpy as np
 from copy import deepcopy, copy
-
 
 
 class Spectrum(object):
@@ -17,13 +9,12 @@ class Spectrum(object):
         assert type(peaks) == np.ndarray, type(peaks)
         assert polarity in "0+-", "polarity must be +, - or 0"
         self.rt = rt
-        perm = np.argsort(peaks[:,0])
-        self.peaks = peaks[perm,:]
-        
-        #self.peaks.sort(axis=0) # mz sort
         self.msLevel = msLevel
         self.precursors = precursors
         self.polarity = polarity
+        # sort resp. mz values:
+        perm = np.argsort(peaks[:,0])
+        self.peaks = peaks[perm,:]
 
     @classmethod
     def fromMSSpectrum(clz, mspec):
@@ -79,6 +70,19 @@ class PeakMap(object):
     def filter(self, condition):
         return PeakMap([s for s in self.spectra if condition(s)], self.meta)
 
+    def specsInRange(self, rtmin, rtmax):
+        return [spec for spec in self.spectra if rtmin <= spec.rt <= rtmax]
+
+    def levelOneSpecsInRange(self, rtmin, rtmax):
+        return [spec for spec in self.spectra if rtmin <= spec.rt <= rtmax
+                                             and spec.msLevel == 1]
+
+    def allRts(self):
+        return [spec.rt for spec in self.spectra]
+
+    def levelOneRts(self):
+        return [spec.rt for spec in self.spectra if spec.msLevel == 1]
+
     @classmethod
     def fromMSExperiment(clz, mse):
         assert type(mse) ==pyOpenMS.MSExperiment
@@ -103,6 +107,3 @@ class PeakMap(object):
 
     def __getitem__(self, idx):
         return self.spectra[idx]
-        
-
-    

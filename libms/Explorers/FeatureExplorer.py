@@ -3,17 +3,12 @@
 from PyQt4.QtGui import  *
 from PyQt4.QtCore import *
 
-import guidata
-import sys
-
-
 from ..gui import helpers
-
 from PlottingWidgets import RtPlotter, MzPlotter
+
+import sys
 import numpy as np
-
 import configs
-
 
 class StreamSplitter(object):
 
@@ -38,7 +33,6 @@ class StreamSplitter(object):
         else:
             self.collected.append(what)
 
-
 class FeatureExplorer(QDialog):
 
     def __init__(self, ftable):
@@ -56,8 +50,9 @@ class FeatureExplorer(QDialog):
 
         self.integratedFeatures = "intbegin" in self.ftable.colNames
 
-        self.rts = [ spec.RT for spec in ftable.ds.specs ]
-        self.maxRT = max(self.rts)
+        self.ds = ftable.ds
+        self.levelOneRts = list(ftable.ds.levelOneRts())
+        self.maxRt = max(self.levelOneRts)
 
         self.setupWidgets()
         self.setupLayout()
@@ -71,10 +66,8 @@ class FeatureExplorer(QDialog):
         self.setSizePolicy(sizePolicy)
         self.setSizeGripEnabled(True)
 
-        
         sys.stdout = StreamSplitter(self.statusMessages, sys.stdout)
         sys.stderr = StreamSplitter(self.statusMessages, sys.stderr)
-
 
     def populateTable(self):
         helpers.populateTableWidget(self.tw, self.ftable)
@@ -111,12 +104,9 @@ class FeatureExplorer(QDialog):
         sys.stdout = sys.__stdout__
         sys.stderr = sys.__stderr__
 
-
     def setupLayout(self):
         vlayouto = QVBoxLayout()
         self.setLayout(vlayouto)
-
-        #hlayout = QHBoxLayout()
 
         vsplitter = QSplitter()
         vsplitter.setOrientation(Qt.Vertical)
@@ -127,17 +117,6 @@ class FeatureExplorer(QDialog):
         hsplitter.addWidget(self.rtPlotter.widget)
 
         if self.integratedFeatures:
-
-
-            #vsplitter2 = QSplitter()
-
-            #vsplitter2.setOpaqueResize(False)
-            #vsplitter2.setOrientation(Qt.Vertical)
-
-
-
-            #vlayout2.addWidget(vsplitter2)
-            #vsplitter2.setLayout(vlayout2)
             vlayout2 = QVBoxLayout()
             vlayout2.addWidget(self.intLabel)
             vlayout2.addWidget(self.chooseIntMethod)
@@ -154,26 +133,23 @@ class FeatureExplorer(QDialog):
             frame.setLayout(vlayout2)
             hsplitter.addWidget(frame)
             
-
         hsplitter.addWidget(self.mzPlotter.widget)
 
-        #vlayout.addLayout(hlayout)
         vsplitter.addWidget(hsplitter)
-
         vsplitter.addWidget(self.tw)
-        vsplitter.addWidget(self.statusMessages) # QTextEdit())
+        vsplitter.addWidget(self.statusMessages) 
 
         vlayouto.addWidget(vsplitter)
 
     def setupWidgets(self):
-
         plotconfigs = (None, dict(shade=0.35, linewidth=1, color="g") )
-        self.rtPlotter = RtPlotter(rangeSelectionCallback=self.plotMz, numCurves=2, configs=plotconfigs)
+        self.rtPlotter = RtPlotter(rangeSelectionCallback=self.plotMz, 
+                                   numCurves=2, configs=plotconfigs)
 
-        rts = [ spec.RT for spec in self.ftable.ds.specs ]
+        rts = [ spec.rt for spec in self.ds.spectra ]
         self.rtPlotter.setRtValues(rts)
 
-        self.mzPlotter = MzPlotter(self.ftable.ds)
+        self.mzPlotter = MzPlotter(self.ds)
 
         self.rtPlotter.setMinimumSize(300, 150)
         self.mzPlotter.setMinimumSize(300, 150)
@@ -195,20 +171,26 @@ class FeatureExplorer(QDialog):
         pol = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
         pol.setVerticalStretch(1)
         self.statusMessages.setSizePolicy(pol)
-        
 
-        self.connect(self.tw.verticalHeader(), SIGNAL("sectionClicked(int)"), self.rowClicked)
-        self.connect(self.tw, SIGNAL("cellClicked(int, int)"), self.cellClicked)
+        # click at row head
+        self.connect(self.tw.verticalHeader(), SIGNAL("sectionClicked(int)"),
+                     self.rowClicked)
+        # click at cell
+        self.connect(self.tw, SIGNAL("cellClicked(int, int)"), 
+                     self.cellClicked)
 
         if self.integratedFeatures:
             self.intLabel = QLabel("Integration")
             self.chooseIntMethod = QComboBox()
             for name, _ in configs.peakIntegrators:
                 self.chooseIntMethod.addItem(name)
-            self.connect(self.chooseIntMethod, SIGNAL("currentIndexChanged(int)"), self.intMethodChanged)
+            self.connect(self.chooseIntMethod, 
+                         SIGNAL("currentIndexChanged(int)"), 
+                         self.intMethodChanged)
             self.reintegrateButton = QPushButton()
             self.reintegrateButton.setText("Integrate")
-            self.connect(self.reintegrateButton, SIGNAL("clicked()"), self.doIntegrate)
+            self.connect(self.reintegrateButton, SIGNAL("clicked()"), 
+                         self.doIntegrate)
 
     def intMethodChanged(self, i):
         print configs.peakIntegrators[i][1], "chosen"
@@ -224,13 +206,13 @@ class FeatureExplorer(QDialog):
         getIndex = self.ftable.getIndex
 
         # setup integrator
-        method = self.chooseIntMethod.currentText()
-        integrator = dict(configs.peakIntegrators)[str(method)] # qstring -> python string
-        integrator.setPeakMap(self.ftable.ds)
-        print str(integrator)
+        method = str(self.chooseIntMethod.currentText()) # conv from qstring
+        integrator = dict(configs.peakIntegrators)[method] 
+        integrator.setPeakMap(self.ds)
 
         # get eic limits
-        row = self.rows[self.tw.item(widgetRowIdx, 0).idx] # rowidx may be different to widgets row index due to sorting:
+        # rowidx may be different to widgets row index due to sorting:
+        row = self.rows[self.tw.item(widgetRowIdx, 0).idx] 
         mzmin = row[getIndex("mzmin")]
         mzmax = row[getIndex("mzmax")]
         intBegin, intEnd = sorted(self.rtPlotter.range_.get_range())
@@ -240,9 +222,7 @@ class FeatureExplorer(QDialog):
         area = res["area"]
         rmse = res["rmse"]
         params = res["params"]
-        #intrts = res["intrts"]
-        #smoothed = res["smoothed"]
-        intrts, smoothed = integrator.getSmoothed(self.rts, params)
+        intrts, smoothed = integrator.getSmoothed(self.levelOneRts, params)
 
         # write values to ftable
         row[getIndex("method")] = method
@@ -251,8 +231,6 @@ class FeatureExplorer(QDialog):
         row[getIndex("area")] = area
         row[getIndex("rmse")] = rmse
         row[getIndex("params")] = params
-        #row[getIndex("intrts")] = intrts
-        #row[getIndex("smoothed")] = smoothed
 
         # format and write values to tableWidgetItems
         ft = self.ftable
@@ -267,24 +245,19 @@ class FeatureExplorer(QDialog):
         self.tw.item(widgetRowIdx, getIndex("area")).setText(strArea)
         self.tw.item(widgetRowIdx, getIndex("rmse")).setText(strRmse)
 
-
         # plot result
         self.rtPlotter.plot(smoothed, x=intrts, index=1)
         self.rtPlotter.replot()
-        print "done"
-            
 
     def plotMz(self):
-
-        minRT=self.rtPlotter.minRTRangeSelected
-        maxRT=self.rtPlotter.maxRTRangeSelected
-
-        peaks = [spec.peaks for spec in self.ftable.ds.specs if minRT <= spec.RT <= maxRT ]
+        minRt=self.rtPlotter.minRTRangeSelected
+        maxRt=self.rtPlotter.maxRTRangeSelected
+        ds = self.ds
+        peaks = [spec.peaks for spec in ds.levelOneSpecsInRange(minRt, maxRt)]
         if len(peaks):
             peaks = np.vstack( peaks )
             self.mzPlotter.plot(peaks)
             self.mzPlotter.replot()
-
         
     def cellClicked(self, rowIdx, colIdx):
         name = self.ftable.colNames[colIdx]
@@ -293,17 +266,18 @@ class FeatureExplorer(QDialog):
         
         getIndex = self.ftable.getIndex
 
-
         if name.startswith("mz"):
             mzmin = self.rows[realIdx][getIndex("mzmin")]
             mzmax = self.rows[realIdx][getIndex("mzmax")]
             self.mzPlotter.setXAxisLimits(mzmin-0.002, mzmax+0.002)
 
             # update y-range
-            minRT = self.rtPlotter.minRTRangeSelected
-            maxRT = self.rtPlotter.maxRTRangeSelected
-            specs = [spec for spec in self.ftable.ds.specs if minRT <= spec.RT <= maxRT ]
-            peaks = np.vstack([ spec.peaks[ (spec.peaks[:,0] >= mzmin) * (spec.peaks[:,0] <= mzmax) ] for spec in self.ftable.ds.specs ])
+            minRt = self.rtPlotter.minRTRangeSelected
+            maxRt = self.rtPlotter.maxRTRangeSelected
+            spectra = self.ds.levelOneSpecsInRange(minRt, maxRt)
+            peaks = [s.peaks[(s.peaks[:,0] >= mzmin) * (s.peaks[:,0] <= mzmax)]
+                     for s in self.ds.spectra ]
+            peaks = np.vstack(peaks)
             if len(peaks)>0:            
                 maxIntensity =  max(peaks[:,1])
                 self.mzPlotter.setYAxisLimits(0, maxIntensity*1.1)
@@ -319,9 +293,7 @@ class FeatureExplorer(QDialog):
             self.rtPlotter.setRangeSelectionLimits(rt, rt)
             self.rtPlotter.replot()
 
-
     def setRowBold(self, rowIdx, bold=True):
-
         for i in range(self.tw.columnCount()):
             item = self.tw.item(rowIdx,i)
             font = item.font()
@@ -329,7 +301,6 @@ class FeatureExplorer(QDialog):
             item.setFont(font)
 
     def rowClicked(self, rowIdx):
-        
         realIdx = self.tw.item(rowIdx, 0).idx # trotz umsortierung !
         getIndex = self.ftable.getIndex
 
@@ -338,19 +309,18 @@ class FeatureExplorer(QDialog):
         mzmin = row[getIndex("mzmin")]
         mzmax = row[getIndex("mzmax")]
 
-        specs = self.ftable.ds.specs
-        peaks = [ spec.peaks[ (spec.peaks[:,0] >= mzmin) * (spec.peaks[:,0] <= mzmax) ] for spec in specs ]
-
-        chromatogram = [ np.sum(peak[:,1]) for peak in peaks ]
-        self.rtPlotter.plot(chromatogram)
+        spectra = [s for s in self.ds.spectra if s.msLevel == 1]
+        chromatogram = [ s.intensityInRange(mzmin, mzmax) for s in spectra ]
+        self.rtPlotter.plot(chromatogram, x=self.levelOneRts)
 
         if self.integratedFeatures:
 
-            method = row[getIndex("method")]
-            integrator = dict(configs.peakIntegrators)[str(method)] # qstring -> python string
+            method = str(row[getIndex("method")]) # qstring -> python string
+            integrator = dict(configs.peakIntegrators)[method] 
 
             params = row[getIndex("params")]
-            intrts, smoothed = integrator.getSmoothed(self.rts, params)
+       
+            intrts, smoothed = integrator.getSmoothed(self.levelOneRts, params)
 
             self.rtPlotter.plot(smoothed, x=intrts, index=1)
             ix = self.chooseIntMethod.findText(method)
@@ -365,15 +335,12 @@ class FeatureExplorer(QDialog):
             rtmin = row[getIndex("rtmin")]
             rtmax = row[getIndex("rtmax")]
             self.rtPlotter.setRangeSelectionLimits(rtmin, rtmax)
-            
 
-        self.rtPlotter.setXAxisLimits(0, self.maxRT)
+        self.rtPlotter.setXAxisLimits(0, self.maxRt)
         self.rtPlotter.replot()
 
-        
-
 def inspectFeatures(ftable):
-
+    import guidata
     app = guidata.qapplication()
     fe = FeatureExplorer(ftable)
     fe.raise_()

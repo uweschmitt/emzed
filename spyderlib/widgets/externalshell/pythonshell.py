@@ -33,8 +33,6 @@ from spyderlib.widgets.externalshell.baseshell import (ExternalShellBase,
                                                    add_pathlist_to_PYTHONPATH)
 from spyderlib.widgets.dicteditor import DictEditor
 
-print "new", add_pathlist_to_PYTHONPATH
-
 
 class ExtPythonShellWidget(PythonShellWidget):
     def __init__(self, parent, history_filename, debug=False, profile=False):

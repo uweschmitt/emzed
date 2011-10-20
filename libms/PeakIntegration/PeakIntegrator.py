@@ -15,16 +15,17 @@ class PeakIntegrator(object):
 
         assert self.peakMap is not None
 
-        specs_in_range = [ spec for spec in self.ms1specs if rtmin <= spec.rt <=rtmax ]
-        chromatogram = np.array([ spec.intensityInRange(mzmin, mzmax) for spec in specs_in_range ])
-
-        rts  = [ spec.rt for spec in self.ms1specs if rtmin <= spec.rt <=rtmax ]
+        specs = self.peakMap.levelOneSpecsInRange(rtmin, rtmax) 
+        # l[ spec for spec in self.ms1specs if rtmin <= spec.rt <=rtmax ]
+        data  = [ (s.rt, s.intensityInRange(mzmin, mzmax)) for s in specs]
+        rts, chromatogram = zip(*data)
         
         if len(rts)==0:
             return dict(area=0, rmse=0)
 
-        fullchromatogram = [ spec.intensityInRange(mzmin, mzmax) for spec in self.ms1specs]
-        area, rmse, params = self.integrator(self.allrts, fullchromatogram, rts, chromatogram)
+        fullchrom = [s.intensityInRange(mzmin, mzmax) for s in self.ms1specs]
+        area, rmse, params = self.integrator(self.allrts, fullchrom, rts, 
+                                             chromatogram)
 
         return dict(area=area, rmse=rmse, params=params)
 
