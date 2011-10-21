@@ -1,5 +1,5 @@
 import guiqwt
-assert guiqwt.__version__ == "2.1.4"
+assert guiqwt.__version__ == "2.1.5", guiqwt.__version__
 
 from guiqwt.plot import CurveWidget, PlotManager
 from guiqwt.builder import make
@@ -136,6 +136,7 @@ class RtPlotter(PlotterBase):
         self.widget.connect(range_.plot(), SIG_RANGE_CHANGED, self.rangeSelectionHandler)
 
         cc = make.info_label("TR", [RtRangeSelectionInfo(range_)], title=None)
+        cc.labelparam.label = None
         self.widget.plot.add_item(cc)
 
     def setRangeSelectionLimits(self, xleft, xright):
@@ -229,6 +230,7 @@ class MzPlotter(PlotterBase):
         setupCommonStyle(line, marker)
 
         label = make.info_label("TR", [MzCursorInfo(marker, line)], title=None)
+        label.labelparam.label = None
 
         widget.plot.add_item(marker)
         widget.plot.add_item(label)
