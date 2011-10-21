@@ -136,7 +136,7 @@ class RtPlotter(PlotterBase):
         self.widget.connect(range_.plot(), SIG_RANGE_CHANGED, self.rangeSelectionHandler)
 
         cc = make.info_label("TR", [RtRangeSelectionInfo(range_)], title=None)
-        cc.labelparam.label = None
+        cc.labelparam.label = ""
         self.widget.plot.add_item(cc)
 
     def setRangeSelectionLimits(self, xleft, xright):
@@ -230,7 +230,7 @@ class MzPlotter(PlotterBase):
         setupCommonStyle(line, marker)
 
         label = make.info_label("TR", [MzCursorInfo(marker, line)], title=None)
-        label.labelparam.label = None
+        label.labelparam.label = ""
 
         widget.plot.add_item(marker)
         widget.plot.add_item(label)
