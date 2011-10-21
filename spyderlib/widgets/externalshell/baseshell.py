@@ -34,8 +34,6 @@ def add_pathlist_to_PYTHONPATH(env, pathlist):
     # PyQt API 1/2 compatibility-related tests:
     assert isinstance(env, list)
     assert all([isinstance(path, basestring) for path in env])
-
-    print "orig add_pathlist_to_PYTHONPATH"
     
     pypath = "PYTHONPATH"
     pathstr = os.pathsep.join(pathlist)
@@ -301,7 +299,7 @@ def test():
     from spyderlib.plugins.variableexplorer import VariableExplorer
     settings = VariableExplorer.get_settings()
     shell = ExternalPythonShell(wdir=osp.dirname(spyderlib.__file__),
-                                ipython=True, stand_alone=settings,
+                                ipython_kernel=True, stand_alone=settings,
                                 arguments="-q4thread -pylab -colors LightBG",
                                 mpl_patch_enabled=True, light_background=False)
 #    shell = ExternalPythonShell(wdir=osp.dirname(spyderlib.__file__),

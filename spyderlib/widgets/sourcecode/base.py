@@ -11,7 +11,11 @@
 # pylint: disable=R0911
 # pylint: disable=R0201
 
-import sys, re, string, os
+import sys
+import re
+import sre_constants
+import string
+import os
 
 from spyderlib.qt.QtGui import (QTextCursor, QColor, QFont, QApplication,
                                 QTextEdit, QTextCharFormat, QToolTip,
@@ -64,25 +68,40 @@ class CompletionWidget(QListWidget):
         # Retrieving current screen height
         desktop = QApplication.desktop()
         srect = desktop.availableGeometry(desktop.screenNumber(self))
-        screen_height = srect.height()
+        screen_right = srect.right()
+        screen_bottom = srect.bottom()
         
         point = self.textedit.cursorRect().bottomRight()
         point.setX(point.x()+self.textedit.get_linenumberarea_width())
         point = self.textedit.mapToGlobal(point)
+
+        # Computing completion widget and its parent right positions
+        comp_right = point.x()+self.width()
+        ancestor = self.parent()
+        if ancestor is None:
+            anc_right = screen_right
+        else:
+            anc_right = min([ancestor.x()+ancestor.width(), screen_right])
+        
+        # Moving completion widget to the left
+        # if there is not enough space to the right
+        if comp_right > anc_right:
+            point.setX(point.x()-self.width())
         
         # Computing completion widget and its parent bottom positions
         comp_bottom = point.y()+self.height()
         ancestor = self.parent()
         if ancestor is None:
-            anc_bottom = screen_height
+            anc_bottom = screen_bottom
         else:
-            anc_bottom = min([ancestor.y()+ancestor.height(), screen_height])
+            anc_bottom = min([ancestor.y()+ancestor.height(), screen_bottom])
         
         # Moving completion widget above if there is not enough space below
+        x_position = point.x()
         if comp_bottom > anc_bottom:
             point = self.textedit.cursorRect().topRight()
-            point.setX(point.x()+self.textedit.get_linenumberarea_width())
             point = self.textedit.mapToGlobal(point)
+            point.setX(x_position)
             point.setY(point.y()-self.height())
             
         if ancestor is not None:
@@ -618,7 +637,13 @@ class TextEditBaseWidget(QPlainTextEdit):
 
     def get_text_line(self, line_nb):
         """Return text line at line number *line_nb*"""
-        return unicode(self.toPlainText()).splitlines()[line_nb-1]
+        # Taking into account the case when a file ends in an empty line,
+        # since splitlines doesn't return that line as the last element
+        # TODO: Make this function more efficient
+        try:
+            return unicode(self.toPlainText()).splitlines()[line_nb]
+        except IndexError:
+            return self.get_line_separator()
     
     def get_text(self, position_from, position_to):
         """
@@ -649,7 +674,8 @@ class TextEditBaseWidget(QPlainTextEdit):
     
     def insert_text(self, text):
         """Insert text at cursor position"""
-        self.textCursor().insertText(text)
+        if not self.isReadOnly():
+            self.textCursor().insertText(text)
     
     def replace_text(self, position_from, position_to, text):
         cursor = self.__select_text(position_from, position_to)
@@ -659,9 +685,39 @@ class TextEditBaseWidget(QPlainTextEdit):
     def remove_text(self, position_from, position_to):
         cursor = self.__select_text(position_from, position_to)
         cursor.removeSelectedText()
+        
+    def find_multiline_pattern(self, regexp, cursor, findflag):
+        """Reimplement QTextDocument's find method
+        
+        Add support for *multiline* regular expressions"""
+        pattern = unicode(regexp.pattern())
+        text = unicode(self.toPlainText())
+        try:
+            regobj = re.compile(pattern)
+        except sre_constants.error:
+            return
+        if findflag & QTextDocument.FindBackward:
+            # Find backward
+            offset = min([cursor.selectionEnd(), cursor.selectionStart()])
+            text = text[:offset]
+            matches = [_m for _m in regobj.finditer(text, 0, offset)]
+            if matches:
+                match = matches[-1]
+            else:
+                return
+        else:
+            # Find forward
+            offset = max([cursor.selectionEnd(), cursor.selectionStart()])
+            match = regobj.search(text, offset)
+        if match:
+            pos1, pos2 = match.span()
+            fcursor = self.textCursor()
+            fcursor.setPosition(pos1)
+            fcursor.setPosition(pos2, QTextCursor.KeepAnchor)
+            return fcursor
 
-    def find_text(self, text, changed=True,
-                  forward=True, case=False, words=False, regexp=False):
+    def find_text(self, text, changed=True, forward=True, case=False,
+                  words=False, regexp=False):
         """Find text"""
         cursor = self.textCursor()
         findflag = QTextDocument.FindFlag()
@@ -686,8 +742,15 @@ class TextEditBaseWidget(QPlainTextEdit):
                           QRegExp.RegExp2)
         for move in moves:
             cursor.movePosition(move)
-            found_cursor = self.document().find(pattern, cursor, findflag)
-            if not found_cursor.isNull():
+            if regexp and '\\n' in text:
+                # Multiline regular expression
+                found_cursor = self.find_multiline_pattern(pattern, cursor,
+                                                           findflag)
+            else:
+                # Single line find: using the QTextDocument's find function,
+                # probably much more efficient than ours
+                found_cursor = self.document().find(pattern, cursor, findflag)
+            if found_cursor is not None and not found_cursor.isNull():
                 self.setTextCursor(found_cursor)
                 return True
         return False
@@ -737,6 +800,51 @@ class TextEditBaseWidget(QPlainTextEdit):
         block_end = self.document().findBlock(end)
         return sorted([block_start.blockNumber(), block_end.blockNumber()])
         
+    def get_executable_text(self):
+        """Return selected text or current line as an processed text,
+        to be executable in a Python/IPython interpreter"""
+        no_selection = not self.has_selected_text()
+        if no_selection:
+            self.select_current_block()
+        
+        ls = self.get_line_separator()
+        
+        _indent = lambda line: len(line)-len(line.lstrip())
+        
+        line_from, line_to = self.get_selection_bounds()
+        text = self.get_selected_text()
+
+        lines = text.split(ls)
+        if len(lines) > 1:
+            # Multiline selection -> eventually fixing indentation
+            original_indent = _indent(self.get_text_line(line_from))
+            text = (" "*(original_indent-_indent(lines[0])))+text
+        
+        # If there is a common indent to all lines, remove it
+        min_indent = 999
+        for line in text.split(ls):
+            if line.strip():
+                min_indent = min(_indent(line), min_indent)
+        if min_indent:
+            text = ls.join([line[min_indent:] for line in text.split(ls)])
+        
+        # Add an EOL character if a block stars with various Python
+        # reserved words, so that it gets evaluated automatically
+        # by the console
+        first_line = lines[0].lstrip()
+        last_line = self.get_text_line(line_to).strip()
+        words = ['def', 'for', 'if', 'while', 'try', 'with', 'class']
+        if any([first_line.startswith(w) for w in words]):
+            text += ls
+            if last_line != '':
+                text += ls
+
+        if no_selection:
+            self.setFocus()
+            self.clear_selection()
+        
+        return text
+    
     def get_line_count(self):
         """Return document total line number"""
         return self.blockCount()
@@ -795,6 +903,61 @@ class TextEditBaseWidget(QPlainTextEdit):
         Paste the duplicated text *before* the current line/selected text
         """
         self.__duplicate_line_or_selection(after_current_line=False)
+        
+    def __move_line_or_selection(self, after_current_line=True):
+        """Move current line or selected text"""
+        cursor = self.textCursor()
+        cursor.beginEditBlock()
+        orig_sel = start_pos, end_pos = (cursor.selectionStart(),
+                                         cursor.selectionEnd())
+        if unicode(cursor.selectedText()):
+            # Check if start_pos is at the start of a block
+            cursor.setPosition(start_pos)
+            cursor.movePosition(QTextCursor.StartOfBlock)
+            start_pos = cursor.position()
+
+            cursor.setPosition(end_pos)
+            # Check if end_pos is at the start of a block: if so, starting
+            # changes from the previous block
+            cursor.movePosition(QTextCursor.StartOfBlock,
+                                QTextCursor.KeepAnchor)
+            if unicode(cursor.selectedText()):
+                cursor.movePosition(QTextCursor.NextBlock)
+                end_pos = cursor.position()
+        else:
+            cursor.movePosition(QTextCursor.StartOfBlock)
+            start_pos = cursor.position()
+            cursor.movePosition(QTextCursor.NextBlock)
+            end_pos = cursor.position()
+        cursor.setPosition(start_pos)
+        cursor.setPosition(end_pos, QTextCursor.KeepAnchor)
+        
+        sel_text = unicode(cursor.selectedText())
+        cursor.removeSelectedText()
+        
+        if after_current_line:
+            text = unicode(cursor.block().text())
+            orig_sel = (orig_sel[0]+len(text)+1, orig_sel[1]+len(text)+1)
+            cursor.movePosition(QTextCursor.NextBlock)
+        else:
+            cursor.movePosition(QTextCursor.PreviousBlock)
+            text = unicode(cursor.block().text())
+            orig_sel = (orig_sel[0]-len(text)-1, orig_sel[1]-len(text)-1)
+        cursor.insertText(sel_text)
+
+        cursor.endEditBlock()
+
+        cursor.setPosition(orig_sel[0])
+        cursor.setPosition(orig_sel[1], QTextCursor.KeepAnchor)
+        self.setTextCursor(cursor)
+    
+    def move_line_up(self):
+        """Move up current line or selected text"""
+        self.__move_line_or_selection(after_current_line=False)
+        
+    def move_line_down(self):
+        """Move down current line or selected text"""
+        self.__move_line_or_selection(after_current_line=True)
         
     def extend_selection_to_complete_lines(self):
         """Extend current selection to complete lines"""

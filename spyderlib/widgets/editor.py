@@ -24,7 +24,7 @@ from spyderlib.qt.compat import getsavefilename
 import os, sys, re, os.path as osp
 
 # Local imports
-from spyderlib.utils import encoding, sourcecode, programs
+from spyderlib.utils import encoding, sourcecode, programs, codeanalysis
 from spyderlib.utils.dochelpers import getsignaturesfromtext
 from spyderlib.utils.module_completion import moduleCompletion
 from spyderlib.baseconfig import _
@@ -33,9 +33,7 @@ from spyderlib.utils.qthelpers import (create_action, add_actions, mimedata2url,
                                        get_filetype_icon, create_toolbutton)
 from spyderlib.widgets.tabs import BaseTabs
 from spyderlib.widgets.findreplace import FindReplace
-from spyderlib.widgets.editortools import (OutlineExplorerWidget, find_tasks,
-                                           check_with_pyflakes,
-                                           check_with_pep8)
+from spyderlib.widgets.editortools import OutlineExplorerWidget
 from spyderlib.widgets.sourcecode import syntaxhighlighters, codeeditor
 from spyderlib.widgets.sourcecode.base import TextEditBaseWidget #@UnusedImport
 from spyderlib.widgets.sourcecode.codeeditor import Printer #@UnusedImport
@@ -50,6 +48,12 @@ DEBUG = False
 class FileListDialog(QDialog):
     def __init__(self, parent, tabs, fullpath_sorting):
         QDialog.__init__(self, parent)
+        
+        # Destroying the C++ object right after closing the dialog box,
+        # otherwise it may be garbage-collected in another QThread
+        # (e.g. the editor's analysis thread in Spyder), thus leading to
+        # a segmentation fault on UNIX or an application crash on Windows
+        self.setAttribute(Qt.WA_DeleteOnClose)
         
         self.indexes = None
         
@@ -155,59 +159,89 @@ class FileListDialog(QDialog):
 
 class AnalysisThread(QThread):
     """Analysis thread"""
-    def __init__(self, parent, checker, end_callback, source_code):
+    def __init__(self, parent, checker, source_code):
         super(AnalysisThread, self).__init__(parent)
         self.checker = checker
-        self.end_callback = end_callback
+        self.results = None
         self.source_code = source_code
     
     def run(self):
         """Run analysis"""
-        self.end_callback(self.checker(self.source_code))
+        self.results = self.checker(self.source_code)
 
 
 class ThreadManager(QObject):
     """Analysis thread manager"""
-    def __init__(self, parent, maximum_simultaneous_threads=1):
+    def __init__(self, parent, max_simultaneous_threads=2):
         super(ThreadManager, self).__init__(parent)
-        self.maximum_simultaneous_threads = maximum_simultaneous_threads
+        self.max_simultaneous_threads = max_simultaneous_threads
         self.started_threads = {}
         self.pending_threads = []
+        self.end_callbacks = {}
         
     def close_threads(self, parent):
         """Close threads associated to parent_id"""
-        parent_id = id(parent)
-        self.pending_threads = [(_th, _id) for (_th, _id)
-                                in self.pending_threads if _id != parent_id]
-        for thread in self.started_threads.get(parent_id, []):
+        if DEBUG:
+            print >>STDOUT, "Call to 'close_threads'"
+        if parent is None:
+            # Closing all threads
+            self.pending_threads = []
+            threadlist = []
+            for threads in self.started_threads.values():
+                threadlist += threads
+        else:
+            parent_id = id(parent)
+            self.pending_threads = [(_th, _id) for (_th, _id)
+                                    in self.pending_threads
+                                    if _id != parent_id]
+            threadlist = self.started_threads.get(parent_id, [])
+        for thread in threadlist:
             if DEBUG:
                 print >>STDOUT, "Waiting for thread %r to finish" % thread
             while thread.isRunning():
                 # We can't terminate thread safely, so we simply wait...
                 QApplication.processEvents()
+                
+    def close_all_threads(self):
+        """Close all threads"""
+        if DEBUG:
+            print >>STDOUT, "Call to 'close_all_threads'"
+        self.close_threads(None)
         
     def add_thread(self, checker, end_callback, source_code, parent):
         """Add thread to queue"""
         parent_id = id(parent)
-        thread = AnalysisThread(self, checker, end_callback, source_code)
+        thread = AnalysisThread(self, checker, source_code)
+        self.end_callbacks[id(thread)] = end_callback
         self.pending_threads.append((thread, parent_id))
         if DEBUG:
             print >>STDOUT, "Added thread %r to queue" % thread
-        QTimer.singleShot(10, self.update_queue)
+        QTimer.singleShot(50, self.update_queue)
     
     def update_queue(self):
         """Update queue"""
-        if self.pending_threads:
-            started = 0
-            for threadlist in self.started_threads.values():
-                started += len(threadlist)
-            if DEBUG:
-                print >>STDOUT, "Updating queue:"
-                print >>STDOUT, "    started:", started
-                print >>STDOUT, "    pending:", len(self.pending_threads)
-            if started < self.maximum_simultaneous_threads:
+        started = 0
+        for parent_id, threadlist in self.started_threads.items():
+            still_running = []
+            for thread in threadlist:
+                if thread.isFinished():
+                    end_callback = self.end_callbacks.pop(id(thread))
+                    end_callback(thread.results)
+                    thread = None
+                else:
+                    still_running.append(thread)
+                    started += 1
+            threadlist = None
+            self.started_threads[parent_id] = still_running
+        if DEBUG:
+            print >>STDOUT, "Updating queue:"
+            print >>STDOUT, "    started:", started
+            print >>STDOUT, "    pending:", len(self.pending_threads)
+        if self.pending_threads and started < self.max_simultaneous_threads:
                 thread, parent_id = self.pending_threads.pop(0)
                 self.connect(thread, SIGNAL('finished()'), self.update_queue)
+                threadlist = self.started_threads.get(parent_id, [])
+                self.started_threads[parent_id] = threadlist+[thread]
                 if DEBUG:
                     print >>STDOUT, "===>starting:", thread
                 thread.start()
@@ -258,6 +292,8 @@ class FileInfo(QObject):
         if text.startswith('import '):
             comp_list = moduleCompletion(text)
             words = text.split(' ')
+            if ',' in words[-1]:
+                words = words[-1].split(',')
             if comp_list:
                 self.editor.show_completion_list(comp_list,
                                                  completion_text=words[-1],
@@ -266,9 +302,9 @@ class FileInfo(QObject):
         elif text.startswith('from '):
             comp_list = moduleCompletion(text)
             words = text.split(' ')
-            if words[-1].find('(') != -1:
+            if '(' in words[-1]:
                 words = words[:-2] + words[-1].split('(')
-            if words[-1].find(',') != -1:
+            if ',' in words[-1]:
                 words = words[:-2] + words[-1].split(',')
             self.editor.show_completion_list(comp_list,
                                              completion_text=words[-1],
@@ -339,6 +375,9 @@ class FileInfo(QObject):
     
     def run_code_analysis(self, run_pyflakes, run_pep8):
         """Run code analysis"""
+        run_pyflakes = run_pyflakes and codeanalysis.is_pyflakes_installed()
+        run_pep8 = run_pep8 and\
+                   codeanalysis.get_checker_executable('pep8') is not None
         self.pyflakes_results = []
         self.pep8_results = []
         if self.editor.is_python():
@@ -348,11 +387,11 @@ class FileInfo(QObject):
             if run_pep8:
                 self.pep8_results = None
             if run_pyflakes:
-                self.threadmanager.add_thread(check_with_pyflakes,
+                self.threadmanager.add_thread(codeanalysis.check_with_pyflakes,
                                               self.pyflakes_analysis_finished,
                                               source_code, self)
             if run_pep8:
-                self.threadmanager.add_thread(check_with_pep8,
+                self.threadmanager.add_thread(codeanalysis.check_with_pep8,
                                               self.pep8_analysis_finished,
                                               source_code, self)
         
@@ -386,7 +425,8 @@ class FileInfo(QObject):
     def run_todo_finder(self):
         """Run TODO finder"""
         if self.editor.is_python():
-            self.threadmanager.add_thread(find_tasks, self.todo_finished,
+            self.threadmanager.add_thread(codeanalysis.find_tasks,
+                                          self.todo_finished,
                                           self.get_source_code(), self)
         
     def todo_finished(self, results):
@@ -581,7 +621,7 @@ class EditorStack(QWidget):
         self.tabs = BaseTabs(self, menu=self.menu, menu_use_tooltips=True,
                              corner_widgets=corner_widgets)
         self.tabs.set_close_function(self.close_file)
-        if hasattr(self.tabs, 'setDocumentMode'):
+        if hasattr(self.tabs, 'setDocumentMode') and not sys.platform == 'darwin':
             self.tabs.setDocumentMode(True)
         self.connect(self.tabs, SIGNAL('currentChanged(int)'),
                      self.current_changed)
@@ -591,6 +631,7 @@ class EditorStack(QWidget):
         self.tabs.add_corner_widgets(widgets)
         
     def closeEvent(self, event):
+        self.threadmanager.close_all_threads()
         self.disconnect(self.analysis_timer, SIGNAL("timeout()"),
                         self.analyze_script)
         QWidget.closeEvent(self, event)
@@ -990,7 +1031,6 @@ class EditorStack(QWidget):
         self.set_stack_title(index, False)
         if set_current:
             self.set_stack_index(index)
-        if set_current:
             self.current_changed(index)
         self.update_actions()
         self.update_filelistdialog()
@@ -1185,7 +1225,7 @@ class EditorStack(QWidget):
             self.set_stack_index(index)
             finfo = self.data[index]
             if finfo.filename == self.tempfile_path or yes_all:
-                if not self.save(refresh_explorer=False):
+                if not self.save():
                     return False
             elif finfo.editor.document().isModified():
                 answer = QMessageBox.question(self, self.title,
@@ -1194,10 +1234,10 @@ class EditorStack(QWidget):
                               ) % osp.basename(finfo.filename),
                             buttons)
                 if answer == QMessageBox.Yes:
-                    if not self.save(refresh_explorer=False):
+                    if not self.save():
                         return False
                 elif answer == QMessageBox.YesAll:
-                    if not self.save(refresh_explorer=False):
+                    if not self.save():
                         return False
                     yes_all = True
                 elif answer == QMessageBox.NoAll:
@@ -1206,7 +1246,7 @@ class EditorStack(QWidget):
                     return False
         return True
     
-    def save(self, index=None, force=False, refresh_explorer=True):
+    def save(self, index=None, force=False):
         """Save file"""
         if index is None:
             # Save the currently edited file
@@ -1242,10 +1282,6 @@ class EditorStack(QWidget):
             finfo.editor.rehighlight()
             
             self._refresh_outlineexplorer(index)
-            if refresh_explorer:
-                # Refresh the explorer widget if it exists:
-                self.emit(SIGNAL("refresh_explorer(QString)"),
-                          osp.dirname(finfo.filename))
             return True
         except EnvironmentError, error:
             QMessageBox.critical(self, _("Save"),
@@ -1301,9 +1337,7 @@ class EditorStack(QWidget):
         for index in range(self.get_stack_count()):
             if self.data[index].editor.document().isModified():
                 folders.add(osp.dirname(self.data[index].filename))
-                self.save(index, refresh_explorer=False)
-        for folder in folders:
-            self.emit(SIGNAL("refresh_explorer(QString)"), folder)
+                self.save(index)
     
     #------ Update UI
     def start_stop_analysis_timer(self):
@@ -1691,10 +1725,10 @@ class EditorStack(QWidget):
         Create new filename with *encoding* and *text*
         """
         finfo = self.create_new_editor(filename, encoding, text,
-                                       set_current=True, new=True)
+                                       set_current=False, new=True)
         finfo.editor.set_cursor_position('eof')
         finfo.editor.insert_text(os.linesep)
-        return finfo.editor
+        return finfo
         
     def load(self, filename, set_current=True):
         """
@@ -1721,7 +1755,7 @@ class EditorStack(QWidget):
                                 QMessageBox.Ok)
             self.set_os_eol_chars(index)
         self.is_analysis_done = False
-        return finfo.editor
+        return finfo
     
     def set_os_eol_chars(self, index=None):
         if index is None:
@@ -1746,55 +1780,14 @@ class EditorStack(QWidget):
         finfo.editor.fix_indentation()
 
     #------ Run
-    def __process_lines(self):
-        editor = self.get_current_editor()
-        ls = editor.get_line_separator()
-        
-        _indent = lambda line: len(line)-len(line.lstrip())
-        
-        line_from, line_to = editor.get_selection_bounds()
-        text = editor.get_selected_text()
-
-        lines = text.split(ls)
-        if len(lines) > 1:
-            # Multiline selection -> eventually fixing indentation
-            original_indent = _indent(editor.get_text_line(line_from))
-            text = (" "*(original_indent-_indent(lines[0])))+text
-        
-        # If there is a common indent to all lines, remove it
-        min_indent = 999
-        for line in text.split(ls):
-            if line.strip():
-                min_indent = min(_indent(line), min_indent)
-        if min_indent:
-            text = ls.join([line[min_indent:] for line in text.split(ls)])
-
-        last_line = text.split(ls)[-1]
-        if last_line.strip() == editor.get_text_line(line_to).strip():
-            # If last line is complete, add an EOL character
-            text += ls
-        
-        return text
-    
-    def __run_in_external_console(self, lines):
-        self.emit(SIGNAL('external_console_execute_lines(QString)'), lines)
-    
     def run_selection_or_block(self):
         """
         Run selected text in console and set focus to console
         *or*, if there is no selection,
         Run current block of lines in console and go to next block
         """
-        editor = self.get_current_editor()
-        if editor.has_selected_text():
-            # Run selected text in external console and set focus to console
-            self.__run_in_external_console( self.__process_lines() )
-        else:
-            # Run current block in external console and go to next block
-            editor.select_current_block()
-            self.__run_in_external_console( self.__process_lines() )
-            editor.setFocus()
-            editor.clear_selection()
+        self.emit(SIGNAL('external_console_execute_lines(QString)'),
+                  self.get_current_editor().get_executable_text())
             
     #------ Drag and drop
     def dragEnterEvent(self, event):
@@ -2288,6 +2281,7 @@ class EditorPluginExample(QSplitter):
         if DEBUG:
             print >>STDOUT, len(self.editorwindows), ":", self.editorwindows
             print >>STDOUT, len(self.editorstacks), ":", self.editorstacks
+        
         event.accept()
         
     def load(self, fname):

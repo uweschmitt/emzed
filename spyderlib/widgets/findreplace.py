@@ -13,7 +13,7 @@
 
 from spyderlib.qt.QtGui import (QHBoxLayout, QGridLayout, QCheckBox, QLabel,
                                 QWidget, QSizePolicy, QShortcut, QKeySequence)
-from spyderlib.qt.QtCore import SIGNAL, Qt
+from spyderlib.qt.QtCore import SIGNAL, Qt, QTimer
 
 import sys
 
@@ -40,6 +40,7 @@ class FindReplace(QWidget):
         QWidget.__init__(self, parent)
         self.enable_replace = enable_replace
         self.editor = None
+        self.is_code_editor = None
         
         glayout = QGridLayout()
         glayout.setContentsMargins(0, 0, 0, 0)
@@ -52,8 +53,8 @@ class FindReplace(QWidget):
         # Find layout
         self.search_text = PatternComboBox(self, tip=_("Search string"),
                                            adjust_to_minimum=False)
-        self.connect(self.search_text, SIGNAL("editTextChanged(QString)"),
-                     self.text_has_changed)
+        self.connect(self.search_text.lineEdit(),
+                     SIGNAL("textEdited(QString)"), self.text_has_been_edited)
         
         self.previous_button = create_toolbutton(self,
                                              triggered=self.find_previous,
@@ -78,17 +79,26 @@ class FindReplace(QWidget):
         self.case_button.setCheckable(True)
         self.connect(self.case_button, SIGNAL("toggled(bool)"),
                      lambda state: self.find())
+                     
         self.words_button = create_toolbutton(self,
                                               icon=get_icon("whole_words.png"),
                                               tip=_("Whole words"))
         self.words_button.setCheckable(True)
         self.connect(self.words_button, SIGNAL("toggled(bool)"),
                      lambda state: self.find())
+                     
+        self.highlight_button = create_toolbutton(self,
+                                              icon=get_icon("highlight.png"),
+                                              tip=_("Highlight matches"))
+        self.highlight_button.setCheckable(True)
+        self.connect(self.highlight_button, SIGNAL("toggled(bool)"),
+                     self.toggle_highlighting)
 
         hlayout = QHBoxLayout()
         self.widgets = [self.close_button, self.search_text,
                         self.previous_button, self.next_button,
-                        self.re_button, self.case_button, self.words_button]
+                        self.re_button, self.case_button, self.words_button,
+                        self.highlight_button]
         for widget in self.widgets[1:]:
             hlayout.addWidget(widget)
         glayout.addLayout(hlayout, 0, 1)
@@ -124,7 +134,8 @@ class FindReplace(QWidget):
         
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         
-        self.findnext_sc = QShortcut(QKeySequence("F3"), parent, self.find_next)
+        self.findnext_sc = QShortcut(QKeySequence("F3"), parent,
+                                     self.find_next)
         self.findnext_sc.setContext(Qt.WidgetWithChildrenShortcut)
         self.findprev_sc = QShortcut(QKeySequence("Shift+F3"), parent,
                                      self.find_previous)
@@ -138,6 +149,12 @@ class FindReplace(QWidget):
         
         escape_sc = QShortcut(QKeySequence("Escape"), parent, self.hide)
         escape_sc.setContext(Qt.WidgetWithChildrenShortcut)
+
+        self.highlight_timer = QTimer(self)
+        self.highlight_timer.setSingleShot(True)
+        self.highlight_timer.setInterval(1000)
+        self.connect(self.highlight_timer, SIGNAL("timeout()"),
+                     self.highlight_matches)
         
     def get_shortcut_data(self):
         """
@@ -166,6 +183,14 @@ class FindReplace(QWidget):
             else:
                 self.show_replace()
                 self.replace_text.setFocus()
+                
+    def toggle_highlighting(self, state):
+        """Toggle the 'highlight all results' feature"""
+        if self.editor is not None:
+            if state:
+                self.highlight_matches()
+            else:
+                self.clear_matches()
         
     def show(self):
         """Overrides Qt Method"""
@@ -189,6 +214,7 @@ class FindReplace(QWidget):
         self.emit(SIGNAL("visibility_changed(bool)"), False)
         if self.editor is not None:
             self.editor.setFocus()
+            self.clear_matches()
         
     def show_replace(self):
         """Show replace widgets"""
@@ -204,6 +230,8 @@ class FindReplace(QWidget):
     def refresh(self):
         """Refresh widget"""
         if self.isHidden():
+            if self.editor is not None:
+                self.clear_matches()
             return
         state = self.editor is not None
         for widget in self.widgets:
@@ -221,37 +249,69 @@ class FindReplace(QWidget):
         from spyderlib.qt.QtWebKit import QWebView
         self.words_button.setVisible(not isinstance(editor, QWebView))
         self.re_button.setVisible(not isinstance(editor, QWebView))
+        from spyderlib.widgets.sourcecode.codeeditor import CodeEditor
+        self.is_code_editor = isinstance(editor, CodeEditor)
+        self.highlight_button.setVisible(self.is_code_editor)
         if refresh:
             self.refresh()
+        if self.isHidden() and editor is not None:
+            self.clear_matches()
         
     def find_next(self):
         """Find next occurence"""
-        state = self.find(changed=False, forward=True)
+        state = self.find(changed=False, forward=True, rehighlight=False)
         self.editor.setFocus()
+        self.search_text.add_current_text()
         return state
         
     def find_previous(self):
         """Find previous occurence"""
-        state = self.find(changed=False, forward=False)
+        state = self.find(changed=False, forward=False, rehighlight=False)
         self.editor.setFocus()
         return state
         
-    def text_has_changed(self, text):
-        """Find text has changed"""
-        self.find(changed=True, forward=True)
+    def text_has_been_edited(self, text):
+        """Find text has been edited (this slot won't be triggered when 
+        setting the search pattern combo box text programmatically"""
+        self.find(changed=True, forward=True, start_highlight_timer=True)
         
-    def find(self, changed=True, forward=True):
+    def highlight_matches(self):
+        """Highlight found results"""
+        if self.is_code_editor and self.highlight_button.isChecked():
+            text = self.search_text.currentText()
+            words = self.words_button.isChecked()
+            regexp = self.re_button.isChecked()
+            self.editor.highlight_found_results(text, words=words,
+                                                regexp=regexp)
+                                                
+    def clear_matches(self):
+        """Clear all highlighted matches"""
+        if self.is_code_editor:
+            self.editor.clear_found_results()
+        
+    def find(self, changed=True, forward=True,
+             rehighlight=True, start_highlight_timer=False):
         """Call the find function"""
         text = self.search_text.currentText()
         if len(text) == 0:
             self.search_text.lineEdit().setStyleSheet("")
             return None
         else:
-            found = self.editor.find_text(text, changed, forward,
-                                          case=self.case_button.isChecked(),
-                                          words=self.words_button.isChecked(),
-                                          regexp=self.re_button.isChecked())
+            case = self.case_button.isChecked()
+            words = self.words_button.isChecked()
+            regexp = self.re_button.isChecked()
+            found = self.editor.find_text(text, changed, forward, case=case,
+                                          words=words, regexp=regexp)
             self.search_text.lineEdit().setStyleSheet(self.STYLE[found])
+            if found:
+                if rehighlight or not self.editor.found_results:
+                    self.highlight_timer.stop()
+                    if start_highlight_timer:
+                        self.highlight_timer.start()
+                    else:
+                        self.highlight_matches()
+            else:
+                self.clear_matches()
             return found
             
     def replace_find(self):
@@ -269,7 +329,8 @@ class FindReplace(QWidget):
                         # Text was already found, do nothing
                         pass
                     else:
-                        if not self.find(changed=False, forward=True):
+                        if not self.find(changed=False, forward=True,
+                                         rehighlight=False):
                             break
                     first = False
                     wrapped = False

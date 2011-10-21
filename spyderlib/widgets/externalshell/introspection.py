@@ -6,8 +6,10 @@ from spyderlib.qt.QtCore import QThread, SIGNAL, Signal
 import threading
 import socket
 
+# Local imports
 from spyderlib.baseconfig import get_conf_path
-from spyderlib.utils import select_port, log_last_error
+from spyderlib.utils.misc import select_port
+from spyderlib.utils.debug import log_last_error
 from spyderlib.utils.bsdsocket import read_packet, write_packet
 
 
@@ -162,6 +164,11 @@ class NotificationThread(QThread):
                     self.emit(SIGNAL('refresh_namespace_browser()'))
                 elif command == 'remote_view':
                     self.sig_process_remote_view.emit(data)
+                elif command == 'ipython_kernel':
+                    self.emit(SIGNAL('new_ipython_kernel(QString)'), data)
+                elif command == 'open_file':
+                    fname, lineno = data
+                    self.emit(SIGNAL('open_file(QString,int)'), fname, lineno)
                 else:
                     raise RuntimeError('Unsupported command: %r' % command)
                 if DEBUG:

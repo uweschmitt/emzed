@@ -22,7 +22,7 @@ from spyderlib.qt.QtGui import (QWidget, QDialog, QListWidget, QListWidgetItem,
                                 QPushButton, QFontComboBox, QGroupBox,
                                 QComboBox, QColor, QGridLayout, QTabWidget,
                                 QRadioButton, QButtonGroup, QSplitter,
-                                QStyleFactory)
+                                QStyleFactory, QScrollArea)
 from spyderlib.qt.QtCore import Qt, QSize, SIGNAL, SLOT, Slot
 from spyderlib.qt.compat import (to_qvariant, from_qvariant,
                                  getexistingdirectory, getopenfilename)
@@ -82,16 +82,22 @@ class ConfigPage(QWidget):
 
 
 class ConfigDialog(QDialog):
+    """Spyder configuration ('Preferences') dialog box"""
     def __init__(self, parent=None):
         QDialog.__init__(self, parent)
+        
+        # Destroying the C++ object right after closing the dialog box,
+        # otherwise it may be garbage-collected in another QThread
+        # (e.g. the editor's analysis thread in Spyder), thus leading to
+        # a segmentation fault on UNIX or an application crash on Windows
+        self.setAttribute(Qt.WA_DeleteOnClose)
 
         self.contents_widget = QListWidget()
         self.contents_widget.setMovement(QListView.Static)
-        self.contents_widget.setMinimumWidth(160 if os.name == 'nt' else 200)
         self.contents_widget.setSpacing(1)
 
         bbox = QDialogButtonBox(QDialogButtonBox.Ok|QDialogButtonBox.Apply
-                                     |QDialogButtonBox.Cancel)
+                                |QDialogButtonBox.Cancel)
         self.apply_btn = bbox.button(QDialogButtonBox.Apply)
         self.connect(bbox, SIGNAL("accepted()"), SLOT("accept()"))
         self.connect(bbox, SIGNAL("rejected()"), SLOT("reject()"))
@@ -131,10 +137,18 @@ class ConfigDialog(QDialog):
         """Set current page index"""
         self.contents_widget.setCurrentRow(index)
         
+    def get_page(self, index=None):
+        """Return page widget"""
+        if index is None:
+            widget = self.pages_widget.currentWidget()
+        else:
+            widget = self.pages_widget.widget(index)
+        return widget.widget()
+        
     def accept(self):
         """Reimplement Qt method"""
         for index in range(self.pages_widget.count()):
-            configpage = self.pages_widget.widget(index)
+            configpage = self.get_page(index)
             if not configpage.is_valid():
                 return
             configpage.apply_changes()
@@ -143,13 +157,13 @@ class ConfigDialog(QDialog):
     def button_clicked(self, button):
         if button is self.apply_btn:
             # Apply button was clicked
-            configpage = self.pages_widget.currentWidget()
+            configpage = self.get_page()
             if not configpage.is_valid():
                 return
             configpage.apply_changes()
             
     def current_page_changed(self, index):
-        widget = self.pages_widget.widget(index)
+        widget = self.get_page(index)
         self.apply_btn.setVisible(widget.apply_callback is not None)
         self.apply_btn.setEnabled(widget.is_modified)
         
@@ -160,7 +174,10 @@ class ConfigDialog(QDialog):
                      self.contents_widget.setCurrentRow(row))
         self.connect(widget, SIGNAL("apply_button_enabled(bool)"),
                      self.apply_btn.setEnabled)
-        self.pages_widget.addWidget(widget)
+        scrollarea = QScrollArea(self)
+        scrollarea.setWidgetResizable(True)
+        scrollarea.setWidget(widget)
+        self.pages_widget.addWidget(scrollarea)
         item = QListWidgetItem(self.contents_widget)
         item.setIcon(widget.get_icon())
         item.setText(widget.get_name())

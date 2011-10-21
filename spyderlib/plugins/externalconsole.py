@@ -17,17 +17,19 @@ from spyderlib.qt.QtGui import (QVBoxLayout, QMessageBox, QInputDialog,
 from spyderlib.qt.QtCore import SIGNAL, Qt
 from spyderlib.qt.compat import getopenfilename
 
-import sys, os
+import sys
+import os
 import os.path as osp
 
 # For debugging purpose:
 STDOUT = sys.stdout
 
 # Local imports
-from spyderlib.baseconfig import _
+from spyderlib.baseconfig import _, SCIENTIFIC_STARTUP
 from spyderlib.config import get_icon, CONF
-from spyderlib.utils import (programs, remove_trailing_single_backslash,
-                             get_error_match)
+from spyderlib.utils import programs
+from spyderlib.utils.misc import (get_error_match, get_python_executable,
+                                  remove_trailing_single_backslash)
 from spyderlib.utils.qthelpers import create_action, mimedata2url
 from spyderlib.widgets.tabs import Tabs
 from spyderlib.widgets.externalshell.pythonshell import ExternalPythonShell
@@ -156,6 +158,22 @@ class ExternalConsoleConfigPage(PluginConfigPage):
         umd_layout.addWidget(umd_namelist_btn)
         umd_group.setLayout(umd_layout)
         
+        # Python executable Group
+        pyexec_group = QGroupBox(_("Python executable"))
+        pyexec_label = QLabel(_("Path to Python interpreter "
+                                "executable binary:"))
+        if os.name == 'nt':
+            filters = _("Executables")+" (*.exe)"
+        else:
+            filters = None
+        pyexec_file = self.create_browsefile('', 'pythonexecutable',
+                                             filters=filters)
+        
+        pyexec_layout = QVBoxLayout()
+        pyexec_layout.addWidget(pyexec_label)
+        pyexec_layout.addWidget(pyexec_file)
+        pyexec_group.setLayout(pyexec_layout)
+        
         # Startup Group
         startup_group = QGroupBox(_("Startup"))
         pystartup_box = newcb(_("Open a Python interpreter at startup"),
@@ -217,35 +235,54 @@ class ExternalConsoleConfigPage(PluginConfigPage):
         
         # PyQt Group
         pyqt_group = QGroupBox(_("PyQt"))
-        pyqt_hook_box = newcb(_("Remove PyQt input hook"),
-                              'remove_pyqt_inputhook',
+        pyqt_setapi_box = self.create_combobox(
+                _("API selection for QString and QVariant objects:"),
+                ((_("Default API"), 0), (_("API #1"), 1), (_("API #2"), 2)),
+                'pyqt_api', default=0, tip=_(
+"""PyQt API #1 is the default API for Python 2. PyQt API #2 is the default 
+API for Python 3 and is compatible with PySide.
+Note that switching to API #2 may require to enable the Matplotlib patch."""))
+        pyqt_hook_box = newcb(_("Replace PyQt input hook by Spyder's"),
+                              'replace_pyqt_inputhook',
                               tip=_(
 """PyQt installs an input hook that allows creating and interacting
-with widgets in an interactive interpreter without blocking it. 
-It is strongly recommended to remove it on Windows platforms 
-(it has no effect in IPython)."""))
-        pyqt_setapi_box = newcb(_("Ignore API change errors "
-                                        "(sip.setapi)"),
-                                'ignore_sip_setapi_errors')
+with Qt widgets in an interactive interpreter without blocking it. 
+On Windows platforms, it is strongly recommended to replace it by Spyder's
+(note that this feature requires the monitor to be enabled and 
+that it has no effect in IPython)."""))
+        pyqt_ignore_api_box = newcb(_("Ignore API change errors (sip.setapi)"),
+                                    'ignore_sip_setapi_errors', tip=_(
+"""Enabling this option will ignore errors when changing PyQt API.
+As PyQt does not support dynamic API changes, it is strongly recommended
+to use this feature wisely, e.g. for debugging purpose.
+"""))
         try:
-            from sip import setapi #@UnusedImport
+            from sip import setapi #analysis:ignore
         except ImportError:
             pyqt_setapi_box.setDisabled(True)
+            pyqt_ignore_api_box.setDisabled(True)
         
         pyqt_layout = QVBoxLayout()
-        pyqt_layout.addWidget(pyqt_hook_box)
         pyqt_layout.addWidget(pyqt_setapi_box)
+        pyqt_layout.addWidget(pyqt_ignore_api_box)
+        if os.name == 'nt':
+            pyqt_layout.addWidget(pyqt_hook_box)
         pyqt_group.setLayout(pyqt_layout)
+        pyqt_group.setEnabled(programs.is_module_installed('PyQt4'))
         
         # IPython Group
-        ipython_group = QGroupBox(_("IPython"))
+        ipython_group = QGroupBox(
+                            _("IPython interpreter command line options"))
         ipython_layout = QVBoxLayout()
         if ipython_is_installed:
-            ipython_edit = self.create_lineedit(_(
-                            "IPython interpreter command line options:\n"
-                            "(Qt4 and matplotlib support: -q4thread -pylab)"),
-                            'ipython_options', alignment=Qt.Vertical)
-            ipython_layout.addWidget(ipython_edit)
+            if programs.is_module_installed('IPython', '0.12'):
+                ipython_edit_012 = self.create_lineedit("IPython >=v0.12",
+                             'ipython_kernel_options', alignment=Qt.Horizontal)
+                ipython_layout.addWidget(ipython_edit_012)
+            else:
+                ipython_edit_010 = self.create_lineedit("IPython v0.10",
+                                    'ipython_options', alignment=Qt.Horizontal)
+                ipython_layout.addWidget(ipython_edit_010)
         else:
             ipython_label = QLabel(_("<b>Note:</b><br>"
                                      "IPython >=<u>v0.10</u> is not "
@@ -304,7 +341,8 @@ It is strongly recommended to remove it on Windows platforms
                     _("Display"))
         tabs.addTab(self.create_tab(monitor_group, source_group),
                     _("Introspection"))
-        tabs.addTab(self.create_tab(startup_group, pystartup_group, umd_group),
+        tabs.addTab(self.create_tab(pyexec_group, startup_group,
+                                    pystartup_group, umd_group),
                     _("Advanced settings"))
         tabs.addTab(self.create_tab(pyqt_group, ipython_group, mpl_group,
                                     ets_group),
@@ -332,27 +370,49 @@ class ExternalConsole(SpyderPluginWidget):
         self.historylog = None # History log plugin
         self.variableexplorer = None # Variable explorer plugin
         
-        self.ipython_count = 0
+        self.ipython_shell_count = 0
+        self.ipython_kernel_count = 0
         self.python_count = 0
         self.terminal_count = 0
 
         try:
-            from sip import setapi #@UnusedImport
+            from sip import setapi #analysis:ignore
         except ImportError:
             self.set_option('ignore_sip_setapi_errors', False)
 
-        python_startup = self.get_option('open_python_at_startup', None)
-        ipython_startup = self.get_option('open_ipython_at_startup', None)
-        if ipython_startup is None:
-            ipython_startup = programs.is_module_installed('IPython', '0.1')
-            self.set_option('open_ipython_at_startup', ipython_startup)
-        if python_startup is None:
-            python_startup = not ipython_startup
-            self.set_option('open_python_at_startup', python_startup)
+        scientific = programs.is_module_installed('numpy') and\
+                     programs.is_module_installed('scipy') and\
+                     programs.is_module_installed('matplotlib')
+        if self.get_option('pythonstartup/default', None) is None:
+            self.set_option('pythonstartup/default', not scientific)
+        if not osp.isfile(self.get_option('pythonstartup', '')):
+            self.set_option('pythonstartup', SCIENTIFIC_STARTUP)
+            self.set_option('pythonstartup/default', not scientific)
+        # default/custom settings are mutually exclusive:
+        self.set_option('pythonstartup/custom',
+                        not self.get_option('pythonstartup/default'))
         
         if self.get_option('ipython_options', None) is None:
             self.set_option('ipython_options',
                             self.get_default_ipython_options())
+        if self.get_option('ipython_kernel_options', None) is None:
+            self.set_option('ipython_kernel_options',
+                            self.get_default_ipython_kernel_options())
+        
+        executable = self.get_option('pythonexecutable',
+                                     get_python_executable())
+        if not osp.isfile(executable):
+            # This is absolutely necessary, in case the Python interpreter
+            # executable has been moved since last Spyder execution (following
+            # a Python distribution upgrade for example)
+            self.set_option('pythonexecutable', get_python_executable())
+        elif executable.endswith('pythonw.exe'):
+            # That should not be necessary because this case is already taken
+            # care of by the `get_python_executable` function but, this was
+            # implemented too late, so we have to fix it here too, in case
+            # the Python executable has already been set with pythonw.exe:
+            self.set_option('pythonexecutable',
+                            executable.replace("pythonw.exe", "python.exe"))
         
         self.shellwidgets = []
         self.filenames = []
@@ -364,7 +424,8 @@ class ExternalConsole(SpyderPluginWidget):
         
         layout = QVBoxLayout()
         self.tabwidget = Tabs(self, self.menu_actions)
-        if hasattr(self.tabwidget, 'setDocumentMode'):
+        if hasattr(self.tabwidget, 'setDocumentMode')\
+           and not sys.platform == 'darwin':
             self.tabwidget.setDocumentMode(True)
         self.connect(self.tabwidget, SIGNAL('currentChanged(int)'),
                      self.refresh_plugin)
@@ -424,7 +485,7 @@ class ExternalConsole(SpyderPluginWidget):
         for index in [current_index]+range(self.tabwidget.count()):
             shellwidget = self.tabwidget.widget(index)
             if isinstance(shellwidget, pythonshell.ExternalPythonShell):
-                if not interpreter_only or shellwidget.is_interpreter():
+                if not interpreter_only or shellwidget.is_interpreter:
                     self.tabwidget.setCurrentIndex(index)
                     return shellwidget
                 
@@ -444,7 +505,7 @@ class ExternalConsole(SpyderPluginWidget):
         if shellwidgets:
             # First, iterate on interpreters only:
             for shellwidget in shellwidgets:
-                if shellwidget.is_interpreter():
+                if shellwidget.is_interpreter:
                     return shellwidget.shell
             else:
                 return shellwidgets[0].shell
@@ -484,7 +545,8 @@ class ExternalConsole(SpyderPluginWidget):
         shell.setFocus()
         
     def start(self, fname, wdir=None, args='', interact=False, debug=False,
-              python=True, ipython=False, python_args=''):
+              python=True, ipython_shell=False, ipython_kernel=False,
+              python_args=''):
         """
         Start new console
         
@@ -530,6 +592,7 @@ class ExternalConsole(SpyderPluginWidget):
         light_background = self.get_option('light_background')
         show_elapsed_time = self.get_option('show_elapsed_time')
         if python:
+            pythonexecutable = self.get_option('pythonexecutable')
             if self.get_option('pythonstartup/default', True):
                 pythonstartup = None
             else:
@@ -538,8 +601,9 @@ class ExternalConsole(SpyderPluginWidget):
             mpl_patch_enabled = self.get_option('mpl_patch/enabled')
             mpl_backend = self.get_option('mpl_patch/backend')
             ets_backend = self.get_option('ets_backend', 'qt4')
-            remove_pyqt_inputhook = self.get_option('remove_pyqt_inputhook',
-                                                    os.name == 'nt')
+            pyqt_api = self.get_option('pyqt_api', 0)
+            replace_pyqt_inputhook = self.get_option('replace_pyqt_inputhook',
+                                                     os.name == 'nt')
             ignore_sip_setapi_errors = self.get_option(
                                            'ignore_sip_setapi_errors', True)
             umd_enabled = self.get_option('umd/enabled')
@@ -554,15 +618,18 @@ class ExternalConsole(SpyderPluginWidget):
                 sa_settings = None
             shellwidget = ExternalPythonShell(self, fname, wdir, self.commands,
                            interact, debug, path=pythonpath,
-                           python_args=python_args, ipython=ipython,
+                           python_args=python_args,
+                           ipython_shell=ipython_shell,
+                           ipython_kernel=ipython_kernel,
                            arguments=args, stand_alone=sa_settings,
                            pythonstartup=pythonstartup,
+                           pythonexecutable=pythonexecutable,
                            umd_enabled=umd_enabled, umd_namelist=umd_namelist,
                            umd_verbose=umd_verbose, ets_backend=ets_backend,
                            monitor_enabled=monitor_enabled,
                            mpl_patch_enabled=mpl_patch_enabled,
-                           mpl_backend=mpl_backend,
-                           remove_pyqt_inputhook=remove_pyqt_inputhook,
+                           mpl_backend=mpl_backend, pyqt_api=pyqt_api,
+                           replace_pyqt_inputhook=replace_pyqt_inputhook,
                            ignore_sip_setapi_errors=ignore_sip_setapi_errors,
                            autorefresh_timeout=ar_timeout,
                            autorefresh_state=ar_state,
@@ -623,12 +690,27 @@ class ExternalConsole(SpyderPluginWidget):
         self.connect(shellwidget.shell, SIGNAL("focus_changed()"),
                      lambda: self.emit(SIGNAL("focus_changed()")))
         if python:
+            if self.main.editor is not None:
+                self.connect(shellwidget, SIGNAL('open_file(QString,int)'),
+                             self.open_file_in_spyder)
             if fname is None:
-                if ipython:
-                    self.ipython_count += 1
-                    tab_name = "IPython %d" % self.ipython_count
+                if ipython_shell:
+                    self.ipython_shell_count += 1
+                    tab_name = "IPython %d" % self.ipython_shell_count
                     tab_icon1 = get_icon('ipython.png')
                     tab_icon2 = get_icon('ipython_t.png')
+                elif ipython_kernel:
+                    self.ipython_kernel_count += 1
+                    tab_name = "IPyKernel %d" % self.ipython_kernel_count
+                    tab_icon1 = get_icon('ipython.png')
+                    tab_icon2 = get_icon('ipython_t.png')
+                    kernel_name = "IPK%d" % self.ipython_kernel_count
+                    self.connect(shellwidget,
+                                 SIGNAL('create_ipython_frontend(QString)'),
+                                 lambda args:
+                                 self.main.new_ipython_frontend(
+                                 args, kernel_widget=shellwidget,
+                                 kernel_name=kernel_name))
                 else:
                     self.python_count += 1
                     tab_name = "Python %d" % self.python_count
@@ -672,6 +754,12 @@ class ExternalConsole(SpyderPluginWidget):
         # Start process and give focus to console
         shellwidget.start_shell()
         shellwidget.shell.setFocus()
+        
+    def open_file_in_spyder(self, fname, lineno):
+        """Open file in Spyder's editor from remote process"""
+        self.main.editor.activateWindow()
+        self.main.editor.raise_()
+        self.main.editor.load(fname, lineno)
         
     #------ Private API --------------------------------------------------------
     def process_started(self, shell_id):
@@ -735,9 +823,16 @@ class ExternalConsole(SpyderPluginWidget):
                             'run_small.png', _("Run a Python script"),
                             triggered=self.run_script)
 
-        run_menu_actions = [interpreter_action]
+        interact_menu_actions = [interpreter_action]
         tools_menu_actions = [terminal_action]
         self.menu_actions = [interpreter_action, terminal_action, run_action]
+        
+        ipython_kernel_action = create_action(self,
+                            _("Start a new IPython kernel"), None,
+                            'ipython.png', triggered=self.start_ipython_kernel)
+        if programs.is_module_installed('IPython', '0.12'):
+            self.menu_actions.insert(1, ipython_kernel_action)
+            interact_menu_actions.append(ipython_kernel_action)
         
         ipython_action = create_action(self,
                             _("Open IPython interpreter"), None,
@@ -746,12 +841,12 @@ class ExternalConsole(SpyderPluginWidget):
                             triggered=self.open_ipython)
         if programs.is_module_installed('IPython', '0.1'):
             self.menu_actions.insert(1, ipython_action)
-            run_menu_actions.append(ipython_action)
+            interact_menu_actions.append(ipython_action)
         
-        self.main.run_menu_actions += [None]+run_menu_actions
+        self.main.interact_menu_actions += interact_menu_actions
         self.main.tools_menu_actions += tools_menu_actions
         
-        return self.menu_actions+run_menu_actions+tools_menu_actions
+        return self.menu_actions+interact_menu_actions+tools_menu_actions
     
     def register_plugin(self):
         """Register plugin in Spyder's main window"""
@@ -865,13 +960,24 @@ class ExternalConsole(SpyderPluginWidget):
     #------ Public API ---------------------------------------------------------
     def open_interpreter_at_startup(self):
         """Open an interpreter at startup, IPython if module is available"""
-        if self.get_option('open_ipython_at_startup'):
-            if programs.is_module_installed('IPython', '0.1'):
+        if self.get_option('open_ipython_at_startup', False):
+            if programs.is_module_installed('IPython', '0.10'):
+                # IPython v0.10.x is fully supported by Spyder, not v0.11+
                 self.open_ipython()
             else:
+                # If IPython v0.11+ is installed (or if IPython is not
+                # installed at all), we must -at least the first time- force
+                # the user to start with the standard Python interpreter which
+                # has been enhanced to support most of the IPython features
+                # needed within an advanced IDE as Spyder:
+                # http://spyder-ide.blogspot.com/2011/09/new-enhanced-scientific-python.html
+                # The main motivation here is to be sure that the novice user
+                # will have an experience as close as possible to MATLAB with
+                # a ready-to-use interpreter with standard scientific modules
+                # preloaded and with non-blocking interactive plotting.
                 self.set_option('open_ipython_at_startup', False)
                 self.set_option('open_python_at_startup', True)
-        if self.get_option('open_python_at_startup'):
+        if self.get_option('open_python_at_startup', True):
             self.open_interpreter()
             
     def open_interpreter(self, wdir=None):
@@ -890,10 +996,17 @@ class ExternalConsole(SpyderPluginWidget):
         default_options.append("-colors LightBG")
         default_options.append("-xmode Plain")
         for editor_name in ("scite", "gedit"):
-            real_name = programs.get_nt_program_name(editor_name)
-            if programs.is_program_installed(real_name):
-                default_options.append("-editor "+real_name)
+            path = programs.find_program(editor_name)
+            if path is not None:
+                default_options.append("-editor "+osp.basename(path))
                 break
+        return " ".join(default_options)
+        
+    def get_default_ipython_kernel_options(self):
+        """Return default ipython kernel command line arguments"""
+        default_options = ["python"]
+        if programs.is_module_installed('matplotlib'):
+            default_options.append("--pylab=inline")
         return " ".join(default_options)
         
     def open_ipython(self, wdir=None):
@@ -902,8 +1015,18 @@ class ExternalConsole(SpyderPluginWidget):
             wdir = os.getcwdu()
         args = self.get_option('ipython_options', "")
         self.start(fname=None, wdir=unicode(wdir), args=args,
-                   interact=True, debug=False, python=True, ipython=True)
-        
+                   interact=True, debug=False, python=True, ipython_shell=True)
+
+    def start_ipython_kernel(self, wdir=None):
+        """Start new IPython kernel"""
+        if wdir is None:
+            wdir = os.getcwdu()
+        args = self.get_option('ipython_kernel_options',
+                               "python --pylab=inline")
+        self.start(fname=None, wdir=unicode(wdir), args=args,
+                   interact=True, debug=False, python=True,
+                   ipython_kernel=True)
+
     def open_terminal(self, wdir=None):
         """Open terminal"""
         if wdir is None:

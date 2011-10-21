@@ -27,7 +27,7 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__version__ = '2.1.0dev'
+__version__ = '2.1.0rc1'
 __license__ = __doc__
 __project_url__ = 'http://spyderlib.googlecode.com'
 __forum_url__   = 'http://groups.google.com/group/spyderlib'
@@ -35,3 +35,14 @@ __forum_url__   = 'http://groups.google.com/group/spyderlib'
 # Dear (Debian, RPM, ...) package makers, please feel free to customize the
 # following path to module's data (images) and translations:
 DATAPATH = LOCALEPATH = DOCPATH = ''
+
+def add_to_distribution(dist):
+    """Add package to py2exe/cx_Freeze distribution object
+    Extension to guidata.disthelpers"""
+    dist.add_modules('PyQt4')
+    for _modname in ('spyderlib', 'spyderplugins'):
+        dist.add_module_data_files(_modname, ("", ),
+                                   ('.png', '.svg', '.html', '.png', '.txt',
+                                    '.js', '.inv', '.ico', '.css', '.doctree',
+                                    '.qm', '.py',),
+                                   copy_to_root=False)

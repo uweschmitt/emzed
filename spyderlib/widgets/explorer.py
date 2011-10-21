@@ -32,8 +32,7 @@ STDOUT = sys.stdout
 
 # Local imports
 from spyderlib.utils.qthelpers import create_action, add_actions
-from spyderlib.utils import (encoding, rename_file, remove_file, programs,
-                             move_file)
+from spyderlib.utils import misc, encoding, programs, scm
 from spyderlib.baseconfig import _
 from spyderlib.config import get_icon
 
@@ -91,7 +90,6 @@ class DirView(QTreeView):
         self.parent_widget = parent
         self.valid_types = None
         self.show_all = None
-        self.show_cd_only = None
         self.menu = None
         self.common_actions = None
         self.__expanded_state = None
@@ -160,15 +158,13 @@ class DirView(QTreeView):
         
     #---- Tree view widget
     def setup(self, name_filters=['*.py', '*.pyw'],
-              valid_types= ('.py', '.pyw'), show_all=False,
-              show_cd_only=False):
+              valid_types= ('.py', '.pyw'), show_all=False):
         """Setup tree widget"""
         self.setup_view()
         
         self.set_name_filters(name_filters)
         self.valid_types = valid_types
         self.show_all = show_all
-        self.show_cd_only = show_cd_only
         
         # Setup context menu
         self.menu = QMenu(self)
@@ -224,90 +220,125 @@ class DirView(QTreeView):
                                          self.new_package(fnames[-1]))
         return [new_file_act, new_folder_act, None,
                 new_module_act, new_package_act]
+        
+    def create_file_import_actions(self, fnames):
+        """Return actions for submenu 'Import...'"""
+        return []
 
     def create_file_manage_actions(self, fnames):
         """Return file management actions"""
+        only_files = all([osp.isfile(_fn) for _fn in fnames])
+        only_modules = all([osp.splitext(_fn)[1] in ('.py', '.pyw', '.ipy')
+                            for _fn in fnames])
+        only_valid = all([osp.splitext(_fn)[1] in self.valid_types
+                          for _fn in fnames])
+        run_action = create_action(self, _("Run"), icon="run_small.png",
+                                   triggered=self.run)
+        edit_action = create_action(self, _("Edit"), icon="edit.png",
+                                    triggered=self.clicked)
+        move_action = create_action(self, _("Move..."),
+                                    icon="move.png",
+                                    triggered=self.move)
+        delete_action = create_action(self, _("Delete..."),
+                                      icon="delete.png",
+                                      triggered=self.delete)
+        rename_action = create_action(self, _("Rename..."),
+                                      icon="rename.png",
+                                      triggered=self.rename)
+        open_action = create_action(self, _("Open"), triggered=self.open)
+        
         actions = []
-        if fnames:
-            only_files = all([osp.isfile(_fn) for _fn in fnames])
-            only_modules = all([osp.splitext(_fn)[1] in ('.py', '.pyw', '.ipy')
-                                for _fn in fnames])
-            only_valid = all([osp.splitext(_fn)[1] in self.valid_types
-                              for _fn in fnames])
-            run_action = create_action(self, _("Run"), icon="run_small.png",
-                                       triggered=self.run)
-            edit_action = create_action(self, _("Edit"), icon="edit.png",
-                                        triggered=self.clicked)
-            move_action = create_action(self, _("Move..."),
-                                        icon="move.png",
-                                        triggered=self.move)
-            delete_action = create_action(self, _("Delete..."),
-                                          icon="delete.png",
-                                          triggered=self.delete)
-            rename_action = create_action(self, _("Rename..."),
-                                          icon="rename.png",
-                                          triggered=self.rename)
-            open_action = create_action(self, _("Open"), triggered=self.open)
-            
-            if only_modules:
-                actions.append(run_action)
-            if only_valid and only_files:
-                actions.append(edit_action)
-            else:
-                actions.append(open_action)
-            actions += [delete_action, rename_action]
-            basedir = fixpath(osp.dirname(fnames[0]))
-            if all([fixpath(osp.dirname(_fn)) == basedir for _fn in fnames]):
-                actions.append(move_action)
-            actions += [None]
+        if only_modules:
+            actions.append(run_action)
+        if only_valid and only_files:
+            actions.append(edit_action)
+        else:
+            actions.append(open_action)
+        actions += [delete_action, rename_action]
+        basedir = fixpath(osp.dirname(fnames[0]))
+        if all([fixpath(osp.dirname(_fn)) == basedir for _fn in fnames]):
+            actions.append(move_action)
+        actions += [None]
+        
+        # SCM support is quite limited for now, so we are enabling the SCM
+        # related actions only when a single file/folder is selected:
+        dirname = fnames[0] if osp.isdir(fnames[0]) else fnames[0]
+        if len(fnames) == 1 and scm.is_scm_repository(dirname):
+            scm_ci = create_action(self, _("Commit"),
+                                   icon="scm_commit.png",
+                                   triggered=lambda fnames=[dirname]:
+                                   self.scm_command(fnames, tool='commit'))
+            scm_log = create_action(self, _("Browse repository"),
+                                    icon="scm_browse.png",
+                                    triggered=lambda fnames=[dirname]:
+                                    self.scm_command(fnames, tool='browse'))
+            actions += [None, scm_ci, scm_log]
+        
         return actions
 
     def create_folder_manage_actions(self, fnames):
         """Return folder management actions"""
         actions = []
-        if fnames and all([osp.isdir(_fn) for _fn in fnames]):
-            if os.name == 'nt':
-                _title = _("Open command prompt here")
-            else:
-                _title = _("Open terminal here")
-            action = create_action(self, _title, icon="cmdprompt.png",
+        if os.name == 'nt':
+            _title = _("Open command prompt here")
+        else:
+            _title = _("Open terminal here")
+        action = create_action(self, _title, icon="cmdprompt.png",
+                               triggered=lambda fnames=fnames:
+                               self.open_terminal(fnames))
+        actions.append(action)
+        _title = _("Open Python interpreter here")
+        action = create_action(self, _title, icon="python.png",
+                               triggered=lambda fnames=fnames:
+                               self.open_interpreter(fnames))
+        actions.append(action)
+        if programs.is_module_installed('IPython', '0.1'):
+            _title = _("Open IPython here")
+            action = create_action(self, _title, icon="ipython.png",
                                    triggered=lambda fnames=fnames:
-                                   self.open_terminal(fnames))
+                                   self.open_ipython(fnames))
             actions.append(action)
-            _title = _("Open Python interpreter here")
-            action = create_action(self, _title, icon="python.png",
-                                   triggered=lambda fnames=fnames:
-                                   self.open_interpreter(fnames))
-            actions.append(action)
-            if programs.is_module_installed('IPython', '0.1'):
-                _title = _("Open IPython here")
-                action = create_action(self, _title, icon="ipython.png",
-                                       triggered=lambda fnames=fnames:
-                                       self.open_ipython(fnames))
-                actions.append(action)
         return actions
-
-    def update_menu(self):
-        """Update option menu"""
-        self.menu.clear()
         
+    def create_context_menu_actions(self):
+        """Create context menu actions"""
         actions = []
         fnames = self.get_selected_filenames()
-        new_actions = self.create_file_new_actions(fnames)
-        if new_actions:
-            new_act_menu = QMenu(_('New'), self)
-            add_actions(new_act_menu, new_actions)
-            actions.append(new_act_menu)
+        if fnames:
+            new_actions = self.create_file_new_actions(fnames)
+            if len(new_actions) > 1:
+                # Creating a submenu only if there is more than one entry
+                new_act_menu = QMenu(_('New'), self)
+                add_actions(new_act_menu, new_actions)
+                actions.append(new_act_menu)
+            else:
+                actions += new_actions
+        if fnames:
+            import_actions = self.create_file_import_actions(fnames)
+            if len(import_actions) > 1:
+                # Creating a submenu only if there is more than one entry
+                import_act_menu = QMenu(_('Import'), self)
+                add_actions(import_act_menu, import_actions)
+                actions.append(import_act_menu)
+            else:
+                actions += import_actions
         if actions:
             actions.append(None)
-        actions += self.create_file_manage_actions(fnames)
+        if fnames:
+            actions += self.create_file_manage_actions(fnames)
         if actions:
             actions.append(None)
-        actions += self.create_folder_manage_actions(fnames)
+        if fnames and all([osp.isdir(_fn) for _fn in fnames]):
+            actions += self.create_folder_manage_actions(fnames)
         if actions:
             actions.append(None)
         actions += self.common_actions
-        add_actions(self.menu, actions)
+        return actions
+
+    def update_menu(self):
+        """Update context menu"""
+        self.menu.clear()
+        add_actions(self.menu, self.create_context_menu_actions())
     
     #---- Events
     def contextMenuEvent(self, event):
@@ -429,7 +460,7 @@ class DirView(QTreeView):
                 yes_to_all = True
         try:
             if osp.isfile(fname):
-                remove_file(fname)
+                misc.remove_file(fname)
                 self.parent_widget.emit(SIGNAL("removed(QString)"),
                                         fname)
             else:
@@ -442,7 +473,7 @@ class DirView(QTreeView):
             QMessageBox.critical(self, _("Project Explorer"),
                             _("<b>Unable to %s <i>%s</i></b>"
                               "<br><br>Error message:<br>%s"
-                              ) % (action_str, fname, str(error)))
+                              ) % (action_str, fname, unicode(error)))
         return False
         
     def delete(self, fnames=None):
@@ -466,8 +497,15 @@ class DirView(QTreeView):
             path = osp.join(osp.dirname(fname), unicode(path))
             if path == fname:
                 return
+            if osp.exists(path):
+                if QMessageBox.warning(self, _("Rename"),
+                         _("Do you really want to rename <b>%s</b> and "
+                           "overwrite the existing file <b>%s</b>?"
+                           ) % (osp.basename(fname), osp.basename(path)),
+                         QMessageBox.Yes|QMessageBox.No) == QMessageBox.No:
+                    return
             try:
-                rename_file(fname, path)
+                misc.rename_file(fname, path)
                 self.parent_widget.emit( \
                      SIGNAL("renamed(QString,QString)"), fname, path)
                 return True
@@ -475,7 +513,7 @@ class DirView(QTreeView):
                 QMessageBox.critical(self, _("Rename"),
                             _("<b>Unable to rename file <i>%s</i></b>"
                               "<br><br>Error message:<br>%s"
-                              ) % (osp.basename(fname), str(error)))
+                              ) % (osp.basename(fname), unicode(error)))
     
     def rename(self, fnames=None):
         """Rename files"""
@@ -504,12 +542,12 @@ class DirView(QTreeView):
         for fname in fnames:
             basename = osp.basename(fname)
             try:
-                move_file(fname, osp.join(folder, basename))
+                misc.move_file(fname, osp.join(folder, basename))
             except EnvironmentError, error:
                 QMessageBox.critical(self, _("Error"),
                                      _("<b>Unable to move <i>%s</i></b>"
                                        "<br><br>Error message:<br>%s"
-                                       ) % (basename, str(error)))
+                                       ) % (basename, unicode(error)))
         
     def create_new_folder(self, current_path, title, subtitle, is_package):
         """Create new folder"""
@@ -528,7 +566,7 @@ class DirView(QTreeView):
                                      _("<b>Unable "
                                        "to create folder <i>%s</i></b>"
                                        "<br><br>Error message:<br>%s"
-                                       ) % (dirname, str(error)))
+                                       ) % (dirname, unicode(error)))
             finally:
                 if is_package:
                     fname = osp.join(dirname, '__init__.py')
@@ -540,23 +578,19 @@ class DirView(QTreeView):
                                              _("<b>Unable "
                                                "to create file <i>%s</i></b>"
                                                "<br><br>Error message:<br>%s"
-                                               ) % (fname, str(error)))
+                                               ) % (fname, unicode(error)))
 
     def new_folder(self, basedir):
         """New folder"""
         title = _('New folder')
         subtitle = _('Folder name:')
-        path = self.create_new_folder(basedir, title, subtitle, is_package=False)
-#        if path:
-#            self.refresh_folder(osp.dirname(path))
+        self.create_new_folder(basedir, title, subtitle, is_package=False)
     
     def new_package(self, basedir):
         """New package"""
         title = _('New package')
         subtitle = _('Package name:')
-        path = self.create_new_folder(basedir, title, subtitle, is_package=True)
-#        if path:
-#            self.refresh_folder(osp.dirname(path))
+        self.create_new_folder(basedir, title, subtitle, is_package=True)
     
     def create_new_file(self, current_path, title, filters, create_func):
         """Create new file
@@ -576,7 +610,7 @@ class DirView(QTreeView):
                 QMessageBox.critical(self, _("New file"),
                                      _("<b>Unable to create file <i>%s</i>"
                                        "</b><br><br>Error message:<br>%s"
-                                       ) % (fname, str(error)))
+                                       ) % (fname, unicode(error)))
 
     def new_file(self, basedir):
         """New file"""
@@ -590,7 +624,6 @@ class DirView(QTreeView):
                 file(fname, 'wb').write('')
         fname = self.create_new_file(basedir, title, filters, create_func)
         if fname is not None:
-#            self.refresh_folder(osp.dirname(fname))
             self.open([fname])
     
     def new_module(self, basedir):
@@ -600,6 +633,17 @@ class DirView(QTreeView):
         create_func = lambda fname: self.parent_widget.emit( \
                                      SIGNAL("create_module(QString)"), fname)
         self.create_new_file(basedir, title, filters, create_func)
+        
+    #----- SCM actions
+    def scm_command(self, fnames, tool):
+        """SCM command (Mercurial, git...)"""
+        try:
+            for path in sorted(fnames):
+                scm.run_scm_tool(path, tool=tool)
+        except RuntimeError, error:
+            QMessageBox.critical(self, _("Error"),
+                                 _("<b>Unable to find external program.</b>"
+                                   "<br><br>%s") % unicode(error))
         
     #----- Settings
     def get_scrollbar_position(self):
@@ -632,10 +676,14 @@ class DirView(QTreeView):
     
     def save_expanded_state(self):
         """Save all items expanded state"""
-        self.__expanded_state = []
-        for idx in self.model().persistentIndexList():
-            if self.isExpanded(idx):
-                self.__expanded_state.append(self.get_filename(idx))
+        model = self.model()
+        # If model is not installed, 'model' will be None: this happens when
+        # using the Project Explorer without having selected a workspace yet
+        if model is not None:
+            self.__expanded_state = []
+            for idx in model.persistentIndexList():
+                if self.isExpanded(idx):
+                    self.__expanded_state.append(self.get_filename(idx))
 
     def restore_directory_state(self, fname):
         """Restore directory expanded state"""
@@ -760,14 +808,17 @@ class FilteredDirView(DirView):
 
 
 class ExplorerTreeWidget(DirView):
-    """File/directory explorer tree widget"""
-    def __init__(self, parent=None):
+    """File/directory explorer tree widget
+    show_cd_only: Show current directory only
+    (True/False: enable/disable the option
+     None: enable the option and do not allow the user to disable it)"""
+    def __init__(self, parent=None, show_cd_only=None):
         DirView.__init__(self, parent)
                 
         self.history = []
         self.histindex = None
 
-        self.show_cd_only = None
+        self.show_cd_only = show_cd_only
         self.__original_root_index = None
         self.__last_folder = None
 
@@ -780,14 +831,20 @@ class ExplorerTreeWidget(DirView):
     #---- Context menu
     def setup_common_actions(self):
         """Setup context menu common actions"""
-        # Show current directory only
-        cd_only_action = create_action(self, _("Show current directory only"),
-                                       toggled=self.toggle_show_cd_only)
-        cd_only_action.setChecked(self.show_cd_only)
-        self.toggle_show_cd_only(self.show_cd_only)
-        
         actions = super(ExplorerTreeWidget, self).setup_common_actions()
-        return actions+[cd_only_action]
+        if self.show_cd_only is None:
+            # Enabling the 'show current directory only' option but do not
+            # allow the user to disable it
+            self.show_cd_only = True
+        else:
+            # Show current directory only
+            cd_only_action = create_action(self,
+                                           _("Show current directory only"),
+                                           toggled=self.toggle_show_cd_only)
+            cd_only_action.setChecked(self.show_cd_only)
+            self.toggle_show_cd_only(self.show_cd_only)
+            actions.append(cd_only_action)
+        return actions
             
     def toggle_show_cd_only(self, checked):
         """Toggle show current directory only mode"""
@@ -795,13 +852,13 @@ class ExplorerTreeWidget(DirView):
         self.show_cd_only = checked
         if checked:
             if self.__last_folder is not None:
-                self.refresh_folder(self.__last_folder)
+                self.set_current_folder(self.__last_folder)
         elif self.__original_root_index is not None:
             self.setRootIndex(self.__original_root_index)
         
     #---- Refreshing widget
-    def refresh_folder(self, folder):
-        """Refresh folder"""
+    def set_current_folder(self, folder):
+        """Set current folder and return associated model index"""
         index = self.fsmodel.setRootPath(folder)
         self.__last_folder = folder
         if self.show_cd_only:
@@ -810,22 +867,15 @@ class ExplorerTreeWidget(DirView):
             self.setRootIndex(index)
         return index
         
-    def set_folder(self, folder, force_current=False):
-        """Set folder"""
-        if not force_current:
-            return
-        index = self.refresh_folder(folder)
-        self.expand(index)
-        self.setCurrentIndex(index)
-        
     def refresh(self, new_path=None, force_current=False):
-        """
-        Refresh widget
-        force=False: won't refresh widget if path has not changed
-        """
+        """Refresh widget
+        force=False: won't refresh widget if path has not changed"""
         if new_path is None:
             new_path = os.getcwdu()
-        self.set_folder(new_path, force_current=force_current)
+        if force_current:
+            index = self.set_current_folder(new_path)
+            self.expand(index)
+            self.setCurrentIndex(index)
         self.emit(SIGNAL("set_previous_enabled(bool)"),
                   self.histindex is not None and self.histindex > 0)
         self.emit(SIGNAL("set_next_enabled(bool)"),
@@ -888,13 +938,12 @@ class ExplorerWidget(QWidget):
     
     def __init__(self, parent=None, name_filters=['*.py', '*.pyw'],
                  valid_types=('.py', '.pyw'), show_all=False,
-                 show_cd_only=False, show_toolbar=True, show_icontext=True):
+                 show_cd_only=None, show_toolbar=True, show_icontext=True):
         QWidget.__init__(self, parent)
         
-        self.treewidget = ExplorerTreeWidget(self)
+        self.treewidget = ExplorerTreeWidget(self, show_cd_only=show_cd_only)
         self.treewidget.setup(name_filters=name_filters,
-                              valid_types=valid_types, show_all=show_all,
-                              show_cd_only=show_cd_only)
+                              valid_types=valid_types, show_all=show_all)
         self.treewidget.chdir(os.getcwdu())
         
         toolbar_action = create_action(self, _("Show toolbar"),
@@ -969,7 +1018,7 @@ class FileExplorerTest(QWidget):
         QWidget.__init__(self)
         vlayout = QVBoxLayout()
         self.setLayout(vlayout)
-        self.explorer = ExplorerWidget(self, show_cd_only=True)
+        self.explorer = ExplorerWidget(self, show_cd_only=None)
         vlayout.addWidget(self.explorer)
         
         hlayout1 = QHBoxLayout()

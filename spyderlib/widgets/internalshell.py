@@ -15,16 +15,12 @@
 
 #----Builtins
 import __builtin__
-try:
-    from IPython.deep_reload import reload
-    __builtin__.dreload = reload
-except ImportError:
-    pass
 from spyderlib.widgets.objecteditor import oedit
 __builtin__.oedit = oedit
 
-
-import sys, os, threading
+import sys
+import os
+import threading
 from time import time
 from subprocess import Popen
 
@@ -37,6 +33,7 @@ from spyderlib.qt.QtCore import SIGNAL, QObject
 from spyderlib.utils.qthelpers import create_action, get_std_icon
 from spyderlib.interpreter import Interpreter
 from spyderlib.utils.dochelpers import getargtxt, getsource, getdoc, getobjdir
+from spyderlib.utils.misc import get_error_match
 #TODO: remove the CONF object and make it work anyway
 # In fact, this 'CONF' object has nothing to do in package spyderlib.widgets
 # which should not contain anything directly related to Spyder's main app
@@ -130,8 +127,14 @@ class InternalShell(PythonShellWidget):
         
         # Clear status bar
         self.emit(SIGNAL("status(QString)"), '')
-                
-                
+        
+        # Embedded shell -- requires the monitor (which installs the
+        # 'open_in_spyder' function in builtins)
+        if hasattr(__builtin__, 'open_in_spyder'):
+            self.connect(self, SIGNAL("go_to_error(QString)"),
+                         self.open_with_external_spyder)
+
+
     #------ Interpreter
     def start_interpreter(self, namespace):
         """Start Python interpreter"""
@@ -173,6 +176,7 @@ class InternalShell(PythonShellWidget):
         self.interpreter.exit_flag = True
         if self.multithreaded:
             self.interpreter.stdin_write.write('\n')
+        self.interpreter.restore_stds()
         
     def edit_script(self, filename, external_editor):
         filename = unicode(filename)
@@ -209,21 +213,34 @@ class InternalShell(PythonShellWidget):
     def help(self):
         """Help on Spyder console"""
         QMessageBox.about(self, _("Help"),
-            _("""<b>%s</b>
-            <p><i>%s</i><br>    edit foobar.py
-            <p><i>%s</i><br>    xedit foobar.py
-            <p><i>%s</i><br>    run foobar.py
-            <p><i>%s</i><br>    clear x, y
-            <p><i>%s</i><br>    !ls
-            <p><i>%s</i><br>    object?
-            <p><i>%s</i><br>    result = oedit(object)
-            """
-            ) % ('Shell special commands:', 'Internal editor:',
-                 'External editor:', 'Run script:', 'Remove references:',
-                 'System commands:', 'Python help:', 'GUI-based editor:') )
-                
-                
+                          """<b>%s</b>
+                          <p><i>%s</i><br>    edit foobar.py
+                          <p><i>%s</i><br>    xedit foobar.py
+                          <p><i>%s</i><br>    run foobar.py
+                          <p><i>%s</i><br>    clear x, y
+                          <p><i>%s</i><br>    !ls
+                          <p><i>%s</i><br>    object?
+                          <p><i>%s</i><br>    result = oedit(object)
+                          """ % (_('Shell special commands:'),
+                                 _('Internal editor:'),
+                                 _('External editor:'),
+                                 _('Run script:'),
+                                 _('Remove references:'),
+                                 _('System commands:'),
+                                 _('Python help:'),
+                                 _('GUI-based editor:')))
+
+
     #------ External editing
+    def open_with_external_spyder(self, text):
+        """Load file in external Spyder's editor, if available
+        This method is used only for embedded consoles
+        (could also be useful if we ever implement the magic %edit command)"""
+        match = get_error_match(unicode(text))
+        if match:
+            fname, lnb = match.groups()
+            __builtin__.open_in_spyder(fname, int(lnb))
+
     def external_editor(self, filename, goto=-1):
         """Edit in an external editor
         Recommended: SciTE (e.g. to go to line where an error did occur)"""

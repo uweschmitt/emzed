@@ -36,7 +36,6 @@ class Explorer(ExplorerWidget, SpyderPluginMixin):
                                 name_filters=self.get_option('name_filters'),
                                 valid_types=VALID_EXT,
                                 show_all=self.get_option('show_all'),
-                                show_cd_only=self.get_option('show_cd_only'),
                                 show_toolbar=self.get_option('show_toolbar'),
                                 show_icontext=self.get_option('show_icontext'))
         SpyderPluginMixin.__init__(self, parent)
@@ -82,18 +81,10 @@ class Explorer(ExplorerWidget, SpyderPluginMixin):
                      self.main.open_external_console(unicode(fname),
                                                  osp.dirname(unicode(fname)),
                                                  '', False, False, True, ''))
-        # Signal "refresh_explorer()" will eventually force the
-        # explorer to change the opened directory:
-        self.connect(self.main.console.shell, SIGNAL("refresh_explorer()"),
-                     lambda: self.refresh_plugin(force_current=True))
-        # Signal "refresh_explorer(QString)" will refresh only the
+        # Signal "set_explorer_cwd(QString)" will refresh only the
         # contents of path passed by the signal in explorer:
-        self.connect(self.main.console.shell,
-                     SIGNAL("refresh_explorer(QString)"), self.refresh_folder)
-        self.connect(self.main.editor, SIGNAL("refresh_explorer(QString)"),
-                     self.refresh_folder)
         self.connect(self.main.workingdirectory,
-                     SIGNAL("refresh_explorer(QString)"),
+                     SIGNAL("set_explorer_cwd(QString)"),
                      lambda directory: self.refresh_plugin(new_path=directory,
                                                            force_current=True))
         self.connect(self, SIGNAL("open_dir(QString)"),
@@ -113,10 +104,6 @@ class Explorer(ExplorerWidget, SpyderPluginMixin):
         return True
         
     #------ Public API ---------------------------------------------------------        
-    def refresh_folder(self, folder):
-        """Refresh only *folder*"""
-        self.treewidget.refresh_folder(folder)
-        
     def chdir(self, directory):
         """Set working directory"""
         self.treewidget.chdir(directory)

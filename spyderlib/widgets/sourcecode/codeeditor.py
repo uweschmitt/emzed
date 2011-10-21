@@ -15,7 +15,12 @@ Editor widget based on QtGui.QPlainTextEdit
 
 from __future__ import division
 
-import sys, os, re, os.path as osp, time
+import sys
+import os
+import re
+import sre_constants
+import os.path as osp
+import time
 
 from spyderlib.qt import is_pyqt46
 from spyderlib.qt.QtGui import (QMouseEvent, QColor, QMenu, QApplication,
@@ -39,8 +44,8 @@ from spyderlib.config import CONF, get_font, get_icon, get_image_path
 from spyderlib.utils.qthelpers import (add_actions, create_action, keybinding,
                                        mimedata2url)
 from spyderlib.utils.dochelpers import getobj
-from spyderlib.utils import encoding, sourcecode, is_keyword
-from spyderlib.utils import log_last_error, log_dt
+from spyderlib.utils import encoding, sourcecode
+from spyderlib.utils.debug import log_last_error, log_dt
 from spyderlib.widgets.editortools import PythonCFM
 from spyderlib.widgets.sourcecode.base import TextEditBaseWidget
 from spyderlib.widgets.sourcecode import syntaxhighlighters
@@ -118,7 +123,7 @@ class RopeProject(object):
             return []
         try:
             resource = rope.base.libutils.path_to_resource(self.project,
-                                                           filename)
+                                                   filename.encode('utf-8'))
         except Exception, _error:
             if DEBUG:
                 log_last_error(LOG_FILENAME, "path_to_resource: %r" % filename)
@@ -142,7 +147,7 @@ class RopeProject(object):
             return []
         try:
             resource = rope.base.libutils.path_to_resource(self.project,
-                                                           filename)
+                                                   filename.encode('utf-8'))
         except Exception, _error:
             if DEBUG:
                 log_last_error(LOG_FILENAME, "path_to_resource: %r" % filename)
@@ -180,7 +185,7 @@ class RopeProject(object):
             return (None, None)
         try:
             resource = rope.base.libutils.path_to_resource(self.project,
-                                                           filename)
+                                                   filename.encode('utf-8'))
         except Exception, _error:
             if DEBUG:
                 log_last_error(LOG_FILENAME, "path_to_resource: %r" % filename)
@@ -219,6 +224,14 @@ def validate_rope_project():
 class GoToLineDialog(QDialog):
     def __init__(self, editor):
         QDialog.__init__(self, editor)
+        
+        # Destroying the C++ object right after closing the dialog box,
+        # otherwise it may be garbage-collected in another QThread
+        # (e.g. the editor's analysis thread in Spyder), thus leading to
+        # a segmentation fault on UNIX or an application crash on Windows
+        self.setAttribute(Qt.WA_DeleteOnClose)
+        
+        self.lineno = None
         self.editor = editor
 
         self.setWindowTitle(_("Editor"))
@@ -229,6 +242,8 @@ class GoToLineDialog(QDialog):
         validator = QIntValidator(self.lineedit)
         validator.setRange(1, editor.get_line_count())
         self.lineedit.setValidator(validator)
+        self.connect(self.lineedit, SIGNAL('textChanged(QString)'),
+                     self.text_has_changed)
         cl_label = QLabel(_("Current line:"))
         cl_label_v = QLabel("<b>%d</b>" % editor.get_cursor_line_number())
         last_label = QLabel(_("Line count:"))
@@ -261,9 +276,20 @@ class GoToLineDialog(QDialog):
         self.setLayout(layout)
 
         self.lineedit.setFocus()
+        
+    def text_has_changed(self, text):
+        """Line edit's text has changed"""
+        text = unicode(text)
+        if text:
+            self.lineno = int(text)
+        else:
+            self.lineno = None
 
     def get_line_number(self):
-        return int(self.lineedit.text())
+        """Return line number"""
+        # It is import to avoid accessing Qt C++ object as it has probably
+        # already been destroyed, due to the Qt.WA_DeleteOnClose attribute
+        return self.lineno
 
 
 #===============================================================================
@@ -536,6 +562,11 @@ class CodeEditor(TextEditBaseWidget):
                      self.__mark_occurences)
         self.occurences = []
         self.occurence_color = QColor(Qt.yellow).lighter(160)
+        
+        # Mark found results
+        self.connect(self, SIGNAL('textChanged()'), self.__text_has_changed)
+        self.found_results = []
+        self.found_results_color = QColor(Qt.magenta).lighter(180)
 
         # Context menu
         self.gotodef_action = None
@@ -572,6 +603,12 @@ class CodeEditor(TextEditBaseWidget):
         self.deleteline_sc = QShortcut(QKeySequence("Ctrl+D"), self,
                                        self.delete_line)
         self.deleteline_sc.setContext(Qt.WidgetWithChildrenShortcut)
+        self.movelineup_sc = QShortcut(QKeySequence("Alt+Up"), self,
+                                       self.move_line_up)
+        self.movelineup_sc.setContext(Qt.WidgetWithChildrenShortcut)
+        self.movelinedown_sc = QShortcut(QKeySequence("Alt+Down"), self,
+                                         self.move_line_down)
+        self.movelinedown_sc.setContext(Qt.WidgetWithChildrenShortcut)
         self.gotodef_sc = QShortcut(QKeySequence("Ctrl+G"), self,
                                     self.do_go_to_definition)
         self.gotodef_sc.setContext(Qt.WidgetWithChildrenShortcut)
@@ -596,6 +633,8 @@ class CodeEditor(TextEditBaseWidget):
                 (self.codecomp_sc, "Code completion", "Ctrl+Space"),
                 (self.duplicate_sc, "Duplicate line", "Ctrl+Alt+Up"),
                 (self.copyline_sc, "Copy line", "Ctrl+Alt+Down"),
+                (self.movelineup_sc, "Move line up", "Alt+Up"),
+                (self.movelinedown_sc, "Move line down", "Alt+Down"),
                 (self.deleteline_sc, "Delete line", "Ctrl+D"),
                 (self.gotodef_sc, "Go to definition", "Ctrl+G"),
                 (self.toggle_comment_sc, "Toggle comment", "Ctrl+1"),
@@ -876,7 +915,7 @@ class CodeEditor(TextEditBaseWidget):
             if text is None:
                 return
         if (self.is_python() or self.is_cython()) and \
-           (is_keyword(unicode(text)) or unicode(text) == 'self'):
+           (sourcecode.is_keyword(unicode(text)) or unicode(text) == 'self'):
             return
 
         # Highlighting all occurences of word *text*
@@ -890,6 +929,45 @@ class CodeEditor(TextEditBaseWidget):
         self.update_extra_selections()
         self.occurences.pop(-1)
         self.scrollflagarea.update()
+
+    #-----highlight found results (find/replace widget)
+    def highlight_found_results(self, pattern, words=False, regexp=False):
+        """Highlight all found patterns"""
+        pattern = unicode(pattern)
+        if not pattern:
+            return
+        if not regexp:
+            pattern = re.escape(unicode(pattern))
+        pattern = r"\b%s\b" % pattern if words else pattern
+        text = unicode(self.toPlainText())
+        try:
+            regobj = re.compile(pattern)
+        except sre_constants.error:
+            return
+        extra_selections = []
+        self.found_results = []
+        for match in regobj.finditer(text):
+            pos1, pos2 = match.span()
+            selection = QTextEdit.ExtraSelection()
+            selection.format.setBackground(self.found_results_color)
+            selection.cursor = self.textCursor()
+            selection.cursor.setPosition(pos1)
+            self.found_results.append(selection.cursor.blockNumber())
+            selection.cursor.setPosition(pos2, QTextCursor.KeepAnchor)
+            extra_selections.append(selection)
+        self.set_extra_selections('find', extra_selections)
+        self.update_extra_selections()
+        
+    def clear_found_results(self):
+        """Clear found results highlighting"""
+        self.found_results = []
+        self.clear_extra_selections('find')
+        self.scrollflagarea.update()
+        
+    def __text_has_changed(self):
+        """Text has changed, eventually clear found results highlighting"""
+        if self.found_results:
+            self.clear_found_results()
 
     #-----markers
     def get_markers_margin(self):
@@ -1162,6 +1240,13 @@ class CodeEditor(TextEditBaseWidget):
             for line_number in self.occurences:
                 position = self.scrollflagarea.value_to_position(line_number)
                 painter.drawRect(make_flag(position))
+            
+        # Found results
+        if self.found_results:
+            set_scrollflagarea_painter(painter, self.found_results_color)
+            for line_number in self.found_results:
+                position = self.scrollflagarea.value_to_position(line_number)
+                painter.drawRect(make_flag(position))
 
         # Painting the slider range
         pen_color = QColor(Qt.white)
@@ -1417,16 +1502,18 @@ class CodeEditor(TextEditBaseWidget):
                 cursor.movePosition(QTextCursor.StartOfBlock)
                 regexp = QRegExp(r"\b%s\b" % QRegExp.escape(text),
                                  Qt.CaseSensitive)
-                cursor = document.find(regexp, cursor, flags)
                 color = self.error_color if error else self.warning_color
-                self.__highlight_selection('code_analysis', cursor,
-                                           underline_color=QColor(color))
-#                old_pos = None
-#                if cursor:
-#                    while cursor.blockNumber() <= line2 and cursor.position() != old_pos:
-#                        self.__highlight_selection('code_analysis', cursor,
-#                                       underline_color=self.warning_color)
-#                        cursor = document.find(text, cursor, flags)
+                # Highlighting all occurences (this is a compromise as pyflakes
+                # do not provide the column number -- see Issue 709 on Spyder's
+                # GoogleCode project website)
+                cursor = document.find(regexp, cursor, flags)
+                if cursor:
+                    while cursor and cursor.blockNumber() <= line2 \
+                          and cursor.blockNumber() >= line_number-1 \
+                          and cursor.position() > 0:
+                        self.__highlight_selection('code_analysis', cursor,
+                                       underline_color=QColor(color))
+                        cursor = document.find(text, cursor, flags)
         self.update_extra_selections()
         self.setUpdatesEnabled(True)
         self.linenumberarea.update()
@@ -2037,8 +2124,8 @@ class CodeEditor(TextEditBaseWidget):
         if self.go_to_definition_enabled and \
            event.modifiers() & Qt.ControlModifier:
             text = self.get_word_at(event.pos())
-            if text and (self.is_python() or self.is_cython()) \
-               and not is_keyword(unicode(text)):
+            if text and (self.is_python() or self.is_cython())\
+               and not sourcecode.is_keyword(unicode(text)):
                 if not self.__cursor_changed:
                     QApplication.setOverrideCursor(
                                                 QCursor(Qt.PointingHandCursor))
@@ -2075,8 +2162,9 @@ class CodeEditor(TextEditBaseWidget):
         if len(text) == 0:
             cursor.select(QTextCursor.WordUnderCursor)
             text = unicode(cursor.selectedText())
-        if self.go_to_definition_enabled and text is not None and \
-           (self.is_python() or self.is_cython()) and not is_keyword(text):
+        if self.go_to_definition_enabled and text is not None\
+           and (self.is_python() or self.is_cython())\
+           and not sourcecode.is_keyword(text):
             self.emit(SIGNAL("go_to_definition(int)"), position)
 
     def mousePressEvent(self, event):
@@ -2194,8 +2282,8 @@ def test(fname):
     win.load(fname)
     win.resize(800, 800)
 
-    from spyderlib.widgets.editortools import (check_with_pyflakes,
-                                               check_with_pep8)
+    from spyderlib.utils.codeanalysis import (check_with_pyflakes,
+                                              check_with_pep8)
     source_code = unicode(win.editor.toPlainText()).encode('utf-8')
     res = check_with_pyflakes(source_code, fname)#+\
 #          check_with_pep8(source_code, fname)

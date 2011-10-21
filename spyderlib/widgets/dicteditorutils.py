@@ -18,24 +18,43 @@ try:
     from numpy import ndarray
     from numpy import array, matrix #@UnusedImport (object eval)
 except ImportError:
-    class ndarray(FakeObject):
-        """Fake ndarray"""
-        pass
+    ndarray = array = matrix = FakeObject
+
+
+def get_numpy_dtype(obj):
+    """Return NumPy data type associated to obj
+    Return None if NumPy is not available
+    or if obj is not a NumPy array or scalar"""
+    if ndarray is not FakeObject:
+        # NumPy is available
+        import numpy as np
+        if isinstance(obj, np.object):
+            # Note: TTBOMK, there is no type associated to both NumPy arrays 
+            # and scalars, so we must handle the AttributeError exception.
+            # Thus, we could have skipped the `isinstance(obj, np.object)` 
+            # test, but keeping it is the only way to be sure that the object 
+            # is really a NumPy object instead of an object simply following 
+            # the same interface.
+            try:
+                return obj.dtype.type
+            except AttributeError:
+                return
+
 
 #----PIL Images support
 try:
     from PIL.Image import Image
     import PIL.Image
 except:
-    class Image(FakeObject):
-        """Fake PIL Image"""
-        pass
+    Image = FakeObject
+
 
 #----Misc.
 def address(obj):
     """Return object address as a string: '<classname @ address>'"""
     return "<%s @ %s>" % (obj.__class__.__name__,
                           hex(id(obj)).upper().replace('X','x'))
+
 
 #----date and datetime objects support
 import datetime
@@ -52,15 +71,19 @@ def datestr_to_datetime(value):
     print value, "-->", v
     return v
 
-#----Background colors for supported types 
+
+#----Background colors for supported types
+ARRAY_COLOR = "#00ff00"
+SCALAR_COLOR = "#0000ff"
 COLORS = {
           bool:               "#ff00ff",
-          (int, float, long): "#0000ff",
+          (int, float,
+           complex, long):    SCALAR_COLOR,
           list:               "#ffff00",
           dict:               "#00ffff",
           tuple:              "#c0c0c0",
           (str, unicode):     "#800000",
-          ndarray:            "#00ff00",
+          ndarray:            ARRAY_COLOR,
           Image:              "#008000",
           datetime.date:      "#808000",
           }
@@ -73,7 +96,14 @@ def get_color_name(value):
         if isinstance(value, typ):
             return name
     else:
-        return "#ffffff"
+        np_dtype = get_numpy_dtype(value)
+        if np_dtype is not None:
+            if value.size == 1:
+                return SCALAR_COLOR
+            else:
+                return ARRAY_COLOR
+        else:
+            return "#ffffff"
 
 #----Sorting
 def sort_against(lista, listb, reverse=False):
@@ -96,6 +126,9 @@ def value_to_display(value, truncate=False,
         try:
             return 'Min: %r\nMax: %r' % (value.min(), value.max())
         except TypeError:
+            pass
+        except ValueError:
+            # Happens when one of the array cell contains a sequence
             pass
     if isinstance(value, Image):
         return '%s  Mode: %s' % (address(value), value.mode)

@@ -6,23 +6,22 @@
 
 """Startup file used by ExternalPythonShell"""
 
-print "orig startup"
-
 import sys
+import os
 
-def __run_pythonstartup_script():
-    import os
+def __run_pythonstartup_script(namespace):
     filename = os.environ.get('PYTHONSTARTUP')
     if filename and os.path.isfile(filename):
-        execfile(filename)
+        execfile(filename, namespace)
 
 def __run_init_commands():
-    import os
     return os.environ.get('PYTHONINITCOMMANDS')
 
-def __is_ipython():
-    import os
+def __is_ipython_shell():
     return os.environ.get('IPYTHON', False)
+
+def __is_ipython_kernel():
+    return os.environ.get('IPYTHON_KERNEL', False)
 
 def __create_banner():
     """Create shell banner"""
@@ -99,7 +98,6 @@ def runfile(filename, args=None, wdir=None):
     wdir: working directory
     """
     global __umd__
-    import os
     if os.environ.get("UMD_ENABLED", "").lower() == "true":
         if __umd__ is None:
             namelist = os.environ.get("UMD_NAMELIST", None)
@@ -112,8 +110,14 @@ def runfile(filename, args=None, wdir=None):
     if args is not None and not isinstance(args, basestring):
         raise TypeError("expected a character buffer object")
     glbs = globals()
-    if '__ipythonshell__' in glbs:
-        glbs = glbs['__ipythonshell__'].IP.user_ns
+    shell = glbs.get('__ipythonshell__')
+    if shell is not None:
+        if hasattr(shell, 'user_ns'):
+            # IPython >=v0.11
+            glbs = shell.user_ns
+        else:
+            # IPython v0.10
+            glbs = shell.IP.user_ns
     glbs['__file__'] = filename
     sys.argv = [filename]
     if args is not None:
@@ -141,18 +145,64 @@ def debugfile(filename, args=None, wdir=None):
     debugger.run("runfile(%r, args=%r, wdir=%r)" % (filename, args, wdir))
 
 
+def evalsc(command):
+    """Evaluate special commands
+    (analog to IPython's magic commands but far less powerful/complete)"""
+    assert command.startswith(('%', '!'))
+    system_command = command.startswith('!')
+    command = command[1:].strip()
+    if system_command:
+        # System command
+        if command.startswith('cd '):
+            evalsc('%'+command)
+        else:
+            from subprocess import Popen, PIPE
+            Popen(command, shell=True, stdin=PIPE)
+            print '\n'
+    else:
+        # General command
+        import re
+        clear_match = re.match(r"^clear ([a-zA-Z0-9_, ]+)", command)
+        cd_match = re.match(r"^cd \"?\'?([a-zA-Z0-9_ \.]+)", command)
+        if cd_match:
+            os.chdir(eval('r"%s"' % cd_match.groups()[0].strip()))
+        elif clear_match:
+            varnames = clear_match.groups()[0].replace(' ', '').split(',')
+            for varname in varnames:
+                try:
+                    globals().pop(varname)
+                except KeyError:
+                    pass
+        elif command in ('cd', 'pwd'):
+            print os.getcwdu()
+        elif command == 'ls':
+            if os.name == 'nt':
+                evalsc('!dir')
+            else:
+                evalsc('!ls')
+        elif command == 'scientific':
+            from spyderlib import baseconfig
+            execfile(baseconfig.SCIENTIFIC_STARTUP, globals())
+        else:
+            raise NotImplementedError, "Unsupported command: '%s'" % command
+            
+
 if __name__ == "__main__":
     __remove_from_syspath__()
     
-    if not __is_ipython():
+    if not __is_ipython_shell() and not __is_ipython_kernel():
         __remove_sys_argv__()
         __create_banner()
-    __commands__ = __run_init_commands()
+        
+    if not __is_ipython_kernel():
+        __commands__ = __run_init_commands()
+    
+        if __commands__:
+            for command in __commands__.split(';'):
+                exec command
 
-    if __commands__:
-        for command in __commands__.split(';'):
-            exec command
-    __run_pythonstartup_script()
+    if not __is_ipython_shell() and not __is_ipython_kernel():
+        __run_pythonstartup_script(globals())
 
     for _name in ['__run_pythonstartup_script', '__run_init_commands',
                   '__create_banner', '__commands__', 'command', '__file__',
@@ -163,8 +213,14 @@ if __name__ == "__main__":
     __doc__ = ''
     __name__ = '__main__'
 
-    if __is_ipython():
-        import os
+    if __is_ipython_kernel():
+        # IPython >=v0.11 Kernel
+        from IPython.zmq.ipkernel import IPKernelApp
+        __ipythonkernel__ = IPKernelApp()
+        __ipythonkernel__.initialize(sys.argv[1:])
+        __ipythonshell__ = __ipythonkernel__.shell
+        __ipythonkernel__.start()
+    elif __is_ipython_shell():
         if os.name == 'nt':
             # Windows platforms: monkey-patching *pyreadline* module
             # to make IPython work in a remote process
@@ -180,7 +236,7 @@ if __name__ == "__main__":
             # For pyreadline v1.5-1.6 only:
             import pyreadline
             pyreadline.GetOutputFile = lambda: None
-        del __is_ipython
+        del __is_ipython_shell
         try:
             # IPython >=v0.11
             # Support for these recent versions of IPython is limited:
@@ -213,6 +269,7 @@ on Windows platforms (only IPython v0.10 is fully supported).
             #      above (banner has to be shown afterwards)
             #FIXME: Windows platforms: pylab/GUI loop support is not working
             __ipythonshell__.stdin_encoding = os.environ['SPYDER_ENCODING']
+            del banner2
         except ImportError:
             # IPython v0.10
             import IPython.Shell
@@ -220,6 +277,7 @@ on Windows platforms (only IPython v0.10 is fully supported).
                                                    'runfile': runfile,
                                                    'debugfile': debugfile})
             __ipythonshell__.IP.stdin_encoding = os.environ['SPYDER_ENCODING']
+            __ipythonshell__.IP.autoindent = 0
         
         # Workaround #2 to make the HDF5 I/O variable explorer plugin work:
         # we import h5py only after initializing IPython in order to avoid 

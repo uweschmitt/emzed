@@ -26,7 +26,7 @@ import os.path as osp
 STDOUT = sys.stdout
 
 # Local imports
-from spyderlib.utils import encoding, sourcecode
+from spyderlib.utils import encoding, sourcecode, codeanalysis
 from spyderlib.baseconfig import get_conf_path, _
 from spyderlib.config import get_icon, CONF, get_color_scheme, EDIT_FILTERS
 from spyderlib.utils import programs
@@ -37,7 +37,6 @@ from spyderlib.widgets.editor import (ReadWriteStatus, EncodingStatus,
                                       CursorPositionStatus, EOLStatus,
                                       EditorSplitter, EditorStack, Printer,
                                       EditorMainWindow)
-from spyderlib.widgets.editortools import get_checker_executable
 from spyderlib.widgets.sourcecode import codeeditor
 from spyderlib.plugins import SpyderPluginWidget, PluginConfigPage
 from spyderlib.plugins.runconfig import (RunConfigDialog, RunConfigOneDialog,
@@ -69,10 +68,7 @@ def clear_all_breakpoints():
     CONF.set('run', 'breakpoints', {})
 
 
-WINPDB_PATH = programs.get_nt_program_name('winpdb')
-
-def is_winpdb_installed():
-    return programs.is_program_installed(WINPDB_PATH)
+WINPDB_PATH = programs.find_program('winpdb')
 
 
 class EditorConfigPage(PluginConfigPage):
@@ -203,12 +199,18 @@ class EditorConfigPage(PluginConfigPage):
                                   "guide for Python code, please refer to the "
                                   "%s page.") % pep8_url)
         analysis_label.setWordWrap(True)
-        is_pep8 = get_checker_executable('pep8') is not None
+        is_pyflakes = codeanalysis.is_pyflakes_installed()
+        is_pep8 = codeanalysis.get_checker_executable('pep8') is not None
+        analysis_label.setEnabled(is_pyflakes or is_pep8)
         pyflakes_box = newcb(_("Code analysis")+" (pyflakes)",
                       'code_analysis/pyflakes', default=True,
                       tip=_("If enabled, Python source code will be analyzed\n"
                             "using pyflakes, lines containing errors or \n"
                             "warnings will be highlighted"))
+        pyflakes_box.setEnabled(is_pyflakes)
+        if not is_pyflakes:
+            pyflakes_box.setToolTip(_("Code analysis requires pyflakes %s+") %
+                                    codeanalysis.PYFLAKES_REQVER)
         pep8_box = newcb(_("Style analysis")+' (pep8)',
                       'code_analysis/pep8', default=False,
                       tip=_('If enabled, Python source code will be analyzed\n'
@@ -339,7 +341,10 @@ class Editor(SpyderPluginWidget):
         
         # Initialize plugin
         self.initialize_plugin()
-                
+        
+        # Configuration dialog size
+        self.configdialog_size = None
+        
         statusbar = self.main.statusBar()
         self.readwrite_status = ReadWriteStatus(self, statusbar)
         self.eol_status = EOLStatus(self, statusbar)
@@ -732,7 +737,7 @@ class Editor(SpyderPluginWidget):
         
         self.winpdb_action = create_action(self, _("Debug with winpdb"),
                                            triggered=self.run_winpdb)
-        self.winpdb_action.setEnabled(is_winpdb_installed())
+        self.winpdb_action.setEnabled(WINPDB_PATH is not None)
         self.register_shortcut(self.winpdb_action, context="Editor",
                                name="Debug with winpdb", default="F7")
         
@@ -810,14 +815,15 @@ class Editor(SpyderPluginWidget):
         
         run_menu_actions = [run_action, debug_action, configure_action,
                             breakpoints_menu, None,
-                            re_run_action, run_selected_action]
+                            re_run_action, run_selected_action, None,
+                            self.winpdb_action]
         self.main.run_menu_actions += run_menu_actions
         run_toolbar_actions = [run_action, debug_action, configure_action,
                                run_selected_action, re_run_action]
         self.main.run_toolbar_actions += run_toolbar_actions
         
         source_menu_actions = [eol_menu, trailingspaces_action,
-                               fixindentation_action, None, self.winpdb_action]
+                               fixindentation_action]
         self.main.source_menu_actions += source_menu_actions
         
         source_toolbar_actions = [self.todo_list_action,
@@ -871,12 +877,12 @@ class Editor(SpyderPluginWidget):
     #------ Focus tabwidget
     def __get_focus_editorstack(self):
         fwidget = QApplication.focusWidget()
-        if isinstance(fwidget, codeeditor.CodeEditor):
-            for editorstack in self.editorstacks:
-                if fwidget is editorstack.get_current_editor():
-                    return editorstack
-        elif isinstance(fwidget, EditorStack):
+        if isinstance(fwidget, EditorStack):
             return fwidget
+        else:
+            for editorstack in self.editorstacks:
+                if editorstack.isAncestorOf(fwidget):
+                    return editorstack
         
     def set_last_focus_editorstack(self, editorwindow, editorstack):
         self.last_focus_editorstack[editorwindow] = editorstack
@@ -974,9 +980,6 @@ class Editor(SpyderPluginWidget):
                      self.ending_long_process)
         
         # Redirect signals
-        self.connect(editorstack, SIGNAL("refresh_explorer(QString)"),
-                     lambda text:
-                     self.emit(SIGNAL("refresh_explorer(QString)"), text))
         self.connect(editorstack, SIGNAL('redirect_stdio(bool)'),
                      lambda state:
                      self.emit(SIGNAL('redirect_stdio(bool)'), state))
@@ -1246,7 +1249,7 @@ class Editor(SpyderPluginWidget):
             enable = editor.is_python()
             for action in self.pythonfile_dependent_actions:
                 if action is self.winpdb_action:
-                    action.setEnabled(enable and is_winpdb_installed())
+                    action.setEnabled(enable and WINPDB_PATH is not None)
                 else:
                     action.setEnabled(enable)
                 
@@ -1312,14 +1315,13 @@ class Editor(SpyderPluginWidget):
             if len(self.recent_files) > self.get_option('max_recent_files'):
                 self.recent_files.pop(-1)
     
-    def _clone_file_everywhere(self, from_editorstack):
-        """Clone current file in all editorstacks"""
-        finfo = self.get_current_finfo()
-        for editorstack in self.editorstacks:
-            if editorstack is not from_editorstack:
-                editor = editorstack.clone_editor_from(finfo,
-                                                       set_current=False)
-                self.register_widget_shortcuts("Editor", editor)
+    def _clone_file_everywhere(self, finfo):
+        """Clone file (*src_editor* widget) in all editorstacks
+        Cloning from the first editorstack in which every single new editor
+        is created (when loading or creating a new file)"""
+        for editorstack in self.editorstacks[1:]:
+            editor = editorstack.clone_editor_from(finfo, set_current=False)
+            self.register_widget_shortcuts("Editor", editor)
     
     def new(self, fname=None, editorstack=None):
         """
@@ -1341,7 +1343,9 @@ class Editor(SpyderPluginWidget):
         create_fname = lambda n: unicode(_("untitled")) + ("%d.py" % n)
         # Creating editor widget
         if editorstack is None:
-            editorstack = self.get_current_editorstack()
+            current_es = self.get_current_editorstack()
+        else:
+            current_es = editorstack
         created_from_here = fname is None
         if created_from_here:
             while True:
@@ -1358,13 +1362,17 @@ class Editor(SpyderPluginWidget):
         else:
             # QString when triggered by a Qt signal
             fname = osp.abspath(unicode(fname))
-            index = editorstack.has_filename(fname)
-            if index and not editorstack.close_file(index):
+            index = current_es.has_filename(fname)
+            if index and not current_es.close_file(index):
                 return
         
-        editor = editorstack.new(fname, enc, text)
-        self.register_widget_shortcuts("Editor", editor)
-        self._clone_file_everywhere(from_editorstack=editorstack)
+        # Creating the editor widget in the first editorstack (the one that
+        # can't be destroyed), then cloning this editor widget in all other
+        # editorstacks:
+        finfo = self.editorstacks[0].new(fname, enc, text)
+        self._clone_file_everywhere(finfo)
+        current_editor = current_es.set_current_filename(finfo.filename)
+        self.register_widget_shortcuts("Editor", current_editor)
         if not created_from_here:
             self.save(force=True)
                 
@@ -1444,7 +1452,8 @@ class Editor(SpyderPluginWidget):
             else:
                 return
             
-        if self.dockwidget and not self.ismaximized:
+        if self.dockwidget and not self.ismaximized\
+           and not self.dockwidget.isAncestorOf(QApplication.focusWidget()):
             self.dockwidget.setVisible(True)
             self.dockwidget.setFocus()
             self.dockwidget.raise_()
@@ -1475,12 +1484,18 @@ class Editor(SpyderPluginWidget):
                 if not osp.isfile(filename):
                     continue
                 # --
-                current = self.get_current_editorstack(editorwindow)
-                current_editor = current.load(filename, set_current=True)
+                current_es = self.get_current_editorstack(editorwindow)
+
+                # Creating the editor widget in the first editorstack (the one
+                # that can't be destroyed), then cloning this editor widget in
+                # all other editorstacks:
+                finfo = self.editorstacks[0].load(filename, set_current=False)
+                self._clone_file_everywhere(finfo)
+                current_editor = current_es.set_current_filename(filename)
                 current_editor.set_breakpoints(load_breakpoints(filename))
                 self.register_widget_shortcuts("Editor", current_editor)
-                self._clone_file_everywhere(from_editorstack=current)
-                current.analyze_script()
+                
+                current_es.analyze_script()
                 self.__add_recent_file(filename)
             if goto is not None: # 'word' is assumed to be None as well
                 current_editor.go_to_line(goto[index], word=word)
@@ -1772,7 +1787,10 @@ class Editor(SpyderPluginWidget):
         dialog = RunConfigDialog(self)
         fname = osp.abspath(self.get_current_filename())
         dialog.setup(fname)
+        if self.configdialog_size is not None:
+            dialog.resize(self.configdialog_size)
         if dialog.exec_():
+            self.configdialog_size = dialog.win_size
             fname = dialog.file_to_run
             if fname is not None:
                 self.load(fname)
@@ -1789,8 +1807,11 @@ class Editor(SpyderPluginWidget):
             if runconf is None:
                 dialog = RunConfigOneDialog(self)
                 dialog.setup(fname)
+                if self.configdialog_size is not None:
+                    dialog.resize(self.configdialog_size)
                 if not dialog.exec_():
                     return
+                self.configdialog_size = dialog.win_size
                 runconf = dialog.get_configuration()
                 
             wdir = runconf.get_working_directory()

@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 # Spyder's ExternalPythonShell sitecustomize
 
-import sys, os, os.path as osp
+import sys
+import os
+import os.path as osp
+
 
 # Prepending this spyderlib package's path to sys.path to be sure 
 # that another version of spyderlib won't be imported instead:
@@ -17,6 +20,22 @@ if not spyderlib_path.startswith(sys.prefix):
     sys.path.insert(0, spyderlib_path)
 os.environ['SPYDER_PARENT_DIR'] = spyderlib_path
 
+
+# Set PyQt4 API to #1 or #2
+pyqt_api = int(os.environ.get("PYQT_API", "0"))
+if pyqt_api:
+    try:
+        import sip
+        try:
+            for qtype in ('QString', 'QVariant'):
+                sip.setapi(qtype, pyqt_api)
+        except AttributeError:
+            # Old version of sip
+            pass
+    except ImportError:
+        pass
+
+
 if os.environ.get("MATPLOTLIB_PATCH", "").lower() == "true":
     try:
         from spyderlib import mpl_patch
@@ -25,10 +44,6 @@ if os.environ.get("MATPLOTLIB_PATCH", "").lower() == "true":
     except ImportError:
         pass
 
-# Removing PyQt4 input hook which is not working well on Windows
-if os.environ.get("REMOVE_PYQT_INPUTHOOK", "").lower() == "true":
-    from PyQt4.QtCore import pyqtRemoveInputHook
-    pyqtRemoveInputHook()
 
 if os.name == 'nt': # Windows platforms
             
@@ -59,6 +74,7 @@ if os.name == 'nt': # Windows platforms
             # Unfortunately, pywin32 is not installed...
             pass
 
+
 # Set standard outputs encoding:
 # (otherwise, for example, print u"é" will fail)
 encoding = None
@@ -82,7 +98,8 @@ try:
 except ImportError:
     pass
 
-# Communication between ExternalShell and the QProcess
+
+# Communication between Spyder and the remote process
 if os.environ.get('SPYDER_SHELL_ID') is None:
     monitor = None
 else:
@@ -95,13 +112,84 @@ else:
                       os.environ["SPYDER_AR_STATE"].lower() == "true")
     monitor.start()
     
-    # Quite limited feature: notify only when a result is displayed in console
-    # (does not notify at every prompt)
-    def displayhook(obj):
-        sys.__displayhook__(obj)
-        monitor.refresh()
-
-    sys.displayhook = displayhook
+    import __builtin__
+    def open_in_spyder(source, lineno=1):
+        """Open in Spyder's editor the source file
+(may be a filename or a Python module/package)"""
+        if not isinstance(source, basestring):
+            source = source.__file__
+            if source.endswith('.pyc'):
+                source = source[:-1]
+            monitor.notify_open_file(source, lineno=lineno)
+    __builtin__.open_in_spyder = open_in_spyder
+    
+    # * Removing PyQt4 input hook which is not working well on Windows since 
+    #   opening a subprocess do not attach a real console to it
+    #   (with keyboard events...)
+    # * Replacing it with our own input hook
+    # XXX: test it with PySide?
+    if os.environ.get("REPLACE_PYQT_INPUTHOOK", "").lower() == "true"\
+       and not os.environ.get('IPYTHON', False):
+        # For now, the Spyder's input hook does not work with IPython:
+        # with IPython v0.10 or non-Windows platforms, this is not a
+        # problem. However, with IPython v0.11 on Windows, this will be
+        # fixed by patching IPython to force it to use our inputhook.
+        def qt_inputhook():
+            """Qt input hook for Spyder's console
+            
+            This input hook wait for available stdin data (notified by
+            ExternalPythonShell through the monitor's inputhook_flag
+            attribute), and in the meantime it processes Qt events."""
+            # Refreshing variable explorer, except on first input hook call:
+            # (otherwise, on slow machines, this may freeze Spyder)
+            monitor.refresh_from_inputhook()
+            try:
+                # This call fails for Python without readline support
+                # (or on Windows platforms) when PyOS_InputHook is called
+                # for the second consecutive time, because the 100-bytes
+                # stdin buffer is full.
+                # For more details, see the `PyOS_StdioReadline` function
+                # in Python source code (Parser/myreadline.c)
+                sys.stdin.tell()
+            except IOError:
+                return 0
+            app = QtCore.QCoreApplication.instance()
+            if app and app.thread() is QtCore.QThread.currentThread():
+                timer = QtCore.QTimer()
+                QtCore.QObject.connect(timer, QtCore.SIGNAL('timeout()'),
+                                       app, QtCore.SLOT('quit()'))
+                monitor.toggle_inputhook_flag(False)
+                while not monitor.inputhook_flag:
+                    timer.start(50)
+                    QtCore.QCoreApplication.exec_()
+                    timer.stop()
+#                # Socket-based alternative:
+#                socket = QtNetwork.QLocalSocket()
+#                socket.connectToServer(os.environ['SPYDER_SHELL_ID'])
+#                socket.waitForConnected(-1)
+#                while not socket.waitForReadyRead(10):
+#                    timer.start(50)
+#                    QtCore.QCoreApplication.exec_()
+#                    timer.stop()
+#                socket.read(3)
+#                socket.disconnectFromServer()
+            return 0
+        # Removing PyQt's PyOS_InputHook implementation:
+        from PyQt4 import QtCore
+        QtCore.pyqtRemoveInputHook()
+        # Installing Spyder's PyOS_InputHook implementation:
+        import ctypes
+        cb_pyfunctype = ctypes.PYFUNCTYPE(ctypes.c_int)(qt_inputhook)
+        pyos_ih = ctypes.c_void_p.in_dll(ctypes.pythonapi, "PyOS_InputHook")
+        pyos_ih.value = ctypes.cast(cb_pyfunctype, ctypes.c_void_p).value
+    else:
+        # Quite limited feature: notify only when a result is displayed in
+        # console (does not notify at every prompt)
+        def displayhook(obj):
+            sys.__displayhook__(obj)
+            monitor.refresh()
+    
+        sys.displayhook = displayhook
 
 
 #===============================================================================
@@ -195,7 +283,8 @@ def interaction(self, frame, traceback):
 @monkeypatch_method(pdb.Pdb, 'Pdb')
 def reset(self):
     self._old_Pdb_reset()
-    monitor.register_pdb_session(self)
+    if monitor is not None:
+        monitor.register_pdb_session(self)
     self.set_spyder_breakpoints()
 
 #XXX: notify spyder on any pdb command (is that good or too lazy? i.e. is more 
@@ -216,7 +305,8 @@ try:
 except ValueError:
     pass
 
-# Removing PyQt4 input hook which is not working well on Windows
+# Ignore PyQt4's sip API changes (this should be used wisely -e.g. for
+# debugging- as dynamic API change is not supported by PyQt)
 if os.environ.get("IGNORE_SIP_SETAPI_ERRORS", "").lower() == "true":
     try:
         import sip

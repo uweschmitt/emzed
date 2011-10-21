@@ -27,14 +27,17 @@ from spyderlib.widgets.externalshell.monitor import (
 from spyderlib.widgets.dicteditor import (RemoteDictEditorTableView,
                                           DictEditorTableView)
 from spyderlib.widgets.dicteditorutils import globalsfilter
-from spyderlib.utils import encoding, fix_reference_name
+from spyderlib.utils import encoding
+from spyderlib.utils.misc import fix_reference_name
 from spyderlib.utils.programs import is_module_installed
 from spyderlib.utils.qthelpers import (create_toolbutton, add_actions,
                                        create_action)
 from spyderlib.utils.iofuncs import iofunctions
 from spyderlib.widgets.importwizard import ImportWizard
-from spyderlib.baseconfig import str2type, _
+from spyderlib.baseconfig import _, get_supported_types
 from spyderlib.config import get_icon
+
+SUPPORTED_TYPES = get_supported_types()
 
 
 class NamespaceBrowser(QWidget):
@@ -51,8 +54,6 @@ class NamespaceBrowser(QWidget):
         self.setup_in_progress = None
         
         # Remote dict editor settings
-        self.editable_types = None
-        self.picklable_types = None
         self.itermax = None
         self.exclude_private = None
         self.exclude_uppercase = None
@@ -74,16 +75,13 @@ class NamespaceBrowser(QWidget):
         
         self.filename = None
             
-    def setup(self, editable_types=None, picklable_types=None, itermax=None,
-              exclude_private=None, exclude_uppercase=None,
+    def setup(self, itermax=None, exclude_private=None, exclude_uppercase=None,
               exclude_capitalized=None, exclude_unsupported=None,
               excluded_names=None, truncate=None, minmax=None, collvalue=None,
               remote_editing=None, inplace=None, autorefresh=None):
         """Setup the namespace browser"""
         assert self.shellwidget is not None
         
-        self.editable_types = editable_types
-        self.picklable_types = picklable_types
         self.itermax = itermax
         self.exclude_private = exclude_private
         self.exclude_uppercase = exclude_uppercase
@@ -275,14 +273,11 @@ class NamespaceBrowser(QWidget):
               (dict, list, tuple)
             * mode (string): 'editable' or 'picklable'
         """
-        assert mode in ('editable', 'picklable')
+        assert mode in SUPPORTED_TYPES.keys()
         if itermax is None:
             itermax = self.itermax
-        if mode == 'picklable':
-            strlist = self.picklable_types
-        else:
-            strlist = self.editable_types
-        def wsfilter(input_dict, itermax=itermax, filters=str2type(strlist)):
+        def wsfilter(input_dict, itermax=itermax,
+                     filters=tuple(SUPPORTED_TYPES[mode])):
             """Keep only objects that can be pickled"""
             return globalsfilter(
                          input_dict, itermax=itermax, filters=filters,
@@ -341,7 +336,7 @@ class NamespaceBrowser(QWidget):
     def copy_value(self, orig_name, new_name):
         monitor_copy_global(self._get_sock(), orig_name, new_name)
         self.refresh_table()
-
+        
     def is_list(self, name):
         """Return True if variable is a list or a tuple"""
         return communicate(self._get_sock(),
@@ -392,7 +387,7 @@ class NamespaceBrowser(QWidget):
         
     def oedit(self, name):
         command = "from spyderlib.widgets.objecteditor import oedit; " \
-                  "oedit('%s', modal=False, namespace=globals());" % name
+                  "oedit('%s', modal=False, namespace=locals());" % name
         self.shellwidget.send_to_process(command)
         
     #------ Set, load and save data --------------------------------------------
@@ -522,4 +517,4 @@ class NamespaceBrowser(QWidget):
                             _("<b>Unable to save current workspace</b>"
                               "<br><br>Error message:<br>%s") % error_message)
         self.save_button.setEnabled(self.filename is not None)
-
+        

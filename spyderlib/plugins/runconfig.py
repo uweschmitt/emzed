@@ -11,7 +11,7 @@ from spyderlib.qt.QtGui import (QVBoxLayout, QDialog, QWidget, QGroupBox,
                                 QComboBox, QHBoxLayout, QDialogButtonBox,
                                 QStackedWidget, QGridLayout, QSizePolicy,
                                 QRadioButton, QMessageBox)
-from spyderlib.qt.QtCore import SIGNAL, SLOT
+from spyderlib.qt.QtCore import SIGNAL, SLOT, Qt
 from spyderlib.qt.compat import getexistingdirectory
 
 import os, sys
@@ -27,6 +27,7 @@ from spyderlib.utils.qthelpers import get_std_icon
 
 
 class RunConfiguration(object):
+    """Run configuration"""
     def __init__(self, fname=None):
         self.args = ''
         self.args_enabled = False
@@ -83,9 +84,13 @@ class RunConfiguration(object):
         
 def _get_run_configurations():
     history_count = CONF.get('run', 'history', 20)
-    return [(filename, options)
-            for filename, options in CONF.get('run', 'configurations', [])
-            if osp.isfile(filename)][:history_count]
+    try:
+        return [(filename, options)
+                for filename, options in CONF.get('run', 'configurations', [])
+                if osp.isfile(filename)][:history_count]
+    except ValueError:
+        CONF.set('run', 'configurations', [])
+        return []
 
 def _set_run_configurations(configurations):
     history_count = CONF.get('run', 'history', 20)
@@ -102,6 +107,7 @@ def get_run_configuration(fname):
 
 
 class RunConfigOptions(QWidget):
+    """Run configuration options"""
     def __init__(self, parent=None):
         QWidget.__init__(self, parent)
         self.runconf = RunConfiguration()
@@ -214,9 +220,29 @@ class RunConfigOptions(QWidget):
             return False
 
 
-class RunConfigOneDialog(QDialog):
+class SizeMixin(object):
+    """Mixin to keep widget size accessible
+    even when C++ object has been deleted"""
+    def __init__(self):
+        self.win_size = None
+
+    def resizeEvent(self, event):
+        """Reimplement Qt method"""
+        QDialog.resizeEvent(self, event)
+        self.win_size = self.size()
+
+
+class RunConfigOneDialog(QDialog, SizeMixin):
+    """Run configuration dialog box: single file version"""
     def __init__(self, parent=None):
         QDialog.__init__(self, parent)
+        SizeMixin.__init__(self)
+        
+        # Destroying the C++ object right after closing the dialog box,
+        # otherwise it may be garbage-collected in another QThread
+        # (e.g. the editor's analysis thread in Spyder), thus leading to
+        # a segmentation fault on UNIX or an application crash on Windows
+        self.setAttribute(Qt.WA_DeleteOnClose)
         
         self.filename = None
         
@@ -253,12 +279,22 @@ class RunConfigOneDialog(QDialog):
         QDialog.accept(self)
     
     def get_configuration(self):
+        # It is import to avoid accessing Qt C++ object as it has probably
+        # already been destroyed, due to the Qt.WA_DeleteOnClose attribute
         return self.runconfigoptions.runconf
 
 
-class RunConfigDialog(QDialog):
+class RunConfigDialog(QDialog, SizeMixin):
+    """Run configuration dialog box: multiple file version"""
     def __init__(self, parent=None):
         QDialog.__init__(self, parent)
+        SizeMixin.__init__(self)
+        
+        # Destroying the C++ object right after closing the dialog box,
+        # otherwise it may be garbage-collected in another QThread
+        # (e.g. the editor's analysis thread in Spyder), thus leading to
+        # a segmentation fault on UNIX or an application crash on Windows
+        self.setAttribute(Qt.WA_DeleteOnClose)
         
         self.file_to_run = None
         

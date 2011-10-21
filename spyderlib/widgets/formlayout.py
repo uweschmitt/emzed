@@ -34,11 +34,12 @@ OTHER DEALINGS IN THE SOFTWARE.
 """
 
 # History:
+# 1.0.11: added support for PySide
 # 1.0.10: added float validator (disable "Ok" and "Apply" button when not valid)
 # 1.0.7: added support for "Apply" button
 # 1.0.6: code cleaning
 
-__version__ = '1.0.10'
+__version__ = '1.0.11'
 __license__ = __doc__
 
 DEBUG = False
@@ -267,6 +268,7 @@ class FormWidget(QWidget):
             elif isinstance(value, (str, unicode)):
                 field = QLineEdit(value, self)
             elif isinstance(value, (list, tuple)):
+                value = list(value)  # in case this is a tuple
                 selindex = value.pop(0)
                 field = QComboBox(self)
                 if isinstance(value[0], (list, tuple)):
@@ -464,6 +466,8 @@ class FormDialog(QDialog):
         
     def get(self):
         """Return form result"""
+        # It is import to avoid accessing Qt C++ object as it has probably
+        # already been destroyed, due to the Qt.WA_DeleteOnClose attribute
         return self.data
 
 
@@ -495,7 +499,6 @@ def fedit(data, title="", comment="", icon=None, parent=None, apply=None):
           * the first element will be the selected index (or value)
           * the other elements can be couples (key, value) or only values
     """
-    
     # Create a QApplication instance if no instance currently exists
     # (e.g. if the module is used directly from the interpreter)
     if QApplication.startingUp():
@@ -504,7 +507,6 @@ def fedit(data, title="", comment="", icon=None, parent=None, apply=None):
     dialog = FormDialog(data, title, comment, icon, parent, apply)
     if dialog.exec_():
         return dialog.get()
-
 
 
 if __name__ == "__main__":

@@ -9,14 +9,16 @@
 import os, threading, socket, thread, struct, cPickle as pickle
 
 # Local imports
-from spyderlib.utils import fix_reference_name, log_last_error
+from spyderlib.utils.misc import fix_reference_name
+from spyderlib.utils.debug import log_last_error
 from spyderlib.utils.dochelpers import (getargtxt, getdoc, getsource,
                                         getobjdir, isdefined)
 from spyderlib.utils.bsdsocket import (communicate, read_packet, write_packet,
                                        PACKET_NOT_RECEIVED)
 from spyderlib.utils.module_completion import moduleCompletion
-from spyderlib.baseconfig import get_conf_path, str2type
+from spyderlib.baseconfig import get_conf_path, get_supported_types
 
+SUPPORTED_TYPES = get_supported_types()
 
 LOG_FILENAME = get_conf_path('monitor.log')
 
@@ -27,8 +29,7 @@ if DEBUG:
     logging.basicConfig(filename=get_conf_path('monitor_debug.log'),
                         level=logging.DEBUG)
 
-REMOTE_SETTINGS = ('editable_types', 'picklable_types', 'itermax',
-                   'exclude_private', 'exclude_uppercase',
+REMOTE_SETTINGS = ('itermax', 'exclude_private', 'exclude_uppercase',
                    'exclude_capitalized', 'exclude_unsupported',
                    'excluded_names', 'truncate', 'minmax', 'collvalue',
                    'inplace', 'remote_editing', 'autorefresh')
@@ -51,16 +52,12 @@ def get_remote_data(data, settings, mode, more_excluded_names=None):
           (dict, list, tuple)
     """
     from spyderlib.widgets.dicteditorutils import globalsfilter
-    assert mode in ('editable', 'picklable')
+    assert mode in SUPPORTED_TYPES.keys()
     excluded_names = settings['excluded_names']
     if more_excluded_names is not None:
         excluded_names += more_excluded_names
-    if mode == 'picklable':
-        fparam = 'picklable_types'
-    else:
-        fparam = 'editable_types'
     return globalsfilter(data, itermax=settings['itermax'],
-                         filters=tuple(str2type(settings[fparam])),
+                         filters=tuple(SUPPORTED_TYPES[mode]),
                          exclude_private=settings['exclude_private'],
                          exclude_uppercase=settings['exclude_uppercase'],
                          exclude_capitalized=settings['exclude_capitalized'],
@@ -140,6 +137,7 @@ class Monitor(threading.Thread):
                  shell_id, timeout, auto_refresh):
         threading.Thread.__init__(self)
         self.ipython_shell = None
+        self.ipython_kernel = None
         self.setDaemon(True)
         
         self.pdb_obj = None
@@ -149,6 +147,9 @@ class Monitor(threading.Thread):
         self.auto_refresh = auto_refresh
         self.refresh_after_eval = False
         self.remote_view_settings = None
+        
+        self.inputhook_flag = False
+        self.first_inputhook_call = True
         
         # Connecting to introspection server
         self.i_request = socket.socket( socket.AF_INET )
@@ -174,6 +175,7 @@ class Monitor(threading.Thread):
                        "setenv": self.setenv,
                        "isdefined": isdefined,
                        "thread": thread,
+                       "toggle_inputhook_flag": self.toggle_inputhook_flag,
                        "set_monitor_timeout": self.set_timeout,
                        "set_monitor_auto_refresh": self.set_auto_refresh,
                        "__set_remote_view_settings__":
@@ -191,6 +193,13 @@ class Monitor(threading.Thread):
                        "__save_globals__": self.saveglobals,
                        "__load_globals__": self.loadglobals,
                        "_" : None}
+                       
+    def toggle_inputhook_flag(self, state):
+        """Toggle the input hook flag
+        
+        The only purpose of this flag is to unblock the PyOS_InputHook
+        callback when text is available in stdin (see sitecustomize.py)"""
+        self.inputhook_flag = state
         
     def set_timeout(self, timeout):
         """Set monitor timeout (in milliseconds!)"""
@@ -208,6 +217,16 @@ class Monitor(threading.Thread):
         """Refresh variable explorer in ExternalPythonShell"""
         communicate(self.n_request, dict(command="refresh"))
         
+    def refresh_from_inputhook(self):
+        """Refresh variable explorer from the PyOS_InputHook.
+        See sitecustomize.py"""
+        # Refreshing variable explorer, except on first input hook call
+        # (otherwise, on slow machines, this may freeze Spyder)
+        if self.first_inputhook_call:
+            self.first_inputhook_call = False
+        else:
+            self.refresh()
+        
     def register_pdb_session(self, pdb_obj):
         self.pdb_obj = pdb_obj
 
@@ -215,6 +234,11 @@ class Monitor(threading.Thread):
         """Notify the ExternalPythonShell regarding pdb current frame"""
         communicate(self.n_request,
                     dict(command="pdb_step", data=(fname, lineno)))
+
+    def notify_open_file(self, fname, lineno=1):
+        """Open file in Spyder's editor"""
+        communicate(self.n_request,
+                    dict(command="open_file", data=(fname, lineno)))
         
     #------ Code completion / Calltips
     def _eval(self, text, glbs):
@@ -257,7 +281,7 @@ class Monitor(threading.Thread):
         """Get object documentation"""
         obj, valid = self._eval(objtxt, glbs)
         if valid:
-            return getdoc(obj)
+            return unicode(getdoc(obj))
     
     def get_source(self, objtxt, glbs):
         """Get object source"""
@@ -269,7 +293,13 @@ class Monitor(threading.Thread):
         """Return completion list for object named *name*
         ** IPython only **"""
         if self.ipython_shell:
-            return self.ipython_shell.complete(name)
+            complist = self.ipython_shell.complete(name)
+            if len(complist) == 2 and isinstance(complist[1], list):
+                # IPython v0.11
+                return complist[1]
+            else:
+                # IPython v0.10
+                return complist
             
     def getmodcomplist(self, name):
         """Return module completion list for object named *name*"""
@@ -427,8 +457,20 @@ class Monitor(threading.Thread):
                     if DEBUG:
                         logging.debug("struct.error -> quitting monitor")
                     break
+                if self.ipython_kernel is None and '__ipythonkernel__' in glbs:
+                    self.ipython_kernel = glbs['__ipythonkernel__']
+                    argv = ['--existing'] +\
+                           ['--%s=%d' % (name, port) for name, port
+                            in self.ipython_kernel.ports.items()]
+                    opts = ' '.join(argv)
+                    communicate(self.n_request,
+                                dict(command="ipython_kernel", data=opts))
                 if self.ipython_shell is None and '__ipythonshell__' in glbs:
-                    self.ipython_shell = glbs['__ipythonshell__'].IP
+                    # IPython >=v0.11
+                    self.ipython_shell = glbs['__ipythonshell__']
+                    if not hasattr(self.ipython_shell, 'user_ns'):
+                        # IPython v0.10
+                        self.ipython_shell = self.ipython_shell.IP
                     self.ipython_shell.modcompletion = moduleCompletion
                     glbs = self.ipython_shell.user_ns
                 namespace = {}
@@ -471,16 +513,34 @@ class Monitor(threading.Thread):
                     logging.debug("error!")
                 log_last_error(LOG_FILENAME, command)
             finally:
-                if DEBUG:
-                    logging.debug("updating remote view")
-                if self.refresh_after_eval:
-                    self.update_remote_view(namespace)
-                    self.refresh_after_eval = False
-                if DEBUG:
-                    logging.debug("sending result")
-                    logging.debug("****** Introspection request /End ******")
-                if command is not PACKET_NOT_RECEIVED:
-                    write_packet(self.i_request, output, already_pickled=True)
+                try:
+                    if DEBUG:
+                        logging.debug("updating remote view")
+                    if self.refresh_after_eval:
+                        self.update_remote_view(namespace)
+                        self.refresh_after_eval = False
+                    if DEBUG:
+                        logging.debug("sending result")
+                        logging.debug("****** Introspection request /End ******")
+                    if command is not PACKET_NOT_RECEIVED:
+                        if write_packet is None:
+                            # This may happen during interpreter shutdown
+                            break
+                        else:
+                            write_packet(self.i_request, output,
+                                         already_pickled=True)
+                except AttributeError, error:
+                    if "'NoneType' object has no attribute" in str(error):
+                        # This may happen during interpreter shutdown
+                        break
+                    else:
+                        raise
+                except TypeError, error:
+                    if "'NoneType' object is not subscriptable" in str(error):
+                        # This may happen during interpreter shutdown
+                        break
+                    else:
+                        raise
 
         self.i_request.close()
         self.n_request.close()

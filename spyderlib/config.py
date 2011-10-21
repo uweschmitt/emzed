@@ -14,27 +14,38 @@ Important note regarding shortcuts:
         Ctrl + Alt + Q, W, F, G, Y, X, C, V, B, N
 """
 
-import os, sys, os.path as osp
+import os
+import sys
+import os.path as osp
+
 from spyderlib.qt.QtGui import QLabel, QIcon, QPixmap, QFont, QFontDatabase
 
 # Local import
 from spyderlib.userconfig import UserConfig, get_home_dir, NoDefault
-from spyderlib.baseconfig import (SUBFOLDER, EDITABLE_TYPES, PICKLABLE_TYPES,
-                                  ITERMAX, EXCLUDED, type2str,
+from spyderlib.baseconfig import (SUBFOLDER, ITERMAX, EXCLUDED,
                                   get_module_data_path, _)
-from spyderlib.utils.iofuncs import iofunctions
+from spyderlib.utils import iofuncs, codeanalysis
 
 
 SANS_SERIF = ['Sans Serif', 'DejaVu Sans', 'Bitstream Vera Sans',
-              'Bitstream Charter', 'Lucida Grande', 'Verdana', 'Geneva',
-              'Lucid', 'Arial', 'Helvetica', 'Avant Garde', 'sans-serif']
-SANS_SERIF.insert(0, unicode(QFont().family()))
+              'Bitstream Charter', 'Times', 'Lucida Grande', 'Calibri',
+              'MS Shell Dlg 2', 'Verdana', 'Geneva', 'Lucid', 'Arial',
+              'Helvetica', 'Avant Garde', 'sans-serif']
 
-MONOSPACE = ['Monospace', 'DejaVu Sans Mono', 'Consolas', 'Courier New',
+MONOSPACE = ['Monospace', 'DejaVu Sans Mono', 'Consolas', 'Monaco',
              'Bitstream Vera Sans Mono', 'Andale Mono', 'Liberation Mono',
-             'Monaco', 'Courier', 'monospace', 'Fixed', 'Terminal']
-MEDIUM = 10
-SMALL = 9
+             'Courier New', 'Courier', 'monospace', 'Fixed', 'Terminal']
+
+if sys.platform == 'darwin':
+    BIG = MEDIUM = SMALL = 12
+elif os.name == 'nt':
+    BIG = 12    
+    MEDIUM = 10
+    SMALL = 9
+else:
+    BIG = 12    
+    MEDIUM = 9
+    SMALL = 9
 
 # Extensions supported by Spyder's Editor
 EDIT_FILETYPES = (
@@ -52,12 +63,13 @@ EDIT_FILETYPES = (
     (_("Web page files"), ('.css', '.htm', '.html',)),
     (_("Configuration files"), ('.properties', '.session', '.ini', '.inf',
                                 '.reg', '.cfg', '.desktop')),
-    (_("All files"), ('',)))
+                 )
 
 def _get_filters(filetypes):
     filters = []
     for title, ftypes in filetypes:
         filters.append("%s (*%s)" % (title, " *".join(ftypes)))
+    filters.append("%s (*)" % _("All files"))
     return "\n".join(filters)
 
 def _get_extensions(filetypes):
@@ -70,7 +82,7 @@ EDIT_FILTERS = _get_filters(EDIT_FILETYPES)
 EDIT_EXT = _get_extensions(EDIT_FILETYPES)
 
 # Extensions supported by Spyder's Variable explorer
-IMPORT_EXT = iofunctions.load_extensions.values()
+IMPORT_EXT = iofuncs.iofunctions.load_extensions.values()
 
 # Extensions that should be visible in Spyder's file/project explorers
 SHOW_EXT = ['.png', '.ico', '.svg']
@@ -180,7 +192,8 @@ DEFAULTS = [
               'umd/namelist': ['guidata', 'guiqwt'],
               'light_background': True,
               'ipython_set_color': True,
-              'remove_pyqt_inputhook': os.name == 'nt',
+              'pyqt_api': 0,
+              'replace_pyqt_inputhook': os.name == 'nt',
               'ignore_sip_setapi_errors': True,
               }),
             ('variable_explorer',
@@ -188,8 +201,6 @@ DEFAULTS = [
               'shortcut': "Ctrl+Shift+V",
               'autorefresh': True,
               'autorefresh/timeout': 2000,
-              'editable_types': type2str(EDITABLE_TYPES),
-              'picklable_types': type2str(PICKLABLE_TYPES),
               'itermax': ITERMAX,
               'excluded_names': EXCLUDED,
               'exclude_private': True,
@@ -269,7 +280,7 @@ DEFAULTS = [
               'font/italic': False,
               'font/bold': False,
               'rich_text/font/family': SANS_SERIF,
-              'rich_text/font/size': 11,
+              'rich_text/font/size': BIG,
               'rich_text/font/italic': False,
               'rich_text/font/bold': False,
               'wrap': True,
@@ -322,7 +333,6 @@ DEFAULTS = [
               'name_filters': NAME_FILTERS,
               'show_hidden': True,
               'show_all': False,
-              'show_cd_only': True,
               'show_toolbar': True,
               'show_icontext': True,
               }),
@@ -336,7 +346,7 @@ DEFAULTS = [
               'exclude_regexp': True,
               'search_text_regexp': True,
               'search_text': [''],
-              'search_text_samples': [r'# ?TODO|# ?FIXME|# ?XXX|# ?HINT|# ?TIP'],
+              'search_text_samples': [codeanalysis.TASKS_PATTERN],
               'in_python_path': False,
               'more_options': True,
               }),

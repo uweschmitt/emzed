@@ -26,7 +26,8 @@ STDERR = sys.stderr
 # Local import
 from spyderlib.baseconfig import get_conf_path, _
 from spyderlib.config import CONF, get_icon, get_font
-from spyderlib.utils import encoding, get_error_match
+from spyderlib.utils import encoding
+from spyderlib.utils.misc import get_error_match
 from spyderlib.utils.dochelpers import getobj
 from spyderlib.utils.qthelpers import (keybinding, create_action, add_actions,
                                        restore_keyevent)
@@ -260,7 +261,7 @@ class ShellBaseWidget(ConsoleBaseWidget):
                                      _("<b>Unable to save file '%s'</b>"
                                        "<br><br>Error message:<br>%s"
                                        ) % (osp.basename(filename),
-                                            str(error)))
+                                            unicode(error)))
         
         
     #------ Basic keypress event handler
@@ -933,6 +934,8 @@ class PythonShellWidget(ShellBaseWidget):
         if text.startswith('import '):
             obj_list = self.get_module_completion(text)
             words = text.split(' ')
+            if ',' in words[-1]:
+                words = words[-1].split(',')
             self.show_completion_list(obj_list, completion_text=words[-1],
                                       automatic=automatic)
             return
@@ -942,9 +945,9 @@ class PythonShellWidget(ShellBaseWidget):
             if obj_list is None:
                 return
             words = text.split(' ')
-            if words[-1].find('(') != -1:
+            if '(' in words[-1]:
                 words = words[:-2] + words[-1].split('(')
-            if words[-1].find(',') != -1:
+            if ',' in words[-1]:
                 words = words[:-2] + words[-1].split(',')
             self.show_completion_list(obj_list, completion_text=words[-1],
                                       automatic=automatic)

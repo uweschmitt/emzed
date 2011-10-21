@@ -558,7 +558,7 @@ def make_fortran_patterns():
 class FortranSH(BaseSH):
     """Fortran Syntax Highlighter"""
     # Syntax highlighting rules:
-    PROG = re.compile(make_fortran_patterns(), re.S)
+    PROG = re.compile(make_fortran_patterns(), re.S|re.I)
     IDPROG = re.compile(r"\s+(\w+)", re.S)
     # Syntax highlighting states (from one text block to another):
     NORMAL = 0
@@ -577,7 +577,7 @@ class FortranSH(BaseSH):
                     start, end = match.span(key)
                     index += end-start
                     self.setFormat(start, end-start, self.formats[key])
-                    if value in ("subroutine", "module", "function"):
+                    if value.lower() in ("subroutine", "module", "function"):
                         match1 = self.IDPROG.match(text, end)
                         if match1:
                             start1, end1 = match1.span(1)
@@ -590,7 +590,7 @@ class Fortran77SH(FortranSH):
     """Fortran 77 Syntax Highlighter"""
     def highlightBlock(self, text):
         text = unicode(text)
-        if text.startswith("c"):
+        if text.startswith(("c", "C")):
             self.setFormat(0, len(text), self.formats["comment"])
         else:
             FortranSH.highlightBlock(self, text)
@@ -687,7 +687,10 @@ class BaseWebSH(BaseSH):
         self.setCurrentBlockState(previous_state)
         match = self.PROG.search(text)        
 
-        while match:
+        match_count = 0
+        n_characters = len(text)
+        # There should never be more matches than characters in the text.
+        while match and match_count < n_characters:
             match_dict = match.groupdict()
             for key, value in match_dict.items():
                 if value:
@@ -710,8 +713,9 @@ class BaseWebSH(BaseSH):
                             self.setCurrentBlockState(self.NORMAL)
                             self.setFormat(start, end-start,
                                            self.formats[key])
-                
+            
             match = self.PROG.search(text, match.end())
+            match_count += 1
 
 def make_html_patterns():
     """Strongly inspired from idlelib.ColorDelegator.make_pat """
@@ -748,3 +752,4 @@ def make_css_patterns():
 class CssSH(BaseWebSH):
     """CSS Syntax Highlighter"""
     PROG = re.compile(make_css_patterns(), re.S)
+
