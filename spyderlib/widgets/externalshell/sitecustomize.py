@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 # Spyder's ExternalPythonShell sitecustomize
 
+import msWorkbenchPatches
+msWorkbenchPatches.patch_external_shell()
+
 import sys
 import os
 import os.path as osp
 
 
-# Prepending this spyderlib package's path to sys.path to be sure 
+# Prepending this spyderlib package's path to sys.path to be sure
 # that another version of spyderlib won't be imported instead:
 spyderlib_path = osp.dirname(__file__)
 while not osp.isdir(osp.join(spyderlib_path, 'spyderlib')):
@@ -34,6 +37,10 @@ if pyqt_api:
             pass
     except ImportError:
         pass
+
+
+
+
 
 
 if os.environ.get("MATPLOTLIB_PATCH", "").lower() == "true":
