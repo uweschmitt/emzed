@@ -80,7 +80,6 @@ def dialog_for(obj, obj_name):
 
     return dialog, conv_func
 
-
 def oedit(obj, modal=True, namespace=None):
     """
     Edit the object 'obj' in a GUI-based editor and return the edited copy
@@ -95,7 +94,11 @@ def oedit(obj, modal=True, namespace=None):
     so it can be called directly from the interpreter)
     """
     # Local import
-   
+    from spyderlib.widgets.texteditor import TextEditor
+    from spyderlib.widgets.dicteditorutils import (ndarray, FakeObject,
+                                                   Image, is_known_type)
+    from spyderlib.widgets.dicteditor import DictEditor
+    from spyderlib.widgets.arrayeditor import ArrayEditor
     
     from spyderlib.utils.qthelpers import qapplication
     app = qapplication()
@@ -109,6 +112,8 @@ def oedit(obj, modal=True, namespace=None):
             namespace = globals()
         keeper.set_namespace(namespace)
         obj = namespace[obj_name]
+        # keep QApplication reference alive in the Python interpreter:
+        namespace['__qapp__'] = app
 
     rv = dialog_for(obj, obj_name)
     if rv is None:
@@ -119,13 +124,14 @@ def oedit(obj, modal=True, namespace=None):
         return conv_func(dialog.get_value())
     
     if modal:
-        dialog.exec_()
-        if dialog.result():
+        if dialog.exec_():
             return end_func(dialog)
     else:
         keeper.create_dialog(dialog, obj_name, end_func)
         import os
-        if os.environ.get("REMOVE_PYQT_INPUTHOOK", "").lower() == "true" \
+        replaced_pyqt_inputhook = os.environ.get("REPLACE_PYQT_INPUTHOOK", ""
+                                                 ).lower() == "true"
+        if os.name == 'nt' and not replaced_pyqt_inputhook \
            and not os.environ.get('IPYTHON', False):
             app.exec_()
 

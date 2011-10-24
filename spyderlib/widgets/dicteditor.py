@@ -520,6 +520,8 @@ class BaseTableView(QTableView):
             self.collvalue_action.setChecked(collvalue)
             return
         
+        resize_action = create_action(self, _("Resize rows to contents"),
+                                      triggered=self.resizeRowsToContents)
         self.paste_action = create_action(self, _("Paste"),
                                           icon=get_icon('editpaste.png'),
                                           triggered=self.paste)
@@ -578,13 +580,15 @@ class BaseTableView(QTableView):
                         self.save_array_action, self.insert_action,
                         self.remove_action, self.copy_action, self.paste_action,
                         None, self.rename_action,self.duplicate_action,
-                        None, self.truncate_action, self.inplace_action,
-                        self.collvalue_action]
+                        None, resize_action, None, self.truncate_action,
+                        self.inplace_action, self.collvalue_action]
         if ndarray is not FakeObject:
             menu_actions.append(self.minmax_action)
         add_actions(menu, menu_actions)
         self.empty_ws_menu = QMenu(self)
-        add_actions(self.empty_ws_menu, [self.insert_action, self.paste_action])
+        add_actions(self.empty_ws_menu,
+                    [self.insert_action, self.paste_action,
+                     None, resize_action])
         return menu
     
     #------ Remote/local API ---------------------------------------------------
@@ -1210,12 +1214,7 @@ class RemoteDictEditorTableView(BaseTableView):
         """Toggle remote editing state"""
         self.sig_option_changed.emit('remote_editing', state)
         self.remote_editing_enabled = state
-
-    def oedit_possible(self, key):
-        if (self.is_list(key) or self.is_dict(key)
-             or self.is_array(key) or self.is_image(key)):
-            return True
-
+            
     def edit_item(self):
         """
         Reimplement BaseTableView's method to edit item
@@ -1229,8 +1228,9 @@ class RemoteDictEditorTableView(BaseTableView):
             if not index.isValid():
                 return
             key = self.model.get_key(index)
-            if self.oedit_possible(key):
-                # If this is a remote dict editor, the following avoid
+            if (self.is_list(key) or self.is_dict(key) 
+                or self.is_array(key) or self.is_image(key)):
+                # If this is a remote dict editor, the following avoid 
                 # transfering large amount of data through the socket
                 self.oedit(key)
             else:
