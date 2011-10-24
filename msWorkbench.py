@@ -147,7 +147,8 @@ from spyderlib.config import (get_icon, get_image_path, CONF, get_shortcut,
                               EDIT_EXT, IMPORT_EXT)
 from spyderlib.otherplugins import get_spyderplugins_mods
 from spyderlib.utils.programs import (run_python_script, is_module_installed,
-                                      start_file)
+                                      start_file,
+                                      run_python_script_in_terminal)
 from spyderlib.utils.iofuncs import load_session, save_session, reset_session
 from spyderlib.userconfig import NoDefault, NoOptionError
 from spyderlib.utils.module_completion import getRootModules, MODULES_PATH
@@ -593,22 +594,6 @@ class MainWindow(QMainWindow):
                 self.xy_action.setToolTip(self.xy_action.toolTip() + \
                                           '\nPlease install Python(x,y) to '
                                           'enable this feature')
-            # Qt-related tools
-            additact = [None]
-            qtdact = create_program_action(self, _("Qt Designer"),
-                                           'qtdesigner.png', "designer")
-            qtlact = create_program_action(self, _("Qt Linguist"),
-                                           'qtlinguist.png', "linguist")
-            args = ['-no-opengl'] if os.name == 'nt' else []
-            qteact = create_python_script_action(self,
-                                   _("Qt examples"), 'qt.png', "PyQt4",
-                                   osp.join("examples", "demos",
-                                            "qtdemo", "qtdemo"), args)
-            for act in (qtdact, qtlact, qteact):
-                if act:
-                    additact.append(act)
-            if len(additact) > 1:
-                self.external_tools_menu_actions += additact
                 
             # Sift
             sift_act = create_python_script_action(self, _("Sift"),
@@ -1446,13 +1431,23 @@ Please provide any additional information below.
         else:
             self.console.shell.interpreter.restore_stds()
         
-    def open_external_console(self, fname, wdir, args,
-                              interact, debug, python,
-                              python_args):
+    def open_external_console(self, fname, wdir, args, interact, debug, python,
+                              python_args, systerm):
         """Open external console"""
-        self.extconsole.setVisible(True)
-        self.extconsole.raise_()
-        self.extconsole.start(
+        if systerm:
+            # Running script in an external system terminal
+            try:
+                run_python_script_in_terminal(fname, wdir, args, interact,
+                                              debug, python_args)
+            except NotImplementedError:
+                QMessageBox.critical(self, _("Run"),
+                                     _("Running an external system terminal "
+                                       "is not supported on platform %s."
+                                       ) % os.name)
+        else:
+            self.extconsole.setVisible(True)
+            self.extconsole.raise_()
+            self.extconsole.start(
                 fname=unicode(fname), wdir=unicode(wdir), args=unicode(args),
                 interact=interact, debug=debug, python=python,
                 python_args=unicode(python_args) )

@@ -1215,6 +1215,11 @@ class RemoteDictEditorTableView(BaseTableView):
         self.sig_option_changed.emit('remote_editing', state)
         self.remote_editing_enabled = state
             
+    def oedit_possible(self, key):
+        if (self.is_list(key) or self.is_dict(key)
+            or self.is_array(key) or self.is_image(key)):
+            return True
+ 
     def edit_item(self):
         """
         Reimplement BaseTableView's method to edit item
@@ -1228,10 +1233,7 @@ class RemoteDictEditorTableView(BaseTableView):
             if not index.isValid():
                 return
             key = self.model.get_key(index)
-            if (self.is_list(key) or self.is_dict(key) 
-                or self.is_array(key) or self.is_image(key)):
-                # If this is a remote dict editor, the following avoid 
-                # transfering large amount of data through the socket
+            if self.oedit_possible(key):
                 self.oedit(key)
             else:
                 BaseTableView.edit_item(self)
