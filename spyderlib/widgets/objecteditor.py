@@ -39,47 +39,6 @@ class DialogKeeper(QObject):
 
 keeper = DialogKeeper()
 
-def dialog_for(obj, obj_name):
-
-    """ uschmitt: this code was at the heart of oedit(). I introduced 
-        an indirection here so that i can monkey patch oedit to show msExpert 
-        related data
-    """
-    
-    from spyderlib.widgets.texteditor import TextEditor
-    from spyderlib.widgets.dicteditorutils import (ndarray, FakeObject,
-                                                   Image, is_known_type)
-    from spyderlib.widgets.dicteditor import DictEditor
-    from spyderlib.widgets.arrayeditor import ArrayEditor
-
-    conv_func = lambda data: data
-    readonly = not is_known_type(obj)
-    if isinstance(obj, ndarray) and ndarray is not FakeObject:
-        dialog = ArrayEditor()
-        if not dialog.setup_and_check(obj, title=obj_name,
-                                      readonly=readonly):
-            return
-    elif isinstance(obj, Image) and Image is not FakeObject \
-         and ndarray is not FakeObject:
-        dialog = ArrayEditor()
-        import numpy as np
-        data = np.array(obj)
-        if not dialog.setup_and_check(data, title=obj_name,
-                                      readonly=readonly):
-            return 
-        import PIL.Image
-        conv_func = lambda data: PIL.Image.fromarray(data, mode=obj.mode)
-    elif isinstance(obj, (str, unicode)):
-        dialog = TextEditor(obj, title=obj_name, readonly=readonly)
-    elif isinstance(obj, (dict, tuple, list)):
-        dialog = DictEditor()
-        dialog.setup(obj, title=obj_name, readonly=readonly)
-    else:
-
-        raise RuntimeError("Unsupported datatype")
-
-    return dialog, conv_func
-
 def oedit(obj, modal=True, namespace=None):
     """
     Edit the object 'obj' in a GUI-based editor and return the edited copy
@@ -115,11 +74,31 @@ def oedit(obj, modal=True, namespace=None):
         # keep QApplication reference alive in the Python interpreter:
         namespace['__qapp__'] = app
 
-    rv = dialog_for(obj, obj_name)
-    if rv is None:
-        return
-    dialog, conv_func = rv
-
+    conv_func = lambda data: data
+    readonly = not is_known_type(obj)
+    if isinstance(obj, ndarray) and ndarray is not FakeObject:
+        dialog = ArrayEditor()
+        if not dialog.setup_and_check(obj, title=obj_name,
+                                      readonly=readonly):
+            return
+    elif isinstance(obj, Image) and Image is not FakeObject \
+         and ndarray is not FakeObject:
+        dialog = ArrayEditor()
+        import numpy as np
+        data = np.array(obj)
+        if not dialog.setup_and_check(data, title=obj_name,
+                                      readonly=readonly):
+            return
+        import PIL.Image
+        conv_func = lambda data: PIL.Image.fromarray(data, mode=obj.mode)
+    elif isinstance(obj, (str, unicode)):
+        dialog = TextEditor(obj, title=obj_name, readonly=readonly)
+    elif isinstance(obj, (dict, tuple, list)):
+        dialog = DictEditor()
+        dialog.setup(obj, title=obj_name, readonly=readonly)
+    else:
+        raise RuntimeError("Unsupported datatype")
+    
     def end_func(dialog):
         return conv_func(dialog.get_value())
     
