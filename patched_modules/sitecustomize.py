@@ -1,13 +1,21 @@
 # -*- coding: utf-8 -*-
 # Spyder's ExternalPythonShell sitecustomize
 
-import msWorkbenchPatches
-msWorkbenchPatches.patch_external_shell()
 
-import sys
+print "patched sitecustomize"
 import os
-import os.path as osp
+import sys
 
+sys.path.insert(0, os.environ.get("MSWORKBENCH_HOME",""))
+
+
+try:
+    import msWorkbenchPatches
+    msWorkbenchPatches.patch_external_shell()
+except Exception, e:
+    print e
+
+import os.path as osp
 
 # Prepending this spyderlib package's path to sys.path to be sure
 # that another version of spyderlib won't be imported instead:
@@ -340,6 +348,7 @@ if monitor and not os.environ.get('IPYTHON', False):
         pass
     del sys.modules['IPython']
 
+print "pythonpath=", os.environ.get("PYTHONPATH")
 
 ## Restoring original PYTHONPATH
 #try:

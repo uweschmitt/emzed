@@ -1,31 +1,14 @@
 # encoding: utf-8
-
-from  spyderlib.widgets import objecteditor
-from  spyderlib.widgets import dicteditorutils
-from  spyderlib.widgets.dicteditor import RemoteDictEditorTableView
-from  spyderlib.widgets.externalshell.namespacebrowser import NamespaceBrowser
-from  spyderlib.widgets.externalshell.monitor import REMOTE_SETTINGS
-
-
-
 from libms.intern_utils.patch_decorator import  replace, add
-
-
-import libms.Explorers
-from  libms.gui.TableDialog import TableDialog
-import libms.DataStructures
-
 import sys
-
-def patch_startup_file():
-    # modifies import in spyderlib\widgets\externalshell\pythonshell.py
-    from patched_modules import patched_startup
-    patched_mod = sys.modules["patched_modules.patched_startup"]
-    sys.modules["spyderlib.widgets.externalshell"].startup = patched_mod
     
 def patch_oedit():
-    """
-    """
+    # runs in external console, is triggered if someone clickst at items
+    # in the variable explorer (aka namespace explorer)
+    import libms.Explorers
+    from  libms.gui.TableDialog import TableDialog
+    import libms.DataStructures
+    from  spyderlib.widgets import objecteditor
 
     @replace(objecteditor.dialog_for, verbose=True)
     def dialog_for(obj, obj_name):
@@ -55,9 +38,6 @@ def patch_baseshell():
     import os.path
     @replace(baseshell.add_pathlist_to_PYTHONPATH, verbose=True)
     def patched(env, pathlist):
-        print
-        print "add_pathlist_to_PYTHONPATH"
-        print
         for i, p in enumerate(pathlist):
             # replace path to ../externalshell/ with path to
             # patched_modules/
@@ -66,19 +46,45 @@ def patch_baseshell():
                 # path to externalshell/ and walk three levels up:
                 startupdir = os.sep.join(p.split(os.sep)[:-3])
                 pathlist[i] = os.path.join(startupdir, "patched_modules")
-        print "PATCHED ", pathlist
         return baseshell._orig_add_pathlist_to_PYTHONPATH(env, pathlist)
 
+def patch_userconfig():
+    from spyderlib.userconfig import UserConfig, NoDefault
+    @replace(UserConfig.get)
+    def patch(self, section, option, default=NoDefault):
+        override_defaults = {
+            ("console" ,"pythonstartup/default") : True,
+            ("console" ,"pythonstartup/custom") : False,
+            ("console" ,"pythonstartup/custom") : False,
+            ("console" ,"open_ipython_at_startup") : True, 
+            ("console" ,"open_python_at_startup") : False, 
+        }
+        value = override_defaults.get((section,option))
+        if value is not None:
+            print "override default for", section, option, value
+            return value
+        return UserConfig._orig_get(self, section, option, default)
+
+def patch_baseconfig():
+    from spyderlib import baseconfig
+    @replace(baseconfig.get_module_source_path, verbose=True)
+    def patch(modname, basename=None):
+        if modname == "spyderlib.widgets.externalshell" and basename=="startup.py":
+            import os
+            return os.path.join(os.environ.get("MSWORKBENCH_HOME"), "patched_modules", "startup.py")
+        return baseconfig._orig_get_module_source_path(modname, basename)
+
 def patch_spyder():
+    patch_userconfig()
+    patch_baseconfig()
 
     # the following path must appear before patching Externalshell, as the
     # corresponding import of ExternalConsole implies import of baseshell. So
     # patching baseshell will not work, as it is registered in sys.modules in
     # unpatched version !
     patch_baseshell() 
-    patch_startup_file()
-    patch_oedit()
 
+    from  spyderlib.widgets.dicteditor import RemoteDictEditorTableView
     @replace(RemoteDictEditorTableView.oedit_possible, verbose=True)
     def oedit_possible(self, key):
         return self.is_peakmap(key) \
@@ -87,6 +93,7 @@ def patch_spyder():
             or RemoteDictEditorTableView._orig_oedit_possible(self, key)
 
     from spyderlib.widgets.externalshell.monitor import communicate
+    from spyderlib.widgets.externalshell.namespacebrowser import NamespaceBrowser
 
     @add(NamespaceBrowser, verbose=True)
     def is_peakmap(self, name):
@@ -113,14 +120,19 @@ def patch_spyder():
         self.editor.is_table = self.is_table
         self.editor.is_featureTable = self.is_featureTable
 
-    @add(NamespaceBrowser, verbose=True)
-    def get_remote_view_settings(self):
-        """Return dict editor view settings for the remote process,
-        but return None if this namespace browser is not visible (no need 
-        to refresh an invisible widget...)"""
-        if self.is_visible and self.isVisible():
-            return self.get_view_settings()
-        
+    @replace(NamespaceBrowser.import_data, verbose=True)
+    def import_data(self, filenames=None):
+        NamespaceBrowser._orig_import_data(self, filenames)
+        self.save_button.setEnabled(self.filename is not None)
+
+    from  spyderlib.plugins.externalconsole import ExternalConsole
+    @replace(ExternalConsole.get_default_ipython_options, verbose=True)
+    def get_default_ipython_options(self):
+        options = ExternalConsole._orig_get_default_ipython_options(self)
+        # pylab clutters namespace, and we do not need it. so:
+        return options.replace("-pylab", "")
+
+    from spyderlib.widgets.externalshell.monitor import REMOTE_SETTINGS
     @add(NamespaceBrowser, verbose=True)
     def get_view_settings(self):
         """Return dict editor view settings"""
@@ -129,22 +141,20 @@ def patch_spyder():
             settings[name] = getattr(self, name)
         return settings
 
-    @replace(NamespaceBrowser.import_data, verbose=True)
-    def import_data(self, filenames=None):
-        NamespaceBrowser._orig_import_data(self, filenames)
-        self.save_button.setEnabled(self.filename is not None)
-
-
-    from  spyderlib.plugins.externalconsole import ExternalConsole
-    @replace(ExternalConsole.get_default_ipython_options, verbose=True)
-    def get_default_ipython_options(self):
-        options = ExternalConsole._orig_get_default_ipython_options(self)
-        return options.replace("-pylab", "")
-
+    @add(NamespaceBrowser, verbose=True)
+    def get_remote_view_settings(self):
+        """Return dict editor view settings for the remote process,
+        but return None if this namespace browser is not visible (no need 
+        to refresh an invisible widget...)"""
+        if self.is_visible and self.isVisible():
+            return self.get_view_settings()
+        
 def patch_external_shell():
-    
+
+    from  spyderlib.widgets import dicteditorutils
     @replace(dicteditorutils.is_supported, verbose=True)
     def is_supported( value, *a, **kw):
+        import libms.DataStructures
         return dicteditorutils._orig_is_supported(value, *a, **kw) \
             or isinstance(value, libms.DataStructures.PeakMap) \
             or isinstance(value, libms.DataStructures.Table) \
@@ -152,6 +162,7 @@ def patch_external_shell():
 
     @replace(dicteditorutils.get_size, verbose=True)
     def get_size( item ):
+        import libms.DataStructures
         if isinstance(item, libms.DataStructures.PeakMap):
             return len(item)
         if isinstance(item, libms.DataStructures.Table):
@@ -162,6 +173,7 @@ def patch_external_shell():
 
     @replace(dicteditorutils.get_type_string, verbose=True)
     def get_type_string( item ):
+        import libms.DataStructures
         if isinstance(item, libms.DataStructures.PeakMap):
             return "PeakMap"
         if isinstance(item, libms.DataStructures.FeatureTable):
@@ -170,16 +182,38 @@ def patch_external_shell():
             return "Table"
         return dicteditorutils._orig_get_type_string(item)
 
-
     @replace(dicteditorutils.value_to_display, verbose=True)
     def  value_to_display(value, *a, **kw):
+        import libms.DataStructures
+        import os.path
+        trunc_len = kw.get("trunc_len", 80)
+        truncate = kw.get("truncate", False)
         if isinstance(value, libms.DataStructures.PeakMap):
-            return  "%s" % value.meta
+            try:
+                res = value.meta.get("source", "")
+                if truncate and len(res)>trunc_len:
+                   res = "..."+ res[(len(res) + 3 - trunc_len):]
+                return res
+            except Exception, e:
+                return "exception: "+e
         if isinstance(value, libms.DataStructures.FeatureTable):
-            
-            return "%r" %  dict( (k,v) for k, v in value.meta.items() if k in ["source", "reintegrated" ])
+            try:
+                p = value.ds.meta.get("source", "")
+                r = value.meta.get("reintegrated", False)
+                res = "%s: reint = %s" % (p, r)
+                if truncate and len(res)>trunc_len:
+                   res = "..."+ res[(len(res) + 3 - trunc_len):]
+                return res
+            except Exception, e:
+                return "exception: "+e
         if isinstance(value, libms.DataStructures.Table):
-            return "%r" % value.meta.get("source")
+            try:
+                res = value.ds.meta.get("source", "")
+                if truncate and len(res)>trunc_len:
+                   res = "..."+ res[(len(res) + 3 - trunc_len):]
+                return res
+            except Exception, e:
+                return "exception: "+e
         return dicteditorutils._orig_value_to_display(value, *a, **kw)
 
     patch_oedit()
