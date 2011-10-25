@@ -2,6 +2,7 @@
 
 from libms.RConnect.XCMSConnector import CentwaveFeatureDetector, MatchedFilterFeatureDetector
 
+
 def union(d1, d2):
     d = d1.copy()
     d.update(d2)
@@ -32,7 +33,9 @@ matchedFilterStd = dict ( )
 matchedFilterConfig = [  ( "std", "standard config" , mfstd ) ]
 
 
-pathToProteoWizard = r"C:\Dokumente und Einstellungen\Administrator\Eigene Dateien\proteowizard"
+from libms.PeakPicking import PeakPickerHiRes
+
+peakPickerHiResConfig = [ ("std", "orbitrap standard", PeakPickerHiRes.standardConfig) ]
 
 
 from libms.PeakIntegration import *

@@ -17,9 +17,13 @@ class PeakPickerHiRes(object):
             params.setValue(pyOpenMS.String(k), value, pyOpenMS.String(), 
                             pyOpenMS.StringList())
 
-    def pickPeakMap(self, pm, show_progress=False):
+    def pickPeakMap(self, pm, showProgress=False):
         assert isinstance(pm, PeakMap)
         eout = pyOpenMS.MSExperiment()
+        if showProgress:
+            self.pp.setLogType(pyOpenMS.LogType.CMD)
+        else:
+            self.pp.setLogType(pyOpenMS.LogType.NONE)
         self.pp.pickExperiment(pm.toMSExperiment(), eout)
         return PeakMap.fromMSExperiment(eout)
 
