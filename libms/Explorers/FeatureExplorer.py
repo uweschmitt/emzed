@@ -342,6 +342,13 @@ class FeatureExplorer(QDialog):
 def inspectFeatures(ftable):
     import guidata
     app = guidata.qapplication()
-    fe = FeatureExplorer(ftable)
-    fe.raise_()
-    fe.exec_()
+    try:
+        fe = FeatureExplorer(ftable)
+        fe.raise_()
+        fe.exec_()
+    except:
+        # fix stdout and stderr if explorer
+        # terminates not clearly
+        import sys
+        sys.stdout = sys.__stdout__
+        sys.stderr = sys.__stderr__
