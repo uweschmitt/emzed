@@ -62,5 +62,4 @@ from string import Template
 for p in repository_pathes:
     pp = os.path.join(Template(p).substitute(os.environ), "configs.py")
     if os.path.exists(pp):
-        print "load from ", pp
         execfile(pp)
