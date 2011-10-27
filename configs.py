@@ -1,15 +1,22 @@
 #encoding: utf-8
 
+repository_pathes = [ "C:/TMP", "$HOME/msworkbench_modules" ]
+
+
 from libms.RConnect.XCMSConnector import CentwaveFeatureDetector, MatchedFilterFeatureDetector
 
 
+"""
 def union(d1, d2):
     d = d1.copy()
     d.update(d2)
     return d
+"""
 
 cwfstd = CentwaveFeatureDetector.standardConfig
+centwaveConfig = [   ("std", "standard config orbitrap", cwfstd) ]
 
+"""
 centwaveConfigStd = dict( ppm=5, 
                           peakwidth=(15, 200),
                           prefilter=(3,1000), 
@@ -27,9 +34,10 @@ centwaveConfig = [   ("std", "standard config orbitrap", union(cwfstd, centwaveC
                      ("long", "long retention config"  , union(cwfstd, centwaveConfigLong)) ,
                  ]
 
+"""
+
 
 mfstd = MatchedFilterFeatureDetector.standardConfig
-matchedFilterStd = dict ( )
 matchedFilterConfig = [  ( "std", "standard config" , mfstd ) ]
 
 
@@ -41,12 +49,18 @@ peakPickerHiResConfig = [ ("std", "orbitrap standard", PeakPickerHiRes.standardC
 from libms.PeakIntegration import *
 # key "std" must exist !
 peakIntegrators = [ ( "std",        SGIntegrator(window_size=11, order=2) ) ,
-                    ( "sg_21_2",    SGIntegrator(window_size=21, order=2) ) ,
-                    ( "sg_11_1",    SGIntegrator(window_size=11, order=1) ) ,
-                    ( "sg_21_1",    SGIntegrator(window_size=21, order=1) ) ,
                     ( "asym_gauss", AsymmetricGaussIntegrator(gtol=0.1) ) ,
                     ( "asym_gauss_exakt", AsymmetricGaussIntegrator(gtol=None) ) ,
                     ( "trapez", TrapezIntegrator() ) ,
                    ]
 
-# 
+
+import os.path
+
+from string import Template
+
+for p in repository_pathes:
+    pp = os.path.join(Template(p).substitute(os.environ), "configs.py")
+    if os.path.exists(pp):
+        print "load from ", pp
+        execfile(pp)

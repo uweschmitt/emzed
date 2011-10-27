@@ -22,6 +22,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import msWorkbenchPatches
 msWorkbenchPatches.patch_spyder()
 
+
 import os
 try:
     # Test if IPython v0.11+ is installed

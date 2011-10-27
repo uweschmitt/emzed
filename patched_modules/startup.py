@@ -249,7 +249,18 @@ if __name__ == "__main__":
         import libms
         import ms
         import batches
+        import traceback
         user_ns = dict(runfile = runfile, debugfile=debugfile, libms=libms, b=batches, ms=ms)
+        try:
+            from configs import repository_pathes
+            from string import Template
+
+            for p in repository_pathes:
+                sys.path.insert(0, Template(p).substitute(os.environ))
+
+        except ImportError, e:
+            traceback.print_exc(file=sys.stdout)
+
         try:
             # IPython >=v0.11
             # Support for these recent versions of IPython is limited:
