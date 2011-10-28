@@ -1,5 +1,7 @@
 #encoding: utf-8
 
+# modules are searched in this order, search ends at first hit
+# configs are read in this order, so local configs overrun global configs
 repository_pathes = [ "C:/TMP", "$HOME/msworkbench_modules" ]
 
 

@@ -255,7 +255,7 @@ if __name__ == "__main__":
             from configs import repository_pathes
             from string import Template
 
-            for p in repository_pathes:
+            for p in reversed(repository_pathes):
                 sys.path.insert(0, Template(p).substitute(os.environ))
 
         except ImportError, e:
