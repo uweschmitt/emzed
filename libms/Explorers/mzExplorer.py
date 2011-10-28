@@ -5,6 +5,7 @@ from PyQt4.QtCore import Qt, SIGNAL
 
 import guidata
 import sys
+import os
 
 
 from PlottingWidgets import RtPlotter, MzPlotter
@@ -42,6 +43,11 @@ class MzExplorer(QDialog):
         self.minMZ = self.absMinMZ
         self.maxMZ = self.absMaxMZ
         self.updateChromatogram()
+
+        title = os.path.basename(peakmap.meta.get("source", ""))
+        self.setWindowTitle(title)
+
+    
 
     def updateChromatogram(self):
 
