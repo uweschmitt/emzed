@@ -12,6 +12,7 @@ class Spectrum(object):
         self.msLevel = msLevel
         self.precursors = precursors
         self.polarity = polarity
+        peaks = peaks[peaks[:,1]>0] # remove zero intensities
         # sort resp. mz values:
         perm = np.argsort(peaks[:,0])
         self.peaks = peaks[perm,:]

@@ -1,7 +1,7 @@
 #encoding: utf-8
 
 
-def alignPeakMaps(pattern=None, destination=None):
+def alignPeakMaps(pattern=None, destination=None, **param):
 
     import glob, os.path
     import ms
@@ -19,12 +19,9 @@ def alignPeakMaps(pattern=None, destination=None):
     else:
         files = glob.glob(pattern)
 
-
-    print files
     maps = [ ms.loadPeakMap(p) for p in files ]
-    print "align"
-    aligned_maps = libms.Alignment.alignPeakMapsWithPoseClustering(maps)
-
+    aligned_maps = libms.Alignment.alignPeakMapsWithPoseClustering(maps, 
+                                                                   **param)
     for pm, path in zip(maps, files):
         basename = os.path.basename(path)
         name, ext = os.path.splitext(basename)

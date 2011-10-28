@@ -1,13 +1,21 @@
 from ..DataStructures.MSTypes import PeakMap
 import pyOpenMS
 
-def alignPeakMapsWithPoseClustering(peakMaps, showProgress=True):
+def alignPeakMapsWithPoseClustering(peakMaps, showProgress=True, npeaks=None):
     try:
         exps = [ pm.toMSExperiment() for pm in peakMaps ]
     except:
         raise ValueError("need list of peakMaps as input")
 
     algo = pyOpenMS.MapAlignmentAlgorithmPoseClustering()
+    if npeaks is not None:
+        print "set npeaks=", npeaks
+        pp = algo.getDefaults()
+        pp.setValue(pyOpenMS.String("max_num_peaks_considered"), 
+                    pyOpenMS.DataValue(npeaks), 
+                    pyOpenMS.String(),
+                    pyOpenMS.StringList())
+        algo.setParameters(pp)
     if showProgress:
         algo.setLogType(pyOpenMS.LogType.CMD)
     transformations = []

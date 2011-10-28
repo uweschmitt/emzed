@@ -3,7 +3,7 @@ import ms
 
 def testPoseClustering():
     pm = ms.loadPeakMap("data\SHOrt_MS2_FILE.mzData")
-    maps = alignPeakMapsWithPoseClustering([pm, pm])
+    maps = alignPeakMapsWithPoseClustering([pm, pm], npeaks=-1)
     assert len(maps)==2
     assert len(maps[0]) == len(pm)
     assert len(maps[1]) == len(pm)
