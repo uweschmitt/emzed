@@ -18,8 +18,6 @@ Contents:
    first_steps
    
 
-
-
 Indices and tables
 ==================
 
