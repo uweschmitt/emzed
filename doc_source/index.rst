@@ -13,7 +13,10 @@ Contents:
 
    intro
    install
+   terms
+   images
    first_steps
+   
 
 
 
