@@ -172,6 +172,7 @@ class _AlignJob(object):
     def _saveResult(self, map_, fig):
         import ms
         import os
+        import datetime
         path = map_.meta["source"]
         basename = os.path.basename(path)
         name, ext = os.path.splitext(basename)
@@ -186,6 +187,14 @@ class _AlignJob(object):
         target = os.path.join(destinationDir, name+"_aligned.mzML")
         print "write aligned map to", target
         ms.storePeakMap(map_, target)
+
+        logTarget = os.path.join(destinationDir, "params.log")
+        print "write aligned map to", logTarget
+        with open(logTarget, "a") as fp:
+            print >> fp, datetime.datetime.now()
+            print >> fp, self.param
+            print >> fp, target
+            print >> fp
         if fig is not None:
             target = os.path.join(destinationDir, name+"_aligned.png")
             print "write plot of model fit to", target
