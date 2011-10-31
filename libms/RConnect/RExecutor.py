@@ -33,10 +33,11 @@ class RExecutor(object):
     def findRHome():
 
         pathToR = None
-
-        for finder in  [ lambda : RExecutor.path_from(_winreg.HKEY_CURRENT_USER),
+        for finder in  [ 
+                         lambda : RExecutor.path_from(_winreg.HKEY_CURRENT_USER),
                          lambda : RExecutor.path_from(_winreg.HKEY_LOCAL_MACHINE),
                          lambda : os.environ.get("R_HOME"),
+                         RExecutor.parse_path_variable,
                        ]:
             try:
                 pathToR = finder()
@@ -68,6 +69,19 @@ class RExecutor(object):
                 print "I will take the first one !"
 
             return found[0]
+
+    @staticmethod
+    def parse_path_variable():
+        for path in os.environ.get("PATH","").split(os.pathsep):
+            # windows
+            if os.path.exists(os.path.join(path, "R.exe")):
+                print "Found R at", path
+                return path
+            # non windows: 
+            test = os.path.join(path, "R")
+            if os.path.exists(test) and not os.path.isdir(test):
+                return tess
+        return None  
         
     @staticmethod
     def path_from(regsection):

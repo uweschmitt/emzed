@@ -58,6 +58,10 @@ def runCentwave(pattern=None, destination=None, configid=None, **params):
 
     class P(BatchRunner):
 
+        def __init__(self, *a, **kw):
+            libms.RConnect.RExecutor.findRHome() # throws exception if R is not found
+            super(P, self).__init__(*a, **kw)
+
         def setup(self, config):
             self.det = libms.RConnect.CentwaveFeatureDetector(**config)
 
@@ -147,6 +151,10 @@ def runMatchedFilter(pattern=None, destination=None, configid=None, **params):
     import libms.RConnect
 
     class P(BatchRunner):
+
+        def __init__(self, *a, **kw):
+            libms.RConnect.RExecutor.findRHome() # throws exception if R is not found
+            super(P, self).__init__(*a, **kw)
 
         def setup(self, config):
             self.det = libms.RConnect.MatchedFilterFeatureDetector(**config)
