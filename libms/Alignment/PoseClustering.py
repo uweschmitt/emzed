@@ -52,7 +52,7 @@ def alignPeakMapsWithPoseClustering(peakMaps, refIdx=None,showProgress=False,
                 # fit values
                 yfitted = np.array([trans.apply(xi) for xi in x])
                 # plot fitted model vs data points
-                pl.plot(x, y-x, label="in data")
+                pl.plot(x, y-x, '*', label="in data")
                 pl.plot(x, yfitted-x, label="fitted")
                 pl.xlabel("RT")
                 pl.ylabel("$\Delta$ RT")
