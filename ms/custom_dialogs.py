@@ -35,7 +35,7 @@ def __fileDialog(startAt=None, onlyDirectories=False, anyFile=False,
     di.raise_()
     if di.exec_():
         files= di.selectedFiles()
-        res = [str(f) for f in files]
+        res = [ str(f.toLatin1()) for f in files]
         return res
 
     return None
