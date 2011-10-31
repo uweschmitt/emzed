@@ -3,7 +3,7 @@ import pyOpenMS
 import numpy as np
 import os
 
-def alignPeakMapsWithPoseClustering(peakMaps, showProgress=True, 
+def alignPeakMapsWithPoseClustering(peakMaps, refIdx=None,showProgress=False, 
                                     max_num_peaks_considered=None,
                                     plotAlignment=False, doShow=True):
     try:
@@ -22,6 +22,10 @@ def alignPeakMapsWithPoseClustering(peakMaps, showProgress=True,
     if showProgress:
         algo.setLogType(pyOpenMS.LogType.CMD)
     transformations = []
+
+    if refIdx is not None:
+        # open ms refidx is 1-based !
+        algo.setReference(refIdx+1, pyOpenMS.String()) 
     algo.alignPeakMaps(exps, transformations)
     s = pyOpenMS.String()
     p = pyOpenMS.Param()
