@@ -114,6 +114,7 @@ class _AlignJob(object):
             print
             toAlign = [self.refmap, map_]
             # align
+            print pp
             alignedMaps = alignPeakMapsWithPoseClustering(toAlign, refIdx=0, 
                                                           **pp)
             fig = None
