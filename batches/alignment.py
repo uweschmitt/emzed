@@ -57,12 +57,41 @@ class _MapAligner(object):
 
 class _AlignJob(object):
 
+    """
+       job scheduler class
+
+       methods are:
+
+            rerun(**params)  -- run from begining  over all maps with given 
+                                parameters
+
+            cont(**params)   -- continue with new parameter setting
+
+            next(**params)   -- process next map with new parameter setting
+
+            skip()           -- skip alignging of current map
+
+    
+       attributes:
+
+            refmap          -- reference map
+
+            maps            -- all selected maps
+
+            mapsToProcess   -- remaining unprocessed maps
+                               in case of trouble mapsToProcess[0] is
+                               the last map which failed
+
+            param           -- current parameter setting for alignment
+
+    """
+
     def __init__(self, refmap, maps, destination, param):
         self.refmap = refmap
         self.mapsToProcess = maps
         self.param = param
         self.maps = maps
-        self.destination = destination
+        self._destination = destination
 
     def rerun(self, **param_update):
         self.mapsToProcess = self.maps[:] # use copy 
@@ -72,9 +101,14 @@ class _AlignJob(object):
         import os
         while len(self.mapsToProcess):
             result = self.next(**param_update)
-            if not self.ok:
+            if not self._ok:
                 return self
         return self
+
+    def skip(self):
+        if len(self.mapsToProcess):
+           self.mapsToProcess.pop(0)
+        print len(self.mapsToProcess), "maps left to process"
 
     def next(self, **param_update):
         if len(self.mapsToProcess) == 0:
@@ -82,21 +116,21 @@ class _AlignJob(object):
             print "all maps processed."
             print
             return
-        self.ok = False
+        self._ok = False
         # fetch job
         map_ = self.mapsToProcess[0]
         # process job
         self.param.update(param_update)
-        alignedMap, fig = self.align(map_)
+        alignedMap, fig = self._align(map_)
         if alignedMap is None:
             return self
-        self.saveResult(alignedMap, fig)
+        self._saveResult(alignedMap, fig)
         # succeeded: remove job
         self.mapsToProcess.pop(0) 
-        self.ok = True
+        self._ok = True
         return self
 
-    def align(self, map_):
+    def _align(self, map_):
         import os.path, pylab
         from  libms.Alignment import alignPeakMapsWithPoseClustering
         path = map_.meta["source"]
@@ -135,16 +169,16 @@ class _AlignJob(object):
                 print
             return None, None
 
-    def saveResult(self, map_, fig):
+    def _saveResult(self, map_, fig):
         import ms
         import os
         path = map_.meta["source"]
         basename = os.path.basename(path)
         name, ext = os.path.splitext(basename)
-        if self.destination is None:
+        if self._destination is None:
             destinationDir = os.path.dirname(path)
         else:
-            destinationDir = self.destination
+            destinationDir = self._destination
             try:
                 os.makedirs(destinationDir)
             except:
