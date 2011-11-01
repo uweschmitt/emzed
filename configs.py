@@ -32,6 +32,8 @@ peakIntegrators = [ ( "std",        SGIntegrator(window_size=11, order=2) ) ,
 
 
 mapAlignmentAlgorithmPoseClusteringConfig = [ ( "std", dict(nPeaks=100)) ]
+dd = dict(gapcost=float(1), affinegapcost=float(0.5), scorefunction="s")
+mapAlignmentAlgorithmSpectrumAlignmentConfig = [ ( "std", dd ) ]
 
 import os.path
 
