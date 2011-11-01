@@ -6,13 +6,10 @@ class _MapAligner(object):
     def __init__(self):
         pass
 
-    def align(self, pattern=None, destination=None, nPeaks=None, 
-                    configId="std"):
+    def align(self, pattern=None, destination=None, configId="std", **param):
         import ms
-        from configs import mapAlignmentAlgorithmPoseClusteringConfig as cfg
-        config = dict(cfg).get(configId)
-        if nPeaks is not None:
-            config["nPeaks"] = nPeaks
+        config = dict(self.getConfig()).get(configId)
+        config.update(param)
 
         files, destination = self.getFiles(pattern, destination)
         if files is None:
@@ -21,7 +18,7 @@ class _MapAligner(object):
         maps = [ ms.loadPeakMap(p) for p in files ]
         refmap = self.determineRefMap(maps)
 
-        job = _AlignJob(refmap, maps, destination, config)
+        job = _AlignJob(self.aligner, refmap, maps, destination, config)
         try:
             __IPYTHON__.user_ns["_j"] = job
         except:
@@ -55,6 +52,30 @@ class _MapAligner(object):
             files = glob.glob(pattern)
         return files, destination
 
+class _PoseClusteringMapAligner(_MapAligner):
+
+    def __init__(self, *a, **kw):
+        super(_PoseClusteringMapAligner, self).__init__(*a, **kw)
+        import libms.Alignment
+        self.aligner = libms.Alignment.alignPeakMapsWithPoseClustering
+
+    def getConfig(self):
+        from configs import mapAlignmentAlgorithmPoseClusteringConfig as cfg
+        return cfg
+
+class _SpectrumAlignmentMapAligner(_MapAligner):
+
+    def __init__(self, *a, **kw):
+        super(_SpectrumAlignmentMapAligner, self).__init__(*a, **kw)
+        import libms.Alignment
+        self.aligner = libms.Alignment.alignPeakMapsWithSpectrumAlignment
+
+    def getConfig(self):
+        from configs import mapAlignmentAlgorithmSpectrumAlignmentConfig as cfg
+        return cfg
+        
+        
+
 class _AlignJob(object):
 
     """
@@ -86,7 +107,8 @@ class _AlignJob(object):
 
     """
 
-    def __init__(self, refmap, maps, destination, param):
+    def __init__(self, aligner, refmap, maps, destination, param):
+        self.aligner = aligner
         self.refmap = refmap
         self.mapsToProcess = maps
         self.param = param
@@ -132,7 +154,6 @@ class _AlignJob(object):
 
     def _align(self, map_):
         import os.path, pylab
-        from  libms.Alignment import alignPeakMapsWithPoseClustering
         path = map_.meta["source"]
         basename = os.path.basename(path)
         try:
@@ -149,8 +170,8 @@ class _AlignJob(object):
             toAlign = [self.refmap, map_]
             # align
             print pp
-            alignedMaps = alignPeakMapsWithPoseClustering(toAlign, refIdx=0, 
-                                                          **pp)
+
+            alignedMaps = self.aligner(toAlign, refIdx=0, **pp)
             fig = None
             if pp.get("plotAlignment"):
                 fig = pylab.gcf() # last figure
@@ -201,5 +222,8 @@ class _AlignJob(object):
             fig.savefig(target)
 
         
-def alignPeakMaps(*a, **kw):
-    _MapAligner().align(*a, **kw)
+def alignPeakMapsWithPoseClustering(*a, **kw):
+    _PoseClusteringMapAligner().align(*a, **kw)
+
+def alignPeakMapsWithSpectrumAlignment(*a, **kw):
+    _SpectrumAlignmentMapAligner().align(*a, **kw)
