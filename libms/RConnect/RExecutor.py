@@ -1,5 +1,5 @@
 
-import _winreg, os, glob, tempfile, subprocess
+import _winreg, os, glob, tempfile, subprocess, sys, win32api
 from   os.path import dirname, abspath, join
 
 # all installled libs will get to local folder
@@ -26,7 +26,8 @@ class RExecutor(object):
 
         self.rHome = RExecutor.findRHome()
         LLL.debug("found R home at "+self.rHome)
-        self.rExe  = RExecutor.findRExe(self.rHome)
+        rExe  = RExecutor.findRExe(self.rHome)
+        self.rExe = win32api.GetShortPathName(rExe) 
         LLL.debug("found R.exe at "+self.rExe)
 
     @staticmethod
@@ -94,25 +95,17 @@ class RExecutor(object):
     def run_script(self, path):
         # hyphens are needed as pathes may contain spaces
         cmd = '"%s" --vanilla --silent < %s' % (self.rExe, path)
-
-        #cmd = '"%s" CMD BATCH  %s rfile.log'  % (self.rExe, path)
-        hasIpython = False
-        
         print cmd
 
-        try:
-            __IPYTHON__  # check if run from IPython
-            hasIpython = True
-        except:
-            pass
-        
-        # for developping it is better to use os.system which opens a new window and
-        # shows progress
-        if 0 and hasIpython:
-            print __IPYTHON__.getoutput(cmd)
-            return None # how to get return status ?
-        else:
-            return os.system(cmd)
+        with open(path, "r") as fp:
+            proc = subprocess.Popen(['%s' % self.rExe, "--vanilla", "--silent"], 
+                                    stdin = fp, stdout = sys.stdout,
+                                    bufsize=0, shell=True)
+            out, err = proc.communicate()
+            if err is not None:
+                print err
+
+        return proc.returncode
 
     def run_command(self, command, dir_=None):
 

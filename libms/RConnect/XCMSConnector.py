@@ -136,7 +136,7 @@ class CentwaveFeatureDetector(object):
                      """ % dd
 
             if RExecutor().run_command(script, td) != 4711:
-                raise Exception("R opreation failed")
+                raise Exception("R operation failed")
 
             # parse csv and shift rt related values to undo rt modifiaction
             # as described above
