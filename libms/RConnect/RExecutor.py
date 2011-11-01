@@ -95,7 +95,10 @@ class RExecutor(object):
         # hyphens are needed as pathes may contain spaces
         cmd = '"%s" --vanilla --silent < %s' % (self.rExe, path)
 
+        #cmd = '"%s" CMD BATCH  %s rfile.log'  % (self.rExe, path)
         hasIpython = False
+        
+        print cmd
 
         try:
             __IPYTHON__  # check if run from IPython

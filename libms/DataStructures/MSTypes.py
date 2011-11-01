@@ -84,6 +84,11 @@ class PeakMap(object):
     def levelOneRts(self):
         return [spec.rt for spec in self.spectra if spec.msLevel == 1]
 
+    def shiftRt(self, delta):
+        for spec in self.spectra:
+            spec.rt += delta
+        return self
+
     @classmethod
     def fromMSExperiment(clz, mse):
         assert type(mse) ==pyOpenMS.MSExperiment

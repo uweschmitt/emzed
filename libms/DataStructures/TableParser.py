@@ -37,12 +37,15 @@ class XCMSFeatureParser(object):
                 return str(val)
   
     @classmethod
-    def parse(clz, lines):
+    def parse(clz, lines, shiftRt=0):
         columnNames = [ n.strip('"') for n in lines[0].split() ]
         numCol = len(columnNames)
         rows = []
         for line in lines[1:]:
             row= [clz.bestConvert(c) for c in line.split()[1:]]
+            for i, name in enumerate(columnNames):
+                if name in ["rt", "rtmin", "rtmax"]:
+                    row[i] += shiftRt
             rows.append(row)
 
         if rows:
