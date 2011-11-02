@@ -2,6 +2,7 @@
 from SGIntegrator import SGIntegrator
 from AsymmetricGaussIntegrator import AsymmetricGaussIntegrator
 from TrapezIntegrator import TrapezIntegrator
+from SimplifiedEMGIntegrator import SimplifiedEMGIntegrator
 
 
 

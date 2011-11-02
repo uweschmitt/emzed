@@ -40,13 +40,6 @@ def run(integrator, areatobe, rmsetobe):
 
 
 def testPeakIntegration():
-    integrator = dict(configs.peakIntegrators).get("trapez")
-
-    run(integrator,  120481.9, 0.0)
-
-    integrator = dict(configs.peakIntegrators).get("std")
-    run(integrator,  119149.7, 6854.8)
-
     
     integrator = dict(configs.peakIntegrators).get("asym_gauss")
     _, _, params = run(integrator, 30584.3, 7251.2)
@@ -55,6 +48,18 @@ def testPeakIntegration():
     assert abs(params[1]- 0.2007) < 0.001, params[1]
     assert abs(params[2]- 0.1921) < 0.001, params[2]
     assert abs(params[3]- 325.7) < 0.1, params[3]
+
+    integrator = dict(configs.peakIntegrators).get("emg")
+
+    run(integrator,  1.545513e5, 7.43277e3)
+
+    integrator = dict(configs.peakIntegrators).get("trapez")
+
+    run(integrator,  120481.9, 0.0)
+
+    integrator = dict(configs.peakIntegrators).get("std")
+    run(integrator,  119149.7, 6854.8)
+
 
 def testTrapezIntegrationSimple():
        
