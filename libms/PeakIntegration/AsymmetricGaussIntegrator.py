@@ -11,7 +11,8 @@ class AsymmetricGaussIntegrator(PeakIntegrator):
         self.gtol = kw.get("gtol")
 
     def __str__(self):
-        return "AsymmetricGaussIntegrator, gtol=%s"  % ("None" if self.gtol is None else "%.2e" % self.gtol)
+        info = "default" if self.gtol is None else "%.2e" % self.gtol
+        return "AsymmetricGaussIntegrator, gtol=%s" %  info
 
     @staticmethod
     def __fun_eval(param, rts):

@@ -5,12 +5,14 @@ def reintegrate(ftable, integratorid="std", showProgress = True):
     from libms.DataStructures import FeatureTable
     import sys
     import numpy as np
+    import time
 
     assert isinstance(ftable, FeatureTable)
     integrator = dict(peakIntegrators).get(integratorid)
     if integrator is None:
         raise Exception("unknown integrator '%s'" % integratorid)
 
+    started = time.time()
     integrator.setPeakMap(ftable.ds)
 
     hasSN = "sn" in ftable.colNames
@@ -63,6 +65,15 @@ def reintegrate(ftable, integratorid="std", showProgress = True):
     title = "" if ftable.title is None else ftable.title
     meta = ftable.meta.copy()
     meta["reintegrated"]=True
+    needed = time.time() - started
+    minutes = int(needed)/60
+    seconds = needed - minutes * 60
+    print
+    print
+    if minutes:
+        print "needed %d minutes and %.1f seconds" % (minutes, seconds)
+    else:
+        print "needed %.1f seconds" % seconds
     return FeatureTable(ftable.ds, colNames, colTypes, rows, colFormats, "reintegrated: "+title, meta=meta)
         
         

@@ -3,11 +3,18 @@ import numpy as np
 import scipy.optimize as opt
 import scipy.special  as special
 import math
+import sys
+import StringIO
 
 class SimplifiedEMGIntegrator(PeakIntegrator):
 
+    def __init__(self, **kw):
+        super(SimplifiedEMGIntegrator, self).__init__(kw)
+        self.xtol = kw.get("xtol")
+
     def __str__(self):
-        return "SimplifiedEMGIntegrator"
+        info = "default" if self.xtol is None else "%.2e" % self.xtol
+        return "SimplifiedEMGIntegrator, xtol=%s" %  info
 
     @staticmethod
     def __fun_eval(param, rts):
@@ -38,20 +45,30 @@ class SimplifiedEMGIntegrator(PeakIntegrator):
         rts = np.array(rts)
         
         param = h, z, w, s
-        param, ok = opt.leastsq(SimplifiedEMGIntegrator.__err, param, 
-                                args=(rts, chromatogram), xtol=1e-3)
+        sys.stdout = sys.stderr = StringIO.StringIO()
+        try:
+            if self.xtol is None:
+                param, ok = opt.leastsq(SimplifiedEMGIntegrator.__err, param, 
+                                        args=(rts, chromatogram))
+            else:
+                param, ok = opt.leastsq(SimplifiedEMGIntegrator.__err, param, 
+                                        args=(rts, chromatogram), xtol=self.xtol)
+        finally:
+            sys.stdout, sys.stderr = sys.__stdout__, sys.__stderr__
+
         h, z, w, s = param
 
-        if ok not in [1,2,3,4] or s<0 or w<0: # failed
+        if ok not in [1,2,3,4] or s<=0 or w<=0: # failed
             area = 0
             rmse = 1.0/math.sqrt(len(rts))*np.linalg.norm(chromatogram)
         else:
             smoothed = SimplifiedEMGIntegrator.__fun_eval(param, allrts)
+            smoothed[np.isnan(smoothed)]=0.0
             area = self.trapez(allrts, smoothed)
             rmse = 1/math.sqrt(len(allrts)) * np.linalg.norm(smoothed - fullchromatogram)
-        if np.isnan(area):
-            area = 0.0
-            rmse = 1.0/math.sqrt(len(rts))*np.linalg.norm(chromatogram)
+        #if np.isnan(area):
+        #   area = 0.0
+        #   rmse = 1.0/math.sqrt(len(rts))*np.linalg.norm(chromatogram)
 
         return area, rmse, param
 

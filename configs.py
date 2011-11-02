@@ -28,7 +28,8 @@ peakIntegrators = [ ( "std",        SGIntegrator(window_size=11, order=2) ) ,
                     ( "asym_gauss", AsymmetricGaussIntegrator(gtol=0.1) ) ,
                     ( "asym_gauss_exakt", AsymmetricGaussIntegrator(gtol=None) ) ,
                     ( "trapez", TrapezIntegrator() ) ,
-                    ( "emg", SimplifiedEMGIntegrator() ) ,
+                    ( "emg", SimplifiedEMGIntegrator(xtol=9e-4) ) ,
+                    ( "emg_exakt", SimplifiedEMGIntegrator() ) ,
                    ]
 
 

@@ -51,7 +51,7 @@ def testPeakIntegration():
 
     integrator = dict(configs.peakIntegrators).get("emg")
 
-    run(integrator,  1.545513e5, 7.43277e3)
+    run(integrator,  1.545102e5, 7.4326e3)
 
     integrator = dict(configs.peakIntegrators).get("trapez")
 
