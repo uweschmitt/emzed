@@ -8,7 +8,6 @@
 
 print "patched startup"
 
-
 import sys
 import os
 
@@ -310,4 +309,12 @@ on Windows platforms (only IPython v0.10 is fully supported).
         except ImportError:
             pass
         
+        #ip = __ipythonshell__
+        #import pdb
+        #pdb.set_trace()
+        ip = IPython.ipapi.get()
+        if ip.options.pylab_import_all:
+            ip.ex("del e")
+            ip.ex("del pi")
+            ip.IP.user_config_ns.update(ip.user_ns)
         __ipythonshell__.mainloop()
