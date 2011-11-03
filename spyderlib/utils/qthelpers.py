@@ -6,7 +6,7 @@
 
 """Qt utilities"""
 
-import os
+import os, re
 import os.path as osp
 
 from spyderlib.qt.QtGui import (QAction, QStyle, QWidget, QIcon, QApplication,
@@ -36,11 +36,24 @@ def qapplication(translate=True):
     Creates it if it doesn't already exist"""
     app = QApplication.instance()
     if not app:
-        app = QApplication([])
+        # Set Application name for Gnome 3
+        # https://groups.google.com/forum/#!topic/pyside/24qxvwfrRDs
+        app = QApplication(['Spyder'])
     if translate:
         install_translator(app)
     return app
 
+def file_uri(fname):
+    """Select the right file uri scheme according to the operating system"""
+    if os.name == 'nt':
+        # Local file
+        if re.search(r'^[a-zA-Z]:', fname):
+            return 'file:///' + fname
+        # UNC based path
+        else:
+            return 'file://' + fname
+    else:
+        return 'file://' + fname
 
 QT_TRANSLATOR = None
 def install_translator(qapp):

@@ -116,15 +116,14 @@ from spyderlib.utils.qthelpers import (create_action, add_actions, get_std_icon,
                                        create_bookmark_action,
                                        create_program_action, DialogManager,
                                        keybinding, qapplication,
-                                       create_python_script_action)
+                                       create_python_script_action, file_uri)
 from spyderlib.baseconfig import (get_conf_path, _, get_module_data_path,
                                   get_module_source_path)
 from spyderlib.config import (get_icon, get_image_path, CONF, get_shortcut,
                               EDIT_EXT, IMPORT_EXT)
 from spyderlib.otherplugins import get_spyderplugins_mods
 from spyderlib.utils.programs import (run_python_script, is_module_installed,
-                                      start_file,
-                                      run_python_script_in_terminal)
+                                      start_file, run_python_script_in_terminal)
 from spyderlib.utils.iofuncs import load_session, save_session, reset_session
 from spyderlib.userconfig import NoDefault, NoOptionError
 from spyderlib.utils.module_completion import getRootModules, MODULES_PATH
@@ -589,12 +588,16 @@ class MainWindow(QMainWindow):
                 self.external_tools_menu_actions += additact
                 
             # Sift
-            sift_act = create_python_script_action(self, _("Sift"),
-                                                   'sift.svg', "guiqwt",
-                                                   osp.join("tests", "sift"))
-            if sift_act:
-                self.external_tools_menu_actions += [None, sift_act]
-                
+            if is_module_installed('guidata') \
+                and is_module_installed('guiqwt'):
+                 from guidata import configtools
+                 from guiqwt import config  # (loading icons) analysis:ignore
+                 sift_icon = configtools.get_icon('sift.svg')
+                 sift_act = create_python_script_action(self, _("Sift"),
+                                sift_icon, "guiqwt", osp.join("tests", "sift"))
+                 if sift_act:
+                     self.external_tools_menu_actions += [None, sift_act]
+
             # ViTables
             vitables_act = create_program_action(self, _("ViTables"),
                                                  'vitables.png', "vitables")
@@ -724,6 +727,7 @@ class MainWindow(QMainWindow):
                     spyder_doc = osp.join(get_module_source_path('spyderlib'),
                                           os.pardir, 'build', 'lib',
                                           'spyderlib', 'doc', "index.html")
+            spyder_doc = file_uri(spyder_doc)
             doc_action = create_bookmark_action(self, spyder_doc,
                                _("Spyder documentation"), shortcut="F1",
                                icon=get_std_icon('DialogHelpButton'))

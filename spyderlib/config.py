@@ -79,7 +79,7 @@ def _get_extensions(filetypes):
     return ftype_list
 
 EDIT_FILTERS = _get_filters(EDIT_FILETYPES)
-EDIT_EXT = _get_extensions(EDIT_FILETYPES)
+EDIT_EXT = _get_extensions(EDIT_FILETYPES)+['']
 
 # Extensions supported by Spyder's Variable explorer
 IMPORT_EXT = iofuncs.iofunctions.load_extensions.values()
@@ -91,10 +91,12 @@ SHOW_EXT = ['.png', '.ico', '.svg']
 VALID_EXT = EDIT_EXT+IMPORT_EXT
 
 # Find in files include/exclude patterns
-INCLUDE_PATTERNS = [r'|'.join(['\\'+_ext+r'$' for _ext in EDIT_EXT]),
+INCLUDE_PATTERNS = [r'|'.join(['\\'+_ext+r'$' for _ext in EDIT_EXT if _ext])+\
+                    r'|README|INSTALL',
                     r'\.pyw?$|\.ipy$|\.txt$|\.rst$',
                     '.']
-EXCLUDE_PATTERNS = [r'\.pyc$|\.pyo$|\.orig$|\.hg|\.svn']
+EXCLUDE_PATTERNS = [r'\.pyc$|\.pyo$|\.orig$|\.hg|\.svn|build',
+                    r'\.pyc$|\.pyo$|\.orig$|\.hg|\.svn']
 
 # Name filters for file/project explorers (excluding files without extension)
 NAME_FILTERS = ['*' + _ext for _ext in VALID_EXT + SHOW_EXT if _ext]+\
@@ -354,7 +356,7 @@ DEFAULTS = [
 
 DEV = not __file__.startswith(sys.prefix)
 DEV = False
-CONF = UserConfig('spyder', defaults=DEFAULTS, load=(not DEV), version='2.0.6',
+CONF = UserConfig('spyder', defaults=DEFAULTS, load=(not DEV), version='2.1.0',
                   subfolder=SUBFOLDER, backup=True, raw_mode=True)
 # Removing old .spyder.ini location:
 old_location = osp.join(get_home_dir(), '.spyder.ini')
