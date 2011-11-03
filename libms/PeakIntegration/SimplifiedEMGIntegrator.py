@@ -18,9 +18,12 @@ class SimplifiedEMGIntegrator(PeakIntegrator):
 
     @staticmethod
     def __fun_eval(param, rts):
-        #print param
         h, z, w, s = param 
-        nominator = np.exp(w*w/2.0/s/s - (rts-z)/ s)
+        inner = w*w/2.0/s/s - (rts-z)/s
+        # avoid overflow: may happen if __fun_eval is called with full
+        # rtrange (getSmoothed...), and s is small:
+        inner[inner>200] = 200 
+        nominator = np.exp(inner)
         denominator = 1 + np.exp(-2.4055/math.sqrt(2.0) * ((rts-z)/w - w/s))
         return h*w/s * math.sqrt(2*math.pi) * nominator / denominator
 
@@ -45,17 +48,12 @@ class SimplifiedEMGIntegrator(PeakIntegrator):
         rts = np.array(rts)
         
         param = h, z, w, s
-        sys.stdout = sys.stderr = StringIO.StringIO()
-        try:
-            if self.xtol is None:
-                param, ok = opt.leastsq(SimplifiedEMGIntegrator.__err, param, 
-                                        args=(rts, chromatogram))
-            else:
-                param, ok = opt.leastsq(SimplifiedEMGIntegrator.__err, param, 
-                                        args=(rts, chromatogram), xtol=self.xtol)
-        finally:
-            sys.stdout, sys.stderr = sys.__stdout__, sys.__stderr__
-
+        if self.xtol is None:
+            param, ok = opt.leastsq(SimplifiedEMGIntegrator.__err, param, 
+                                    args=(rts, chromatogram))
+        else:
+            param, ok = opt.leastsq(SimplifiedEMGIntegrator.__err, param, 
+                                  args=(rts, chromatogram), xtol=self.xtol)
         h, z, w, s = param
 
         if ok not in [1,2,3,4] or s<=0 or w<=0: # failed
@@ -66,9 +64,6 @@ class SimplifiedEMGIntegrator(PeakIntegrator):
             smoothed[np.isnan(smoothed)]=0.0
             area = self.trapez(allrts, smoothed)
             rmse = 1/math.sqrt(len(allrts)) * np.linalg.norm(smoothed - fullchromatogram)
-        #if np.isnan(area):
-        #   area = 0.0
-        #   rmse = 1.0/math.sqrt(len(rts))*np.linalg.norm(chromatogram)
 
         return area, rmse, param
 

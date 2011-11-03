@@ -75,7 +75,10 @@ class PeakMap(object):
         return [spec for spec in self.spectra if rtmin <= spec.rt <= rtmax]
 
     def levelOneSpecsInRange(self, rtmin, rtmax):
-        return [spec for spec in self.spectra if rtmin <= spec.rt <= rtmax
+        # rt values can be truncated/rounded from gui or other sources, 
+        # so wie dither the limits a bit, spaces in realistic rt values
+        # are much higher thae 1e-2 seconds
+        return [spec for spec in self.spectra if rtmin-1e-2 <= spec.rt <= rtmax+1e-2
                                              and spec.msLevel == 1]
 
     def allRts(self):
