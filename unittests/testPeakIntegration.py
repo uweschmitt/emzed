@@ -49,9 +49,9 @@ def testPeakIntegration():
     assert abs(params[2]- 0.1921) < 0.001, params[2]
     assert abs(params[3]- 325.7) < 0.1, params[3]
 
-    integrator = dict(configs.peakIntegrators).get("emg")
+    integrator = dict(configs.peakIntegrators).get("emg_exakt")
 
-    run(integrator,  1.545102e5, 7.4326e3)
+    run(integrator,  154542.79, 7.43274e3)
 
     integrator = dict(configs.peakIntegrators).get("trapez")
 
