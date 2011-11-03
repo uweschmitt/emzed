@@ -125,13 +125,6 @@ def patch_spyder():
         NamespaceBrowser._orig_import_data(self, filenames)
         self.save_button.setEnabled(self.filename is not None)
 
-    from  spyderlib.plugins.externalconsole import ExternalConsole
-    @replace(ExternalConsole.get_default_ipython_options, verbose=True)
-    def get_default_ipython_options(self):
-        options = ExternalConsole._orig_get_default_ipython_options(self)
-        # pylab clutters namespace, and we do not need it. so:
-        return options.replace("-pylab", "")
-
     from spyderlib.widgets.externalshell.monitor import REMOTE_SETTINGS
     @add(NamespaceBrowser, verbose=True)
     def get_view_settings(self):
