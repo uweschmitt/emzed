@@ -1,3 +1,4 @@
+import pyOpenMS as P
 import operator, copy
 
 
@@ -158,6 +159,46 @@ class FeatureTable(Table):
         self.requireColumn("rtmax")
 
         self.ds = ds
+
+    def toOpenMSFeatureMap(self):
+        if not "area" in self.colNames:
+            print "features not integrated. I assume const intensity"
+            iarea = None
+        else:
+            iarea = self.getIndex("area")
+        imz = self.getIndex("mz")
+        irt = self.getIndex("rt")
+        fm = P.FeatureMap()
+
+        for row in self.rows:
+            f = P.Feature()
+            f.setMZ(row[imz])
+            f.setRT(row[irt])
+            if iarea is not None:
+                f.setIntensity(row[iarea])
+            else:
+                f.setIntensity(1000.0)
+            fm.push_back(f)
+        return fm
+
+    def alignAccordingTo(self, fmap):
+        # test for matching
+        assert fmap.size() == len(self)
+        irt = self.getIndex("rt")
+        irtmin = self.getIndex("rtmin")
+        irtmax = self.getIndex("rtmax")
+        for i in range(len(self)):
+            feature = fmap[i]
+            row = self.rows[i]
+            rtold = row[irt]
+            rnew  = feature.getRT()
+            diff = rnew - rtold
+            row[irt] += diff
+            row[irtmin] += diff
+            row[irtmax] += diff
+        
+        
+
 
     def extractColumns(self, colnames):
         rv = super(FeatureTable, self).extractColumns(colnames)

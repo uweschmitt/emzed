@@ -3,13 +3,14 @@ from save_utils import *
 from custom_dialogs import *
 from integration import *
 from shell_helpers import *
+from align import *
 
 from libms.Explorers       import inspectPeakMap, inspectFeatures
 from libms.gui.TableDialog import showTable
 from libms.PeakIntegration import SGIntegrator, AsymmetricGaussIntegrator
 
 __all__ = [ "inspectMap", "inspectFeatures", "showTable", "SGIntegrator",
-            "AsymmetricGaussIntegrator" ]
+            "AsymmetricGaussIntegrator", "alignFeatureTables" ]
 
 
 # remove namespace clutter, __all__ only works for "from ms import *"
@@ -20,3 +21,4 @@ del integration
 del shell_helpers
 del AsymmetricGaussIntegrator
 del SGIntegrator
+del align
