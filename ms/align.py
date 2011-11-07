@@ -4,8 +4,9 @@ def alignFeatureTables(tables, destination = None, numBreakpoints=5):
     import pylab
     import numpy as np
     import pyOpenMS as P
+    import copy
+
     import custom_dialogs
-    
     if destination is None:
         destination = custom_dialogs.askForDirectory()
         if destination is None:
@@ -14,16 +15,18 @@ def alignFeatureTables(tables, destination = None, numBreakpoints=5):
 
     assert os.path.isdir(os.path.abspath(destination)), "target is no directory"
 
-    fms = [ table.toOpenMSFeatureMap() for table in tables ] 
+    fms = [(i, table.toOpenMSFeatureMap()) for i, table in enumerate(tables)]
     # sort descending in num features
-    fms.sort(key=lambda fm: -fm.size())
+    fms.sort(key=lambda (i, fm): -fm.size())
 
     ma = P.MapAlignmentAlgorithmPoseClustering()
     ma.setLogType(P.LogType.CMD)
 
-    refmap = fms[0]
-    for table, fm in zip(tables, fms)[1:]:
-        filename = os.path.basename(table.ds.meta["source"]) 
+    imax, refmap = fms[0]
+    results = [copy.copy(tables[imax])]
+    for i, fm in fms[1:]:
+        table = copy.deepcopy(tables[i])
+        filename = os.path.basename(table.ds.meta["source"])
         print "align", filename
         ts = []
         ma.alignFeatureMaps([refmap, fm], ts)
@@ -39,18 +42,14 @@ def alignFeatureTables(tables, destination = None, numBreakpoints=5):
         pylab.plot(x, y-x, ".")
         x.sort()
         yn = [ ts[0].apply(xi) for xi in x]
-        pylab.plot(x, yn-x) 
+        pylab.plot(x, yn-x)
         filename = os.path.splitext(filename)[0]+"_aligned.png"
         target_path = os.path.join(destination, filename)
         print "save", filename
         pylab.savefig(target_path)
         table.alignAccordingTo(fm)
+        results.append(table)
+    for t in results:
+        t.meta["aligned"] = True
+    return results
 
-       
-             
-         
-        
-
-            
-        
-        
