@@ -15,7 +15,10 @@ class TemporaryDirectoryWithBackup(object):
         backupdir = "logs/last_temp_dir"
 
         rmtree(backupdir, ignore_errors = True) # might not exist
-        copytree(self.d, backupdir)
+        try:
+            copytree(self.d, backupdir)
+        except:
+            pass # sometimes copytree fails
         
         if not self.keep:
             rmtree(self.d) 
