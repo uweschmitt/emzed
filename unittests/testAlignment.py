@@ -8,15 +8,21 @@ def testPoseClustering():
     ft=pickle.load(open("data/ft.pickled","rb"))
     irt = ft.getIndex("rt")
     before = np.array([ r[irt] for r in ft.rows])
-    ms.alignFeatureTables([ft,ft], ".")
-    irt = ft.getIndex("rt")
-    after = np.array([ r[irt] for r in ft.rows])
+    neu = ms.alignFeatureTables([ft,ft], ".")
 
-    # aligning against itself should do something:
-    assert np.any(before!=after)
-    # ... but not too much:
-    assert np.linalg.norm(before-after)<1e-3 
-    
+    assert len(neu) == 2
+    irt = ft.getIndex("rt")
+
+    after = np.array([ r[irt] for r in ft.rows])
+    # args should not be changed !
+    assert np.all(before==after)
+
+    # result should be little aligned:
+    for ft in neu:
+        assert "aligned" in ft.meta
+        after = np.array([ r[irt] for r in ft.rows])
+        assert np.linalg.norm(before-after)<1e-3
+
     # alignmen should produce alignment map:
     assert os.path.exists("zeros_aligned.png")
-    
+

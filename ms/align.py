@@ -41,7 +41,7 @@ def alignFeatureTables(tables, destination = None, numBreakpoints=5):
         y = np.array(y)
         pylab.plot(x, y-x, ".")
         x.sort()
-        yn = [ ts[0].apply(xi) for xi in x]
+        yn = [ ts[1].apply(xi) for xi in x]
         pylab.plot(x, yn-x)
         filename = os.path.splitext(filename)[0]+"_aligned.png"
         target_path = os.path.join(destination, filename)
