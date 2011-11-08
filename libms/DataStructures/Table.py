@@ -161,11 +161,13 @@ class FeatureTable(Table):
         self.ds = ds
 
     def toOpenMSFeatureMap(self):
-        if not "area" in self.colNames:
+        if "into" in self.colNames:
+            iarea = self.getIndex("into")
+        elif "area" in self.colNames:
+            iarea = self.getIndex("area")
+        else:
             print "features not integrated. I assume const intensity"
             iarea = None
-        else:
-            iarea = self.getIndex("area")
         imz = self.getIndex("mz")
         irt = self.getIndex("rt")
         fm = P.FeatureMap()
