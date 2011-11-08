@@ -45,6 +45,7 @@ def alignFeatureTables(tables, destination = None, nPeaks=-1, numBreakpoints=5):
         x,y = zip(*dtp)
         x = np.array(x)
         y = np.array(y)
+        pylab.clf()
         pylab.plot(x, y-x, ".")
         x.sort()
         yn = [ ts[1].apply(xi) for xi in x]
