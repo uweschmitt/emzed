@@ -10,29 +10,6 @@ import sys
 import numpy as np
 import configs
 
-class StreamSplitter(object):
-
-    """ output stream: prints output to given stream
-        and to QTextEdit widget.
-
-        The append() method of QTextEdit starts a new
-        line for each call. That is why we have to
-        collect outputs without "\n" at its end.
-    """
-
-    def __init__(self, qtextedit, stream):
-        self.qtextedit = qtextedit
-        self.stream = stream
-        self.collected = []
-
-    def write(self, what):
-        self.stream.write(what)
-        if what.endswith("\n"):
-            self.qtextedit.append("".join(self.collected)+what.rstrip("\n"))
-            self.collected = []
-        else:
-            self.collected.append(what)
-
 class FeatureExplorer(QDialog):
 
     def __init__(self, ftable):
@@ -66,9 +43,6 @@ class FeatureExplorer(QDialog):
         self.setSizePolicy(sizePolicy)
         self.setSizeGripEnabled(True)
 
-        sys.stdout = StreamSplitter(self.statusMessages, sys.stdout)
-        sys.stderr = StreamSplitter(self.statusMessages, sys.stderr)
-
     def populateTable(self):
         helpers.populateTableWidget(self.tw, self.ftable)
 
@@ -100,10 +74,6 @@ class FeatureExplorer(QDialog):
 
         self.tw.setMinimumHeight(150)
 
-    def closeEvent(self, evt):
-        sys.stdout = sys.__stdout__
-        sys.stderr = sys.__stderr__
-
     def setupLayout(self):
         vlayouto = QVBoxLayout()
         self.setLayout(vlayouto)
@@ -132,18 +102,17 @@ class FeatureExplorer(QDialog):
             frame = QFrame()
             frame.setLayout(vlayout2)
             hsplitter.addWidget(frame)
-            
+
         hsplitter.addWidget(self.mzPlotter.widget)
 
         vsplitter.addWidget(hsplitter)
         vsplitter.addWidget(self.tw)
-        vsplitter.addWidget(self.statusMessages) 
 
         vlayouto.addWidget(vsplitter)
 
     def setupWidgets(self):
         plotconfigs = (None, dict(shade=0.35, linewidth=1, color="g") )
-        self.rtPlotter = RtPlotter(rangeSelectionCallback=self.plotMz, 
+        self.rtPlotter = RtPlotter(rangeSelectionCallback=self.plotMz,
                                    numCurves=2, configs=plotconfigs)
 
         rts = [ spec.rt for spec in self.ds.spectra ]
@@ -164,13 +133,6 @@ class FeatureExplorer(QDialog):
         pol = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
         pol.setVerticalStretch(5)
         self.tw.setSizePolicy(pol)
-
-        self.statusMessages = QTextEdit()
-        self.statusMessages.setReadOnly(True)
-        self.statusMessages.setMinimumHeight(20)
-        pol = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
-        pol.setVerticalStretch(1)
-        self.statusMessages.setSizePolicy(pol)
 
         # click at row head
         self.connect(self.tw.verticalHeader(), SIGNAL("sectionClicked(int)"),
@@ -193,7 +155,7 @@ class FeatureExplorer(QDialog):
                          self.doIntegrate)
 
     def intMethodChanged(self, i):
-        print configs.peakIntegrators[i][1], "chosen"
+        pass
 
     def doIntegrate(self):
         if not self.integratedFeatures:
@@ -319,12 +281,11 @@ class FeatureExplorer(QDialog):
             integrator = dict(configs.peakIntegrators)[method] 
 
             params = row[getIndex("params")]
-       
             intrts, smoothed = integrator.getSmoothed(self.levelOneRts, params)
 
             self.rtPlotter.plot(smoothed, x=intrts, index=1)
             ix = self.chooseIntMethod.findText(method)
-            if ix<0: 
+            if ix<0:
                 print "INTEGRATOR NOT AVAILABLE"
             else:
                 self.chooseIntMethod.setCurrentIndex(ix)
@@ -342,13 +303,6 @@ class FeatureExplorer(QDialog):
 def inspectFeatures(ftable):
     import guidata
     app = guidata.qapplication()
-    try:
-        fe = FeatureExplorer(ftable)
-        fe.raise_()
-        fe.exec_()
-    except:
-        # fix stdout and stderr if explorer
-        # terminates not clearly
-        import sys
-        sys.stdout = sys.__stdout__
-        sys.stderr = sys.__stderr__
+    fe = FeatureExplorer(ftable)
+    fe.raise_()
+    fe.exec_()
