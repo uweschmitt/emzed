@@ -2,7 +2,7 @@
 # Spyder's ExternalPythonShell sitecustomize
 
 
-print "patched sitecustomize"
+print "run patched sitecustomize"
 import os
 import sys
 
@@ -351,8 +351,6 @@ if monitor and not os.environ.get('IPYTHON', False):
     except ImportError:
         pass
     del sys.modules['IPython']
-
-print "pythonpath=", os.environ.get("PYTHONPATH")
 
 ## Restoring original PYTHONPATH
 #try:

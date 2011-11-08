@@ -2,7 +2,8 @@
 
 # modules are searched in this order, search ends at first hit
 # configs are read in this order, so local configs overrun global configs
-repository_pathes = [ "C:/TMP", "$HOME/msworkbench_modules" ]
+globalDataPath = "C:/TMP"
+repositoryPathes = [ globalDataPath, "$HOME/msworkbench_modules" ]
 
 
 from libms.RConnect.XCMSConnector import CentwaveFeatureDetector, MatchedFilterFeatureDetector
@@ -41,7 +42,7 @@ import os.path
 
 from string import Template
 
-for p in repository_pathes:
+for p in repositoryPathes:
     pp = os.path.join(Template(p).substitute(os.environ), "configs.py")
     if os.path.exists(pp):
         execfile(pp)

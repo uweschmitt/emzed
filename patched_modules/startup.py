@@ -6,15 +6,15 @@
 
 """modified msworkbench Startup file used by ExternalPythonShell"""
 
-print "patched startup"
+print "run patched startup"
 
 import sys
 import os
+import glob
 
 def __run_pythonstartup_script(namespace):
     filename = os.environ.get('PYTHONSTARTUP')
     if filename and os.path.isfile(filename):
-        print "exec", filename
         execfile(filename, namespace)
 
 def __run_init_commands():
@@ -204,7 +204,6 @@ if __name__ == "__main__":
 
         if __commands__:
             for command in __commands__.split(';'):
-                print "exec ", command
                 exec command
 
     if not __is_ipython_shell() and not __is_ipython_kernel():
@@ -245,16 +244,19 @@ if __name__ == "__main__":
             import pyreadline
             pyreadline.GetOutputFile = lambda: None
         del __is_ipython_shell
-        import libms
-        import ms
-        import batches
         import traceback
-        user_ns = dict(runfile = runfile, debugfile=debugfile, libms=libms, b=batches, ms=ms)
+        user_ns = dict(runfile = runfile, debugfile=debugfile)
+
+        import startup
+        pattern = os.path.join(os.path.abspath(startup.__path__[0]),"*.py")
+        for python_file in sorted(glob.glob(pattern)):
+            execfile(python_file, user_ns)
+
         try:
-            from configs import repository_pathes
+            from configs import repositoryPathes
             from string import Template
 
-            for p in reversed(repository_pathes):
+            for p in reversed(repositoryPathes):
                 sys.path.insert(0, Template(p).substitute(os.environ))
 
         except ImportError, e:
@@ -314,7 +316,13 @@ on Windows platforms (only IPython v0.10 is fully supported).
         #pdb.set_trace()
         ip = IPython.ipapi.get()
         if ip.options.pylab_import_all:
-            ip.ex("del e")
-            ip.ex("del pi")
+            try:
+                ip.ex("del e")
+            except:
+                pass
+            try:
+                ip.ex("del pi")
+            except:
+                pass
             ip.IP.user_config_ns.update(ip.user_ns)
         __ipythonshell__.mainloop()
