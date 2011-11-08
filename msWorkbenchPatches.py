@@ -1,17 +1,51 @@
 # encoding: utf-8
-from libms.intern_utils.patch_decorator import  replace, add
 import sys
-    
+import functools, inspect, sys
+
+def replace( orig_func, target=None, verbose=False):
+
+    def decorator(new_func, target=target):
+        def wrapper(*a, **kw):
+            return new_func(*a, **kw)
+
+        wrapper.isPatched = True
+        if inspect.ismethod(orig_func):
+            if target is None:
+                target =  orig_func.im_class
+            #LLL.debug("replace method %s in %s with %s" %( orig_func, target, new_func))
+            setattr(target, orig_func.__name__, wrapper)
+            setattr(target, "_orig_%s" % orig_func.__name__, orig_func)
+        elif inspect.isfunction(orig_func):
+            if target is None:
+                target = sys.modules[orig_func.__module__]
+            #LLL.debug("replace function %s in %s with %s" %( orig_func, target, new_func))
+            setattr(target, orig_func.func_name, wrapper)
+            setattr(target, "_orig_%s" % orig_func.__name__, orig_func)
+        else:
+            raise Exception("can not wrap %s " % orig_func)
+        return wrapper # not needed as new_func is not modified at all
+    return decorator
+
+
+def add(target, verbose=False):
+
+    def decorator(new_func, target=target):
+        #LLL.debug("add %s to %s" % (new_func, target))
+        setattr(target, new_func.__name__, new_func)
+    return decorator
+
 def patch_oedit():
     # runs in external console, is triggered if someone clickst at items
     # in the variable explorer (aka namespace explorer)
-    import libms.Explorers
-    from  libms.gui.TableDialog import TableDialog
-    import libms.DataStructures
     from  spyderlib.widgets import objecteditor
 
     @replace(objecteditor.dialog_for, verbose=True)
     def dialog_for(obj, obj_name):
+
+        # for faster startup import appear not at top of file but here:
+        import libms.Explorers
+        from  libms.gui.TableDialog import TableDialog
+        import libms.DataStructures
 
         if isinstance(obj, libms.DataStructures.PeakMap):
             dlg = libms.Explorers.MzExplorer()
@@ -33,7 +67,7 @@ def patch_baseshell():
     # shell in spyderlib\widgets\externalshell\pythonshell.py
     # so the sitecustomize will be loaded from patched_modules\
     # and not from spyderlib\widgets\externalshell\
- 
+
     import spyderlib.widgets.externalshell.baseshell as baseshell
     import os.path
     @replace(baseshell.add_pathlist_to_PYTHONPATH, verbose=True)
@@ -141,7 +175,7 @@ def patch_spyder():
         to refresh an invisible widget...)"""
         if self.is_visible and self.isVisible():
             return self.get_view_settings()
-        
+
 def patch_external_shell():
 
     from  spyderlib.widgets import dicteditorutils
