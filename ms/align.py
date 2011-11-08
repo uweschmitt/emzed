@@ -1,4 +1,4 @@
-def alignFeatureTables(tables, destination = None, numBreakpoints=5):
+def alignFeatureTables(tables, destination = None, nPeaks=-1, numBreakpoints=5):
 
     import os.path 
     import pylab
@@ -21,6 +21,12 @@ def alignFeatureTables(tables, destination = None, numBreakpoints=5):
 
     ma = P.MapAlignmentAlgorithmPoseClustering()
     ma.setLogType(P.LogType.CMD)
+    pp = ma.getDefaults()
+    pp.setValue(P.String("superimposer:num_used_points"),
+                P.DataValue(nPeaks),
+                P.String(),
+                P.StringList())
+    ma.setParameters(pp)
 
     imax, refmap = fms[0]
     results = [copy.copy(tables[imax])]

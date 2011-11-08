@@ -8,7 +8,7 @@ def testPoseClustering():
     ft=pickle.load(open("data/ft.pickled","rb"))
     irt = ft.getIndex("rt")
     before = np.array([ r[irt] for r in ft.rows])
-    neu = ms.alignFeatureTables([ft,ft], ".")
+    neu = ms.alignFeatureTables([ft,ft], ".", nPeaks=9999, numBreakpoints=2)
 
     assert len(neu) == 2
     irt = ft.getIndex("rt")

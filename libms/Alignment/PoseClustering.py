@@ -4,7 +4,7 @@ import numpy as np
 import os
 
 def alignPeakMapsWithPoseClustering(peakMaps, refIdx=None,showProgress=False, 
-                                    max_num_peaks_considered=None,
+                                    num_used_peaks=-1,
                                     plotAlignment=False, doShow=True):
     try:
         exps = [ pm.toMSExperiment() for pm in peakMaps ]
@@ -12,13 +12,12 @@ def alignPeakMapsWithPoseClustering(peakMaps, refIdx=None,showProgress=False,
         raise ValueError("need list of peakMaps as input")
 
     algo = pyOpenMS.MapAlignmentAlgorithmPoseClustering()
-    if max_num_peaks_considered is not None:
-        pp = algo.getDefaults()
-        pp.setValue(pyOpenMS.String("max_num_peaks_considered"), 
-                    pyOpenMS.DataValue(max_num_peaks_considered), 
-                    pyOpenMS.String(),
-                    pyOpenMS.StringList())
-        algo.setParameters(pp)
+    pp = algo.getDefaults()
+    pp.setValue(pyOpenMS.String("superimposer:num_used_peaks"), 
+                pyOpenMS.DataValue(num_used_peaks), 
+                pyOpenMS.String(),
+                pyOpenMS.StringList())
+    algo.setParameters(pp)
     if showProgress:
         algo.setLogType(pyOpenMS.LogType.CMD)
     transformations = []
@@ -37,14 +36,10 @@ def alignPeakMapsWithPoseClustering(peakMaps, refIdx=None,showProgress=False,
 
     if plotAlignment:
         import pylab as pl
-        nsub = len(peakMaps)-1 if len(peakMaps)-1 < 4  else 4
-        i = 0
         for pm, trans in zip(peakMaps, transformations):
             datapoints = trans.getDataPoints()
             if datapoints: # one is empty
-                if i%nsub==0:
-                    pl.figure()
-                pl.subplot(nsub,1, 1 + i % nsub)
+                pl.figure()
                 title = os.path.basename(pm.meta.get("source", ""))
                 pl.title(title)
                 # unzip (x,y) tuples and convert to array:
@@ -57,7 +52,6 @@ def alignPeakMapsWithPoseClustering(peakMaps, refIdx=None,showProgress=False,
                 pl.xlabel("RT")
                 pl.ylabel("$\Delta$ RT")
                 pl.legend()
-                i += 1
 
         if doShow:
             pl.show()
