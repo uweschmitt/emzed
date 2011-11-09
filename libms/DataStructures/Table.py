@@ -133,6 +133,8 @@ class Table(object):
         return len(self.rows)
 
     def saveCSV(self, path):
+        if not os.path.splitext(path).upper()==".CSV":
+            raise "%s has wrong filentype extensioe" % path
         with file(path, "w") as fp:
             print >> fp, "; ".join(self.colNames)
             for row in self.rows:
