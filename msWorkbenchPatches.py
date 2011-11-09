@@ -2,6 +2,9 @@
 import sys
 import functools, inspect, sys
 
+from config_logger import do_config
+do_config()
+
 def replace( orig_func, target=None, verbose=False):
 
     def decorator(new_func, target=target):
