@@ -1,6 +1,7 @@
 import pyOpenMS 
 import numpy as np
 from copy import deepcopy, copy
+import os.path
 
 
 class Spectrum(object):
@@ -97,7 +98,8 @@ class PeakMap(object):
         assert type(mse) ==pyOpenMS.MSExperiment
         specs = [ Spectrum.fromMSSpectrum(mse[i]) for i in range(mse.size()) ]
         meta = dict()
-        meta["source"] = mse.getLoadedFilePath().c_str()
+        meta["full_source"] = mse.getLoadedFilePath().c_str()
+        meta["source"] = os.path.basename(meta.get("full_source"))
         return clz(specs, meta) 
 
     def __len__(self):
