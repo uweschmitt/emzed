@@ -9,6 +9,7 @@ from PlottingWidgets import RtPlotter, MzPlotter
 import sys
 import numpy as np
 import configs
+import os
 
 class FeatureExplorer(QDialog):
 
@@ -35,6 +36,10 @@ class FeatureExplorer(QDialog):
         self.setupLayout()
         self.populateTable()
         self.setWindowSize() # depends on table size
+
+        title = os.path.basename(self.ds.meta.get("source",""))
+        title += " aligned=%s" % self.ds.meta.get("aligned", "False")
+        self.setWindowTitle(title)
 
         self.plotMz()
 

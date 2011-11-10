@@ -1,5 +1,5 @@
 import pyOpenMS as P
-import operator, copy
+import operator, copy, os, itertools
 
 
 def formatSeconds(seconds):
@@ -132,15 +132,19 @@ class Table(object):
     def __len__(self):
         return len(self.rows)
 
-    def saveCSV(self, path):
-        with file(path, "w") as fp:
-            print >> fp, "; ".join(self.colNames)
-            for row in self.rows:
-                print >> fp, "; ".join(map(str, row))
-
+    def storeCSV(self, path):
+        if not os.path.splitext(path)[1].upper()==".CSV":
+            raise Exception("%s has wrong filentype extensioe" % path)
+        it = itertools
+        for p in it.chain([path], ( "%s.%d" % (path, i) for i in it.count(1))):
+            if not os.path.exists(p):
+                print "write ", p
+                with file(p, "w") as fp:
+                    print >> fp, "; ".join(self.colNames)
+                    for row in self.rows:
+                        print >> fp, "; ".join(map(str, row))
+                break
         return self
-             
-            
 
 class FeatureTable(Table):
 
