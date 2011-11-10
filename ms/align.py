@@ -15,9 +15,6 @@ def alignFeatureTables(tables, destination = None, nPeaks=-1, numBreakpoints=5):
 
     assert os.path.isdir(os.path.abspath(destination)), "target is no directory"
 
-    fms = [(i, table.toOpenMSFeatureMap()) for i, table in enumerate(tables)]
-    # sort descending in num features
-    fms.sort(key=lambda (i, fm): -fm.size())
 
     ma = P.MapAlignmentAlgorithmPoseClustering()
     ma.setLogType(P.LogType.CMD)
@@ -28,11 +25,16 @@ def alignFeatureTables(tables, destination = None, nPeaks=-1, numBreakpoints=5):
                 P.StringList())
     ma.setParameters(pp)
 
-    imax, refmap = fms[0]
-    results = [copy.copy(tables[imax])]
-    for i, fm in fms[1:]:
-        table = copy.deepcopy(tables[i])
+    fms = [table.toOpenMSFeatureMap() for table in tables]
+    refmap = max(fms, key=lambda fm: fm.size())
+    results = []
+    for fm, table in zip(fms, tables):
+        table = copy.deepcopy(table)
         filename = os.path.basename(table.ds.meta["source"])
+        if fm is refmap:
+            results.append(table)
+            continue
+
         print "align", filename
         ts = []
         ma.alignFeatureMaps([refmap, fm], ts)
