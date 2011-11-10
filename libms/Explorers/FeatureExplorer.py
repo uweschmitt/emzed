@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from Pyt4.QtGui import  *
-from Pyt4.QtCore import *
+from PyQt4.QtGui import  *
+from PyQt4.QtCore import *
 
 from ..gui import helpers
 from PlottingWidgets import RtPlotter, MzPlotter
@@ -11,11 +11,11 @@ import numpy as np
 import configs
 import os
 
-class FeatureExplorer(Dialog):
+class FeatureExplorer(QDialog):
 
     def __init__(self, ftable):
-        Dialog.__init__(self)
-        self.setWindowFlags(t.Window)
+        QDialog.__init__(self)
+        self.setWindowFlags(Qt.Window)
 
         self.ftable = ftable.requireColumn("mz") \
                             .requireColumn("mzmin") \
@@ -40,10 +40,11 @@ class FeatureExplorer(Dialog):
         title = os.path.basename(self.ds.meta.get("source",""))
         title += " aligned=%s" % self.ds.meta.get("aligned", "False")
         self.setWindowTitle(title)
+
         self.plotMz()
 
         self.setMinimumHeight(600)
-        sizePolicy = SizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.setSizePolicy(sizePolicy)
         self.setSizeGripEnabled(True)
 
@@ -79,19 +80,19 @@ class FeatureExplorer(Dialog):
         self.tw.setMinimumHeight(150)
 
     def setupLayout(self):
-        vlayouto = VBoxLayout()
+        vlayouto = QVBoxLayout()
         self.setLayout(vlayouto)
 
-        vsplitter = Splitter()
-        vsplitter.setOrientation(t.Vertical)
+        vsplitter = QSplitter()
+        vsplitter.setOrientation(Qt.Vertical)
         vsplitter.setOpaqueResize(False)
 
-        hsplitter = Splitter()
+        hsplitter = QSplitter()
         hsplitter.setOpaqueResize(False)
         hsplitter.addWidget(self.rtPlotter.widget)
 
         if self.integratedFeatures:
-            vlayout2 = VBoxLayout()
+            vlayout2 = QVBoxLayout()
             vlayout2.addWidget(self.intLabel)
             vlayout2.addWidget(self.chooseIntMethod)
             vlayout2.addWidget(self.reintegrateButton)
@@ -99,11 +100,11 @@ class FeatureExplorer(Dialog):
 
             vlayout2.setSpacing(10)
             vlayout2.setMargin(5)
-            vlayout2.setAlignment(self.intLabel, t.AlignTop)
-            vlayout2.setAlignment(self.chooseIntMethod, t.AlignTop)
-            vlayout2.setAlignment(self.reintegrateButton, t.AlignTop)
+            vlayout2.setAlignment(self.intLabel, Qt.AlignTop)
+            vlayout2.setAlignment(self.chooseIntMethod, Qt.AlignTop)
+            vlayout2.setAlignment(self.reintegrateButton, Qt.AlignTop)
 
-            frame = Frame()
+            frame = QFrame()
             frame.setLayout(vlayout2)
             hsplitter.addWidget(frame)
 
@@ -127,14 +128,14 @@ class FeatureExplorer(Dialog):
         self.rtPlotter.setMinimumSize(300, 150)
         self.mzPlotter.setMinimumSize(300, 150)
 
-        pol = SizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+        pol = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
         pol.setVerticalStretch(5)
         self.rtPlotter.widget.setSizePolicy(pol)
         self.mzPlotter.widget.setSizePolicy(pol)
 
-        self.tw = TableWidget()
+        self.tw = QTableWidget()
 
-        pol = SizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+        pol = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
         pol.setVerticalStretch(5)
         self.tw.setSizePolicy(pol)
 
@@ -146,14 +147,14 @@ class FeatureExplorer(Dialog):
                      self.cellClicked)
 
         if self.integratedFeatures:
-            self.intLabel = Label("Integration")
-            self.chooseIntMethod = ComboBox()
+            self.intLabel = QLabel("Integration")
+            self.chooseIntMethod = QComboBox()
             for name, _ in configs.peakIntegrators:
                 self.chooseIntMethod.addItem(name)
             self.connect(self.chooseIntMethod, 
                          SIGNAL("currentIndexChanged(int)"), 
                          self.intMethodChanged)
-            self.reintegrateButton = PushButton()
+            self.reintegrateButton = QPushButton()
             self.reintegrateButton.setText("Integrate")
             self.connect(self.reintegrateButton, SIGNAL("clicked()"), 
                          self.doIntegrate)
