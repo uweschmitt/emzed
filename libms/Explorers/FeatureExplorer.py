@@ -37,8 +37,8 @@ class FeatureExplorer(QDialog):
         self.populateTable()
         self.setWindowSize() # depends on table size
 
-        title = os.path.basename(self.ds.meta.get("source",""))
-        title += " aligned=%s" % self.ds.meta.get("aligned", "False")
+        title = os.path.basename(ftable.meta.get("source",""))
+        title += " aligned=%s" % ftable.meta.get("aligned", "False")
         self.setWindowTitle(title)
 
         self.plotMz()
