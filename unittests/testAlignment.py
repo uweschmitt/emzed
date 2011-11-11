@@ -3,25 +3,35 @@ import ms
 import os
 import pickle
 import numpy as np
+import copy
 
 def testPoseClustering():
     ft=pickle.load(open("data/ft.pickled","rb"))
     irt = ft.getIndex("rt")
     before = np.array([ r[irt] for r in ft.rows])
-    neu = ms.alignFeatureTables([ft,ft], ".", nPeaks=9999, numBreakpoints=2)
 
-    assert len(neu) == 2
+    # make copy and shift
+    ft2=copy.deepcopy(ft)
+    ix = ft2.getIndex("rt")
+    for r in ft2.rows:
+        r[ix] += 2.0
+    # delete one row, so ft should become reference map !
+    del ft2.rows[-1]
+    
+    ftneu, ft2neu = ms.alignFeatureTables([ft,ft2], ".", nPeaks=9999, numBreakpoints=2)
+
     irt = ft.getIndex("rt")
+    def getrt(t):
+        return np.array([r[irt] for r in t.rows])
 
-    after = np.array([ r[irt] for r in ft.rows])
-    # args should not be changed !
-    assert np.all(before==after)
+    # refmap ft should not be changed:
+    assert np.all(getrt(ftneu) == getrt(ft))
+    # but ft2 should:
+    assert np.linalg.norm(getrt(ft2neu) - getrt(ft2)) > 8.0
 
-    # result should be little aligned:
-    for ft in neu:
-        assert "aligned" in ft.meta
-        after = np.array([ r[irt] for r in ft.rows])
-        assert np.linalg.norm(before-after)<1e-3
+    # now ftneu and ft2neu should be very near.
+    # remenber: ft2 has not as much rows as ft, so:
+    assert np.linalg.norm(getrt(ft2neu) - getrt(ftneu)[:-1]) < 1e-6
 
     # alignmen should produce alignment map:
     assert os.path.exists("zeros_aligned.png")
