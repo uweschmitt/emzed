@@ -1,6 +1,6 @@
 def alignFeatureTables(tables, destination = None, nPeaks=-1, numBreakpoints=5):
 
-    import os.path 
+    import os.path
     import pylab
     import numpy as np
     import pyOpenMS as P
@@ -15,7 +15,7 @@ def alignFeatureTables(tables, destination = None, nPeaks=-1, numBreakpoints=5):
 
     assert os.path.isdir(os.path.abspath(destination)), "target is no directory"
 
-
+    # setup algorithm
     ma = P.MapAlignmentAlgorithmPoseClustering()
     ma.setLogType(P.LogType.CMD)
     pp = ma.getDefaults()
@@ -25,56 +25,86 @@ def alignFeatureTables(tables, destination = None, nPeaks=-1, numBreakpoints=5):
                 P.StringList())
     ma.setParameters(pp)
 
+    # convert to pyOpenMS types and find map with max num features which
+    # is taken as refamp:
     fms = [table.toOpenMSFeatureMap() for table in tables]
     refmap = max(fms, key=lambda fm: fm.size())
+    print
+    print "refmap is", os.path.basename(refmap.get("source"))
+    print
     results = []
     for fm, table in zip(fms, tables):
-        table = copy.deepcopy(table)
-        filename = os.path.basename(table.ds.meta["source"])
+        table = copy.deepcopy(table) # so we do not modify existing table !
         if fm is refmap:
             results.append(table)
             continue
-
+        filename = os.path.basename(table.ds.meta["source"])
         print "align", filename
-        # be careful: alignFeatureMaps modifies second arg,
-        # so you MUST NOT put the arg as [] into this
-        # function ! in this case you have no access to the calculated
-        # transformations.
-        ts = []
-        ma.alignFeatureMaps([refmap, fm], ts)
-        assert len(ts) == 2 # ts is now filled !!!!
-
-        bps = numBreakpoints
-        pp = P.Param()
-        pp.setValue(P.String("num_breakpoints"), P.DataValue(bps), P.String(),
-                                                 P.StringList())
-        ma.fitModel(P.String("b_spline"), pp, ts)
-        # be careful: transformFeatureMaps modifies first arg,
-        # so you MUST NOT put the args as [refmamp, fm] into this
-        # function ! in this case you have no access to the transformed
-        # data.
-        toalign = [refmap, fm]
-        ma.transformFeatureMaps(toalign, ts)
-        fmneu = toalign[1]
-        assert fmneu is not fm # arg is modified !
-        # transformation done 
-
-        dtp = ts[1].getDataPoints()
-        x,y = zip(*dtp)
-        x = np.array(x)
-        y = np.array(y)
-        pylab.clf()
-        pylab.plot(x, y-x, ".")
-        x.sort()
-        yn = [ ts[1].apply(xi) for xi in x]
-        pylab.plot(x, yn-x)
-        filename = os.path.splitext(filename)[0]+"_aligned.png"
-        target_path = os.path.join(destination, filename)
-        print "save", filename
-        pylab.savefig(target_path)
-        table.alignAccordingTo(fmneu)
+        fnmeu, ts = __align(ma, refmpa, fm, numBreakpoints) 
+        __plot_and_save(ts, filename) 
+        __adaptRtValuesInTable(table, fmneu)
         results.append(table)
     for t in results:
         t.meta["aligned"] = True
     return results
 
+def __align(ma, refmap, fm, numBreakpoints):
+    # be careful: alignFeatureMaps modifies second arg,
+    # so you MUST NOT put the arg as [] into this
+    # function ! in this case you have no access to the calculated
+    # transformations.
+    ts = []
+    ma.alignFeatureMaps([refmap, fm], ts)
+    assert len(ts) == 2 # ts is now filled !!!!
+
+    # fit transformations with a spline
+    bps = numBreakpoints
+    pp = P.Param()
+    pp.setValue(P.String("num_breakpoints"), P.DataValue(bps), P.String(),
+                                             P.StringList())
+    ma.fitModel(P.String("b_spline"), pp, ts)
+    # be careful: transformFeatureMaps modifies first arg,
+    # so you MUST NOT put the args as [refmamp, fm] into this
+    # function ! in this case you have no access to the transformed
+    # data.
+    toalign = [refmap, fm]
+    ma.transformFeatureMaps(toalign, ts)
+    fmneu = toalign[1]
+    assert fmneu is not fm # arg is modified !
+    # transformation done 
+    return fmneu, ts
+
+def __plot_and_save(ts, filename):
+    dtp = ts[1].getDataPoints()
+    x,y = zip(*dtp)
+    x = np.array(x)
+    y = np.array(y)
+    pylab.clf()
+    pylab.plot(x, y-x, ".")
+    x.sort()
+    yn = [ ts[1].apply(xi) for xi in x]
+    pylab.plot(x, yn-x)
+    filename = os.path.splitext(filename)[0]+"_aligned.png"
+    target_path = os.path.join(destination, filename)
+    print "save", filename
+    pylab.savefig(target_path)
+
+def __adaptRtValuesInTable(tableOld, fmapAligned):
+    assert isinstance(tableOld, Table)
+    assert isinstance(fmapAligned, P.PeakMap)
+
+    tableOld.requireFeatures()
+    fmapAligned.requireFeatures()
+    # test for matching
+    assert fmapAligned.size() == len(tableOld)
+    irt = tableOld.getIndex("rt")
+    irtmin = tableOld.getIndex("rtmin")
+    irtmax = tableOld.getIndex("rtmax")
+    for i in range(len(tableOld)):
+        row = tableOld.rows[i]
+        rtold = row[irt]
+        rnew = fmapAligned[i].getRT()
+        diff = rnew - rtold
+        row[irt] = rnew
+        row[irtmin] += diff
+        row[irtmax] += diff
