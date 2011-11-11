@@ -49,7 +49,6 @@ def alignFeatureTables(tables, destination = None, nPeaks=-1, numBreakpoints=5):
         pp.setValue(P.String("num_breakpoints"), P.DataValue(bps), P.String(),
                                                  P.StringList())
         ma.fitModel(P.String("b_spline"), pp, ts)
-
         # be careful: transformFeatureMaps modifies first arg,
         # so you MUST NOT put the args as [refmamp, fm] into this
         # function ! in this case you have no access to the transformed
