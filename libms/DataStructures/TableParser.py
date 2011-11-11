@@ -1,9 +1,7 @@
 from Table import Table
 
-
 class XCMSFeatureParser(object):
 
-    
     typePrecedences = { int: (0, int) , float: (1, float), str: (2, str) }
 
     typeDefaults = dict( mz= float, mzmin= float, mzmax=float,
@@ -35,23 +33,18 @@ class XCMSFeatureParser(object):
                 return float(val)
             except ValueError:
                 return str(val)
-  
     @classmethod
-    def parse(clz, lines, shiftRt=0):
+    def parse(clz, lines):
         columnNames = [ n.strip('"') for n in lines[0].split() ]
         numCol = len(columnNames)
         rows = []
         for line in lines[1:]:
             row= [clz.bestConvert(c) for c in line.split()[1:]]
-            for i, name in enumerate(columnNames):
-                if name in ["rt", "rtmin", "rtmax"]:
-                    row[i] += shiftRt
             rows.append(row)
 
         if rows:
             columns     = ( (row[i] for row in rows) for i in range(numCol) )
-            columnTypes = [clz.commonTypeOfColumn(col) for col in columns ] 
-            
+            columnTypes = [clz.commonTypeOfColumn(col) for col in columns ]
             knownTypes = [ (i, clz.typeDefaults.get(columnNames[i] )) for i in range(numCol) ]
 
             for i, type_ in knownTypes:
@@ -65,7 +58,6 @@ class XCMSFeatureParser(object):
             for i, format_ in knownFormats:
                 if format_ is not None:
                     formats[i] = format_
-            
         else:
             columnTypes = numCol * (str, )
             formats     = numCol * ("%r", )
@@ -79,14 +71,6 @@ class XCMSFeatureParser(object):
         modlines.insert(0, lines[0])
         return clz.parse(modlines)
 
-
-   
-
-
-
-
-     
 if __name__ == "__main__":
-    
     table = XCMSFeatureParser.parse(file("output_from_xcms.csv").readlines())
 
