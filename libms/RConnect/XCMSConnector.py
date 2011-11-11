@@ -93,12 +93,7 @@ class CentwaveFeatureDetector(object):
             raise Exception("empty peakmap")
 
         peakMap.spectra.sort(key = lambda s: s.rt)
-        minRt = peakMap.spectra[0].rt
-        # xcms does not like rt <= 0, so we shift that rt starts with 1.0:
-        # we have to undo this shift later when parsing the output of xcms
-        shift = minRt-1.0 
-        peakMap.shiftRt(-shift)
-        
+
         with TemporaryDirectoryWithBackup() as td:
 
             temp_input = os.path.join(td, "input.mzData")
@@ -111,9 +106,9 @@ class CentwaveFeatureDetector(object):
             dd["temp_output"] = temp_output
             dd["fitgauss"] = str(dd["fitgauss"]).upper()
             dd["verbose_columns"] = str(dd["verbose_columns"]).upper()
-        
+
             script = """
-                        if (require("xcms") == FALSE) 
+                        if (require("xcms") == FALSE)
                         {
                             source("http://bioconductor.org/biocLite.R")
                             biocLite("xcms", dep=T)
@@ -140,13 +135,11 @@ class CentwaveFeatureDetector(object):
 
             # parse csv and shift rt related values to undo rt modifiaction
             # as described above
-            table = XCMSFeatureParser.parse(file(temp_output).readlines(), 
-                                            shiftRt=shift)
-            table.meta["xcms_centwave_config"] = dd
-            table.meta["source"] = peakMap.meta.get("source")
-            return FeatureTable.fromTableAndMap(table, peakMap)
+            table = XCMSFeatureParser.parse(file(temp_output).readlines())
+            table.addConstantColumn("peakmap", object, None, peakMap)
+            table.addConstantColumn("centwave_config", dict, None, dd)
+            return table
 
-            
 class MatchedFilterFeatureDetector(object):
 
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "matchedFilter.txt")
@@ -228,11 +221,8 @@ class MatchedFilterFeatureDetector(object):
             if RExecutor().run_command(script, td) != 4711:
                 raise Exception("R opreation failed")
 
-            # parse csv and shift rt related values to undo rt modifiaction
-            # as described above
-            table = XCMSFeatureParser.parse(file(temp_output).readlines(), 
-                                            shiftRt=shift)
-            table.meta["xcms_matchedfilters_config"] = dd
-            table.meta["source"] = peakMap.meta.get("source")
-            return FeatureTable.fromTableAndMap(table, peakMap)
-
+            # parse csv and 
+            table = XCMSFeatureParser.parse(file(temp_output).readlines())
+            table.addConstantColumn("peakmap", object, None, peakMap)
+            table.addConstantColumn("matchedfilter_config", dict, None, dd)
+            return table

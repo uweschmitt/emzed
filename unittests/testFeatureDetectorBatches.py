@@ -15,9 +15,9 @@ def testRunCentwave():
     assert len(tables) == 1
     table=tables[0]
     assert len(table) == 0, len(table)
-    assert len(table.colNames) ==  11, len(table.colNames)
-    assert len(table.colTypes) ==  11
-    
+    assert len(table.colNames) ==  13, len(table.colNames)
+    assert len(table.colTypes) ==  13
+
 def testMatcheFilter():
 
     try:
@@ -29,5 +29,5 @@ def testMatcheFilter():
     assert len(tables) == 1
     table=tables[0]
     assert len(table) == 742, len(table)
-    assert len(table.colNames) ==  13, len(table.colNames)
-    assert len(table.colTypes) ==  13
+    assert len(table.colNames) ==  15, len(table.colNames)
+    assert len(table.colTypes) ==  15
