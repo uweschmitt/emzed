@@ -87,7 +87,7 @@ def runCentwave(pattern=None, destination=None, configid=None, **params):
             basename, ext = os.path.splitext(os.path.basename(path))
             savePath = os.path.join(destinationDir, basename+".csv")
             print "save to ", savePath
-            result.saveCSV(savePath)
+            result.storeCSV(savePath)
 
     return P(configs.centwaveConfig, True).run(pattern, destination, configid, **params)
             
@@ -180,7 +180,7 @@ def runMatchedFilter(pattern=None, destination=None, configid=None, **params):
             basename, ext = os.path.splitext(os.path.basename(path))
             savePath = os.path.join(destinationDir, basename+".csv")
             print "save to ", savePath
-            result.saveCSV(savePath)
+            result.storeCSV(savePath)
 
 
     return P(configs.matchedFilterConfig, True).run(pattern, destination, configid, **params)
