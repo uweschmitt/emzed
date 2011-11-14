@@ -16,7 +16,7 @@ class FD(BatchRunner):
             print e
             print "reading FAILED"
             return None
-        
+
         ds = ds.filter(lambda spec: spec.msLevel == 1)
         table = self.det.process(ds)
         table.title = path
@@ -50,7 +50,7 @@ def runCentwave(pattern=None, destination=None, configid=None, **params):
          if you have a single config this one is used automatically
 
          examples:
-                
+
               runCentwave():
                      asks for source files and target directory
                      asks for config if multiple configs are defined
@@ -155,5 +155,5 @@ def runMatchedFilter(pattern=None, destination=None, configid=None, **params):
             self.det = libms.RConnect.MatchedFilterFeatureDetector(**config)
 
     return P(configs.matchedFilterConfig, True).run(pattern, destination, configid, **params)
-            
+
 runMatchedFilter.__doc__ += __libmsrconnect.MatchedFilterFeatureDetector.__doc__
