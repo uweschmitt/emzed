@@ -1,5 +1,6 @@
 import pyOpenMS as P
-import operator, copy, os, itertools
+import operator, copy, os, itertools, re, numpy
+from   ExpressionTree import Node, Column
 
 
 def formatSeconds(seconds):
@@ -20,7 +21,6 @@ def _formatter(f):
     return format
 
 
-
 class Table(object):
 
     def __init__(self, colNames, colTypes, colFormats, rows=None, title=None,
@@ -29,16 +29,31 @@ class Table(object):
         if rows is not None:
             for row in rows:
                 assert len(row) == len(colNames)
+        else:
+            rows = []
         self.colNames = list(colNames)
         self.colTypes = list(colTypes)
         self.rows     = rows
         self.colFormats = list(colFormats)
 
-        self.colIndizes = dict((n, i) for i, n in enumerate(colNames))
         self.title = title
         self.meta = copy.deepcopy(meta) if meta is not None else dict()
         self.sources = () if sources is None else tuple(sources)
+        self.primaryIndex = {}
         self.setupFormatters()
+        self.updateIndices()
+        self.emptyColumnCache()
+        self.name = str(self)
+        self.__str__ = self.__str__inaktiv
+
+    def __str__inaktiv(self):
+        return self.name
+
+    def emptyColumnCache(self):
+        self.columnCache = dict()
+
+    def updateIndices(self):
+        self.colIndizes = dict((n, i) for i, n in enumerate(self.colNames))
 
     def getVisibleCols(self):
         return [n for (n, f) in zip (self.colNames, self.colFormats)\
@@ -47,22 +62,33 @@ class Table(object):
     def setupFormatters(self):
         self.colFormatters = [_formatter(f) for f in self.colFormats ]
 
-    def __getstate__(self):
-        """ for pickling. self.colFormatters can not be pickled """
-        dd = self.__dict__.copy()
-        del dd["colFormatters"]
-        return dd
-
     def __getattr__(self,name):
         if name in self.colNames:
-            ix = self.getIndex(name)
-            column = [ row[ix] for row in self.rows ]
-            return column
+            return self.getColumn(name)
         raise AttributeError("%s has no attribute %s" % (self, name))
+
+    def getColumn(self, name):
+        if name in self.columnCache:
+            return self.columnCache[name]
+        ix = self.getIndex(name)
+        values = [ row[ix] for row in self.rows ]
+        rv = Column(self, name, values)
+        self.columnCache[name] = rv
+        return rv
+
+    def __getstate__(self):
+        """ for pickling. """
+        dd = self.__dict__.copy()
+        # self.colFormatters can not be pickled 
+        del dd["colFormatters"]
+        # for effiency:
+        del dd["columnCache"]
+        return dd
 
     def __setstate__(self, dd):
         self.__dict__ = dd
         self.setupFormatters()
+        self.emptyColumnCache()
 
     def __iter__(self):
         return iter(self.rows)
@@ -70,7 +96,6 @@ class Table(object):
     def requireColumn(self, name):
         if not name in self.colNames:
             raise Exception("column %r required" % name)
-        return self
 
     def getIndex(self, colName):
         idx = self.colIndizes.get(colName, None)
@@ -78,17 +103,24 @@ class Table(object):
             raise Exception("colname %s not in table" % colName)
         return idx
 
+    #@memoize
+    def getColumnCtx(self, needed):
+        names = [ n for (t,n) in needed if t==self ]
+        return dict((n, (self.getColumn(n).getValues(),
+                         self.primaryIndex.get(n))) for n in names)
+
     def addEnumeration(self, colname="id"):
+        """ adds enumerated column as first column to table inplace """
+
         if colname in self.colNames:
             raise Exception("column with name %s already exists")
-
         self.colNames.insert(0, colname)
         self.colTypes.insert(0, int)
         self.colFormats.insert(0, "%d")
         for i, r in enumerate(self.rows):
             r.insert(0, i)
         self.setupFormatters()
-        return self
+        self.updateIndices()
 
     def sortBy(self, colName, ascending=True):
         idx = self.colIndizes[colName]
@@ -97,7 +129,6 @@ class Table(object):
             self.primaryIndex = {colName: True}
         else:
             self.primaryIndex = {}
-        return self
 
     def addConstantColumn(self, name, type_, format, value=None):
         # HIER MIT EXPRESSION !
@@ -107,7 +138,7 @@ class Table(object):
         self.colTypes.append(type_)
         self.colFormats.append(format)
         self.setupFormatters()
-        return self
+        self.updateIndices()
 
     def extractColumns(self, names):
         indices = [self.getIndex(name)  for name in names]
@@ -121,7 +152,6 @@ class Table(object):
             if k not in self.colNames:
                 raise Exception("colum %s does not exist" % k)
         self.colNames = [ kw.get(n,n) for n in self.colNames]
-        return self
 
     def __len__(self):
         return len(self.rows)
@@ -138,7 +168,93 @@ class Table(object):
                     for row in self.rows:
                         print >> fp, "; ".join(map(str, row))
                 break
-        return self
+
+    def buildEmptyClone(self):
+        return Table(self.colNames, self.colTypes, self.colFormats, [],
+                     self.title, self.meta.copy())
+
+    def filter(self, expr, debug = False):
+        assert isinstance(expr, Node)
+        if debug:
+            print "#", expr
+
+        ctx = { self: self.getColumnCtx(expr.neededColumns()) }
+        flags, _ = expr.eval(ctx)
+        rv = self.buildEmptyClone()
+        rv.rows = [ self.rows[n] for n, i in enumerate(flags) if i ]
+        return rv
+
+    def join(self, t, expr, debug = False):
+        assert isinstance(t, Table)
+        assert isinstance(expr, Node)
+        if debug:
+            print "# %s.join(%s, %s)" % (self.name, t.name, expr)
+        tctx = t.getColumnCtx(expr.neededColumns())
+        colNames = ["%s_1" % n for n in self.colNames]\
+                 + ["%s_2" % n for n in t.colNames]
+
+        colFormats = self.colFormats + t.colFormats
+        colTypes = self.colTypes + t.colTypes
+        sources = ( self.sources, t.sources )
+        title = "%s vs %s" % (self.title, t.title)
+        meta = {self: self.meta.copy(), t: t.meta.copy()}
+
+        rows = []
+        for r1 in self.rows:
+            r1ctx = dict((n, (v, None)) for (n,v) in zip(self.colNames, r1))
+            ctx = {self:r1ctx, t:tctx}
+            flags,_ = expr.eval(ctx)
+            rows.extend([ r1 + t.rows[n] for (n,i) in enumerate(flags) if i])
+
+        return Table(colNames, colTypes, colFormats, rows, title, meta, sources)
+
+    def leftJoin(self, t, expr, debug = False):
+        assert isinstance(t, Table)
+        assert isinstance(expr, Node)
+        if debug:
+            print "# %s.leftJoin(%s, %s)" % (self.name, t.name, expr)
+        tctx = t.getColumnCtx(expr.neededColumns())
+        colNames = ["%s_1" % n for n in self.colNames]\
+                 + ["%s_2" % n for n in t.colNames]
+
+        colFormats = self.colFormats + t.colFormats
+        colTypes = self.colTypes + t.colTypes
+        sources = ( self.sources, t.sources )
+        title = "%s vs %s" % (self.title, t.title)
+        meta = {self: self.meta.copy(), t: t.meta.copy()}
+
+        filler = [None] * len(t.colNames)
+
+        rows = []
+        for r1 in self.rows:
+            r1ctx = dict((n, (v, None)) for (n,v) in zip(self.colNames, r1))
+            ctx = {self:r1ctx, t:tctx}
+            flags,_ = expr.eval(ctx)
+            if numpy.any(flags):
+                rows.extend([r1 + t.rows[n] for (n,i) in enumerate(flags) if i])
+            else:
+                rows.extend([r1 + filler])
+
+        return Table(colNames, colTypes, colFormats, rows, title, meta, sources)
+
+
+    def _print(self, w=12):
+        #inner method is private, else the object can not be pickled !
+        def _p(vals, w=w):
+            expr = "%%-%ds" % w
+            for v in vals:
+                print (expr % v), 
+
+        _p(self.colNames)
+        print
+        _p(re.match("<type '((\w|[.])+)'>", str(n)).groups()[0] 
+                                                   for n in self.colTypes)
+        print
+        _p(["------"] * len(self.colNames))
+        print
+        for row in self.rows:
+            _p(row)
+            print
 
 
 def requireFeatures(table):
