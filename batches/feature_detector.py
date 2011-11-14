@@ -1,3 +1,37 @@
+from BatchRunner import BatchRunner
+class FD(BatchRunner):
+
+    def __init__(self, *a, **kw):
+        import libms.RConnect
+        libms.RConnect.RExecutor.findRHome() # throws exception if R is not found
+        super(FD, self).__init__(*a, **kw)
+
+    def process(self, path):
+        import ms
+
+        try:
+            print "read ", path
+            ds = ms.loadPeakMap(path)
+        except Exception, e:
+            print e
+            print "reading FAILED"
+            return None
+        
+        ds = ds.filter(lambda spec: spec.msLevel == 1)
+        table = self.det.process(ds)
+        table.title = path
+
+        print len(table), "features found"
+        return table
+
+    def write(self, result, destinationDir, path):
+        import os.path
+        basename, ext = os.path.splitext(os.path.basename(path))
+        savePath = os.path.join(destinationDir, basename+".csv")
+        print "save to ", savePath
+        result.storeCSV(savePath)
+
+
 
 def runCentwave(pattern=None, destination=None, configid=None, **params):
 
@@ -49,45 +83,13 @@ def runCentwave(pattern=None, destination=None, configid=None, **params):
 
     """
 
-
-    from BatchRunner import BatchRunner
     import configs
-    import ms
-    import os.path
     import libms.RConnect
 
-    class P(BatchRunner):
-
-        def __init__(self, *a, **kw):
-            libms.RConnect.RExecutor.findRHome() # throws exception if R is not found
-            super(P, self).__init__(*a, **kw)
+    class P(FD):
 
         def setup(self, config):
             self.det = libms.RConnect.CentwaveFeatureDetector(**config)
-
-        def process(self, path):
-            
-            try:
-                print "read ", path
-                ds = ms.loadPeakMap(path)
-            except Exception, e:
-                print e
-                print "reading FAILED"
-                return None
-
-            ds = ds.filter(lambda spec: spec.msLevel == 1)
-            
-            table = self.det.process(ds)
-            table.title = path
-
-            print len(table), "features found"
-            return table
-
-        def write(self, result, destinationDir, path):
-            basename, ext = os.path.splitext(os.path.basename(path))
-            savePath = os.path.join(destinationDir, basename+".csv")
-            print "save to ", savePath
-            result.storeCSV(savePath)
 
     return P(configs.centwaveConfig, True).run(pattern, destination, configid, **params)
             
@@ -144,44 +146,13 @@ def runMatchedFilter(pattern=None, destination=None, configid=None, **params):
 
     """
 
-    from BatchRunner import BatchRunner
-    import configs
-    import ms
-    import os.path
     import libms.RConnect
+    import configs
 
-    class P(BatchRunner):
-
-        def __init__(self, *a, **kw):
-            libms.RConnect.RExecutor.findRHome() # throws exception if R is not found
-            super(P, self).__init__(*a, **kw)
+    class P(FD):
 
         def setup(self, config):
             self.det = libms.RConnect.MatchedFilterFeatureDetector(**config)
-
-        def process(self, path):
-
-            try:
-                print "read ", path
-                ds = ms.loadPeakMap(path)
-            except Exception, e:
-                print e
-                print "reading FAILED"
-                return None
-            
-            ds = ds.filter(lambda spec: spec.msLevel == 1)
-            table = self.det.process(ds)
-            table.title = path
-
-            print len(table), "features found"
-            return table
-
-        def write(self, result, destinationDir, path):
-            basename, ext = os.path.splitext(os.path.basename(path))
-            savePath = os.path.join(destinationDir, basename+".csv")
-            print "save to ", savePath
-            result.storeCSV(savePath)
-
 
     return P(configs.matchedFilterConfig, True).run(pattern, destination, configid, **params)
             

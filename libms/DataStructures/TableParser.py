@@ -62,7 +62,7 @@ class XCMSFeatureParser(object):
             columnTypes = numCol * (str, )
             formats     = numCol * ("%r", )
 
-        return Table(columnNames, columnTypes, rows, formats)
+        return Table(columnNames, columnTypes, formats, rows)
 
     @classmethod
     def fromCSV(clz, path):

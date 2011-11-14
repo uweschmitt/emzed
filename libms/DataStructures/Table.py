@@ -1,5 +1,5 @@
 import pyOpenMS as P
-import operator, copy, os# , itertools
+import operator, copy, os, itertools
 
 
 def formatSeconds(seconds):
