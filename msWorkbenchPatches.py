@@ -95,7 +95,10 @@ def patch_userconfig():
             ("console" ,"pythonstartup/custom") : False,
             ("console" ,"open_ipython_at_startup") : True, 
             ("console" ,"open_python_at_startup") : False, 
+            # imports are slow and insecure :
+            ("inspector", "automatic_import") : False, 
         }
+
         value = override_defaults.get((section,option))
         if value is not None:
             print "override default for", section, option, value
@@ -110,6 +113,7 @@ def patch_baseconfig():
             import os
             return os.path.join(os.environ.get("MSWORKBENCH_HOME"), "patched_modules", "startup.py")
         return baseconfig._orig_get_module_source_path(modname, basename)
+
 
 def patch_spyder():
     patch_userconfig()
