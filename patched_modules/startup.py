@@ -262,6 +262,10 @@ if __name__ == "__main__":
         except ImportError, e:
             traceback.print_exc(file=sys.stdout)
 
+        # ipython does not like __builtins__ in namespace:
+        if "__builtins__" in user_ns:
+            del user_ns["__builtins__"]
+
         try:
             # IPython >=v0.11
             # Support for these recent versions of IPython is limited:
