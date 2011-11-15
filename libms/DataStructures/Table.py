@@ -37,6 +37,7 @@ class Table(object):
         self.rows     = rows
         self.colFormats = list(colFormats)
 
+        self.colIndizes = dict((n, i) for i, n in enumerate(colNames))
         self.title = title
         self.meta = copy.deepcopy(meta) if meta is not None else dict()
         self.sources = () if sources is None else tuple(sources)
@@ -93,6 +94,7 @@ class Table(object):
     def requireColumn(self, name):
         if not name in self.colNames:
             raise Exception("column %r required" % name)
+        return self
 
     def getIndex(self, colName):
         idx = self.colIndizes.get(colName, None)
@@ -313,3 +315,51 @@ def toOpenMSFeatureMap(table):
             f.setIntensity(1000.0)
         fm.push_back(f)
     return fm
+
+
+def requireFeatures(table):
+    table.requireColumn("mzmin")
+    table.requireColumn("mzmax")
+    table.requireColumn("mz")
+    table.requireColumn("rt")
+    table.requireColumn("rtmax")
+    table.requireColumn("rtmax")
+
+def toOpenMSFeatureMap(table):
+
+    table.requireFeatures()
+
+    if "into" in table.colNames:
+        iarea = table.getIndex("into")
+    elif "area" in table.colNames:
+        iarea = table.getIndex("area")
+    else:
+        print "features not integrated. I assume const intensity"
+        iarea = None
+
+    imz = table.getIndex("mz")
+    irt = table.getIndex("rt")
+    fm = P.FeatureMap()
+
+    for row in table.rows:
+        f = P.Feature()
+        f.setMZ(row[imz])
+        f.setRT(row[irt])
+        if iarea is not None:
+            f.setIntensity(row[iarea])
+        else:
+            f.setIntensity(1000.0)
+        fm.push_back(f)
+    return fm
+
+
+def fromTableAndMap(table, ds):
+    meta = table.meta.copy()
+    meta["source"] = ds.meta.get("source")
+
+    return FeatureTable(ds, colNames=table.colNames,
+                            colTypes=table.colTypes, 
+                            rows=table.rows, 
+                            colFormats=table.colFormats, 
+                            title=table.title,
+                            meta=table.meta) 
