@@ -24,6 +24,10 @@ def testRunnerTable():
     # test pickle
     t = pickle.loads(pickle.dumps(t))
     run(t, names, [row1, row2, row3])
+    t.store("temp_output/test.dat")
+    t = Table.load("temp_output/test.dat")
+    run(t, names, [row1, row2, row3])
+
 
 def run(t, colnames, rows):
     t = copy.deepcopy(t) # prohibit changes
@@ -118,10 +122,16 @@ def run(t, colnames, rows):
     tn.addColumn("squared", tn.iii * tn.iii)
     assert list(tn.getColumn("computed").values ) == [8080, 7441, 6161]
     assert list(tn.getColumn("squared").values ) == [9, 4, 1]
+
+    tn.replaceColumn("squared", tn.squared+1)
+    assert list(tn.getColumn("squared").values ) == [10, 5, 2]
+    assert len(tn.colNames)  == 6
+
     tn.dropColumn("computed")
     tn.dropColumn("squared")
     assert tn.colNames == [ "id", "iii", "long", "x"]
     assert len(tn) == 3
+
 
 
 

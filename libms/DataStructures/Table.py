@@ -1,5 +1,5 @@
 import pyOpenMS as P
-import operator, copy, os, itertools, re, numpy
+import operator, copy, os, itertools, re, numpy, cPickle
 from   ExpressionTree import Node, Column
 from TableParser import TableParser
 
@@ -150,6 +150,7 @@ class Table(object):
             if k not in self.colNames:
                 raise Exception("colum %s does not exist" % k)
         self.colNames = [ kw.get(n,n) for n in self.colNames]
+        self.emptyColumnCache()
 
     def __len__(self):
         return len(self.rows)
@@ -167,6 +168,18 @@ class Table(object):
                         print >> fp, "; ".join(map(str, row))
                 break
 
+    def store(self, path, forceOverwrite=False):
+        if not forceOverwrite and os.path.exists(path):
+            raise Exception("%s exists. You may use forceOverwrite=True" % path)
+        with open(path, "wb") as fp:
+            cPickle.dump(self, fp)
+
+    @staticmethod
+    def load(path):
+        with open(path, "rb") as fp:
+            return cPickle.load(fp)
+
+
     def buildEmptyClone(self):
         return Table(self.colNames, self.colTypes, self.colFormats, [],
                      self.title, self.meta.copy())
@@ -180,6 +193,7 @@ class Table(object):
             del row[ix]
         self.updateIndices()
         self.setupFormatters()
+        self.emptyColumnCache()
 
     def addColumn(self, name, expr, format=None):
         if name in self.colNames:
@@ -198,6 +212,21 @@ class Table(object):
         self.setupFormatters()
         self.updateIndices()
 
+    def replaceColumn(self, name, expr, format=None):
+        ix = self.getIndex(name)
+        ctx = { self: self.getColumnCtx(expr.neededColumns()) }
+        values, _ = expr.eval(ctx)
+        t = TableParser.commonTypeOfColumn(values)
+        f = format if format is not None else TableParser.standardFormats.get(t)
+
+        self.colNames[ix] = name
+        self.colTypes[ix] = t
+        self.colFormats[ix] = f
+        for row, v in zip(self.rows, values):
+            row[ix] = v
+        self.setupFormatters()
+        self.updateIndices()
+        self.emptyColumnCache()
 
     def filter(self, expr, debug = False):
         assert isinstance(expr, Node)
