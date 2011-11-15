@@ -222,16 +222,41 @@ class AlgebraicNode(Node):
     def eval(self, ctx):
         lval, _ = self.left.eval(ctx)
         rval, _ = self.right.eval(ctx)
+
         if type(lval) in [str, int, float] and type(rval) in [list,np.ndarray]:
             res = [self.efun(lval, r) for r in rval ]
             if type(lval) == str:
                 return res, None
             return np.array(res), None
+
         if type(rval) in [str, int, float] and type(lval) in [list,np.ndarray]:
             res = [self.efun(l, rval) for l in lval ]
             if type(lval) == str:
                 return res, None
             return np.array(res), None
+
+        if type(lval) == list and type(lval[0]) in [int, float]:
+            lval = np.array(lval)
+        if type(rval) == list and type(rval[0]) in [int, float]:
+            rval = np.array(rval)
+
+        # arrays are fast:
+        if type(lval) == type(rval) == np.ndarray:
+            if len(lval) != len(rval):
+                raise Exception("sizes do not fit !")
+            return self.efun(lval, rval), None
+
+        # all other variation (eg str, ...): 
+        if type(lval) == list and type(rval) == list:
+            if len(lval) != len(rval):
+                raise Exception("sizes do not fit !")
+            return [ self.efun(l,r) for (l,r) in zip(lval,rval) ], None
+
+        # at least one is np.ndarray:
+        if type(lval) in [list, np.ndarray] and type(rval) in [list,np.ndarray]:
+            if len(lval) != len(rval):
+                raise Exception("sizes do not fit !")
+            return np.array([ self.efun(l,r) for (l,r) in zip(lval,rval) ]), None
         return self.efun(lval, rval), None
 
 class LogicNode(Node):

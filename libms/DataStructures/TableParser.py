@@ -1,11 +1,17 @@
+import numpy as np
 
 class TableParser(object):
 
-    typePrecedences = { int: (0, int) , float: (1, float), str: (2, str) }
+    typePrecedences = { int: (0, int),
+                        float: (1, float),
+                        str: (2, str) }
+
     standardFormats = { int: "%d", float : "%.2f", str: "%s" }
 
     @classmethod
     def commonTypeOfColumn(clz, col):
+        if isinstance(col, np.ndarray):
+            return col.dtype
         precedences = ( clz.typePrecedences[type(c)] for c in col )
         minprecedence=  min(precedences)
         return minprecedence[1]

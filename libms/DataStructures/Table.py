@@ -39,7 +39,7 @@ class Table(object):
 
         self.colIndizes = dict((n, i) for i, n in enumerate(colNames))
         self.title = title
-        self.meta = copy.deepcopy(meta) if meta is not None else dict()
+        self.meta = copy.copy(meta) if meta is not None else dict()
         self.sources = () if sources is None else tuple(sources)
         self.primaryIndex = {}
         self.setupFormatters()
@@ -273,7 +273,7 @@ class Table(object):
 
         _p(self.colNames)
         print
-        _p(re.match("<type '((\w|[.])+)'>", str(n)).groups()[0] 
+        _p(re.match("<type '((\w|[.])+)'>|(\w+)", str(n)).groups()[0]  or str(n)
                                                    for n in self.colTypes)
         print
         _p(["------"] * len(self.colNames))

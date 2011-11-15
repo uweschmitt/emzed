@@ -114,8 +114,14 @@ def run(t, colnames, rows):
 
     assert ex != None
 
+    tn.addColumn("computed", tn.long / (tn.iii + 1))
+    tn.addColumn("squared", tn.iii * tn.iii)
+    assert list(tn.getColumn("computed").values ) == [8080, 7441, 6161]
+    assert list(tn.getColumn("squared").values ) == [9, 4, 1]
+    tn.dropColumn("computed")
+    tn.dropColumn("squared")
+    assert tn.colNames == [ "id", "iii", "long", "x"]
+    assert len(tn) == 3
 
-
-# TODO: addColumn + dropColumn
 
 
