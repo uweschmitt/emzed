@@ -2,9 +2,14 @@ import urllib, urllib2
 import sys, time
 import xml.etree.ElementTree  as etree
 import cPickle
+from ..DataStructures import Table
 
 
 class PubChemDB(object):
+
+    colNames = ["mw", "cid", "mf", "iupac", "synonyms", "url"]
+    colTypes = [float, str, str,    str,    str,       str ]
+    colFormats=["%.5f", "%s", "%d", "%s", None, "%s" ]
 
     @staticmethod
     def _get_count():
@@ -92,30 +97,47 @@ class PubChemDB(object):
         print "TOTAL TIME %.fm %.fs" % divmod(needed,60)
         return items
 
-    @staticmethod
-    def load(path):
+    def __init__(self, path):
+        self.path = path
         try:
-            data = cPickle.load(open(path,"rb"))
+            self.table = cPickle.load(open(path,"rb"))
         except:
-            data = []
-        return data
+            self.table = self.emptyTable()
 
-    @staticmethod
-    def getNewIds(data, maxIds = 9999999):
-        print len(data), "ITEMS IN LOCAL PUBCHEM DB"
+    def emptyTable(self):
+        return Table(self.colNames, self.colTypes, self.colFormats,[],
+                          "PubChem")
+
+    def __len__(self):
+        return len(self.table)
+
+    def synchronize(self, maxIds = 9999999):
+        print len(self.table), "ITEMS IN LOCAL PUBCHEM DB"
         counts = PubChemDB._get_count()
         print counts, "ITEMS IN GLOBAL PUBCHEM DB"
         unknown = []
-        if counts>len(data):
+        missing = []
+        if counts!=len(self.table):
             uis = set(PubChemDB._get_uilist(maxIds))
-            known_uis = set(d.get("cid") for mw, d in data)
+            known_uis = set(d.get("cid") for mw, d in self.table)
             unknown = list(uis - known_uis)
-        return unknown
+            missing = list(known_uis-uis)
+        return unknown, missing
 
-    @staticmethod
-    def update(path, data, ids):
+    def reset(self):
+        ids = PubChemDB._get_uilist(9999999)
+        self.table = self.emptyTable()
+        self.update(ids)
+
+    def update(self, ids):
         print "FETCH", len(ids), "ITEMS"
         if ids:
-            data.extend(PubChemDB._download(ids))
-        cPickle.dump(data, open(path,"wb"))
+            for mw, dd in PubChemDB._download(ids):
+                row = [ dd.get(n) for n in self.colNames ]
+                self.table.rows.append(row)
+        self.table.dropColumn("url")
+        url = "http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?cid="
+        self.table.addColumn("url", url+self.table.cid)
+        self.table.sortBy("mw")# build index
+        cPickle.dump(self.table, open(self.path,"wb"))
 

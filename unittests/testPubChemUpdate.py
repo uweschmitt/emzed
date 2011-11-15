@@ -5,11 +5,14 @@ def testPubChemUpdate():
 
     dp = "temp_output"
     dbPath = os.path.join(dp, "pubchem.db")
-    data = PubChemDB.load(dbPath)
-    assert len(data)==0
-    newIds = PubChemDB.getNewIds(data, 100)
+    db = PubChemDB(dbPath)
+    assert len(db.table)==0
+    newIds, missing = db.synchronize(100)
     assert len(newIds)==100
-    PubChemDB.update(dbPath, data, newIds[:100])
-    assert len(data) == 100
-    data = PubChemDB.load(dbPath)
-    assert len(data) == 100
+    assert len(missing)==0
+    db.update(newIds[:100])
+    assert len(db.table) == 100
+    db = PubChemDB(dbPath)
+    assert len(db.table) == 100
+    assert db.table.rows[0][-1].startswith("http")
+    assert len(db.table.rows[0]) == len(db.colNames)

@@ -25,14 +25,6 @@ def testRunnerTable():
     t = pickle.loads(pickle.dumps(t))
     run(t, names, [row1, row2, row3])
 
-    #TODO: filter instead of getitem with slice
-    #test subtable
-    #ts = t[0:3]
-    #assert isinstance( ts  , Table)
-    #assert len(ts)==3
-    #run(ts, names, [row1, row2, row3])
-
-
 def run(t, colnames, rows):
     t = copy.deepcopy(t) # prohibit changes
     ixs = set()
@@ -124,5 +116,6 @@ def run(t, colnames, rows):
 
 
 
+# TODO: addColumn + dropColumn
 
 

@@ -87,20 +87,14 @@ class Node(object):
     def __and__(self, other):
         return AndNode(self, other)
 
-    #def __rand__(self, other):
-    #    return AndNode(other, self)
+    # no rand / ror / rxor: makes sometimes trouble with precedence of
+    # terms.....
 
     def __or__(self, other):
         return OrNode(self, other)
 
-    #def __ror__(self, other):
-    #    return OrNode(other, self)
-
     def __xor__(self, other):
         return XorNode(self, other)
-
-    #def __rxor__(self, other):
-    #    return XorNode(other, self)
 
     def neededColumns(self):
         return self.left.neededColumns() + self.right.neededColumns()
@@ -228,6 +222,16 @@ class AlgebraicNode(Node):
     def eval(self, ctx):
         lval, _ = self.left.eval(ctx)
         rval, _ = self.right.eval(ctx)
+        if type(lval) in [str, int, float] and type(rval) in [list,np.ndarray]:
+            res = [self.efun(lval, r) for r in rval ]
+            if type(lval) == str:
+                return res, None
+            return np.array(res), None
+        if type(rval) in [str, int, float] and type(lval) in [list,np.ndarray]:
+            res = [self.efun(l, rval) for l in lval ]
+            if type(lval) == str:
+                return res, None
+            return np.array(res), None
         return self.efun(lval, rval), None
 
 class LogicNode(Node):

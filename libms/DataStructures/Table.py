@@ -1,6 +1,7 @@
 import pyOpenMS as P
 import operator, copy, os, itertools, re, numpy
 from   ExpressionTree import Node, Column
+from TableParser import TableParser
 
 
 def formatSeconds(seconds):
@@ -44,10 +45,6 @@ class Table(object):
         self.updateIndices()
         self.emptyColumnCache()
         self.name = str(self)
-        self.__str__ = self.__str__inaktiv
-
-    def __str__inaktiv(self):
-        return self.name
 
     def emptyColumnCache(self):
         self.columnCache = dict()
@@ -79,7 +76,7 @@ class Table(object):
     def __getstate__(self):
         """ for pickling. """
         dd = self.__dict__.copy()
-        # self.colFormatters can not be pickled 
+        # self.colFormatters can not be pickled
         del dd["colFormatters"]
         # for effiency:
         del dd["columnCache"]
@@ -103,7 +100,6 @@ class Table(object):
             raise Exception("colname %s not in table" % colName)
         return idx
 
-    #@memoize
     def getColumnCtx(self, needed):
         names = [ n for (t,n) in needed if t==self ]
         return dict((n, (self.getColumn(n).getValues(),
@@ -172,6 +168,34 @@ class Table(object):
     def buildEmptyClone(self):
         return Table(self.colNames, self.colTypes, self.colFormats, [],
                      self.title, self.meta.copy())
+
+    def dropColumn(self, name):
+        ix = self.getIndex(name)
+        del self.colNames[ix]
+        del self.colFormats[ix]
+        del self.colTypes[ix]
+        for row in self.rows:
+            del row[ix]
+        self.updateIndices()
+        self.setupFormatters()
+
+    def addColumn(self, name, expr, format=None):
+        if name in self.colNames:
+            raise Exception("column with name %s already exists" % name)
+        ctx = { self: self.getColumnCtx(expr.neededColumns()) }
+        values, _ = expr.eval(ctx)
+        t = TableParser.commonTypeOfColumn(values)
+        f = format if format is not None else TableParser.standardFormats.get(t)
+
+        self.colNames.append(name)
+        self.colTypes.append(t)
+        self.colFormats.append(f)
+        for row, v in zip(self.rows, values):
+            row.append(v)
+
+        self.setupFormatters()
+        self.updateIndices()
+
 
     def filter(self, expr, debug = False):
         assert isinstance(expr, Node)

@@ -1,22 +1,8 @@
-from Table import Table
 
-class XCMSFeatureParser(object):
+class TableParser(object):
 
     typePrecedences = { int: (0, int) , float: (1, float), str: (2, str) }
-
-    typeDefaults = dict( mz= float, mzmin= float, mzmax=float,
-                      rt= float, rtmin= float, rtmax=float,
-                      into= float, intb= float,
-                      maxo= float, sn= float,
-                      sample= int )
-
     standardFormats = { int: "%d", float : "%.2f", str: "%s" }
-
-    formatDefaults = dict( mz= "%10.5f", mzmin= "%10.5f", mzmax= "%10.5f",
-                           rt= "%6.1f",  rtmin= "%6.1f", rtmax = "%6.1f",
-                           into= "%.2e", intb= "%.2e", intf="%.2e",
-                           maxo= "%.2e", sn= "%.1e",
-                           sample= "%2d" )
 
     @classmethod
     def commonTypeOfColumn(clz, col):
@@ -33,6 +19,7 @@ class XCMSFeatureParser(object):
                 return float(val)
             except ValueError:
                 return str(val)
+
     @classmethod
     def parse(clz, lines):
         columnNames = [ n.strip('"') for n in lines[0].split() ]
@@ -62,6 +49,7 @@ class XCMSFeatureParser(object):
             columnTypes = numCol * (str, )
             formats     = numCol * ("%r", )
 
+        from Table import Table
         return Table(columnNames, columnTypes, formats, rows)
 
     @classmethod
@@ -70,6 +58,21 @@ class XCMSFeatureParser(object):
         modlines = [ '"%d" %s' % (i+1, l) for i, l in enumerate(lines[1:]) ]
         modlines.insert(0, lines[0])
         return clz.parse(modlines)
+
+class XCMSFeatureParser(TableParser):
+
+
+    typeDefaults = dict( mz= float, mzmin= float, mzmax=float,
+                      rt= float, rtmin= float, rtmax=float,
+                      into= float, intb= float,
+                      maxo= float, sn= float,
+                      sample= int )
+
+    formatDefaults = dict( mz= "%10.5f", mzmin= "%10.5f", mzmax= "%10.5f",
+                           rt= "%6.1f",  rtmin= "%6.1f", rtmax = "%6.1f",
+                           into= "%.2e", intb= "%.2e", intf="%.2e",
+                           maxo= "%.2e", sn= "%.1e",
+                           sample= "%2d" )
 
 if __name__ == "__main__":
     table = XCMSFeatureParser.parse(file("output_from_xcms.csv").readlines())

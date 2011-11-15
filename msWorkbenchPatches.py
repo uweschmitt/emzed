@@ -55,7 +55,7 @@ def patch_oedit():
             dlg.setup(obj)
             return dlg, lambda x: x
 
-        elif isinstance(obj, libms.DataStructures.FeatureTable):
+        elif isinstance(obj, libms.DataStructures.Table):
             dlg = libms.Explorers.FeatureExplorer(obj)
             return dlg, lambda x: x
 
@@ -148,7 +148,7 @@ def patch_spyder():
     def is_featureTable(self, name):
         """Return True if variable is a PeakMap"""
         return communicate(self._get_sock(),
-                   "isinstance(globals()['%s'], (libms.DataStructures.FeatureTable))" % name)
+                   "isinstance(globals()['%s'], (libms.DataStructures.Table))" % name)
 
     @replace(NamespaceBrowser.setup, verbose=True)
     def setup(self, *a, **kw):
@@ -187,8 +187,7 @@ def patch_external_shell():
         import libms.DataStructures
         return dicteditorutils._orig_is_supported(value, *a, **kw) \
             or isinstance(value, libms.DataStructures.PeakMap) \
-            or isinstance(value, libms.DataStructures.Table) \
-            or isinstance(value, libms.DataStructures.FeatureTable)
+            or isinstance(value, libms.DataStructures.Table) 
 
     @replace(dicteditorutils.get_size, verbose=True)
     def get_size( item ):
@@ -197,8 +196,6 @@ def patch_external_shell():
             return len(item)
         if isinstance(item, libms.DataStructures.Table):
             return len(item)
-        if isinstance(item, libms.DataStructures.FeatureTable):
-            return len(item)
         return dicteditorutils._orig_get_size(item)
 
     @replace(dicteditorutils.get_type_string, verbose=True)
@@ -206,8 +203,6 @@ def patch_external_shell():
         import libms.DataStructures
         if isinstance(item, libms.DataStructures.PeakMap):
             return "PeakMap"
-        if isinstance(item, libms.DataStructures.FeatureTable):
-            return "FeatureTable"
         if isinstance(item, libms.DataStructures.Table):
             return "Table"
         return dicteditorutils._orig_get_type_string(item)
@@ -225,25 +220,15 @@ def patch_external_shell():
                    res = "..."+ res[(len(res) + 3 - trunc_len):]
                 return res
             except Exception, e:
-                return "exception: "+e
-        if isinstance(value, libms.DataStructures.FeatureTable):
-            try:
-                p = value.ds.meta.get("source", "")
-                r = value.meta.get("reintegrated", False)
-                res = "%s: reint = %s" % (p, r)
-                if truncate and len(res)>trunc_len:
-                   res = "..."+ res[(len(res) + 3 - trunc_len):]
-                return res
-            except Exception, e:
-                return "exception: "+e
+                return "exception: "+e.message
         if isinstance(value, libms.DataStructures.Table):
             try:
-                res = value.ds.meta.get("source", "")
+                res = value.meta.get("source", "")
                 if truncate and len(res)>trunc_len:
                    res = "..."+ res[(len(res) + 3 - trunc_len):]
                 return res
             except Exception, e:
-                return "exception: "+e
+                return "exception: "+e.message
         return dicteditorutils._orig_value_to_display(value, *a, **kw)
 
     patch_oedit()

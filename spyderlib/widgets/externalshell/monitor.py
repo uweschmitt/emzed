@@ -22,7 +22,7 @@ SUPPORTED_TYPES = get_supported_types()
 
 LOG_FILENAME = get_conf_path('monitor.log')
 
-DEBUG = False
+DEBUG =  True
 
 if DEBUG:
     import logging
@@ -267,7 +267,11 @@ class Monitor(threading.Thread):
     
     def get_arglist(self, objtxt, glbs):
         """Get func/method argument list"""
+        logging.debug("objtxt="+str(objtxt))
+        logging.debug("glbs="+str(glbs))
         obj, valid = self._eval(objtxt, glbs)
+        logging.debug("obj="+str(obj))
+        logging.debug("valid="+str(valid))
         if valid:
             return getargtxt(obj)
     
