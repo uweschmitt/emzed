@@ -16,4 +16,16 @@ def storePeakMap(pm, path=None):
     experiment = pm.toMSExperiment()
     fh  = FileHandler()
     fh.storeExperiment(path, experiment)
-    
+
+def storeTable(tab, path=None):
+    """ saves .table files """
+
+    # local import in order to keep namespaces clean
+    import ms
+
+    if path is None:
+        path = ms.askForSave(extensions=["table"])
+        if path is None:
+            return None
+
+    tab.store(path)

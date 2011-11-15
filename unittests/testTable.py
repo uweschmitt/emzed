@@ -1,6 +1,7 @@
 #encoding: utf-8
 
 from libms.DataStructures import Table
+import ms
 import numpy as np
 import pickle, copy, os, re, sys
 import StringIO
@@ -24,8 +25,8 @@ def testRunnerTable():
     # test pickle
     t = pickle.loads(pickle.dumps(t))
     run(t, names, [row1, row2, row3])
-    t.store("temp_output/test.dat")
-    t = Table.load("temp_output/test.dat")
+    ms.storeTable(t, "temp_output/test.table")
+    t = ms.loadTable("temp_output/test.table")
     run(t, names, [row1, row2, row3])
 
 

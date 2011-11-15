@@ -157,7 +157,7 @@ class Table(object):
 
     def storeCSV(self, path):
         if not os.path.splitext(path)[1].upper()==".CSV":
-            raise Exception("%s has wrong filentype extensioe" % path)
+            raise Exception("%s has wrong filentype extension" % path)
         it = itertools
         for p in it.chain([path], ( "%s.%d" % (path, i) for i in it.count(1))):
             if not os.path.exists(p):
@@ -169,6 +169,8 @@ class Table(object):
                 break
 
     def store(self, path, forceOverwrite=False):
+        if not os.path.splitext(path)[1].upper()==".TABLE":
+            raise Exception("%s has wrong extension, need .table" % path)
         if not forceOverwrite and os.path.exists(path):
             raise Exception("%s exists. You may use forceOverwrite=True" % path)
         with open(path, "wb") as fp:
