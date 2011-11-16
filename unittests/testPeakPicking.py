@@ -7,5 +7,3 @@ def testPeakPicking():
     ds2 = pp.pickPeakMap(ds)
     assert len(ds) == len(ds2)
     assert ds2[0].peaks.shape == (9570, 2)
-   
-

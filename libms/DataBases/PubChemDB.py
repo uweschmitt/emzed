@@ -1,8 +1,8 @@
 import urllib, urllib2
-import sys, time
+import sys, time, os
 import xml.etree.ElementTree  as etree
 import cPickle
-from ..DataStructures import Table
+from ..DataStructures.Table import Table
 
 
 class PubChemDB(object):
@@ -97,11 +97,11 @@ class PubChemDB(object):
         print "TOTAL TIME %.fm %.fs" % divmod(needed,60)
         return items
 
-    def __init__(self, path):
+    def __init__(self, path=None):
         self.path = path
-        try:
+        if path is not None and os.path.exists(path):
             self.table = cPickle.load(open(path,"rb"))
-        except:
+        else:
             self.table = self.emptyTable()
 
     def emptyTable(self):
@@ -119,7 +119,7 @@ class PubChemDB(object):
         missing = []
         if counts!=len(self.table):
             uis = set(PubChemDB._get_uilist(maxIds))
-            known_uis = set(d.get("cid") for mw, d in self.table)
+            known_uis = set(self.table.get(row, "cid") for row in self.table)
             unknown = list(uis - known_uis)
             missing = list(known_uis-uis)
         return unknown, missing
@@ -128,6 +128,7 @@ class PubChemDB(object):
         ids = PubChemDB._get_uilist(9999999)
         self.table = self.emptyTable()
         self.update(ids)
+        self.store()
 
     def update(self, ids):
         print "FETCH", len(ids), "ITEMS"
@@ -137,7 +138,12 @@ class PubChemDB(object):
                 self.table.rows.append(row)
         self.table.dropColumn("url")
         url = "http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?cid="
-        self.table.addColumn("url", url+self.table.cid)
+        self.table.addColumn("url", url+self.table.cid, type=str)
         self.table.sortBy("mw")# build index
-        cPickle.dump(self.table, open(self.path,"wb"))
+
+    def store(self, path=None):
+        if path is None:
+            path = self.path
+        assert path is not None, "no path given in constructor nor as argument"
+        cPickle.dump(self.table, open(path,"wb"))
 

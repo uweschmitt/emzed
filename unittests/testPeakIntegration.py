@@ -7,7 +7,7 @@ def run(integrator, areatobe, rmsetobe):
     assert len(str(integrator))>0
 
     try:
-        ds = run.ds 
+        ds = run.ds
     except:
         ds = run.ds =  ms.loadPeakMap("data/SHORT_MS2_FILE.mzData")
 
@@ -20,7 +20,6 @@ def run(integrator, areatobe, rmsetobe):
     mzmax = ds.spectra[0].peaks[-10,0]
 
     result = integrator.integrate(mzmin, mzmax, rtmin, rtmax)
-        
     area=result.get("area")
     rmse=result.get("rmse")
 
@@ -40,7 +39,7 @@ def run(integrator, areatobe, rmsetobe):
 
 
 def testPeakIntegration():
-    
+
     integrator = dict(configs.peakIntegrators).get("asym_gauss")
     _, _, params = run(integrator, 30584.3, 7251.2)
 
@@ -62,7 +61,7 @@ def testPeakIntegration():
 
 
 def testTrapezIntegrationSimple():
-       
+
     p0 = np.array((1.0, 1.0, 2.0, 2.0)).reshape(-1,2)
     p1 = np.array((2.0, 2.0, 3.0, 3.0)).reshape(-1,2)
     p2 = np.array((1.0, 1.0, 2.0, 2.0, 3.0, 3.0)).reshape(-1,2)
@@ -77,13 +76,13 @@ def testTrapezIntegrationSimple():
 
     integrator = dict(configs.peakIntegrators).get("trapez")
     integrator.setPeakMap(pm)
-    
+
     assert integrator.integrate(1.4, 2.5, 0, 3)["area"] == 5.0
     assert integrator.integrate(1.4, 2.5, 0, 2)["area"] == 4.0
 
     assert integrator.integrate(0.4, 2.5, 0, 3)["area"] == 6.5
     assert integrator.integrate(0.4, 2.5, 0, 2)["area"] == 5.0
-    
+
     assert integrator.integrate(0.4, 3.0, 0, 3)["area"] == 14
 
 
@@ -91,13 +90,13 @@ def testTrapezIntegrationSimple():
     s1 = Spectrum(p1, 1.0, 2, '0')
     pm = PeakMap([s0,s1,s2,s3])
     integrator.setPeakMap(pm)
-    
+
     assert integrator.integrate(1.4, 2.5, 0, 3)["area"] == 5.0
     assert integrator.integrate(1.4, 2.5, 0, 2)["area"] == 4.0
 
     assert integrator.integrate(0.4, 2.5, 0, 3)["area"] == 7.5
     assert integrator.integrate(0.4, 2.5, 0, 2)["area"] == 6.0
-    
+
     assert integrator.integrate(0.4, 3.0, 0, 3)["area"] == 13.5
 
 

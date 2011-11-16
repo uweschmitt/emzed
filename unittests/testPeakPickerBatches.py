@@ -12,4 +12,4 @@ def testPeakPickerHiRes():
         pass
     batches.runPeakPickerHiRes(inPath, destination="temp_output", configid="std")
     assert len(glob.glob(outPath)) == 1
-        
+

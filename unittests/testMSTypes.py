@@ -67,9 +67,3 @@ class TestMSTypes(object):
         assert spec.intensityInRange(0.5, 4.5) == 4.0
         assert spec.intensityInRange(2.0, 2.0) == 1.0
         assert spec.intensityInRange(2.1, 2.0) == 0.0
-    
-
-        
-
-        
-

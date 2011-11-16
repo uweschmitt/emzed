@@ -1,6 +1,6 @@
 #encoding: utf-8
 
-from libms.DataStructures import Table
+from libms.DataStructures.Table import Table
 import ms
 import numpy as np
 import pickle, copy, os, re, sys

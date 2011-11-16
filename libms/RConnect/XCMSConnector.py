@@ -14,11 +14,11 @@ def installXcmsIfNeeded():
         LLL.error("R_LIBS not set in environment")
         raise Exception("inconsistent system: R_LIBS not set.")
 
-    if os.path.exists(os.path.join(R_LIBS, "xcms")):  
+    if os.path.exists(os.path.join(R_LIBS, "xcms")):
         return
-    
+
     script = """
-                if (require("xcms") == FALSE) 
+                if (require("xcms") == FALSE)
                 {
                     source("http://bioconductor.org/biocLite.R")
                     biocLite("xcms", dep=T)
@@ -57,24 +57,24 @@ class CentwaveFeatureDetector(object):
 
     usage:
 
-           print CentwaveFeatureDetector.standardConfig  
+           print CentwaveFeatureDetector.standardConfig
 
            detector = CentwaveFeatureDetector(param1=val1, ....)
            detector.process(peakmap)
 
-    
+
     Docs from XCMS library:
 
     """
 
     __doc__ += "".join(file(path).readlines())
 
-    standardConfig = dict(   ppm=25, 
-                             peakwidth=(20,50), 
-                             prefilter=(3,100), 
-                             snthresh = 10, 
+    standardConfig = dict(   ppm=25,
+                             peakwidth=(20,50),
+                             prefilter=(3,100),
+                             snthresh = 10,
                              integrate = 1,
-                             mzdiff=-0.001, 
+                             mzdiff=-0.001,
                              noise=0,
                              mzCenterFun="wMean",
                              fitgauss=False,
@@ -114,8 +114,8 @@ class CentwaveFeatureDetector(object):
                             biocLite("xcms", dep=T)
                         }
                         library(xcms)
-                        xs <- xcmsSet(%(temp_input)r, method="centWave", 
-                                          ppm=%(ppm)d, 
+                        xs <- xcmsSet(%(temp_input)r, method="centWave",
+                                          ppm=%(ppm)d,
                                           peakwidth=c%(peakwidth)r,
                                           prefilter=c%(prefilter)r,
                                           snthresh = %(snthresh)f,
@@ -138,6 +138,8 @@ class CentwaveFeatureDetector(object):
             table = XCMSFeatureParser.parse(file(temp_output).readlines())
             table.addConstantColumn("peakmap", object, None, peakMap)
             table.addConstantColumn("centwave_config", dict, None, dd)
+            table.addConstantColumn("source", str, None,
+                                    peakMap.meta.get("source"))
             return table
 
 class MatchedFilterFeatureDetector(object):
@@ -148,12 +150,12 @@ class MatchedFilterFeatureDetector(object):
 
     usage:
 
-           print MatchedFilterFeatureDetector.standardConfig  
+           print MatchedFilterFeatureDetector.standardConfig
 
            detector = MatchedFilterFeatureDetector(param1=val1, ....)
            detector.process(peakmap)
 
-    
+
     Docs from XCMS library:
 
     """
@@ -178,14 +180,14 @@ class MatchedFilterFeatureDetector(object):
         assert isinstance(peakMap, PeakMap)
         if len(peakMap) == 0:
             raise Exception("empty peakmap")
-            
+
         peakMap.spectra.sort(key = lambda s: s.rt)
         minRt = peakMap.spectra[0].rt
         # xcms does not like rt <= 0, so we shift that rt starts with 1.0:
         # we have to undo this shift later when parsing the output of xcms
-        shift = minRt-1.0 
+        shift = minRt-1.0
         peakMap.shiftRt(-shift)
-        
+
         with TemporaryDirectoryWithBackup() as td:
 
             temp_input = os.path.join(td, "input.mzData")
@@ -197,15 +199,15 @@ class MatchedFilterFeatureDetector(object):
             dd["temp_input"] = temp_input
             dd["temp_output"] = temp_output
             dd["index"] = str(dd["index"]).upper()
-        
+
             script = """
-                        if (require("xcms") == FALSE) 
+                        if (require("xcms") == FALSE)
                         {
                             source("http://bioconductor.org/biocLite.R")
                             biocLite("xcms", dep=T)
                         }
                         library(xcms)
-                        xs <- xcmsSet(%(temp_input)r, method="matchedFilter", 
+                        xs <- xcmsSet(%(temp_input)r, method="matchedFilter",
                                        fwhm = %(fwhm)f, sigma = %(sigma)f,
                                        max = %(max_)d,
                                        snthresh = %(snthresh)f,
@@ -221,8 +223,10 @@ class MatchedFilterFeatureDetector(object):
             if RExecutor().run_command(script, td) != 4711:
                 raise Exception("R opreation failed")
 
-            # parse csv and 
+            # parse csv and
             table = XCMSFeatureParser.parse(file(temp_output).readlines())
             table.addConstantColumn("peakmap", object, None, peakMap)
             table.addConstantColumn("matchedfilter_config", dict, None, dd)
+            table.addConstantColumn("source", str, None,
+                                    peakMap.meta.get("source"))
             return table

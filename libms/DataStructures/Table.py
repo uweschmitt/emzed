@@ -1,10 +1,25 @@
 import pyOpenMS as P
-import operator, copy, os, itertools, re, numpy, cPickle
+import operator, copy, os, itertools, re, numpy, cPickle, sys
 from   ExpressionTree import Node, Column
 import numpy as np
 
+_standardFormats = { int: "%d", float : "%.2f", str: "%s" }
 
-def commonTypeOfColumn(col):
+class _CmdLineProgress(object):
+
+    def __init__(self, imax, step=5):
+        self.imax = imax
+        self.step = step
+        self.last = 0
+
+    def progress(self, i):
+        percent = int(100.0 * (i+1) / self.imax)
+        if percent != self.last:
+            print percent,
+            sys.stdout.flush()
+            self.last = percent
+
+def _commonTypeOfColumn(col):
     if isinstance(col, np.ndarray):
         return col.dtype
     types = set( type(c) for c in col )
@@ -25,17 +40,17 @@ def _formatter(f):
             return None
     elif f.startswith("%"):
         def format(s, f=f):
-            return f%s
+            return "-" if s is None else f % s
     else:
         def format(s, f=f):
-            return eval(f, globals(), dict(o=s))
+            return "-" if s is None else eval(f, globals(), dict(o=s))
     return format
 
 
 class Table(object):
 
     def __init__(self, colNames, colTypes, colFormats, rows=None, title=None,
-                       meta=None, sources=None):
+                       meta=None):
         assert len(colNames) == len(colTypes)
         if rows is not None:
             for row in rows:
@@ -50,7 +65,6 @@ class Table(object):
         self.colIndizes = dict((n, i) for i, n in enumerate(colNames))
         self.title = title
         self.meta = copy.copy(meta) if meta is not None else dict()
-        self.sources = () if sources is None else tuple(sources)
         self.primaryIndex = {}
         self.setupFormatters()
         self.updateIndices()
@@ -216,17 +230,19 @@ class Table(object):
         self.setupFormatters()
         self.emptyColumnCache()
 
-    def addColumn(self, name, expr, format=None):
+    def addColumn(self, name, expr, type=None, format=None):
         if name in self.colNames:
             raise Exception("column with name %s already exists" % name)
         ctx = { self: self.getColumnCtx(expr.neededColumns()) }
         values, _ = expr.eval(ctx)
-        t = commonTypeOfColumn(values)
-        f = format if format is not None else TableParser.standardFormats.get(t)
+        if type is None:
+            type = _commonTypeOfColumn(values)
+        if format is None:
+            format = _standardFormats.get(type)
 
         self.colNames.append(name)
-        self.colTypes.append(t)
-        self.colFormats.append(f)
+        self.colTypes.append(type)
+        self.colFormats.append(format)
         for row, v in zip(self.rows, values):
             row.append(v)
 
@@ -237,8 +253,8 @@ class Table(object):
         ix = self.getIndex(name)
         ctx = { self: self.getColumnCtx(expr.neededColumns()) }
         values, _ = expr.eval(ctx)
-        t = commonTypeOfColumn(values)
-        f = format if format is not None else TableParser.standardFormats.get(t)
+        t = _commonTypeOfColumn(values)
+        f = format if format is not None else _standardFormats.get(t)
 
         self.colNames[ix] = name
         self.colTypes[ix] = t
@@ -274,43 +290,42 @@ class Table(object):
         if debug:
             print "# %s.join(%s, %s)" % (self.name, t.name, expr)
         tctx = t.getColumnCtx(expr.neededColumns())
+
+        cmdlineProgress = _CmdLineProgress(len(self))
+        rows = []
+        for i, r1 in enumerate(self.rows):
+            r1ctx = dict((n, (v, None)) for (n,v) in zip(self.colNames, r1))
+            ctx = {self:r1ctx, t:tctx}
+            flags,_ = expr.eval(ctx)
+            rows.extend([ r1 + t.rows[n] for (n,i) in enumerate(flags) if i])
+            cmdlineProgress.progress(i)
+
+        table = self._buildJoinTable(t)
+        table.rows = rows
+        return table
+
+    def _buildJoinTable(self, t):
         colNames = ["%s_1" % n for n in self.colNames]\
                  + ["%s_2" % n for n in t.colNames]
 
         colFormats = self.colFormats + t.colFormats
         colTypes = self.colTypes + t.colTypes
-        sources = ( self.sources, t.sources )
         title = "%s vs %s" % (self.title, t.title)
         meta = {self: self.meta.copy(), t: t.meta.copy()}
+        return Table(colNames, colTypes, colFormats, [], title, meta)
 
-        rows = []
-        for r1 in self.rows:
-            r1ctx = dict((n, (v, None)) for (n,v) in zip(self.colNames, r1))
-            ctx = {self:r1ctx, t:tctx}
-            flags,_ = expr.eval(ctx)
-            rows.extend([ r1 + t.rows[n] for (n,i) in enumerate(flags) if i])
-
-        return Table(colNames, colTypes, colFormats, rows, title, meta, sources)
-
-    def leftJoin(self, t, expr, debug = False):
+    def leftJoin(self, t, expr, debug = False, progress=True):
         assert isinstance(t, Table)
         assert isinstance(expr, Node)
         if debug:
             print "# %s.leftJoin(%s, %s)" % (self.name, t.name, expr)
         tctx = t.getColumnCtx(expr.neededColumns())
-        colNames = ["%s_1" % n for n in self.colNames]\
-                 + ["%s_2" % n for n in t.colNames]
-
-        colFormats = self.colFormats + t.colFormats
-        colTypes = self.colTypes + t.colTypes
-        sources = ( self.sources, t.sources )
-        title = "%s vs %s" % (self.title, t.title)
-        meta = {self: self.meta.copy(), t: t.meta.copy()}
 
         filler = [None] * len(t.colNames)
+        cmdlineProgress = _CmdLineProgress(len(self))
 
         rows = []
-        for r1 in self.rows:
+        for i, r1 in enumerate(self.rows):
             r1ctx = dict((n, (v, None)) for (n,v) in zip(self.colNames, r1))
             ctx = {self:r1ctx, t:tctx}
             flags,_ = expr.eval(ctx)
@@ -318,8 +333,12 @@ class Table(object):
                 rows.extend([r1 + t.rows[n] for (n,i) in enumerate(flags) if i])
             else:
                 rows.extend([r1 + filler])
+            cmdlineProgress.progress(i)
 
-        return Table(colNames, colTypes, colFormats, rows, title, meta, sources)
+
+        table = self._buildJoinTable(t)
+        table.rows = rows
+        return table
 
 
     def _print(self, w=12):
@@ -327,7 +346,7 @@ class Table(object):
         def _p(vals, w=w):
             expr = "%%-%ds" % w
             for v in vals:
-                print (expr % v), 
+                print (expr % v),
 
         _p(self.colNames)
         print
@@ -341,51 +360,13 @@ class Table(object):
             print
 
 
-def requireFeatures(table):
+def toOpenMSFeatureMap(table):
     table.requireColumn("mzmin")
     table.requireColumn("mzmax")
     table.requireColumn("mz")
     table.requireColumn("rt")
     table.requireColumn("rtmax")
     table.requireColumn("rtmax")
-
-def toOpenMSFeatureMap(table):
-    table.requireFeatures()
-    if "into" in table.colNames:
-        iarea = table.getIndex("into")
-    elif "area" in table.colNames:
-        iarea = table.getIndex("area")
-    else:
-        print "features not integrated. I assume const intensity"
-        iarea = None
-
-    imz = table.getIndex("mz")
-    irt = table.getIndex("rt")
-    fm = P.FeatureMap()
-
-    for row in table.rows:
-        f = P.Feature()
-        f.setMZ(row[imz])
-        f.setRT(row[irt])
-        if iarea is not None:
-            f.setIntensity(row[iarea])
-        else:
-            f.setIntensity(1000.0)
-        fm.push_back(f)
-    return fm
-
-
-def requireFeatures(table):
-    table.requireColumn("mzmin")
-    table.requireColumn("mzmax")
-    table.requireColumn("mz")
-    table.requireColumn("rt")
-    table.requireColumn("rtmax")
-    table.requireColumn("rtmax")
-
-def toOpenMSFeatureMap(table):
-
-    table.requireFeatures()
 
     if "into" in table.colNames:
         iarea = table.getIndex("into")
@@ -409,15 +390,3 @@ def toOpenMSFeatureMap(table):
             f.setIntensity(1000.0)
         fm.push_back(f)
     return fm
-
-
-def fromTableAndMap(table, ds):
-    meta = table.meta.copy()
-    meta["source"] = ds.meta.get("source")
-
-    return FeatureTable(ds, colNames=table.colNames,
-                            colTypes=table.colTypes, 
-                            rows=table.rows, 
-                            colFormats=table.colFormats, 
-                            title=table.title,
-                            meta=table.meta) 

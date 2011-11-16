@@ -11,6 +11,7 @@ if len(newIds) and not len(missingIds):
     print "PUBCHEM NOT UP TO DATE"
     if os.access(globalDataPath, os.W_OK):
         pubChemDB.update(dbPath, data, newIds)
+        pubChemDB.store()
     else:
         print
         print "*"*65
@@ -41,5 +42,6 @@ del pubChemDB
 del new
 del dbPath
 del newIds
+del missingIds
 del globalDataPath
 del PubChemDB

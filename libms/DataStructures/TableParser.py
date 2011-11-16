@@ -3,7 +3,6 @@ import Table
 class TableParser(object):
 
 
-    standardFormats = { int: "%d", float : "%.2f", str: "%s" }
 
     @classmethod
     def bestConvert(clz, val):
@@ -26,14 +25,14 @@ class TableParser(object):
 
         if rows:
             columns     = ( (row[i] for row in rows) for i in range(numCol) )
-            columnTypes = [Table.commonTypeOfColumn(col) for col in columns ]
+            columnTypes = [Table._commonTypeOfColumn(col) for col in columns ]
             knownTypes = [ (i, clz.typeDefaults.get(columnNames[i] )) for i in range(numCol) ]
 
             for i, type_ in knownTypes:
                 if type_ is not None:
                     columnTypes[i] = type_
 
-            formats     = [clz.standardFormats[type_] for type_ in columnTypes]
+            formats     = [Table._standardFormats[type_] for type_ in columnTypes]
 
             knownFormats = [ (i, clz.formatDefaults.get(columnNames[i] )) for i in range(numCol) ]
 

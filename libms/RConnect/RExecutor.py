@@ -8,9 +8,7 @@ os.environ["R_LIBS"] = R_LIBS
 if not os.path.exists(R_LIBS):
     os.mkdir(R_LIBS)
 
-
 from ..intern_utils import TemporaryDirectoryWithBackup
-
 
 class RExecutor(object):
 
@@ -27,14 +25,13 @@ class RExecutor(object):
         self.rHome = RExecutor.findRHome()
         LLL.debug("found R home at "+self.rHome)
         rExe  = RExecutor.findRExe(self.rHome)
-        self.rExe = win32api.GetShortPathName(rExe) 
+        self.rExe = win32api.GetShortPathName(rExe)
         LLL.debug("found R.exe at "+self.rExe)
 
     @staticmethod
     def findRHome():
-
         pathToR = None
-        for finder in  [ 
+        for finder in  [
                          lambda : RExecutor.path_from(_winreg.HKEY_CURRENT_USER),
                          lambda : RExecutor.path_from(_winreg.HKEY_LOCAL_MACHINE),
                          lambda : os.environ.get("R_HOME"),
@@ -45,12 +42,9 @@ class RExecutor(object):
                 if pathToR != None:
                     break
             except (KeyError, WindowsError):
-                pass 
-
-
+                pass
         if pathToR is None:
             raise Exception("install dir of R not found, neither in registry, nor is R_HOME set.")
-    
         return pathToR
 
     @staticmethod
@@ -78,12 +72,12 @@ class RExecutor(object):
             if os.path.exists(os.path.join(path, "R.exe")):
                 print "Found R at", path
                 return path
-            # non windows: 
+            # non windows:
             test = os.path.join(path, "R")
             if os.path.exists(test) and not os.path.isdir(test):
                 return tess
-        return None  
-        
+        return None
+
     @staticmethod
     def path_from(regsection):
         key = _winreg.OpenKey(regsection, "Software\\R-core\\R")
@@ -98,8 +92,8 @@ class RExecutor(object):
         print cmd
 
         with open(path, "r") as fp:
-            proc = subprocess.Popen(['%s' % self.rExe, "--vanilla", "--silent"], 
-                                    stdin = fp, stdout = sys.stdout,
+            proc = subprocess.Popen(['%s' % self.rExe, "--vanilla", "--silent"],
+                                    stdin = fp, stdout = sys.__stdout__,
                                     bufsize=0, shell=True)
             out, err = proc.communicate()
             if err is not None:
@@ -110,26 +104,17 @@ class RExecutor(object):
     def run_command(self, command, dir_=None):
 
         if dir_ is not None:
-
             fp = file(os.path.join(dir_, "script.R"), "w")
             print >> fp, command
             fp.close()
             return self.run_script(fp.name)
 
         else:
-
             with TemporaryDirectoryWithBackup() as td:
-
                 fp = file(os.path.join(td, "script.R"), "w")
                 print >> fp, command
                 fp.close()
                 return self.run_script(fp.name)
-            
-
 
 if __name__ == "__main__":
    RExecutor().test()
-
-    
-    
-    

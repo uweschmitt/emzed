@@ -1,12 +1,16 @@
 def alignFeatureTables(tables, destination = None, nPeaks=-1, numBreakpoints=5):
 
     import os.path
-    import pylab
-    import numpy as np
     import pyOpenMS as P
     import copy
-
+    from  libms.DataStructures.Table import toOpenMSFeatureMap, Table
     import custom_dialogs
+
+    for table in tables:
+        assert isinstance(table, Table), "non table object in tables"
+        table.requireColumn("mz"), "need mz column for alignment"
+        table.requireColumn("rt"), "need rt column for alignment"
+
     if destination is None:
         destination = custom_dialogs.askForDirectory()
         if destination is None:
@@ -27,21 +31,24 @@ def alignFeatureTables(tables, destination = None, nPeaks=-1, numBreakpoints=5):
 
     # convert to pyOpenMS types and find map with max num features which
     # is taken as refamp:
-    fms = [table.toOpenMSFeatureMap() for table in tables]
-    refmap = max(fms, key=lambda fm: fm.size())
+    fms = [ (toOpenMSFeatureMap(table), table) for table in tables]
+    refmap, reftable = max(fms, key=lambda (fm, t): fm.size())
     print
-    print "refmap is", os.path.basename(refmap.get("source"))
+    print "refmap is", os.path.basename(reftable.meta.get("source","<noname>"))
     print
     results = []
-    for fm, table in zip(fms, tables):
+    for fm, table in fms:
         table = copy.deepcopy(table) # so we do not modify existing table !
         if fm is refmap:
             results.append(table)
             continue
-        filename = os.path.basename(table.ds.meta["source"])
+        sources = set(table.getColumn("source").values)
+        assert len(sources)==1, "multiple sources in table"
+        source = sources.pop()
+        filename = os.path.basename(source)
         print "align", filename
-        fnmeu, ts = __align(ma, refmpa, fm, numBreakpoints) 
-        __plot_and_save(ts, filename) 
+        fmneu, ts = __align(ma, refmap, fm, numBreakpoints)
+        __plot_and_save(ts, filename, destination)
         __adaptRtValuesInTable(table, fmneu)
         results.append(table)
     for t in results:
@@ -53,6 +60,7 @@ def __align(ma, refmap, fm, numBreakpoints):
     # so you MUST NOT put the arg as [] into this
     # function ! in this case you have no access to the calculated
     # transformations.
+    import pyOpenMS as P
     ts = []
     ma.alignFeatureMaps([refmap, fm], ts)
     assert len(ts) == 2 # ts is now filled !!!!
@@ -74,7 +82,10 @@ def __align(ma, refmap, fm, numBreakpoints):
     # transformation done 
     return fmneu, ts
 
-def __plot_and_save(ts, filename):
+def __plot_and_save(ts, filename, destination):
+    import numpy as np
+    import pylab
+    import os.path
     dtp = ts[1].getDataPoints()
     x,y = zip(*dtp)
     x = np.array(x)
@@ -90,11 +101,6 @@ def __plot_and_save(ts, filename):
     pylab.savefig(target_path)
 
 def __adaptRtValuesInTable(tableOld, fmapAligned):
-    assert isinstance(tableOld, Table)
-    assert isinstance(fmapAligned, P.PeakMap)
-
-    tableOld.requireFeatures()
-    fmapAligned.requireFeatures()
     # test for matching
     assert fmapAligned.size() == len(tableOld)
     irt = tableOld.getIndex("rt")

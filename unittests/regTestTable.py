@@ -1,6 +1,6 @@
 import sys, StringIO, difflib
 import numpy as np
-from libms.DataStructures import Table
+from libms.DataStructures.Table import Table
 
 def record(fun, args, p=None):
     try:

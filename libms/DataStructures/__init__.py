@@ -1,3 +1,3 @@
-from Table import *
 from TableParser import *
+from Table import *
 from MSTypes import *

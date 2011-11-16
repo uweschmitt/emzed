@@ -93,10 +93,10 @@ def patch_userconfig():
             ("console" ,"pythonstartup/default") : True,
             ("console" ,"pythonstartup/custom") : False,
             ("console" ,"pythonstartup/custom") : False,
-            ("console" ,"open_ipython_at_startup") : True, 
-            ("console" ,"open_python_at_startup") : False, 
+            ("console" ,"open_ipython_at_startup") : True,
+            ("console" ,"open_python_at_startup") : False,
             # imports are slow and insecure :
-            ("inspector", "automatic_import") : False, 
+            ("inspector", "automatic_import") : False,
         }
 
         value = override_defaults.get((section,option))
@@ -123,7 +123,7 @@ def patch_spyder():
     # corresponding import of ExternalConsole implies import of baseshell. So
     # patching baseshell will not work, as it is registered in sys.modules in
     # unpatched version !
-    patch_baseshell() 
+    patch_baseshell()
 
     from  spyderlib.widgets.dicteditor import RemoteDictEditorTableView
     @replace(RemoteDictEditorTableView.oedit_possible, verbose=True)
@@ -148,18 +148,11 @@ def patch_spyder():
         return communicate(self._get_sock(),
                    "isinstance(globals()['%s'], (libms.DataStructures.Table))" % name)
 
-    @add(NamespaceBrowser, verbose=True)
-    def is_featureTable(self, name):
-        """Return True if variable is a PeakMap"""
-        return communicate(self._get_sock(),
-                   "isinstance(globals()['%s'], (libms.DataStructures.Table))" % name)
-
     @replace(NamespaceBrowser.setup, verbose=True)
     def setup(self, *a, **kw):
         NamespaceBrowser._orig_setup(self, *a, **kw)
         self.editor.is_peakmap = self.is_peakmap
         self.editor.is_table = self.is_table
-        self.editor.is_featureTable = self.is_featureTable
 
     @replace(NamespaceBrowser.import_data, verbose=True)
     def import_data(self, filenames=None):
@@ -178,7 +171,7 @@ def patch_spyder():
     @add(NamespaceBrowser, verbose=True)
     def get_remote_view_settings(self):
         """Return dict editor view settings for the remote process,
-        but return None if this namespace browser is not visible (no need 
+        but return None if this namespace browser is not visible (no need
         to refresh an invisible widget...)"""
         if self.is_visible and self.isVisible():
             return self.get_view_settings()
@@ -191,7 +184,7 @@ def patch_external_shell():
         import libms.DataStructures
         return dicteditorutils._orig_is_supported(value, *a, **kw) \
             or isinstance(value, libms.DataStructures.PeakMap) \
-            or isinstance(value, libms.DataStructures.Table) 
+            or isinstance(value, libms.DataStructures.Table)
 
     @replace(dicteditorutils.get_size, verbose=True)
     def get_size( item ):

@@ -3,7 +3,6 @@ import batches
 import glob
 import os
 
-
 def testRunCentwave():
 
     try:
@@ -15,8 +14,8 @@ def testRunCentwave():
     assert len(tables) == 1
     table=tables[0]
     assert len(table) == 0, len(table)
-    assert len(table.colNames) ==  13, len(table.colNames)
-    assert len(table.colTypes) ==  13
+    assert len(table.colNames) ==  14, len(table.colNames)
+    assert len(table.colTypes) ==  14
 
 def testMatcheFilter():
 
@@ -29,5 +28,5 @@ def testMatcheFilter():
     assert len(tables) == 1
     table=tables[0]
     assert len(table) == 742, len(table)
-    assert len(table.colNames) ==  15, len(table.colNames)
-    assert len(table.colTypes) ==  15
+    assert len(table.colNames) ==  16, len(table.colNames)
+    assert len(table.colTypes) ==  16
