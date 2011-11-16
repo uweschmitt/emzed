@@ -118,6 +118,9 @@ class Table(object):
             raise Exception("colname %s not in table" % colName)
         return idx
 
+    def get(self, row, colName):
+        return row[self.getIndex(colName)]
+
     def getColumnCtx(self, needed):
         names = [ n for (t,n) in needed if t==self ]
         return dict((n, (self.getColumn(n).getValues(),

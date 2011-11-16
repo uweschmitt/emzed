@@ -5,8 +5,7 @@ sys.path.insert(0, "..")
 import ms
 
 table = ms.loadTable("features.table")
-
-pm = table.rows[0][table.getIndex("peakmap")]
-
-
+print table.rows[0]
+print table.colFormatters
+ms.inspect(table)
 

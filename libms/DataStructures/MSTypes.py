@@ -39,9 +39,7 @@ class Spectrum(object):
     def intensityInRange(self, mzmin, mzmax):
         imin = self.peaks[:,0].searchsorted(mzmin)
         imax = self.peaks[:,0].searchsorted(mzmax, side='right')
-        rv = np.sum(self.peaks[imin:imax,1])
-        return rv
-
+        return self.peaks[imin:imax,1].sum()
 
     def toMSSpectrum(self):
         spec = pyOpenMS.MSSpectrum()

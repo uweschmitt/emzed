@@ -15,7 +15,7 @@ import new
 
 
 def formatSeconds(seconds):
-    return "%.2f" % (seconds/60.0)
+    return "%.2fm" % (seconds/60.0)
 
 class RtRangeSelectionInfo(ObjectInfo):
 

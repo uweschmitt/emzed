@@ -27,7 +27,8 @@ class PeakIntegrator(object):
         area, rmse, params = self.integrator(self.allrts, fullchrom, rts, 
                                              chromatogram)
 
-        return dict(area=area, rmse=rmse, params=params)
+        return dict(area=area, rmse=rmse, params=params, rts=rts,
+                    chromatogram=chromatogram)
 
     def smoothed(self, *a):
         raise Exception("not implemented")
