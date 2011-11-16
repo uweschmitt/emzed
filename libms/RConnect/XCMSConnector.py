@@ -138,8 +138,10 @@ class CentwaveFeatureDetector(object):
             table = XCMSFeatureParser.parse(file(temp_output).readlines())
             table.addConstantColumn("peakmap", object, None, peakMap)
             table.addConstantColumn("centwave_config", dict, None, dd)
-            table.addConstantColumn("source", str, None,
-                                    peakMap.meta.get("source"))
+            src = peakMap.meta.get("source","")
+            table.addConstantColumn("source", str, None, src)
+            table.addEnumeration()
+            table.title = os.path.basename(src)
             return table
 
 class MatchedFilterFeatureDetector(object):
@@ -227,6 +229,8 @@ class MatchedFilterFeatureDetector(object):
             table = XCMSFeatureParser.parse(file(temp_output).readlines())
             table.addConstantColumn("peakmap", object, None, peakMap)
             table.addConstantColumn("matchedfilter_config", dict, None, dd)
-            table.addConstantColumn("source", str, None,
-                                    peakMap.meta.get("source"))
+            src = peakMap.meta.get("source","")
+            table.addConstantColumn("source", str, None, src)
+            table.addEnumeration()
+            table.title = os.path.basename(src)
             return table

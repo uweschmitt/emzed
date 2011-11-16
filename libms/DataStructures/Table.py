@@ -14,7 +14,7 @@ class _CmdLineProgress(object):
 
     def progress(self, i):
         percent = int(100.0 * (i+1) / self.imax)
-        if percent != self.last:
+        if percent >= self.last+self.step:
             print percent,
             sys.stdout.flush()
             self.last = percent
@@ -147,7 +147,20 @@ class Table(object):
             raise Exception("column with name %s already exists")
         self.colNames.insert(0, colname)
         self.colTypes.insert(0, int)
-        self.colFormats.insert(0, "%d")
+        if len(self)>99999:
+            fmt = "%6d"
+        elif len(self) > 9999:
+            fmt = "%5d"
+        elif len(self) > 999:
+            fmt = "%4d"
+        elif len(self) > 99:
+            fmt = "%3d"
+        elif len(self) > 9:
+            fmt = "%2d"
+        else:
+            fmt = "%d"
+        fmt = "%d"
+        self.colFormats.insert(0, fmt)
         for i, r in enumerate(self.rows):
             r.insert(0, i)
         self.setupFormatters()
@@ -184,6 +197,7 @@ class Table(object):
                 raise Exception("colum %s does not exist" % k)
         self.colNames = [ kw.get(n,n) for n in self.colNames]
         self.emptyColumnCache()
+        self.updateIndices()
 
     def __len__(self):
         return len(self.rows)
@@ -293,21 +307,30 @@ class Table(object):
 
         cmdlineProgress = _CmdLineProgress(len(self))
         rows = []
-        for i, r1 in enumerate(self.rows):
+        for ii, r1 in enumerate(self.rows):
             r1ctx = dict((n, (v, None)) for (n,v) in zip(self.colNames, r1))
             ctx = {self:r1ctx, t:tctx}
             flags,_ = expr.eval(ctx)
             rows.extend([ r1 + t.rows[n] for (n,i) in enumerate(flags) if i])
-            cmdlineProgress.progress(i)
+            cmdlineProgress.progress(ii)
 
         table = self._buildJoinTable(t)
         table.rows = rows
         return table
 
     def _buildJoinTable(self, t):
-        colNames = ["%s_1" % n for n in self.colNames]\
-                 + ["%s_2" % n for n in t.colNames]
 
+        names1 = self.colNames
+        names2 = t.colNames
+        colNames = []
+        for name in names1:
+            if name in names2:
+                name = name+"_1"
+            colNames.append(name)
+        for name in names2:
+            if name in names1:
+                name = name+"_2"
+            colNames.append(name)
         colFormats = self.colFormats + t.colFormats
         colTypes = self.colTypes + t.colTypes
         title = "%s vs %s" % (self.title, t.title)
@@ -325,7 +348,7 @@ class Table(object):
         cmdlineProgress = _CmdLineProgress(len(self))
 
         rows = []
-        for i, r1 in enumerate(self.rows):
+        for ii, r1 in enumerate(self.rows):
             r1ctx = dict((n, (v, None)) for (n,v) in zip(self.colNames, r1))
             ctx = {self:r1ctx, t:tctx}
             flags,_ = expr.eval(ctx)
@@ -333,7 +356,7 @@ class Table(object):
                 rows.extend([r1 + t.rows[n] for (n,i) in enumerate(flags) if i])
             else:
                 rows.extend([r1 + filler])
-            cmdlineProgress.progress(i)
+            cmdlineProgress.progress(ii)
 
 
         table = self._buildJoinTable(t)

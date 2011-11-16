@@ -3,7 +3,6 @@
 from PyQt4.QtGui import  *
 from PyQt4.QtCore import *
 
-from ..gui import helpers
 from PlottingWidgets import RtPlotter, MzPlotter
 
 import sys
@@ -11,6 +10,72 @@ import numpy as np
 import configs
 import pprint
 import os
+
+from ..DataStructures.Table import Table
+
+def widthOfTableWidget(tw):
+
+    width = 0
+    for i in range(tw.columnCount()):
+        width += tw.columnWidth(i)
+
+    width += tw.verticalHeader().sizeHint().width()
+    width += tw.verticalScrollBar().sizeHint().width()
+    width += tw.frameWidth()*2
+    return width
+
+class ValuedQTableWidgetItem(QTableWidgetItem):
+
+    """ using this sublcass allows sorting columns in QTableWidget based on
+        their numerical value
+    """
+
+    def __init__(self, rowIndex, value, *a, **kw):
+        super(ValuedQTableWidgetItem, self).__init__(*a, **kw)
+        self.rowIndex = rowIndex
+        self.value = value
+
+    def __lt__(self, other):
+        return self.value < other.value
+
+
+def populateTableWidget(tWidget, table):
+    assert isinstance(table, Table)
+
+    tWidget.clear()
+    tWidget.setRowCount(len(table))
+
+    headers = table.getVisibleCols()
+    tWidget.setColumnCount(len(headers))
+    tWidget.setHorizontalHeaderLabels(headers)
+
+    colidxmap = dict((name, i) for i, name in enumerate(headers))
+
+    tWidget.setSortingEnabled(False)  # needs to be done before filling the table
+
+    for i, row in enumerate(table.rows):
+        for value, formatter, type_, colName in zip(row, table.colFormatters,
+                                               table.colTypes, table.colNames):
+            tosee = formatter(value)
+            if tosee is not None:
+                item = ValuedQTableWidgetItem(i, value, tosee)
+                if len(tosee)>50:
+                    item.setSizeHint(QSize(50,-1))
+                item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+                if type_ == float or type_ == int:
+                    item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                font = item.font()
+                font.setFamily("Courier")
+                if type_ == str and tosee.startswith("http://"):
+                    font.setUnderline(True)
+                item.setFont(font)
+                j = colidxmap[colName]
+                tWidget.setItem(i, j, item)
+
+    tWidget.setSortingEnabled(True)
+    # adjust height of rows (normaly reduces size to a reasonable value)
+    tWidget.verticalHeader().setResizeMode(QHeaderView.ResizeToContents)
+    return colidxmap
 
 class FeatureExplorer(QDialog):
 
@@ -38,7 +103,6 @@ class FeatureExplorer(QDialog):
         self.setupWidgets()
         self.setupLayout()
         self.populateTable()
-        pprint.pprint(self.colIdxMap)
         self.setWindowSize() # depends on table size
 
         if table.title:
@@ -58,7 +122,11 @@ class FeatureExplorer(QDialog):
         self.setSizeGripEnabled(True)
 
     def populateTable(self):
-        self.colIdxMap = helpers.populateTableWidget(self.tw, self.table)
+        self.colIdxMap = populateTableWidget(self.tw, self.table)
+        for i in range(len(self.table)):
+            self.tw.setVerticalHeaderItem(i, QTableWidgetItem("  "))
+        idcol = self.colIdxMap.get("id", 0)
+        self.tw.sortByColumn(idcol, Qt.AscendingOrder)
 
     def setWindowSize(self):
 
@@ -83,7 +151,7 @@ class FeatureExplorer(QDialog):
         # 2) make windows size fit to tables size
         #    big table -> expand window
         #    small table: plots give mim
-        self.setMinimumWidth(helpers.widthOfTableWidget(self.tw))
+        self.setMinimumWidth(widthOfTableWidget(self.tw))
         self.tw.setMinimumHeight(150)
 
     def setupLayout(self):

@@ -5,7 +5,5 @@ sys.path.insert(0, "..")
 import ms
 
 table = ms.loadTable("features.table")
-print table.rows[0]
-print table.colFormatters
 ms.inspect(table)
 

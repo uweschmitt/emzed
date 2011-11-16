@@ -5,8 +5,8 @@
                             biocLite("xcms", dep=T)
                         }
                         library(xcms)
-                        xs <- xcmsSet('c:\\dokume~1\\admini~1\\lokale~1\\temp\\tmpyuqwiz\\input.mzData', method="centWave", 
-                                          ppm=3, 
+                        xs <- xcmsSet('c:\\dokume~1\\admini~1\\lokale~1\\temp\\tmprwdi5w\\input.mzData', method="centWave",
+                                          ppm=3,
                                           peakwidth=c(8, 15),
                                           prefilter=c(8, 10000),
                                           snthresh = 40.000000,
@@ -17,6 +17,6 @@
                                           verbose.columns = FALSE,
                                           mzCenterFun = 'wMean'
                                      )
-                        write.table(xs@peaks, file='c:\\dokume~1\\admini~1\\lokale~1\\temp\\tmpyuqwiz\\output.csv')
+                        write.table(xs@peaks, file='c:\\dokume~1\\admini~1\\lokale~1\\temp\\tmprwdi5w\\output.csv')
                         q(status=4711)
                      
