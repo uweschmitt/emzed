@@ -1,11 +1,21 @@
 import pyOpenMS as P
 import operator, copy, os, itertools, re, numpy, cPickle
 from   ExpressionTree import Node, Column
-from TableParser import TableParser
+import numpy as np
 
 
-def formatSeconds(seconds):
-    return "%.2fm" % (seconds / 60.0)
+def commonTypeOfColumn(col):
+    if isinstance(col, np.ndarray):
+        return col.dtype
+    types = set( type(c) for c in col )
+    if str in types:
+        return str
+    if float in types:
+        return float
+    if int in types:
+        return int
+    raise Exception("do not know how to find common type for %r" % types)
+
 
 def _formatter(f):
     """ helper, is toplevel for supporting pickling of Table """
@@ -90,6 +100,12 @@ class Table(object):
 
     def __iter__(self):
         return iter(self.rows)
+
+    def hasColumn(self, name):
+        return name in self.colNames
+
+    def hasColumns(self, *names):
+        return all(self.hasColumn(n) for n in names)
 
     def requireColumn(self, name):
         if not name in self.colNames:
@@ -202,7 +218,7 @@ class Table(object):
             raise Exception("column with name %s already exists" % name)
         ctx = { self: self.getColumnCtx(expr.neededColumns()) }
         values, _ = expr.eval(ctx)
-        t = TableParser.commonTypeOfColumn(values)
+        t = commonTypeOfColumn(values)
         f = format if format is not None else TableParser.standardFormats.get(t)
 
         self.colNames.append(name)
@@ -218,7 +234,7 @@ class Table(object):
         ix = self.getIndex(name)
         ctx = { self: self.getColumnCtx(expr.neededColumns()) }
         values, _ = expr.eval(ctx)
-        t = TableParser.commonTypeOfColumn(values)
+        t = commonTypeOfColumn(values)
         f = format if format is not None else TableParser.standardFormats.get(t)
 
         self.colNames[ix] = name
@@ -229,6 +245,14 @@ class Table(object):
         self.setupFormatters()
         self.updateIndices()
         self.emptyColumnCache()
+
+    def unique(self):
+        raise Exception("does not work")
+        rv = self.buildEmptyClone()
+        # rows as tuples, set does not like unhashable lists as elements
+        rows = set( tuple(row) for row in self.rows )
+        rv.rows = list(rows)
+        return rv
 
     def filter(self, expr, debug = False):
         assert isinstance(expr, Node)

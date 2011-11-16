@@ -26,7 +26,7 @@ def loadTable(path=None):
 
     # local import in order to keep namespaces clean
     import ms
-    from   libms.DataStructures import Table
+    from   libms.DataStructures.Table import Table
 
     if path is None:
         path = ms.askForSingleFile(extensions=["table"])

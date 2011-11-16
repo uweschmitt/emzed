@@ -15,25 +15,10 @@ import new
 
 
 def formatSeconds(seconds):
-    
-        hours = int(seconds / 3600)
-        remainder = seconds %  3600   # % works for floating point !
-
-        minutes = int(remainder / 60)
-        seconds = remainder % 60  
-
-        if hours:
-            formatted = "%dh %dm %.1f" % (hours, minutes, seconds)
-        elif minutes:
-            formatted = "%dm %.1f" % (minutes, seconds)
-        else:
-            formatted = "%.1f" % seconds
-                
-        return  formatted.rstrip(".0")+"s"
-        
+    return "%.2f" % (seconds/60.0)
 
 class RtRangeSelectionInfo(ObjectInfo):
-    
+
     def __init__(self, range_):
         self.range_ = range_
 

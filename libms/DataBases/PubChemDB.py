@@ -8,8 +8,8 @@ from ..DataStructures import Table
 class PubChemDB(object):
 
     colNames = ["mw", "cid", "mf", "iupac", "synonyms", "url"]
-    colTypes = [float, str, str,    str,    str,       str ]
-    colFormats=["%.5f", "%s", "%d", "%s", None, "%s" ]
+    colTypes = [float, str,   str,   str,    str,       str ]
+    colFormats=["%.5f", "%s", "%s", "%s", None, "%s" ]
 
     @staticmethod
     def _get_count():

@@ -1,20 +1,9 @@
-import numpy as np
+import Table
 
 class TableParser(object):
 
-    typePrecedences = { int: (0, int),
-                        float: (1, float),
-                        str: (2, str) }
 
     standardFormats = { int: "%d", float : "%.2f", str: "%s" }
-
-    @classmethod
-    def commonTypeOfColumn(clz, col):
-        if isinstance(col, np.ndarray):
-            return col.dtype
-        precedences = ( clz.typePrecedences[type(c)] for c in col )
-        minprecedence=  min(precedences)
-        return minprecedence[1]
 
     @classmethod
     def bestConvert(clz, val):
@@ -37,7 +26,7 @@ class TableParser(object):
 
         if rows:
             columns     = ( (row[i] for row in rows) for i in range(numCol) )
-            columnTypes = [clz.commonTypeOfColumn(col) for col in columns ]
+            columnTypes = [Table.commonTypeOfColumn(col) for col in columns ]
             knownTypes = [ (i, clz.typeDefaults.get(columnNames[i] )) for i in range(numCol) ]
 
             for i, type_ in knownTypes:
@@ -55,8 +44,7 @@ class TableParser(object):
             columnTypes = numCol * (str, )
             formats     = numCol * ("%r", )
 
-        from Table import Table
-        return Table(columnNames, columnTypes, formats, rows)
+        return Table.Table(columnNames, columnTypes, formats, rows)
 
     @classmethod
     def fromCSV(clz, path):
@@ -74,8 +62,9 @@ class XCMSFeatureParser(TableParser):
                       maxo= float, sn= float,
                       sample= int )
 
+    fms = "'%.2fm' % (o/60.0)"
     formatDefaults = dict( mz= "%10.5f", mzmin= "%10.5f", mzmax= "%10.5f",
-                           rt= "%6.1f",  rtmin= "%6.1f", rtmax = "%6.1f",
+                           rt=  fms, rtmin=fms, rtmax=fms,
                            into= "%.2e", intb= "%.2e", intf="%.2e",
                            maxo= "%.2e", sn= "%.1e",
                            sample= "%2d" )

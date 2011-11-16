@@ -1,6 +1,6 @@
-from ..DataStructures import Table
+from ..DataStructures.Table import Table
 from PyQt4.QtGui      import QTableWidgetItem, QHeaderView
-from PyQt4.QtCore     import Qt
+from PyQt4.QtCore     import Qt, QSize
 
 def widthOfTableWidget(tw):
 
@@ -13,23 +13,20 @@ def widthOfTableWidget(tw):
     width += tw.frameWidth()*2
     return width
 
-class NumericQTableWidgetItem(QTableWidgetItem):
+class ValuedQTableWidgetItem(QTableWidgetItem):
 
     """ using this sublcass allows sorting columns in QTableWidget based on
-        their numerical value 
+        their numerical value
     """
 
-
-    def __init__(self, idx, *a, **kw):
-        super(NumericQTableWidgetItem, self).__init__(*a, **kw)
-        self.idx = idx
-
+    def __init__(self, rowIndex, value, *a, **kw):
+        super(ValuedQTableWidgetItem, self).__init__(*a, **kw)
+        self.rowIndex = rowIndex
+        self.value = value
 
     def __lt__(self, other):
-        try:
-            return float(self.text()) <= float(other.text())
-        except:
-            return self.text() <= other.text()
+        return self.value < other.value
+
 
 def populateTableWidget(tWidget, table):
     assert isinstance(table, Table)
@@ -44,19 +41,24 @@ def populateTableWidget(tWidget, table):
     tWidget.setSortingEnabled(False)  # needs to be done before filling the table
 
     for i, row in enumerate(table.rows):
-        for j, (value, formatter, type_) in enumerate(zip(row, table.colFormatters, table.colTypes)):
-            tosee = formatter(value) 
+        j = 0
+        for value, formatter, type_ in zip(row, table.colFormatters, table.colTypes):
+            tosee = formatter(value)
             if tosee is not None:
-                item = NumericQTableWidgetItem(i, tosee)
-                item.setData(Qt.UserRole, value)
+                item = ValuedQTableWidgetItem(i, value, tosee)
+                if len(tosee)>50:
+                    item.setSizeHint(QSize(50,-1))
                 item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
                 if type_ == float:
                     item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 font = item.font()
                 font.setFamily("Courier")
+                if type_ == str and tosee.startswith("http://"):
+                    font.setUnderline(True)
                 item.setFont(font)
                 tWidget.setItem(i, j, item)
-   
+                j += 1
+
     tWidget.setSortingEnabled(True)
     # adjust height of rows (normaly reduces size to a reasonable value)
     tWidget.verticalHeader().setResizeMode(QHeaderView.ResizeToContents)

@@ -30,6 +30,18 @@ def testRunnerTable():
     run(t, names, [row1, row2, row3])
 
 
+    #t = t.unique()
+    #run(t, names, [row1, row2, row3])
+
+    #t.rows.append(row1)
+    #t.rows.append(row2)
+
+    #assert len(t) == 5
+    #t=t.unique()
+    #assert len(t) == 3
+    #run(t, names, [row1, row2, row3])
+
+
 def run(t, colnames, rows):
     t = copy.deepcopy(t) # prohibit changes
     ixs = set()
@@ -132,7 +144,6 @@ def run(t, colnames, rows):
     tn.dropColumn("squared")
     assert tn.colNames == [ "id", "iii", "long", "x"]
     assert len(tn) == 3
-
 
 
 

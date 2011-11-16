@@ -5,7 +5,7 @@ from integration import *
 from shell_helpers import *
 from align import *
 
-from libms.Explorers       import inspectPeakMap, inspectFeatures
+from libms.Explorers       import inspectPeakMap, inspect
 from libms.gui.TableDialog import showTable
 from libms.PeakIntegration import SGIntegrator, AsymmetricGaussIntegrator
 
