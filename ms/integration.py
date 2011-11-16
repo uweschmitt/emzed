@@ -45,11 +45,11 @@ def reintegrate(ftable, integratorid="std", showProgress = True):
           colTypes.append(ftable.colTypes[getIndex("sn")])
           colFormats.append(ftable.colFormats[getIndex("sn")])
 
-    colNames += [ "intbegin", "intend", "method", "area", "rmse", "params",
-                  "rts", "chromatogram" ]
-    colTypes += [ float, float, str, float, float, object, object, object ]
+    colNames += [ "intbegin", "intend", "method", "area", "rmse", "params",]
+
+    colTypes += [ float, float, str, float, float, object, ]
     fmt = '''"%.2fm" % o'''
-    colFormats += [ fmt, fmt, "%s", "%.2e", "%.2e", None, None, None ]
+    colFormats += [ fmt, fmt, "%s", "%.2e", "%.2e", None, ]
 
     rows = []
     lastcent = -1
@@ -78,7 +78,7 @@ def reintegrate(ftable, integratorid="std", showProgress = True):
         if hasSN:
             newrow.append(ftable.get(row, "sn"))
         newrow.extend([intbegin, intend, method, result["area"], result["rmse"],
-                      result["params"], result["rts"], result["chromatogram"]])
+                      result["params"], ])
 
         rows.append(newrow)
 

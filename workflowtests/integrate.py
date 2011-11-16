@@ -14,4 +14,4 @@ def integrate(table=table):
 
 reinttab = integrate()
 
-reinttab.store("integrated_features.table")
+reinttab.store("integrated_features.table", True)

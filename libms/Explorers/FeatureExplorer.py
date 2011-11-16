@@ -38,6 +38,7 @@ class FeatureExplorer(QDialog):
         self.setupWidgets()
         self.setupLayout()
         self.populateTable()
+        pprint.pprint(self.colIdxMap)
         self.setWindowSize() # depends on table size
 
         if table.title:
@@ -57,28 +58,28 @@ class FeatureExplorer(QDialog):
         self.setSizeGripEnabled(True)
 
     def populateTable(self):
-        helpers.populateTableWidget(self.tw, self.table)
+        self.colIdxMap = helpers.populateTableWidget(self.tw, self.table)
 
     def setWindowSize(self):
 
         # the following three steps 1)-3) set the dialog window to an optimal width
-        # 
+        #
         # large table:
-        #              - shrink columns witdts's as much as possible (step 1) 
+        #              - shrink columns witdts's as much as possible (step 1)
         #              - table gives minimal width in step 2)
         #              - step 3: table columns are stretched to fit the windows width,
         #                this is a no op in this case, due to 1) and 2)
         #
         # small table:
-        #              - shrink columns witdths's as much as possible (step 1) 
+        #              - shrink columns witdths's as much as possible (step 1)
         #              - plots sizes shadow minimal width in step 2)
         #              - step 3: table columns are stretched to fit the windows width,
         #                this undoes step 1
 
-        # 1) make columns as small as possible 
+        # 1) make columns as small as possible
         #    might shrink too much, therefore step 3
         self.tw.resizeColumnsToContents()
- 
+
         # 2) make windows size fit to tables size
         #    big table -> expand window
         #    small table: plots give mim
@@ -155,7 +156,7 @@ class FeatureExplorer(QDialog):
         self.connect(self.tw.verticalHeader(), SIGNAL("sectionClicked(int)"),
                      self.rowClicked)
         # click at cell
-        self.connect(self.tw, SIGNAL("cellClicked(int, int)"), 
+        self.connect(self.tw, SIGNAL("cellClicked(int, int)"),
                      self.cellClicked)
 
         if self.isIntegrated:
@@ -163,37 +164,34 @@ class FeatureExplorer(QDialog):
             self.chooseIntMethod = QComboBox()
             for name, _ in configs.peakIntegrators:
                 self.chooseIntMethod.addItem(name)
-            self.connect(self.chooseIntMethod, 
-                         SIGNAL("currentIndexChanged(int)"), 
+            self.connect(self.chooseIntMethod,
+                         SIGNAL("currentIndexChanged(int)"),
                          self.intMethodChanged)
             self.reintegrateButton = QPushButton()
             self.reintegrateButton.setText("Integrate")
-            self.connect(self.reintegrateButton, SIGNAL("clicked()"), 
+            self.connect(self.reintegrateButton, SIGNAL("clicked()"),
                          self.doIntegrate)
 
     def intMethodChanged(self, i):
         pass
 
     def doIntegrate(self):
-        if not self.integratedFeatures:
-            return
 
         widgetRowIdx = self.tw.currentRow()
         if widgetRowIdx < 0:
             return
 
-        getIndex = self.table.getIndex
 
         # setup integrator
         method = str(self.chooseIntMethod.currentText()) # conv from qstring
-        integrator = dict(configs.peakIntegrators)[method] 
+        integrator = dict(configs.peakIntegrators)[method]
         integrator.setPeakMap(self.peakmap)
 
         # get eic limits
         # rowidx may be different to widgets row index due to sorting:
-        row = self.rows[self.tw.item(widgetRowIdx, 0).rowIndex] 
-        mzmin = row[getIndex("mzmin")]
-        mzmax = row[getIndex("mzmax")]
+        row = self.table.rows[self.tw.item(widgetRowIdx, 0).rowIndex]
+        mzmin = self.table.get(row, "mzmin")
+        mzmax = self.table.get(row, "mzmax")
         intBegin, intEnd = sorted(self.rtPlotter.range_.get_range())
 
         # integrate
@@ -204,6 +202,7 @@ class FeatureExplorer(QDialog):
         intrts, smoothed = integrator.getSmoothed(self.levelOneRts, params)
 
         # write values to table
+        getIndex = self.table.getIndex
         row[getIndex("method")] = method
         row[getIndex("intbegin")] = intBegin
         row[getIndex("intend")] = intEnd
@@ -218,11 +217,11 @@ class FeatureExplorer(QDialog):
         strArea     = ft.colFormatters[getIndex("area")](area)
         strRmse     = ft.colFormatters[getIndex("rmse")](rmse)
 
-        self.tw.item(widgetRowIdx, getIndex("intbegin")).setText(strIntBegin)
-        self.tw.item(widgetRowIdx, getIndex("intend")).setText(strIntEnd)
-        self.tw.item(widgetRowIdx, getIndex("method")).setText(method)
-        self.tw.item(widgetRowIdx, getIndex("area")).setText(strArea)
-        self.tw.item(widgetRowIdx, getIndex("rmse")).setText(strRmse)
+        self.tw.item(widgetRowIdx, self.colIdxMap["intbegin"]).setText(strIntBegin)
+        self.tw.item(widgetRowIdx, self.colIdxMap["intend"]).setText(strIntEnd)
+        self.tw.item(widgetRowIdx, self.colIdxMap["method"]).setText(method)
+        self.tw.item(widgetRowIdx, self.colIdxMap["area"]).setText(strArea)
+        self.tw.item(widgetRowIdx, self.colIdxMap["rmse"]).setText(strRmse)
 
         # plot result
         self.rtPlotter.plot(smoothed, x=intrts, index=1)
@@ -245,8 +244,6 @@ class FeatureExplorer(QDialog):
 
         # trotz umsortierung :
         row = self.table.rows[item.rowIndex]
-        #print "ROW="
-        #pprint.pprint(row)
 
         if type(item.value) == str and item.value.startswith("http://"):
             url = QUrl(item.value, QUrl.TolerantMode)
@@ -273,12 +270,10 @@ class FeatureExplorer(QDialog):
             elif name.startswith("rtm"):  # rtmin or rtmax
                 rtmin = row[getIndex("rtmin")]
                 rtmax = row[getIndex("rtmax")]
-                print rtmin, rtmax
                 self.rtPlotter.setRangeSelectionLimits(rtmin, rtmax)
                 self.rtPlotter.replot()
 
             elif name.startswith("rt"):  #  rt
-                print rt
                 rt= row[getIndex("rt")]
                 self.rtPlotter.setRangeSelectionLimits(rt, rt)
                 self.rtPlotter.replot()

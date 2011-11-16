@@ -38,11 +38,13 @@ def populateTableWidget(tWidget, table):
     tWidget.setColumnCount(len(headers))
     tWidget.setHorizontalHeaderLabels(headers)
 
+    colidxmap = dict((name, i) for i, name in enumerate(headers))
+
     tWidget.setSortingEnabled(False)  # needs to be done before filling the table
 
     for i, row in enumerate(table.rows):
-        j = 0
-        for value, formatter, type_ in zip(row, table.colFormatters, table.colTypes):
+        for value, formatter, type_, colName in zip(row, table.colFormatters,
+                                               table.colTypes, table.colNames):
             tosee = formatter(value)
             if tosee is not None:
                 item = ValuedQTableWidgetItem(i, value, tosee)
@@ -56,10 +58,11 @@ def populateTableWidget(tWidget, table):
                 if type_ == str and tosee.startswith("http://"):
                     font.setUnderline(True)
                 item.setFont(font)
+                j = colidxmap[colName]
                 tWidget.setItem(i, j, item)
-                j += 1
 
     tWidget.setSortingEnabled(True)
     # adjust height of rows (normaly reduces size to a reasonable value)
     tWidget.verticalHeader().setResizeMode(QHeaderView.ResizeToContents)
+    return colidxmap
 
