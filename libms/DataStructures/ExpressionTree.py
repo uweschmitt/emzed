@@ -220,25 +220,41 @@ class AlgebraicNode(Node):
         self.symbol = symbol
 
     def eval(self, ctx):
-        lval, _ = self.left.eval(ctx)
-        rval, _ = self.right.eval(ctx)
-
-        if type(lval) in [str, int, float] and type(rval) in [list,np.ndarray]:
-            res = [self.efun(lval, r) for r in rval ]
-            if type(lval) == str:
-                return res, None
-            return np.array(res), None
-
-        if type(rval) in [str, int, float] and type(lval) in [list,np.ndarray]:
-            res = [self.efun(l, rval) for l in lval ]
-            if type(lval) == str:
-                return res, None
-            return np.array(res), None
+        lval, idxl = self.left.eval(ctx)
+        rval, idxr = self.right.eval(ctx)
 
         if type(lval) == list and type(lval[0]) in [int, float]:
             lval = np.array(lval)
         if type(rval) == list and type(rval[0]) in [int, float]:
             rval = np.array(rval)
+
+        if type(lval) in [int, float] and type(rval) == np.ndarray:
+            res = self.efun(lval, rval)
+            # order preserving operations keep index idxr
+            # c + vec, c * vec and c>0, c/vec and c<0 kepp order of vec
+            # c - vec destroys it:
+            if self.symbol == "+" or (self.symbol=="*" and lval > 0)\
+                                  or (self.symbol=="/" and lval < 0):
+                return res, idxr
+            # else: loose index
+            return res, None
+
+        if  type(lval) == np.ndarray and type(rval) in [int, float]:
+            res = self.efun(lval, rval)
+            # order preserving operations keep index idxr
+            # vec +/- c, vec */ c and c>0 keep order of vec
+            if self.symbol in "+-" or (self.symbol in "*/" and rval > 0):
+                return res, idxl
+            # else: loose index
+            return res, None
+
+        if type(lval) == str and type(rval) == list:
+            res = [self.efun(lval, r) for r in rval ]
+            return res, None
+
+        if type(rval) == str and type(lval) == list:
+            res = [self.efun(l, rval) for l in lval ]
+            return res, None
 
         # arrays are fast:
         if type(lval) == type(rval) == np.ndarray:
@@ -257,6 +273,7 @@ class AlgebraicNode(Node):
             if len(lval) != len(rval):
                 raise Exception("sizes do not fit !")
             return np.array([ self.efun(l,r) for (l,r) in zip(lval,rval) ]), None
+
         return self.efun(lval, rval), None
 
 class LogicNode(Node):
@@ -265,7 +282,6 @@ class LogicNode(Node):
         super(LogicNode, self).__init__(left, right)
         if right.__class__ == Value and type(right.value) != bool:
             print "warning: parentesis for logic op set ?"
-
 
     def richeval(self, l, r, bitop):
         if type(l) == bool and type(r) == bool:
@@ -283,8 +299,6 @@ class LogicNode(Node):
         elif type(l) == type(r) == np.ndarray:
             return bitop(l,r)
         raise Exception("bool op for %r and %r not defined" % (l, r))
-
-
 
 class AndNode(LogicNode):
 
