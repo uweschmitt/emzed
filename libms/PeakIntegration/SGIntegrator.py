@@ -40,7 +40,6 @@ class SGIntegrator(SmoothedIntegrator):
         self.weights = self._savitzky_golay_coeff(window_size, order)
 
     def __str__(self):
-        
         return "SGIntegrator (window_size=%(window_size)d, order=%(order)d)" % self.config
 
     def _savitzky_golay_coeff(self, window_size, order, deriv=0):
@@ -77,20 +76,11 @@ class SGIntegrator(SmoothedIntegrator):
         smoothed = self._savitzky_golay_smooth(chromatogram, self.weights)
         smoothed[smoothed<0]= 0  # clip negative values, result from some spikes
 
-        missing = len(rts) - len(smoothed) 
+        missing = len(rts) - len(smoothed)
         if missing >0 : # pad zeros for very short eics
             smoothed = np.hstack( [ np.zeros( ( missing/2, )), smoothed, np.zeros( (  missing - missing/2, )) ] )
         if missing <0 : # pad zeros for very short eics
             missing = - missing
-            rts = np.hstack( [ rts[0]*np.ones( ( missing/2, )), rts, rts[-1]*np.ones( (  missing - missing/2, )) ] )
+            rts = np.hstack([rts[0]*np.ones( ( missing/2, )), rts, rts[-1]*np.ones( (  missing - missing/2, ))])
 
-        return rts, smoothed 
-
-        
-
-
-        
-
-        
-        
-        
+        return rts, smoothed

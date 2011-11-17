@@ -18,8 +18,9 @@ class PeakIntegrator(object):
         specs = self.peakMap.levelOneSpecsInRange(rtmin, rtmax) 
         # l[ spec for spec in self.ms1specs if rtmin <= spec.rt <=rtmax ]
         data  = [ (s.rt, s.intensityInRange(mzmin, mzmax)) for s in specs]
+        if len(data) == 0:
+            return dict(area=0, rmse=0)
         rts, chromatogram = zip(*data)
-
         if len(rts)==0:
             return dict(area=0, rmse=0)
 
