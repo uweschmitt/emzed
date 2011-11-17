@@ -10,7 +10,7 @@ newIds, missingIds = pubChemDB.synchronize()
 if len(newIds) and not len(missingIds):
     print "PUBCHEM NOT UP TO DATE"
     if os.access(globalDataPath, os.W_OK):
-        pubChemDB.update(dbPath, data, newIds)
+        pubChemDB.update(newIds)
         pubChemDB.store()
     else:
         print
