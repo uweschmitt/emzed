@@ -60,7 +60,7 @@ class Table(object):
         self.colNames = list(colNames)
         self.colTypes = list(colTypes)
         self.rows     = rows
-        self.colFormats = list(colFormats)
+        self.colFormats = [None if f=="" else f for f in colFormats]
 
         self.colIndizes = dict((n, i) for i, n in enumerate(colNames))
         self.title = title

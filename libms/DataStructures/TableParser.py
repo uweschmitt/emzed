@@ -33,7 +33,6 @@ class TableParser(object):
                     columnTypes[i] = type_
 
             formats     = [Table._standardFormats[type_] for type_ in columnTypes]
-
             knownFormats = [ (i, clz.formatDefaults.get(columnNames[i] )) for i in range(numCol) ]
 
             for i, format_ in knownFormats:
@@ -64,9 +63,9 @@ class XCMSFeatureParser(TableParser):
     fms = "'%.2fm' % (o/60.0)"
     formatDefaults = dict( mz= "%10.5f", mzmin= "%10.5f", mzmax= "%10.5f",
                            rt=  fms, rtmin=fms, rtmax=fms,
-                           into= "%.2e", intb= "%.2e", intf="%.2e",
-                           maxo= "%.2e", sn= "%.1e",
-                           sample= "%2d" )
+                           into= "", intb= "", intf="",
+                           maxo= "", sn= "%.1e",
+                           sample= "")
 
 if __name__ == "__main__":
     table = XCMSFeatureParser.parse(file("output_from_xcms.csv").readlines())
