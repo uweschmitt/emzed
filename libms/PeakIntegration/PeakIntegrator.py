@@ -19,7 +19,7 @@ class PeakIntegrator(object):
         # l[ spec for spec in self.ms1specs if rtmin <= spec.rt <=rtmax ]
         data  = [ (s.rt, s.intensityInRange(mzmin, mzmax)) for s in specs]
         rts, chromatogram = zip(*data)
-        
+
         if len(rts)==0:
             return dict(area=0, rmse=0)
 
@@ -27,13 +27,11 @@ class PeakIntegrator(object):
         area, rmse, params = self.integrator(self.allrts, fullchrom, rts, 
                                              chromatogram)
 
-        return dict(area=area, rmse=rmse, params=params, rts=rts,
-                    chromatogram=chromatogram)
+        return dict(area=area, rmse=rmse, params=params)
 
     def smoothed(self, *a):
         raise Exception("not implemented")
 
-    
     def trapez(self, x, y):
         assert len(x)==len(y), "x, y have different length"
 

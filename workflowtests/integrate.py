@@ -8,10 +8,6 @@ import ms
 
 table = ms.loadTable("features.table")
 
-
-def integrate(table=table):
-    return ms.reintegrate(table, "emg_exakt")
-
-reinttab = integrate()
+reinttab = ms.integrate(table, "std")
 
 reinttab.store("integrated_features.table", True)
