@@ -130,7 +130,6 @@ def patch_spyder():
     def oedit_possible(self, key):
         return self.is_peakmap(key) \
             or self.is_table(key) \
-            or self.is_featureTable(key) \
             or RemoteDictEditorTableView._orig_oedit_possible(self, key)
 
     from spyderlib.widgets.externalshell.monitor import communicate
