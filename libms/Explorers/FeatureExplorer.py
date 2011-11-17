@@ -54,6 +54,7 @@ def populateTableWidget(tWidget, table):
     tWidget.setSortingEnabled(False)  # needs to be done before filling the table
 
     for i, row in enumerate(table.rows):
+        tWidget.setVerticalHeaderItem(i, QTableWidgetItem("  "))
         for value, formatter, type_, colName in zip(row, table.colFormatters,
                                                table.colTypes, table.colNames):
             tosee = formatter(value)
@@ -123,8 +124,6 @@ class FeatureExplorer(QDialog):
 
     def populateTable(self):
         self.colIdxMap = populateTableWidget(self.tw, self.table)
-        for i in range(len(self.table)):
-            self.tw.setVerticalHeaderItem(i, QTableWidgetItem("  "))
         idcol = self.colIdxMap.get("id", 0)
         self.tw.sortByColumn(idcol, Qt.AscendingOrder)
 
