@@ -1,5 +1,5 @@
 # t1.leftJoin(t2, ((t1.str > 'hi') & (t1.float <= t2.float)))
-id_1     int_1    float_1  str_1    id_2     int_2    float_2  str_2   
+33 66 100 id_1     int_1    float_1  str_1    id_2     int_2    float_2  str_2   
 int      int      float    str      int      int      float    str     
 ------   ------   ------   ------   ------   ------   ------   ------  
 0        1        1.0      hi       None     None     None     None    
@@ -8,7 +8,7 @@ int      int      float    str      int      int      float    str
 2        3        3.0      hi3      2        3        3.0      hi3     
 
 # t1.leftJoin(t2, ((t1.str >= 'hi') & (t1.float <= t2.float)))
-id_1     int_1    float_1  str_1    id_2     int_2    float_2  str_2   
+33 66 100 id_1     int_1    float_1  str_1    id_2     int_2    float_2  str_2   
 int      int      float    str      int      int      float    str     
 ------   ------   ------   ------   ------   ------   ------   ------  
 0        1        1.0      hi       0        1        1.0      hi      
@@ -19,7 +19,7 @@ int      int      float    str      int      int      float    str
 2        3        3.0      hi3      2        3        3.0      hi3     
 
 # t1.leftJoin(t2, (((t1.str >= 'hi') & (t1.float <= t2.float)) & False))
-id_1     int_1    float_1  str_1    id_2     int_2    float_2  str_2   
+33 66 100 id_1     int_1    float_1  str_1    id_2     int_2    float_2  str_2   
 int      int      float    str      int      int      float    str     
 ------   ------   ------   ------   ------   ------   ------   ------  
 0        1        1.0      hi       None     None     None     None    
@@ -27,7 +27,7 @@ int      int      float    str      int      int      float    str
 2        3        3.0      hi3      None     None     None     None    
 
 # t1.leftJoin(t2, (((t1.str >= 'hi') | True) & (t1.float <= t2.float)))
-id_1     int_1    float_1  str_1    id_2     int_2    float_2  str_2   
+33 66 100 id_1     int_1    float_1  str_1    id_2     int_2    float_2  str_2   
 int      int      float    str      int      int      float    str     
 ------   ------   ------   ------   ------   ------   ------   ------  
 0        1        1.0      hi       0        1        1.0      hi      
