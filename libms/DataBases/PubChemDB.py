@@ -147,6 +147,6 @@ class PubChemDB(object):
         assert path is not None, "no path given in constructor nor as argument"
         cPickle.dump(self.table, open(path,"wb"))
 
-    def __getitem__(self, colName):
+    def __getattr__(self, colName):
         return getattr(self.table, colName)
 
