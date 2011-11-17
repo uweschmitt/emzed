@@ -10,6 +10,6 @@ def testCentwaveFeatureDetector():
     assert det.__doc__ != None
     table = det.process(ds)
     assert len(table) == 17, len(table)
-    assert len(table.colNames) ==  14
-    assert len(table.colTypes) ==  14
+    assert len(table.colNames) ==  16, len(table.colNames)
+    assert len(table.colTypes) ==  16, len(table.colTypes)
     table.store("data/features.table", forceOverwrite=True)

@@ -1,4 +1,4 @@
-import pyOpenMS 
+import pyOpenMS
 import numpy as np
 from copy import deepcopy, copy
 import os.path
@@ -66,6 +66,9 @@ class PeakMap(object):
     def __init__(self, spectra, meta=dict()):
         self.spectra = spectra
         self.meta = meta
+        polarities = set(spec.polarity for spec in spectra)
+        assert len(polarities) == 1, "in consistent polarities"
+        self.polarity = polarities.pop()
 
     def filter(self, condition):
         return PeakMap([s for s in self.spectra if condition(s)], self.meta)
