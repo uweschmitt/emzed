@@ -102,9 +102,9 @@ class PubChemDB(object):
         if path is not None and os.path.exists(path):
             self.table = cPickle.load(open(path,"rb"))
         else:
-            self.table = self.emptyTable()
+            self.table = self._emptyTable()
 
-    def emptyTable(self):
+    def _emptyTable(self):
         return Table(self.colNames, self.colTypes, self.colFormats,[],
                           "PubChem")
 
@@ -126,7 +126,7 @@ class PubChemDB(object):
 
     def reset(self):
         ids = PubChemDB._get_uilist(9999999)
-        self.table = self.emptyTable()
+        self.table = self._emptyTable()
         self.update(ids)
         self.store()
 
@@ -146,4 +146,7 @@ class PubChemDB(object):
             path = self.path
         assert path is not None, "no path given in constructor nor as argument"
         cPickle.dump(self.table, open(path,"wb"))
+
+    def __getitem__(self, colName):
+        return getattr(self.table, colName)
 
