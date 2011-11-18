@@ -53,12 +53,21 @@ def _formatter(f):
             return "-" if s is None else eval(f, globals(), dict(o=s))
     return format
 
+#class RowBunch(list):
+    #def __init__(self, row, index):
+        #self.row = row
+        #self.index = index
+#
+    #def __getattr__(self, name):
+        #if name in self.index.keys():
+            #return self.row[self.index[name]]
+        #return getattr(self.row, name)
 
 class Table(object):
 
     """
     A table holds rows of the same lenght. Each Column of the table has
-    a name, a type and a format information, which indicates how to render
+    a *name*, a *type* and *format* information, which indicates how to render
     values in this column.
     Further a table has a title and meta information which is a dictionary.
 
@@ -81,10 +90,10 @@ class Table(object):
             rows = []
         self.colNames = list(colNames)
         self.colTypes = list(colTypes)
-        self.rows     = rows
+        self.colIndizes = dict((n, i) for i, n in enumerate(colNames))
+        self.rows     = rows # [ RowBunch(row, self.colIndizes) for row in rows ]
         self.colFormats = [None if f=="" else f for f in colFormats]
 
-        self.colIndizes = dict((n, i) for i, n in enumerate(colNames))
         self.title = title
         self.meta = copy.copy(meta) if meta is not None else dict()
         self.primaryIndex = {}
@@ -100,6 +109,8 @@ class Table(object):
         self.colIndizes = dict((n, i) for i, n in enumerate(self.colNames))
 
     def getVisibleCols(self):
+        """ returns a list with the names of the columns which are
+            visible. that is: the corresponding format is not None """
         return [n for (n, f) in zip (self.colNames, self.colFormats)\
                               if f is not None ]
 
@@ -112,6 +123,10 @@ class Table(object):
         raise AttributeError("%s has no attribute %s" % (self, name))
 
     def getColumn(self, name):
+        """ returns Column object for column *name*.
+            to get the values of the colum you can use
+            ``table.getColumn("index").values``
+        """
         if name in self.columnCache:
             return self.columnCache[name]
         ix = self.getIndex(name)
@@ -138,23 +153,34 @@ class Table(object):
         return iter(self.rows)
 
     def hasColumn(self, name):
+        """ checks if column with given name *name* exists """
         return name in self.colNames
 
     def hasColumns(self, *names):
+        """ checks if columns with given names exist """
         return all(self.hasColumn(n) for n in names)
 
     def requireColumn(self, name):
+        """ throws exception if column with name *name* does not exist"""
         if not name in self.colNames:
             raise Exception("column %r required" % name)
         return self
 
     def getIndex(self, colName):
+        """ gets the integer index of the column colName,
+            eg you can use it as
+            ``table.rows[0][table.getIndex("mz")]``
+            """
         idx = self.colIndizes.get(colName, None)
         if idx is None:
             raise Exception("colname %s not in table" % colName)
         return idx
 
     def get(self, row, colName):
+        """ returns value of column colName in a given row.
+
+            usage: ``table.get(table.rows[0], "mz")``
+        """
         return row[self.getIndex(colName)]
 
     def getColumnCtx(self, needed):
@@ -163,7 +189,12 @@ class Table(object):
                          self.primaryIndex.get(n))) for n in names)
 
     def addEnumeration(self, colname="id"):
-        """ adds enumerated column as first column to table inplace """
+        """ adds enumerated column as first column to table **inplace**.
+
+            if *colname* is not given the colname is "id"
+
+            Enumeration starts with zero
+        """
 
         if colname in self.colNames:
             raise Exception("column with name %s already exists")
@@ -189,6 +220,17 @@ class Table(object):
         self.updateIndices()
 
     def sortBy(self, colName, ascending=True):
+        """
+        sorts table in respect of column named *colName* **inplace**.
+        *ascending* is boolean and tells if the values are sorted
+        in ascending order or descending.
+
+        This is important to build an internal index for faster queries
+        with ``Table.filter``, ``Table.leftJoin`` and ``Table.join``.
+
+        For building an internal index, ascending must be *True*, you
+        can have only one index per table.
+        """
         idx = self.colIndizes[colName]
         self.rows.sort(key = operator.itemgetter(idx), reverse=not ascending)
         if ascending:
@@ -197,7 +239,19 @@ class Table(object):
             self.primaryIndex = {}
 
     def addConstantColumn(self, name, type_, format, value=None):
-        # HIER MIT EXPRESSION !
+        """
+        adds a column with constant value **inplace**.
+        
+          - *name* is name of the new column, *type_* is one of the
+            valid types described above.
+          - format is a format string as "%d" or *None* or an executable
+            string with python code.
+
+        If no default value *value* is given, the column consists
+        of *None* values.
+        """
+        assert name not in self.colNames,\
+                    "column with name %s already exists" % name
         for row in self.rows:
             row.append(value)
         self.colNames.append(name)
@@ -206,7 +260,13 @@ class Table(object):
         self.setupFormatters()
         self.updateIndices()
 
-    def extractColumns(self, names):
+    def copy(self):
+        """ returns a deep copy of the table """
+        return copy.deepcopy(self)
+
+    def extractColumns(self, *names):
+        """extracts the given columnames and returns a new
+           table with these colums"""
         indices = [self.getIndex(name)  for name in names]
         types = [ self.colTypes[i] for i in indices ]
         formats = [self.colFormats[i] for i in indices]
@@ -214,6 +274,10 @@ class Table(object):
         return Table(names, types, formats, rows, self.title, self.meta.copy())
 
     def renameColumns(self, **kw):
+        """renames colums **inplace**.
+           So if you want to rename "mz_1" to "mz" and "rt_1"
+           to "rt", ``table.renameColumns(mz_1=mz, rt_1=rt)``
+        """
         for k in kw.keys():
             if k not in self.colNames:
                 raise Exception("colum %s does not exist" % k)
@@ -225,6 +289,14 @@ class Table(object):
         return len(self.rows)
 
     def storeCSV(self, path):
+        """writes the table in .csv format. The *path* has to end with
+           '.csv'.
+
+           If the file allready exists, the routine tries names
+           ``*.csv.1, *.csv.2, ...`` until a nonexisting file name is found
+
+           As .csv is a text format all binary information is lost !
+        """
         if not os.path.splitext(path)[1].upper()==".CSV":
             raise Exception("%s has wrong filentype extension" % path)
         it = itertools
@@ -238,6 +310,12 @@ class Table(object):
                 break
 
     def store(self, path, forceOverwrite=False):
+        """
+        writes the table in binary format. All information, as
+        coresponding peakMaps are written too.
+
+        The extension must be ".table".
+        """
         if not os.path.splitext(path)[1].upper()==".TABLE":
             raise Exception("%s has wrong extension, need .table" % path)
         if not forceOverwrite and os.path.exists(path):
@@ -247,6 +325,7 @@ class Table(object):
 
     @staticmethod
     def load(path):
+        """loads a table stored with Table.store"""
         with open(path, "rb") as fp:
             return cPickle.load(fp)
 
@@ -256,6 +335,9 @@ class Table(object):
                      self.title, self.meta.copy())
 
     def dropColumn(self, name):
+        """ removes a column with given *name* from the table.
+            Works **inplace**
+        """
         ix = self.getIndex(name)
         del self.colNames[ix]
         del self.colFormats[ix]
@@ -267,6 +349,13 @@ class Table(object):
         self.emptyColumnCache()
 
     def addColumn(self, name, expr, type=None, format=None):
+        """
+        adds an computed column **inplace**. Eg::
+
+           table.addColumn("diffrt", table.rtmax-table.rtmin)
+
+        \\
+        """
         if name in self.colNames:
             raise Exception("column with name %s already exists" % name)
         ctx = { self: self.getColumnCtx(expr.neededColumns()) }
@@ -286,6 +375,12 @@ class Table(object):
         self.updateIndices()
 
     def replaceColumn(self, name, expr, format=None):
+        """as Table.addColumn, but replaces a given column. Eg::
+
+                 table.replaceColumn("mzmin", table.mzmin*0.9)
+
+        \\
+        """
         ix = self.getIndex(name)
         ctx = { self: self.getColumnCtx(expr.neededColumns()) }
         values, _ = expr.eval(ctx)
@@ -296,7 +391,7 @@ class Table(object):
         self.colTypes[ix] = t
         self.colFormats[ix] = f
         for row, v in zip(self.rows, values):
-            row[ix] = t(v) 
+            row[ix] = t(v)
         self.setupFormatters()
         self.updateIndices()
         self.emptyColumnCache()
@@ -310,6 +405,13 @@ class Table(object):
         return rv
 
     def filter(self, expr, debug = False):
+        """builds a new table with columns selected according to *expr*. Eg ::
+
+               table.filter(table.mz >= 100.0)
+               table.filter((table.mz >= 100.0) & (table.rt <= 20))
+
+        \\
+        """
         assert isinstance(expr, Node)
         if debug:
             print "#", expr
@@ -326,6 +428,40 @@ class Table(object):
         return rv
 
     def join(self, t, expr, debug = False):
+        """joins two tables.
+
+           So if you have two table *t1* and *t2* as
+
+           === ===
+           id  mz
+           === ===
+           0   100.0
+           1   200.0
+           2   300.0
+           === ===
+
+           and
+
+           ===    =====     ====
+           id     mz        rt
+           ===    =====     ====
+           0      100.0     10.0
+           1      110.0     20.0
+           2      200.0     30.0
+           ===    =====     ====
+ 
+           Then the result of ``t1.join(t2, (t1.mz >= t2.mz -20) & (t1.mz <= t2.mz + 20)``
+           is
+
+           ====   =====  ====   =====  ====
+           id_1   mz_1   id_2   mz_2   rt
+           ====   =====  ====   =====  ====
+           0      100.0  0      100.0  10.0
+           0      100.0  1      110.0  20.0
+           1      200.0  2      200.0  30.0
+           ====   =====  ====   =====  ====
+
+        """
         # no direct type check below, as databases decorate member tables:
         try:
             t.getColumnCtx
@@ -354,6 +490,23 @@ class Table(object):
         return table
 
     def leftJoin(self, t, expr, debug = False, progress=True):
+        """performs an *left join* also known as *outer join* of two tables.
+           It works similar to *Table.join* but keeps nonmatching rows of
+           the first table. So if we take the example from *Table.join*
+
+           Then the result of ``t1.leftJoin(t2, (t1.mz >= t2.mz -20) & (t1.mz <= t2.mz + 20)``
+           is
+
+           ====   =====  ====   =====  ====
+           id_1   mz_1   id_2   mz_2   rt
+           ====   =====  ====   =====  ====
+           0      100.0  0      100.0  10.0
+           0      100.0  1      110.0  20.0
+           1      200.0  2      200.0  30.0
+           2      300.0  None   None   None
+           ====   =====  ====   =====  ====
+
+        """
         # no direct type check below, as databases decorate member tables:
         try:
             t.getColumnCtx

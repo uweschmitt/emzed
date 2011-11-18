@@ -45,7 +45,7 @@ def testRunnerTable():
 
 
 def run(t, colnames, rows):
-    t = copy.deepcopy(t) # prohibit changes
+    t = t.copy()
     ixs = set()
     for i, name in enumerate(colnames):
         ixs.add(t.getIndex(name))
@@ -150,7 +150,7 @@ def run(t, colnames, rows):
 
     tn.dropColumn("id")
     tn.dropColumn("x")
-    t2= copy.deepcopy(tn)
+    t2= tn.copy() 
     res = tn.leftJoin(t2,tn.iii == tn.long)
     assert len(res) == len(t2)
     res = tn.leftJoin(t2,tn.iii == tn.iii)

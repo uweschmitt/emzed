@@ -13,9 +13,9 @@ Contents:
 
    intro
    install
+   tables
    terms
    images
-   first_steps
    
 
 Indices and tables
