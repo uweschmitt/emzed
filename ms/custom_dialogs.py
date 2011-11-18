@@ -37,8 +37,7 @@ def __fileDialog(startAt=None, onlyDirectories=False, anyFile=False,
         files= di.selectedFiles()
         res = [ str(f.toLatin1()) for f in files]
         return res
-
-    return None
+    return [None]
 
 
 def askForDirectory(startAt=None):
