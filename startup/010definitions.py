@@ -1,3 +1,3 @@
 print "LOAD DEFINITIONS"
 print
-__builtins__.MMU = 0.001
+__builtins__["MMU"] = 0.001
