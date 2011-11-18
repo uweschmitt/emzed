@@ -27,5 +27,16 @@ def storeTable(tab, path=None):
         path = ms.askForSave(extensions=["table"])
         if path is None:
             return None
-
     tab.store(path)
+
+def storeCSV(tab, path=None):
+
+    # local import in order to keep namespaces clean
+    import ms
+
+    if path is None:
+        path = ms.askForSave(extensions=["csv"])
+        if path is None:
+            return None
+    tab.storeCSV(path)
+
