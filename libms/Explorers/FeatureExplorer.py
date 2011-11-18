@@ -358,37 +358,38 @@ class FeatureExplorer(QDialog):
 
         row = self.table.rows[realIdx]
 
-        mzmin = row[getIndex("mzmin")]
-        mzmax = row[getIndex("mzmax")]
+        if self.hasFeatures:
+            mzmin = row[getIndex("mzmin")]
+            mzmax = row[getIndex("mzmax")]
 
-        spectra = [s for s in self.peakmap if s.msLevel == 1]
-        chromatogram = [ s.intensityInRange(mzmin, mzmax) for s in spectra ]
-        self.rtPlotter.plot(chromatogram, x=self.levelOneRts)
-
-        if self.isIntegrated:
-
-            method = str(row[getIndex("method")]) # qstring -> python string
-            integrator = dict(configs.peakIntegrators)[method]
-
-            params = row[getIndex("params")]
-            intrts, smoothed = integrator.getSmoothed(self.levelOneRts, params)
-
-            self.rtPlotter.plot(smoothed, x=intrts, index=1)
-            ix = self.chooseIntMethod.findText(method)
-            if ix<0:
-                print "INTEGRATOR NOT AVAILABLE"
-            else:
-                self.chooseIntMethod.setCurrentIndex(ix)
-            intbegin = row[getIndex("intbegin")]
-            intend = row[getIndex("intend")]
-            self.rtPlotter.setRangeSelectionLimits(intbegin, intend)
-        else:
+            spectra = [s for s in self.peakmap if s.msLevel == 1]
+            chromatogram = [s.intensityInRange(mzmin, mzmax) for s in spectra]
+            self.rtPlotter.plot(chromatogram, x=self.levelOneRts)
             rtmin = row[getIndex("rtmin")]
             rtmax = row[getIndex("rtmax")]
             self.rtPlotter.setRangeSelectionLimits(rtmin, rtmax)
 
-        self.rtPlotter.setXAxisLimits(0, self.maxRt)
-        self.rtPlotter.replot()
+            if self.isIntegrated:
+
+                method = str(row[getIndex("method")]) # qstring -> python string
+                integrator = dict(configs.peakIntegrators)[method]
+
+                params = row[getIndex("params")]
+                intrts, smoothed = integrator.getSmoothed(self.levelOneRts,
+                                                          params)
+
+                self.rtPlotter.plot(smoothed, x=intrts, index=1)
+                ix = self.chooseIntMethod.findText(method)
+                if ix<0:
+                    print "INTEGRATOR NOT AVAILABLE"
+                else:
+                    self.chooseIntMethod.setCurrentIndex(ix)
+                intbegin = row[getIndex("intbegin")]
+                intend = row[getIndex("intend")]
+                self.rtPlotter.setRangeSelectionLimits(intbegin, intend)
+
+            self.rtPlotter.setXAxisLimits(0, self.maxRt)
+            self.rtPlotter.replot()
 
 def inspect(table):
     import guidata
