@@ -21,7 +21,14 @@ class _CmdLineProgress(object):
 
 def _commonTypeOfColumn(col):
     if isinstance(col, np.ndarray):
-        return col.dtype
+        dtype = col.dtype
+        if dtype in [np.int8, np.int16, np.int32]:
+            return int
+        elif dtype == np.int64:
+            return long
+        else:
+            return float
+
     types = set( type(c) for c in col )
     if str in types:
         return str
@@ -48,6 +55,21 @@ def _formatter(f):
 
 
 class Table(object):
+
+    """
+    A table holds rows of the same lenght. Each Column of the table has
+    a name, a type and a format information, which indicates how to render
+    values in this column.
+    Further a table has a title and meta information which is a dictionary.
+
+    columntypes can be any python type.
+
+    format can be:
+         - a string interpolation string, eg "%.2f"
+         - None, which supresses rendering of this column
+         - python code which renders an object of name 'o', eg
+           'str(o)+"x"'
+    """
 
     def __init__(self, colNames, colTypes, colFormats, rows=None, title=None,
                        meta=None):
@@ -258,7 +280,7 @@ class Table(object):
         self.colTypes.append(type)
         self.colFormats.append(format)
         for row, v in zip(self.rows, values):
-            row.append(v)
+            row.append(type(v))
 
         self.setupFormatters()
         self.updateIndices()
@@ -274,7 +296,7 @@ class Table(object):
         self.colTypes[ix] = t
         self.colFormats[ix] = f
         for row, v in zip(self.rows, values):
-            row[ix] = v
+            row[ix] = t(v) 
         self.setupFormatters()
         self.updateIndices()
         self.emptyColumnCache()
@@ -295,11 +317,20 @@ class Table(object):
         ctx = { self: self.getColumnCtx(expr.neededColumns()) }
         flags, _ = expr.eval(ctx)
         rv = self.buildEmptyClone()
-        rv.rows = [ self.rows[n] for n, i in enumerate(flags) if i ]
+        if flags is True:
+            rv.rows = self.rows[:]
+        elif flags is False:
+            rv.rows = []
+        else:
+            rv.rows = [ self.rows[n] for n, i in enumerate(flags) if i ]
         return rv
 
     def join(self, t, expr, debug = False):
-        assert isinstance(t, Table)
+        # no direct type check below, as databases decorate member tables:
+        try:
+            t.getColumnCtx
+        except:
+            raise Exception("first arg is of wrong type")
         assert isinstance(expr, Node)
         if debug:
             print "# %s.join(%s, %s)" % (self.name, t.name, expr)
@@ -311,7 +342,44 @@ class Table(object):
             r1ctx = dict((n, (v, None)) for (n,v) in zip(self.colNames, r1))
             ctx = {self:r1ctx, t:tctx}
             flags,_ = expr.eval(ctx)
-            rows.extend([ r1 + t.rows[n] for (n,i) in enumerate(flags) if i])
+            if type(flags) == bool:
+                if flags:
+                    rows.extend([ r1 + row for row in t.rows])
+            else:
+                rows.extend([ r1 + t.rows[n] for (n,i) in enumerate(flags) if i])
+            cmdlineProgress.progress(ii)
+
+        table = self._buildJoinTable(t)
+        table.rows = rows
+        return table
+
+    def leftJoin(self, t, expr, debug = False, progress=True):
+        # no direct type check below, as databases decorate member tables:
+        try:
+            t.getColumnCtx
+        except:
+            raise Exception("first arg is of wrong type")
+        assert isinstance(expr, Node)
+        if debug:
+            print "# %s.leftJoin(%s, %s)" % (self.name, t.name, expr)
+        tctx = t.getColumnCtx(expr.neededColumns())
+
+        filler = [None] * len(t.colNames)
+        cmdlineProgress = _CmdLineProgress(len(self))
+
+        rows = []
+        for ii, r1 in enumerate(self.rows):
+            r1ctx = dict((n, (v, None)) for (n,v) in zip(self.colNames, r1))
+            ctx = {self:r1ctx, t:tctx}
+            flags,_ = expr.eval(ctx)
+            if flags is True:
+                    rows.extend([ r1 + row for row in t.rows])
+            elif flags is False:
+                    rows.extend([ r1 + filler])
+            elif numpy.any(flags):
+                rows.extend([r1 + t.rows[n] for (n,i) in enumerate(flags) if i])
+            else:
+                rows.extend([r1 + filler])
             cmdlineProgress.progress(ii)
 
         table = self._buildJoinTable(t)
@@ -319,7 +387,6 @@ class Table(object):
         return table
 
     def _buildJoinTable(self, t):
-
         names1 = self.colNames
         names2 = t.colNames
         colNames = []
@@ -336,32 +403,6 @@ class Table(object):
         title = "%s vs %s" % (self.title, t.title)
         meta = {self: self.meta.copy(), t: t.meta.copy()}
         return Table(colNames, colTypes, colFormats, [], title, meta)
-
-    def leftJoin(self, t, expr, debug = False, progress=True):
-        assert isinstance(t, Table)
-        assert isinstance(expr, Node)
-        if debug:
-            print "# %s.leftJoin(%s, %s)" % (self.name, t.name, expr)
-        tctx = t.getColumnCtx(expr.neededColumns())
-
-        filler = [None] * len(t.colNames)
-        cmdlineProgress = _CmdLineProgress(len(self))
-
-        rows = []
-        for ii, r1 in enumerate(self.rows):
-            r1ctx = dict((n, (v, None)) for (n,v) in zip(self.colNames, r1))
-            ctx = {self:r1ctx, t:tctx}
-            flags,_ = expr.eval(ctx)
-            if numpy.any(flags):
-                rows.extend([r1 + t.rows[n] for (n,i) in enumerate(flags) if i])
-            else:
-                rows.extend([r1 + filler])
-            cmdlineProgress.progress(ii)
-
-
-        table = self._buildJoinTable(t)
-        table.rows = rows
-        return table
 
 
     def _print(self, w=12):

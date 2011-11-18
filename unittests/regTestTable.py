@@ -1,6 +1,7 @@
 import sys, StringIO, difflib
 import numpy as np
 from libms.DataStructures.Table import Table
+from libms.DataStructures.ExpressionTree import Value
 
 def record(fun, args, p=None):
     try:
@@ -20,7 +21,7 @@ def check((lines, p), ptobe):
         data = fp.read()
     tobe = [ l for l in data.split("\n") if not l.startswith("#") ]
     ok = True
-    for line in difflib.unified_diff(lines, tobe):
+    for line in difflib.unified_diff(lines, tobe, n=5):
         print line
         ok = False
     if not ok:
@@ -51,8 +52,8 @@ def setupTable():
     return t
 
 def testFilter():
-    t = setupTable()
 
+    t = setupTable()
     out1 = record(run_num_compares,[t, t.int], "tint_noindex.is")
     check(out1, "tint_noindex.tobe")
 
@@ -65,7 +66,7 @@ def testFilter():
     t.sortBy("float")
     out3 = record(run_num_compares,[t, t.float], "tfloat_withindex.is")
     compare(out1, out2, out3)
-    
+
     out = record(run_logics, [t, t.int], "tint_logics_noindex.is")
     check(out, "tint_logics_noindex.tobe")
 
@@ -87,6 +88,8 @@ def run_num_compares(t, col):
         expressions.append(rhs > col)
         expressions.append(rhs == col)
         expressions.append(rhs != col)
+        expressions.append(col == col)
+        expressions.append(col != col)
 
     for e in expressions:
         print
@@ -102,6 +105,8 @@ def run_logics(t, col):
     expressions.append( (col >= 2) | (col >=1) | True )
     expressions.append( (col >= 2) | (col >1) & False )
     expressions.append( (col >= 2) | (col <1) & False)
+    expressions.append( Value(True))
+    expressions.append( Value(False))
     for e in expressions:
         print
         t.filter(e, debug=True)._print()
@@ -178,6 +183,8 @@ def run_join_int(jf, t1, t2):
     print
     jf(t2, t1.int < t2.int, debug=True)._print(w=8)
     print
+    jf(t2, t1.int == t1.int, debug=True)._print(w=8)
+    print
 
 def run_join_float(jf, t1, t2):
     jf(t2, t1.float > t2.float, debug=True)._print(w=8)
@@ -192,6 +199,8 @@ def run_join_float(jf, t1, t2):
     print
     jf(t2, t1.float < t2.float, debug=True)._print(w=8)
     print
+    jf(t2, t1.float == t1.float, debug=True)._print(w=8)
+    print
 
 def run_join_comp(jf, t1, t2):
     e = t1.float <= t2.float
@@ -203,6 +212,6 @@ def run_join_comp(jf, t1, t2):
     print
     jf(t2, ((t1.str>="hi")  | True) & e, debug=True)._print(w=8)
     print
-
+    jf(t2, t1.int <= t1.float, debug=True)._print(w=8)
 if __name__ == "__main__":
     testFilte()

@@ -21,6 +21,8 @@ def testRunnerTable():
     rows = [row1, row2, row3]
     t=Table(names, types, formats, rows, "testtabelle", meta=dict(why=42))
 
+
+
     run(t, names, [row1, row2, row3])
     # test pickle
     t = pickle.loads(pickle.dumps(t))
@@ -136,6 +138,7 @@ def run(t, colnames, rows):
     assert list(tn.getColumn("computed").values ) == [8080, 7441, 6161]
     assert list(tn.getColumn("squared").values ) == [9, 4, 1]
 
+
     tn.replaceColumn("squared", tn.squared+1)
     assert list(tn.getColumn("squared").values ) == [10, 5, 2]
     assert len(tn.colNames)  == 6
@@ -145,5 +148,20 @@ def run(t, colnames, rows):
     assert tn.colNames == [ "id", "iii", "long", "x"]
     assert len(tn) == 3
 
+    tn.dropColumn("id")
+    tn.dropColumn("x")
+    t2= copy.deepcopy(tn)
+    res = tn.leftJoin(t2,tn.iii == tn.long)
+    assert len(res) == len(t2)
+    res = tn.leftJoin(t2,tn.iii == tn.iii)
+    assert len(res) == len(t2)**2
+    res = tn.leftJoin(t2, (tn.iii == tn.iii) & (t2.long==32323))
+    assert len(res) == len(t2)
 
+    res = tn.join(t2,tn.iii == tn.long)
+    assert len(res) == 0
+    res = tn.join(t2,tn.iii == tn.iii)
+    assert len(res) == len(t2)**2, len(res)
+    res = tn.join(t2, (tn.iii == tn.iii) & (t2.long==32323))
+    assert len(res) == len(t2), len(res)
 

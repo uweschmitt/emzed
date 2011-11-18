@@ -106,15 +106,32 @@ class CompNode(Node):
         lhs, ixl = self.left.eval(ctx)
         rhs, ixr = self.right.eval(ctx)
 
-        if ixl != None and type(rhs) in [float, int]:
+        if ixl != None and type(rhs) in [float, int, long]:
             return self.fastcomp(lhs, rhs, ixl), None
-        if ixr != None and type(lhs) in [float, int]:
+        if ixr != None and type(lhs) in [float, int, long]:
             return self.rfastcomp(lhs, rhs, ixr), None
 
-        if type(lhs) in [int, float, str] and type(rhs) in [np.ndarray, list]:
+        if type(lhs) == list and type(lhs[0]) != str:
+            lhs = np.array(lhs)
+        if type(rhs) == list and type(rhs[0]) != str:
+            rhs = np.array(rhs)
+
+        if type(lhs) in [int, float, long] and type(rhs)==np.ndarray:
+            return self.comparator(lhs, rhs), None
+
+        if type(lhs) ==np.ndarray and type(rhs) in [int, float, long]:
+            return self.comparator(lhs, rhs), None
+
+        if type(lhs) ==np.ndarray and type(rhs) ==np.ndarray:
+            assert len(lhs) == len(rhs)
+            return self.comparator(lhs, rhs), None
+
+        if type(lhs) ==str and type(rhs) in [np.ndarray, list]:
             return np.array([ self.comparator(lhs, r) for r in  rhs]), None
-        if type(rhs) in [int, float, str] and type(lhs) in [np.ndarray, list]:
+        if type(rhs) ==str and type(lhs) in [np.ndarray, list]:
             return np.array([ self.comparator(l, rhs) for l in  lhs]), None
+        assert type(lhs) in [int, long, float, str] and type(rhs) in [int, long, float, str]
+
         return self.comparator(lhs, rhs), None
 
 def Range(start, end, len):
@@ -223,12 +240,12 @@ class AlgebraicNode(Node):
         lval, idxl = self.left.eval(ctx)
         rval, idxr = self.right.eval(ctx)
 
-        if type(lval) == list and type(lval[0]) in [int, float]:
+        if type(lval) == list and len(lval)>0 and type(lval[0]) in [int, float, long]:
             lval = np.array(lval)
-        if type(rval) == list and type(rval[0]) in [int, float]:
+        if type(rval) == list and len(rval)>0 and type(rval[0]) in [int, float, long]:
             rval = np.array(rval)
 
-        if type(lval) in [int, float] and type(rval) == np.ndarray:
+        if type(lval) in [int, float, long] and type(rval) == np.ndarray:
             res = self.efun(lval, rval)
             # order preserving operations keep index idxr
             # c + vec, c * vec and c>0, c/vec and c<0 kepp order of vec
@@ -239,7 +256,7 @@ class AlgebraicNode(Node):
             # else: loose index
             return res, None
 
-        if  type(lval) == np.ndarray and type(rval) in [int, float]:
+        if  type(lval) == np.ndarray and type(rval) in [int, float, long]:
             res = self.efun(lval, rval)
             # order preserving operations keep index idxr
             # vec +/- c, vec */ c and c>0 keep order of vec
@@ -260,6 +277,7 @@ class AlgebraicNode(Node):
         if type(lval) == type(rval) == np.ndarray:
             if len(lval) != len(rval):
                 raise Exception("sizes do not fit !")
+            res = self.efun(lval, rval)
             return self.efun(lval, rval), None
 
         # all other variation (eg str, ...): 
@@ -274,7 +292,8 @@ class AlgebraicNode(Node):
                 raise Exception("sizes do not fit !")
             return np.array([ self.efun(l,r) for (l,r) in zip(lval,rval) ]), None
 
-        return self.efun(lval, rval), None
+        assert type(lhs) in [int, long, float, str] and type(rhs) in [int, long, float, str]
+        return [self.efun(lval, rval)], None
 
 class LogicNode(Node):
 
@@ -403,7 +422,7 @@ class Column(Node):
     def evalsize(self, ctx):
         cx = ctx[self.table]
         rv, _ = cx[self.colname]
-        if type(rv) in [int, float, str]:
+        if type(rv) in [int, long, float, str]:
             return 1
         return len(rv)
 
@@ -423,9 +442,9 @@ class BinaryExpression(Node):
     def eval(self, ctx):
         lhs, _ = self.left.eval(ctx)
         rhs, _ = self.right.eval(ctx)
-        if type(lhs) in [int,float, str] and type(rhs) in [np.ndarray, list]:
+        if type(lhs) in [int, long,float, str] and type(rhs) in [np.ndarray, list]:
             return np.array([ self.efun(lhs, r) for r in rhs]), None
-        if type(rhs) in [int,float, str] and type(lhs) in [np.ndarray, list]:
+        if type(rhs) in [int, long,float, str] and type(lhs) in [np.ndarray, list]:
             return np.array([ self.efun(l, rhs) for l in lhs]), None
         raise Exception("eval with %s and %s not possible" %(lhs, rhs))
 

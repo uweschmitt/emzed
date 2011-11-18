@@ -56,3 +56,16 @@ int          int          float        str
 ------       ------       ------       ------      
 1            2            2.0          hi2         
 2            3            3.0          hi3         
+
+# True
+id           int          float        str         
+int          int          float        str         
+------       ------       ------       ------      
+0            1            1.0          hi          
+1            2            2.0          hi2         
+2            3            3.0          hi3         
+
+# False
+id           int          float        str         
+int          int          float        str         
+------       ------       ------       ------      
