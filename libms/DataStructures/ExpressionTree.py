@@ -17,6 +17,10 @@ def lt(a, x):
 def gt(a, x):
     return np.searchsorted(a, x, 'right')
 
+_basic_num_types = [int, long, float]
+_basic_types = [int, long, float, str]
+_iterables = [list, np.ndarray]
+
 class Node(object):
 
     def __init__(self, left, right):
@@ -106,9 +110,9 @@ class CompNode(Node):
         lhs, ixl = self.left.eval(ctx)
         rhs, ixr = self.right.eval(ctx)
 
-        if ixl != None and type(rhs) in [float, int, long]:
+        if ixl != None and type(rhs) in _basic_num_types:
             return self.fastcomp(lhs, rhs, ixl), None
-        if ixr != None and type(lhs) in [float, int, long]:
+        if ixr != None and type(lhs) in _basic_num_types:
             return self.rfastcomp(lhs, rhs, ixr), None
 
         if type(lhs) == list and type(lhs[0]) != str:
@@ -116,21 +120,21 @@ class CompNode(Node):
         if type(rhs) == list and type(rhs[0]) != str:
             rhs = np.array(rhs)
 
-        if type(lhs) in [int, float, long] and type(rhs)==np.ndarray:
+        if type(lhs) in _basic_num_types and type(rhs)==np.ndarray:
             return self.comparator(lhs, rhs), None
 
-        if type(lhs) ==np.ndarray and type(rhs) in [int, float, long]:
+        if type(lhs) ==np.ndarray and type(rhs) in _basic_num_types:
             return self.comparator(lhs, rhs), None
 
         if type(lhs) ==np.ndarray and type(rhs) ==np.ndarray:
             assert len(lhs) == len(rhs)
             return self.comparator(lhs, rhs), None
 
-        if type(lhs) ==str and type(rhs) in [np.ndarray, list]:
+        if type(lhs) ==str and type(rhs) in _iterables:
             return np.array([ self.comparator(lhs, r) for r in  rhs]), None
-        if type(rhs) ==str and type(lhs) in [np.ndarray, list]:
+        if  type(lhs) in _iterables and type(rhs) ==str:
             return np.array([ self.comparator(l, rhs) for l in  lhs]), None
-        assert type(lhs) in [int, long, float, str] and type(rhs) in [int, long, float, str]
+        assert type(lhs) in _basic_types and type(rhs) in _basic_types
 
         return self.comparator(lhs, rhs), None
 
@@ -240,12 +244,12 @@ class AlgebraicNode(Node):
         lval, idxl = self.left.eval(ctx)
         rval, idxr = self.right.eval(ctx)
 
-        if type(lval) == list and len(lval)>0 and type(lval[0]) in [int, float, long]:
+        if type(lval) == list and lval and type(lval[0]) in _basic_num_types:
             lval = np.array(lval)
-        if type(rval) == list and len(rval)>0 and type(rval[0]) in [int, float, long]:
+        if type(rval) == list and rval and type(rval[0]) in _basic_num_types:
             rval = np.array(rval)
 
-        if type(lval) in [int, float, long] and type(rval) == np.ndarray:
+        if type(lval) in _basic_num_types and type(rval) == np.ndarray:
             res = self.efun(lval, rval)
             # order preserving operations keep index idxr
             # c + vec, c * vec and c>0, c/vec and c<0 kepp order of vec
@@ -256,7 +260,7 @@ class AlgebraicNode(Node):
             # else: loose index
             return res, None
 
-        if  type(lval) == np.ndarray and type(rval) in [int, float, long]:
+        if  type(lval) == np.ndarray and type(rval) in _basic_num_types:
             res = self.efun(lval, rval)
             # order preserving operations keep index idxr
             # vec +/- c, vec */ c and c>0 keep order of vec
@@ -287,12 +291,12 @@ class AlgebraicNode(Node):
             return [ self.efun(l,r) for (l,r) in zip(lval,rval) ], None
 
         # at least one is np.ndarray:
-        if type(lval) in [list, np.ndarray] and type(rval) in [list,np.ndarray]:
+        if type(lval) in _iterables and type(rval) in _iterables:
             if len(lval) != len(rval):
                 raise Exception("sizes do not fit !")
             return np.array([ self.efun(l,r) for (l,r) in zip(lval,rval) ]), None
 
-        assert type(lhs) in [int, long, float, str] and type(rhs) in [int, long, float, str]
+        assert type(lhs) in _basic_types and type(rhs) in _basic_types
         return [self.efun(lval, rval)], None
 
 class LogicNode(Node):
@@ -422,7 +426,7 @@ class Column(Node):
     def evalsize(self, ctx):
         cx = ctx[self.table]
         rv, _ = cx[self.colname]
-        if type(rv) in [int, long, float, str]:
+        if type(rv) in _basic_types:
             return 1
         return len(rv)
 
@@ -442,9 +446,9 @@ class BinaryExpression(Node):
     def eval(self, ctx):
         lhs, _ = self.left.eval(ctx)
         rhs, _ = self.right.eval(ctx)
-        if type(lhs) in [int, long,float, str] and type(rhs) in [np.ndarray, list]:
+        if type(lhs) in _basic_types and type(rhs) in _iterables:
             return np.array([ self.efun(lhs, r) for r in rhs]), None
-        if type(rhs) in [int, long,float, str] and type(lhs) in [np.ndarray, list]:
+        if type(rhs) in _basic_types and type(lhs) in _iterables:
             return np.array([ self.efun(l, rhs) for l in lhs]), None
         raise Exception("eval with %s and %s not possible" %(lhs, rhs))
 
