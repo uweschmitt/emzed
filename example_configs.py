@@ -1,3 +1,8 @@
+if __name__ != "__main__":
+    import os 
+    raise Exception("\n\nTHIS FILE %s IS NOT FOR IMPORT !\nMAYBE THIS HAPPENS "\
+                    "BECAUSE YOUR WORKING DIRCTORY IS\n\n    %s\n" %\
+                    (__file__, os.getcwd()))
 
 
 long_cfg = dict( ppm=5, 

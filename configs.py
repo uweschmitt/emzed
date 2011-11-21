@@ -45,4 +45,5 @@ from string import Template
 for p in repositoryPathes:
     pp = os.path.join(Template(p).substitute(os.environ), "configs.py")
     if os.path.exists(pp):
+        print "RUN FILE", pp
         execfile(pp)
