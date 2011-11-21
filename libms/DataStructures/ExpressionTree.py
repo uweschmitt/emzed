@@ -100,6 +100,9 @@ class Node(object):
     def __xor__(self, other):
         return XorNode(self, other)
 
+    def __invert__(self):
+        return InvertNode(self)
+
     def neededColumns(self):
         return self.left.neededColumns() + self.right.neededColumns()
 
@@ -299,6 +302,27 @@ class AlgebraicNode(Node):
         assert type(lhs) in _basic_types and type(rhs) in _basic_types
         return [self.efun(lval, rval)], None
 
+
+class InvertNode(Node):
+
+    def __init__(self, child):
+        self.child = child
+
+    def eval(self, ctx):
+        val, _ = self.child.eval(ctx)
+        if type(val) in _basic_types:
+            return not val, None
+        elif type(val) in _iterables:
+            return np.array([ not v for v in val ]), None
+        raise Exception("invert eval with%s not possible" % val)
+
+    def __str__(self):
+        return "~%s" % str(self.child)
+
+    def neededColumns(self):
+        return self.child.neededColumns()
+
+
 class LogicNode(Node):
 
     def __init__(self, left, right):
@@ -435,6 +459,8 @@ class Column(Node):
 
     def startswith(self, other):
         return BinaryExpression(self, other, lambda a,b: a.startswith(b), "%s.startswith(%s)")
+    def contains(self, other):
+        return BinaryExpression(self, other, lambda a,b: b in a, "%s.contains(%s)")
 
 class BinaryExpression(Node):
 

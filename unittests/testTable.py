@@ -70,6 +70,17 @@ def run(t, colnames, rows):
     assert set(t.getVisibleCols()) == { 'int', 'long', 'float', 'str',
                                         'object', 'array' }
 
+
+    tn = t.filter(t.str.contains("hi"))
+    assert len(tn) == 3
+    tn = t.filter(~ t.str.contains("hi"))
+    assert len(tn) == 0
+
+    tn = t.filter(t.str.contains("2"))
+    assert len(tn) == 1
+
+
+
     # test requireColumn
     for name in colnames:
         t.requireColumn(name)
