@@ -49,7 +49,7 @@ def loadCSV(path=None, sep=";", **specialFormats):
     with open(path,"r") as fp:
         # remove clutter at right margin
         reader = csv.reader(fp, delimiter=sep)
-        colNames = reader.next()
+        colNames = [n.strip().replace(" ","_") for n in reader.next()]
         rows = [ [bestConvert(c) for c in row] for row in reader]
 
 
@@ -64,4 +64,5 @@ def loadCSV(path=None, sep=";", **specialFormats):
     formats = [formats[n] for n in colNames]
 
     title = os.path.basename(path)
-    return Table(colNames, types, formats, rows, title, dict())
+    meta = dict(loaded_from=os.path.abspath(path))
+    return Table(colNames, types, formats, rows, title, meta)
