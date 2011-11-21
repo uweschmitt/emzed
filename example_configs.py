@@ -1,11 +1,13 @@
-if __name__ != "__main__":
-    import os 
+try:
+    is_exec
+except Exception, e:
+    import os
     raise Exception("\n\nTHIS FILE %s IS NOT FOR IMPORT !\nMAYBE THIS HAPPENS "\
                     "BECAUSE YOUR WORKING DIRCTORY IS\n\n    %s\n" %\
                     (__file__, os.getcwd()))
 
 
-long_cfg = dict( ppm=5, 
+long_cfg = dict( ppm=5,
                  peakwidth=(15, 600),
                  prefilter=(3,1000), 
                  snthresh = 10, 
