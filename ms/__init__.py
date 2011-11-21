@@ -4,6 +4,7 @@ from custom_dialogs import *
 from integration import *
 from shell_helpers import *
 from align import *
+from isotope_calculator import *
 
 from libms.Explorers       import inspectPeakMap, inspect
 from libms.gui.TableDialog import showTable
@@ -22,3 +23,4 @@ del shell_helpers
 del AsymmetricGaussIntegrator
 del SGIntegrator
 del align
+del isotope_calculator
