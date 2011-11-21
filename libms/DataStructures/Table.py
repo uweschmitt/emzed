@@ -3,7 +3,8 @@ import operator, copy, os, itertools, re, numpy, cPickle, sys
 from   ExpressionTree import Node, Column
 import numpy as np
 
-_standardFormats = { int: "%d", float : "%.2f", str: "%s" }
+standardFormats = { int: "%d", float : "%.2f", str: "%s" }
+fms = "'%.2fm' % (o/60.0)"  # format seconds to floating point minutes
 
 class _CmdLineProgress(object):
 
@@ -19,7 +20,7 @@ class _CmdLineProgress(object):
             sys.stdout.flush()
             self.last = percent
 
-def _commonTypeOfColumn(col):
+def commonTypeOfColumn(col):
     if isinstance(col, np.ndarray):
         dtype = col.dtype
         if dtype in [np.int8, np.int16, np.int32]:
@@ -38,6 +39,14 @@ def _commonTypeOfColumn(col):
         return int
     raise Exception("do not know how to find common type for %r" % types)
 
+def bestConvert(val):
+    try:
+        return int(val)
+    except ValueError:
+        try:
+            return float(val)
+        except ValueError:
+            return str(val)
 
 def _formatter(f):
     """ helper, is toplevel for supporting pickling of Table """
@@ -113,6 +122,13 @@ class Table(object):
             visible. that is: the corresponding format is not None """
         return [n for (n, f) in zip (self.colNames, self.colFormats)\
                               if f is not None ]
+
+    def getFormat(self, colName):
+        return self.colFormats[self.getIndex(colName)]
+
+    def setFormat(self, colName, fmt):
+        self.colFormats[self.getIndex(colName)] = fmt
+        self.setupFormatters()
 
     def setupFormatters(self):
         self.colFormatters = [_formatter(f) for f in self.colFormats ]
@@ -266,7 +282,8 @@ class Table(object):
 
     def extractColumns(self, *names):
         """extracts the given columnames and returns a new
-           table with these colums"""
+           table with these colums, eg ``t.extractColumns("id", "name"))``
+           """
         indices = [self.getIndex(name)  for name in names]
         types = [ self.colTypes[i] for i in indices ]
         formats = [self.colFormats[i] for i in indices]
@@ -361,9 +378,9 @@ class Table(object):
         ctx = { self: self.getColumnCtx(expr.neededColumns()) }
         values, _ = expr.eval(ctx)
         if type is None:
-            type = _commonTypeOfColumn(values)
+            type = commonTypeOfColumn(values)
         if format is None:
-            format = _standardFormats.get(type)
+            format = standardFormats.get(type)
 
         self.colNames.append(name)
         self.colTypes.append(type)
@@ -384,8 +401,8 @@ class Table(object):
         ix = self.getIndex(name)
         ctx = { self: self.getColumnCtx(expr.neededColumns()) }
         values, _ = expr.eval(ctx)
-        t = _commonTypeOfColumn(values)
-        f = format if format is not None else _standardFormats.get(t)
+        t = commonTypeOfColumn(values)
+        f = format if format is not None else standardFormats.get(t)
 
         self.colNames[ix] = name
         self.colTypes[ix] = t
@@ -484,7 +501,7 @@ class Table(object):
             else:
                 rows.extend([ r1 + t.rows[n] for (n,i) in enumerate(flags) if i])
             cmdlineProgress.progress(ii)
-
+        print
         table = self._buildJoinTable(t)
         table.rows = rows
         return table
@@ -534,7 +551,7 @@ class Table(object):
             else:
                 rows.extend([r1 + filler])
             cmdlineProgress.progress(ii)
-
+        print
         table = self._buildJoinTable(t)
         table.rows = rows
         return table

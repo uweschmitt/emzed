@@ -88,7 +88,7 @@ def run(t, colnames, rows):
     t.sortBy("int", ascending=False)
 
     # restrct cols
-    tn = t.extractColumns( ["int", "long"])
+    tn = t.extractColumns("int", "long")
     assert len(tn.colNames) == 2, len(t.colNames)
     assert len(tn.colTypes) == 2
     assert len(tn.colFormats) == 2

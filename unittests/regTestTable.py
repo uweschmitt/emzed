@@ -45,7 +45,7 @@ def setupTable():
 
     rows = [row1, row2, row3]
     t=Table(names, types, formats, rows, "testtabelle", meta=dict(why=42))
-    t = t.extractColumns(["int", "float", "str"])
+    t = t.extractColumns("int", "float", "str")
     t.addEnumeration()
     t.name = "t"
     t._print()
