@@ -12,4 +12,5 @@ def testCentwaveFeatureDetector():
     assert len(table) == 17, len(table)
     assert len(table.colNames) ==  16, len(table.colNames)
     assert len(table.colTypes) ==  16, len(table.colTypes)
+    assert "polarity" in table.colNames
     table.store("data/features.table", forceOverwrite=True)

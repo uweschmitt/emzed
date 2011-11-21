@@ -233,7 +233,6 @@ def decorate(table, peakMap):
     table.addConstantColumn("peakmap", object, None, peakMap)
     src = peakMap.meta.get("source","")
     table.addConstantColumn("source", str, None, src)
-    table.addConstantColumn("polarity", str, None,
-                            peakMap.meta.get("polarity"))
+    table.addConstantColumn("polarity", str, None, peakMap.polarity)
     table.addEnumeration()
     table.title = os.path.basename(src)
