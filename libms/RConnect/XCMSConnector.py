@@ -1,3 +1,4 @@
+#encoding: utf-8
 from RExecutor import RExecutor
 from ..DataStructures import *
 
@@ -68,6 +69,8 @@ class CentwaveFeatureDetector(object):
     """
 
     __doc__ += "".join(file(path).readlines())
+
+    __doc__ = unicode(__doc__, "latin-1").encode("utf-8")
 
     standardConfig = dict(   ppm=25,
                              peakwidth=(20,50),
@@ -160,6 +163,7 @@ class MatchedFilterFeatureDetector(object):
     """
 
     __doc__ += "".join(file(path).readlines())
+    __doc__ = unicode(__doc__, "latin-1").encode("utf-8")
 
     standardConfig = dict(   fwhm = 30,
                              sigma = 30/2.3548,
