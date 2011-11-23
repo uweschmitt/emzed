@@ -27,6 +27,12 @@ for path in repositoryPathes:
         setattr(tab, name, table)
 
 tab.elements = Elements()
+# next line only valid after execution of 100loadpubchem.py during
+# startup:
+tab.pc_full = db.pubchem.table
+tab.pc_kegg = tab.pc_full.filter(tab.pc_full.is_in_kegg == 1)
+tab.pc_hmdb = tab.pc_full.filter(tab.pc_full.is_in_hmdb == 1)
+
 del repositoryPathes
 del path
 

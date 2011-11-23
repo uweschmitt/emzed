@@ -17,6 +17,10 @@ def testPubChemUpdate():
     assert db.table.rows[0][-1].startswith("http")
     assert len(db.table.rows[0]) == len(db.colNames)
 
+    row = db.table.rows[0]
+    assert db.table.get(row, "is_in_kegg") in [0,1]
+    assert db.table.get(row, "is_in_hmdb") in [0,1]
+
     unknown, missing = db.synchronize(200)
     assert len(unknown)==100, len(unknown)
     assert len(missing)==0, len(missing)

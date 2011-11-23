@@ -23,9 +23,10 @@ elif len(missingIds):
     print "PUBCHEM OUT OF SYNC"
     if os.access(globalDataPath, os.W_OK):
         print
-        print "PLEASE RUN db.pc.reset() TO"
+        print "PLEASE RUN db.pubchem.reset() AND RESTART SHELL TO"
         print "GET A NEW VERSION OF pubChemDB"
         print
+        #pubChemDB.reset(100)
 
     else:
         print
@@ -37,7 +38,7 @@ elif len(missingIds):
 
 # cleanup namespace
 db = new.module("db")
-db.pc=pubChemDB
+db.pubchem=pubChemDB
 del pubChemDB
 del new
 del dbPath

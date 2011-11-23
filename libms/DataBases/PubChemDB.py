@@ -7,9 +7,10 @@ from ..DataStructures.Table import Table
 
 class PubChemDB(object):
 
-    colNames = ["mw", "cid", "mf", "iupac", "synonyms", "url"]
-    colTypes = [float, str,   str,   str,    str,       str ]
-    colFormats=["%.6f", "%s", "%s", "%s", None, "%s" ]
+    colNames = ["mw", "cid", "mf", "iupac", "synonyms", "url", "is_in_kegg",
+                "is_in_hmdb"]
+    colTypes = [float, str, str, str, str, str, int, int ]
+    colFormats=["%.6f", "%s", "%s", "%s", None, "%s", "%d", "%d" ]
 
     @staticmethod
     def _get_count():
@@ -29,10 +30,15 @@ class PubChemDB(object):
         return count
 
     @staticmethod
-    def _get_uilist(retmax):
+    def _get_uilist(retmax=None, source=None):
+        term="metabolic[SRCC] AND 0[TFC]"
+        if source is not None:
+            term +=' AND "%s"[SRC]' % source
+        if retmax is None:
+            retmax = 99999999
         data = dict(db="pccompound",
                     rettype="uilist",
-                    term="metabolic[SRCC] AND 0[TFC]",
+                    term=term,
                     retmax=retmax,
                     tool="msworkbench",
                     email="tools@ms-workbench.de",
@@ -61,7 +67,7 @@ class PubChemDB(object):
         return data
 
     @staticmethod
-    def _parse_data(data):
+    def _parse_data(data, keggIds=None, humanMBdbIds=None):
         doc = etree.fromstring(data)
         items = []
         for summary in doc[0]:
@@ -71,12 +77,16 @@ class PubChemDB(object):
             iupac = summary.findall("IUPACName")[0].text
             synonyms = ";".join(t.text for t in summary.findall("SynonymList")[0])
             d = dict(cid=cid, mw=mw, mf=mf, iupac=iupac, synonyms=synonyms)
+            if keggIds is not None:
+                d["is_in_kegg"]=cid in keggIds
+            if humanMBdbIds is not None:
+                d["is_in_hmdb"]=cid in humanMBdbIds
             items.append((mw, d))
         return items
 
 
     @staticmethod
-    def _download(idlist):
+    def _download(idlist, keggIds=None, humanMBdbIds=None):
         print
         print "START DOWNLOAD OF", len(idlist), "ITEMS"
         started = time.time()
@@ -85,7 +95,7 @@ class PubChemDB(object):
         items = []
         for i, j in enumerate(jobs):
             data = PubChemDB._get_summary_data(j)
-            items.extend(PubChemDB._parse_data(data))
+            items.extend(PubChemDB._parse_data(data, keggIds, humanMBdbIds))
             print "   %3d %%" % (100.0 * (i+1)/len(jobs)), "done",
             needed = time.time()-started
             time_per_batch = needed / (i+1)
@@ -111,7 +121,7 @@ class PubChemDB(object):
     def __len__(self):
         return len(self.table)
 
-    def synchronize(self, maxIds = 9999999):
+    def synchronize(self, maxIds = None):
         print len(self.table), "ITEMS IN LOCAL PUBCHEM DB"
         counts = PubChemDB._get_count()
         print counts, "ITEMS IN GLOBAL PUBCHEM DB"
@@ -124,16 +134,23 @@ class PubChemDB(object):
             missing = list(known_uis-uis)
         return unknown, missing
 
-    def reset(self):
-        ids = PubChemDB._get_uilist(9999999)
+    def reset(self, fetchmax=99999999):
+        ids = PubChemDB._get_uilist()
         self.table = self._emptyTable()
-        self.update(ids)
+        self.update(ids[:fetchmax])
         self.store()
 
     def update(self, ids):
+
+        keggids = set(PubChemDB._get_uilist(source="KEGG"))
+        hmdbids = set(PubChemDB._get_uilist(source="Human Metabolome Database"))
+
+        print "%d ENTRIES FROM KEGG" % len(keggids)
+        print "%d ENTRIES FROM HUMAN METABOLOME DATABASE" % len(hmdbids)
+
         print "FETCH", len(ids), "ITEMS"
         if ids:
-            for mw, dd in PubChemDB._download(ids):
+            for mw, dd in PubChemDB._download(ids, keggids, hmdbids):
                 row = [ dd.get(n) for n in self.colNames ]
                 self.table.rows.append(row)
         self.table.dropColumn("url")
