@@ -42,7 +42,7 @@ def loadCSV(path=None, sep=";", **specialFormats):
     from   libms.DataStructures.Table import Table, commonTypeOfColumn, bestConvert
 
     if path is None:
-        path = ms.askForSingleFile(extensions=["table"])
+        path = ms.askForSingleFile(extensions=["csv"])
         if path is None:
             return None
 
