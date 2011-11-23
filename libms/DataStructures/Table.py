@@ -3,7 +3,7 @@ import operator, copy, os, itertools, re, numpy, cPickle, sys
 from   ExpressionTree import Node, Column
 import numpy as np
 
-standardFormats = { int: "%d", float : "%.2f", str: "%s" }
+standardFormats = { int: "%d", long: "%d", float : "%.2f", str: "%s" }
 fms = "'%.2fm' % (o/60.0)"  # format seconds to floating point minutes
 
 class _CmdLineProgress(object):
@@ -62,18 +62,8 @@ def _formatter(f):
             return "-" if s is None else eval(f, globals(), dict(o=s))
     return format
 
-#class RowBunch(list):
-    #def __init__(self, row, index):
-        #self.row = row
-        #self.index = index
-#
-    #def __getattr__(self, name):
-        #if name in self.index.keys():
-            #return self.row[self.index[name]]
-        #return getattr(self.row, name)
 
 class Table(object):
-
     """
     A table holds rows of the same lenght. Each Column of the table has
     a *name*, a *type* and *format* information, which indicates how to render
@@ -574,7 +564,6 @@ class Table(object):
         meta = {self: self.meta.copy(), t: t.meta.copy()}
         return Table(colNames, colTypes, colFormats, [], title, meta)
 
-
     def _print(self, w=12):
         #inner method is private, else the object can not be pickled !
         def _p(vals, w=w):
@@ -590,7 +579,7 @@ class Table(object):
         _p(["------"] * len(self.colNames))
         print
         for row in self.rows:
-            _p(row)
+            _p( fmt(value) for (fmt, value) in zip(self.colFormatters, row) )
             print
 
 
