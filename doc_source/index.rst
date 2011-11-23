@@ -11,9 +11,12 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   tables
+   ms
+   batches
+
    intro
    install
-   tables
    terms
    images
    

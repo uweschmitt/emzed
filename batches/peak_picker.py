@@ -80,4 +80,3 @@ def runPeakPickerHiRes(pattern=None, destination=None, configid=None, **params):
             ms.storePeakMap(result, savePath)
 
     return P(configs.peakPickerHiResConfig, False).run(pattern, destination, configid, **params)
-            
