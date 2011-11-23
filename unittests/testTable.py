@@ -70,6 +70,7 @@ def run(t, colnames, rows):
     assert set(t.getVisibleCols()) == { 'int', 'long', 'float', 'str',
                                         'object', 'array' }
 
+    
 
     tn = t.filter(t.str.contains("hi"))
     assert len(tn) == 3

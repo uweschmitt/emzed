@@ -109,7 +109,7 @@ class Table(object):
         self.setupFormatters()
         self.updateIndices()
         self.emptyColumnCache()
-        self.name = str(self)
+        self._name = str(self)
 
     def emptyColumnCache(self):
         self.columnCache = dict()
@@ -133,7 +133,7 @@ class Table(object):
     def setupFormatters(self):
         self.colFormatters = [_formatter(f) for f in self.colFormats ]
 
-    def __getattr__(self,name):
+    def __getattr__(self, name):
         if name in self.colNames:
             return self.getColumn(name)
         raise AttributeError("%s has no attribute %s" % (self, name))
@@ -486,7 +486,7 @@ class Table(object):
             raise Exception("first arg is of wrong type")
         assert isinstance(expr, Node)
         if debug:
-            print "# %s.join(%s, %s)" % (self.name, t.name, expr)
+            print "# %s.join(%s, %s)" % (self._name, t._name, expr)
         tctx = t.getColumnCtx(expr.neededColumns())
 
         cmdlineProgress = _CmdLineProgress(len(self))
@@ -531,7 +531,7 @@ class Table(object):
             raise Exception("first arg is of wrong type")
         assert isinstance(expr, Node)
         if debug:
-            print "# %s.leftJoin(%s, %s)" % (self.name, t.name, expr)
+            print "# %s.leftJoin(%s, %s)" % (self._name, t._name, expr)
         tctx = t.getColumnCtx(expr.neededColumns())
 
         filler = [None] * len(t.colNames)

@@ -445,7 +445,7 @@ class Column(Node):
         return cx[self.colname]
 
     def __str__(self):
-        return "%s.%s" % (self.table.name, self.colname)
+        return "%s.%s" % (self.table._name, self.colname)
 
     def evalsize(self, ctx):
         cx = ctx[self.table]

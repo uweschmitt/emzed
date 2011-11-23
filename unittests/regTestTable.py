@@ -47,7 +47,7 @@ def setupTable():
     t=Table(names, types, formats, rows, "testtabelle", meta=dict(why=42))
     t = t.extractColumns("int", "float", "str")
     t.addEnumeration()
-    t.name = "t"
+    t._name = "t"
     t._print()
     return t
 
@@ -135,9 +135,9 @@ def run_str(t):
 
 def testJoin():
     t1 = setupTable()
-    t1.name ="t1"
+    t1._name ="t1"
     t2 = setupTable()
-    t2.name ="t2"
+    t2._name ="t2"
     out = record(run_join_int, [t1.join, t1, t2], "tjoin_int.is")
     check(out, "tjoin_int.tobe")
     outf = record(run_join_float, [t1.join, t1, t2], "tjoin_float.is")
@@ -147,9 +147,9 @@ def testJoin():
 
 def testLeftJoin():
     t1 = setupTable()
-    t1.name ="t1"
+    t1._name ="t1"
     t2 = setupTable()
-    t2.name ="t2"
+    t2._name ="t2"
     out = record(run_join_int, [t1.leftJoin, t1, t2], "tljoin_int.is")
     check(out, "tljoin_int.tobe")
     outf = record(run_join_float, [t1.leftJoin, t1, t2], "tljoin_float.is")
@@ -159,9 +159,9 @@ def testLeftJoin():
 
 def testJoin():
     t1 = setupTable()
-    t1.name ="t1"
+    t1._name ="t1"
     t2 = setupTable()
-    t2.name ="t2"
+    t2._name ="t2"
     out = record(run_join_int, [t1.join, t1, t2], "tjoin_int.is")
     check(out, "tjoin_int.tobe")
     outf = record(run_join_float, [t1.join, t1, t2], "tjoin_float.is")
