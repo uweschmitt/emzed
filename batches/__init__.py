@@ -3,6 +3,15 @@ from peak_picker import *
 from alignment import *
 
 # remove clutter
-del feature_detector
-del peak_picker
-del alignment
+try:
+    del feature_detector
+except: 
+    pass
+try:
+    del peak_picker
+except: 
+    pass
+try:
+    del alignment
+except: 
+    pass
