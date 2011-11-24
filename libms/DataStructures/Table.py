@@ -416,7 +416,7 @@ class Table(object):
             f = self.colFormats[ix]
         elif format is None:
             f = format 
-        else
+        else:
             f= standardFormats.get(t)
 
         self.colNames[ix] = name
