@@ -2,6 +2,7 @@ import pyOpenMS as P
 import operator, copy, os, itertools, re, numpy, cPickle, sys
 from   ExpressionTree import Node, Column
 import numpy as np
+from   collections import Counter
 
 standardFormats = { int: "%d", long: "%d", float : "%.2f", str: "%s" }
 fms = "'%.2fm' % (o/60.0)"  # format seconds to floating point minutes
@@ -81,6 +82,13 @@ class Table(object):
 
     def __init__(self, colNames, colTypes, colFormats, rows=None, title=None,
                        meta=None):
+
+        if len(colNames) != len(set(colNames)):
+            counts = Counter(colNames)
+            multiples = [name for (name, count) in counts.items() if count>1]
+            message = "multiple columns: " + ", ".join(multiples)
+            raise Exception(message)
+
         assert len(colNames) == len(colTypes)
         if rows is not None:
             for row in rows:
@@ -243,6 +251,7 @@ class Table(object):
             self.primaryIndex = {colName: True}
         else:
             self.primaryIndex = {}
+        self.emptyColumnCache()
 
     def addConstantColumn(self, name, type_, format, value=None):
         """

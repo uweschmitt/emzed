@@ -29,8 +29,14 @@ def integrate(ftable, integratorid="std", showProgress = True):
     integrator.setPeakMap(peakmap)
 
     resultTable = ftable.buildEmptyClone()
-    resultTable.colNames += [ "intbegin", "intend", "method", "area", "rmse",
-                              "params",]
+
+    newCols = [ "intbegin", "intend", "method", "area", "rmse", "params",]
+    # remove old results if table was integrated before:
+    for col in newCols:
+        if resultTable.hasColumn(col):
+            resultTable.dropColumn(col)
+
+    resultTable.colNames += newCols 
     resultTable.colTypes += [ float, float, str, float, float, object, ]
     fmt = '''"%.2fm" % o'''
     resultTable.colFormats += [ fmt, fmt, "%s", "%.2e", "%.2e", None, ]

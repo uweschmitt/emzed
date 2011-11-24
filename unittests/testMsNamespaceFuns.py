@@ -53,7 +53,7 @@ def testAlignFeatureTables():
 
 def testIntegration():
     ft = ms.loadTable("data/features.table")
-    ftr = ms.reintegrate(ft, "trapez")
+    ftr = ms.integrate(ft, "trapez")
     assert "area" in ftr.colNames
     assert "rmse" in ftr.colNames
 

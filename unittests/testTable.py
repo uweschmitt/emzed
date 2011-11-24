@@ -177,3 +177,17 @@ def run(t, colnames, rows):
     res = tn.join(t2, (tn.iii == tn.iii) & (t2.long==32323))
     assert len(res) == len(t2), len(res)
 
+
+def testDoubleColumnames():
+    ex = None
+    try:
+        colnames = ["col0", "col0", "col1", "col1", "col2"]
+        t = Table(colnames, []*5, []*5)
+    except Exception, e:
+        ex = e.message
+    assert ex != None
+    assert "multiple" in ex
+    assert "col0" in ex
+    assert "col1" in ex
+    assert "col2" not in ex
+
