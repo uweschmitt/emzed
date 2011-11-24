@@ -1,6 +1,9 @@
 
 
 def integrate(ftable, integratorid="std", showProgress = True):
+    """ integrates features  in ftable.
+        returns processed table. *ftable* is not changed inplace
+    """
     from configs import peakIntegrators
     from libms.DataStructures.Table import Table
     from libms.DataStructures.MSTypes import PeakMap
