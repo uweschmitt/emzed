@@ -125,6 +125,7 @@ class Table(object):
         return self.colFormats[self.getIndex(colName)]
 
     def setFormat(self, colName, fmt):
+        """ sets format of columns *colName* to format *fmt* """
         self.colFormats[self.getIndex(colName)] = fmt
         self.setupFormatters()
 
@@ -391,17 +392,32 @@ class Table(object):
         self.updateIndices()
 
     def replaceColumn(self, name, expr, format=None):
-        """as Table.addColumn, but replaces a given column. Eg::
+        """as *Table.addColumn*, but replaces a given column. Eg::
 
                  table.replaceColumn("mzmin", table.mzmin*0.9)
+
+           if the type of the column does not change, the format
+           is kept unless *format* paramter is given.
+           if the type changes and no format parameter is given,
+           a standard format is used.
+
+           one still can change the format afterwards by using
+           ``Table.setFormat()``
 
         \\
         """
         ix = self.getIndex(name)
+        oldtype = self.colTypes[ix]
         ctx = { self: self.getColumnCtx(expr.neededColumns()) }
         values, _ = expr.eval(ctx)
         t = commonTypeOfColumn(values)
-        f = format if format is not None else standardFormats.get(t)
+
+        if t == oldtype and format is not None:
+            f = self.colFormats[ix]
+        elif format is None:
+            f = format 
+        else
+            f= standardFormats.get(t)
 
         self.colNames[ix] = name
         self.colTypes[ix] = t
