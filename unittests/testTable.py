@@ -118,7 +118,7 @@ def run(t, colnames, rows):
     tn.renameColumns(int='iii')
     assert set(tn.getVisibleCols()) == { 'iii', 'long', 'id' }
 
-    tn.addConstantColumn('x', str, '%s', 'hi')
+    tn.addColumn('x', 'hi', str, '%s')
     assert set(tn.getVisibleCols()) == { 'iii', 'long', 'id', 'x' }
     assert tn.colNames[-1]=="x"
 
@@ -145,8 +145,11 @@ def run(t, colnames, rows):
 
     assert ex != None
 
+    # computed by exrpression
     tn.addColumn("computed", tn.long / (tn.iii + 1))
-    tn.addColumn("squared", tn.iii * tn.iii)
+    # computed by callback:
+    tn.addColumn("squared", lambda t,r,n: t.get(r, "iii")**2)
+
     assert list(tn.getColumn("computed").values ) == [8080, 7441, 6161]
     assert list(tn.getColumn("squared").values ) == [9, 4, 1]
 

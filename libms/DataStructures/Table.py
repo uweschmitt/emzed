@@ -96,16 +96,18 @@ class Table(object):
         else:
             rows = []
         self.colNames = list(colNames)
-        self.colTypes = list(colTypes)
-        self.colIndizes = dict((n, i) for i, n in enumerate(colNames))
-        self.rows     = rows # [ RowBunch(row, self.colIndizes) for row in rows ]
-        self.colFormats = [None if f=="" else f for f in colFormats]
+        self.updateIndices()
 
+        self.colTypes = list(colTypes)
+
+        self.colFormats = [None if f=="" else f for f in colFormats]
+        self.setupFormatters()
+
+        self.rows     = rows 
         self.title = title
         self.meta = copy.copy(meta) if meta is not None else dict()
+
         self.primaryIndex = {}
-        self.setupFormatters()
-        self.updateIndices()
         self.emptyColumnCache()
         self._name = str(self)
 
@@ -254,27 +256,6 @@ class Table(object):
             self.primaryIndex = {}
         self.emptyColumnCache()
 
-    def addConstantColumn(self, name, type_, format, value=None):
-        """
-        adds a column with constant value **inplace**.
-        
-          - *name* is name of the new column, *type_* is one of the
-            valid types described above.
-          - format is a format string as "%d" or *None* or an executable
-            string with python code.
-
-        If no default value *value* is given, the column consists
-        of *None* values.
-        """
-        assert name not in self.colNames,\
-                    "column with name %s already exists" % name
-        for row in self.rows:
-            row.append(value)
-        self.colNames.append(name)
-        self.colTypes.append(type_)
-        self.colFormats.append(format)
-        self.setupFormatters()
-        self.updateIndices()
 
     def copy(self):
         """ returns a deep copy of the table """
@@ -365,31 +346,64 @@ class Table(object):
         self.setupFormatters()
         self.emptyColumnCache()
 
-    def addColumn(self, name, expr, type=None, format=None):
+    def addColumn(self, name, what, type_=None, format=None):
         """
-        adds an computed column **inplace**. Eg::
+        adds a column **inplace**.
 
-           table.addColumn("diffrt", table.rtmax-table.rtmin)
+          - *name* is name of the new column, *type_* is one of the
+            valid types described above.
+          - format is a format string as "%d" or *None* or an executable
+            string with python code.
 
-        \\
+        For the values *what* you can use
+
+           - an expression as
+           ``table.addColumn("diffrt", table.rtmax-table.rtmin)``
+           - a callback with signature ``callback(table, row, name)``
+           - a constant value
+
+        If no value *what* is given, the column consists
+        of *None* values.
         """
         if name in self.colNames:
             raise Exception("column with name %s already exists" % name)
+
+        if isinstance(what, Node):
+            return self._addColumnByExpression(name, what, type_, format)
+        elif callable(what):
+            return self._addColumnByCallback(name, what, type_, format)
+        else:
+            return self.addConstantColumn(name, what, type_, format)
+
+    def _addColumnByExpression(self, name, expr, type_, format):
         ctx = { self: self.getColumnCtx(expr.neededColumns()) }
         values, _ = expr.eval(ctx)
-        if type is None:
-            type = commonTypeOfColumn(values)
+        return self._addColumn(name, values, type_, format)
+
+    def _addColumnByCallback(self, name, callback, type_, format):
+        values = [callback(self, r, name) for r in self.rows]
+        return self._addColumn(name, values, type_, format)
+
+    def _addColumn(self, name, values, type_, format):
+        if type_ is None:
+            type_ = commonTypeOfColumn(values)
         if format is None:
-            format = standardFormats.get(type)
+            format = standardFormats.get(type_)
 
         self.colNames.append(name)
-        self.colTypes.append(type)
+        self.colTypes.append(type_)
         self.colFormats.append(format)
         for row, v in zip(self.rows, values):
-            row.append(type(v))
+            row.append(type_(v))
 
         self.setupFormatters()
         self.updateIndices()
+
+    def addConstantColumn(self, name, value, type_, format):
+        """
+        see addColumn 
+        """
+        return self._addColumn(name, [value]*len(self), type_, format)
 
     def replaceColumn(self, name, expr, format=None):
         """as *Table.addColumn*, but replaces a given column. Eg::
