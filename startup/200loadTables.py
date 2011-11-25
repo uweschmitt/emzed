@@ -2,7 +2,7 @@ print "LOAD LOCAL DATA TABLES"
 print
 from configs import repositoryPathes
 import os, ms, glob, new
-from  libms.Chemistry import Elements
+from  libms.Chemistry.Elements import Elements
 
 tab = new.module("tab")
 
@@ -34,7 +34,17 @@ tab.pc_kegg = tab.pc_full.filter(tab.pc_full.is_in_kegg == 1)
 tab.pc_hmdb = tab.pc_full.filter(tab.pc_full.is_in_hmdb == 1)
 
 del repositoryPathes
-del path
+
+try:
+    del path
+except:
+    pass
+
+
+try:
+    del p
+except:
+    pass
 
 try:
     del table
@@ -45,7 +55,7 @@ try:
     del name
 except:
     pass
-    
+
 del os
 del glob
 del new
