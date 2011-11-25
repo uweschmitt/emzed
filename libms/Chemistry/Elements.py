@@ -22,14 +22,9 @@ class Elements(Table):
         self.__dict__ = Elements.__we_are_all_one  # shared state
 
         if not hasattr(self, "rows"):
-            dataPath = os.environ.get("OPENMS_DATA_PATH")
-            if dataPath is None:
-                raise Exception("OPENMS_DATA_PATH env variable not set. Your "\
-                                "pyOpenMS installations seems to be broken")
-
-            elementPath = os.path.join(dataPath, "CHEMISTRY", "Elements.xml")
+            path = os.path.dirname(os.path.abspath(__file__))
             param = pyOpenMS.Param()
-            param.load(elementPath)
+            param.load(os.path.join(path, "Elements.xml"))
 
             getters = {
                     pyOpenMS.DataType.STRING_VALUE: "toString",
@@ -37,41 +32,81 @@ class Elements(Table):
                     pyOpenMS.DataType.DOUBLE_VALUE: "toDouble",
             }
 
+
             data = NestedBunchDict()
             for k in param.getKeys():
                 fields = k.split(":")
                 element = fields[1]
                 kind = fields[2]
-                if kind in ["Name", "Symbol", "AtomicNumber", "AverageWeight",
-                            "MonoWeight"]:
+                if kind in ["Name", "Symbol", "AtomicNumber"]:
                     entry = param.getValue(pyOpenMS.String(k))
                     value = getattr(entry, getters[entry.valueType()])()
                     data[element][kind] =  value
                 if kind == "Isotopes":
                     neutrons = int(fields[3])
-                    distribution = param.getValue(pyOpenMS.String(k)).toDouble()
-                    data[element]["Isotopes"][neutrons]=distribution
+                    kind = fields[4]
+                    if kind in ["RelativeAbundance", "AtomicMass"]:
+                        entry = param.getValue(pyOpenMS.String(k))
+                        value = getattr(entry, getters[entry.valueType()])()
+                    data[element]["Isotopes"][neutrons][kind]=value
 
-            maxNumIsotopes = max(len(e["Isotopes"]) for e in data.values())
-            colNames = ["number", "symbol", "name", "mw", "m0", "min_neutrons"]
-            colNames += ["prob_%d" % i for i in range(maxNumIsotopes)]
-            colTypes = [int, str, str, float, float, int]
-            colTypes += [float] * maxNumIsotopes
-            colFormats = ["%d", "%s", "%s", "%.6f", "%.6f", "%d" ]
-            colFormats += ["%.2f"] * maxNumIsotopes
+            colNames = ["number", "symbol", "name", "neutrons", "mass", "abundance"]
+            colTypes = [int, str, str, int, float, float]
+            colFormats = ["%d", "%s", "%s", "%d", "%.10f", "%.3f" ]
 
             rows = []
             for props in data.values():
-                row = [props.AtomicNumber, props.Symbol, props.Name,
-                       props.AverageWeight, props.MonoWeight]
-                row.append(min(props.Isotopes.keys()))
-                props = [d for n, d  in sorted(props.Isotopes.items())]
-                props += [None] * (maxNumIsotopes - len(props)) # fill row
-                row  += props
-                rows.append(row)
+                row0 = [props.AtomicNumber, props.Symbol, props.Name]
+                for k, isoprop in props.Isotopes.items():
+                    row = row0 + [ k, isoprop.AtomicMass, isoprop.RelativeAbundance / 100.0 ]
+                    rows.append(row)
 
             super(Elements, self).__init__(colNames, colTypes, colFormats, rows,
                                            title="Elements")
+            self.sortBy("number")
+
+
+class MonoIsotopicElements(Table):
+
+    # borg pattern
+    __we_are_all_one = dict()
+
+    def __init__(self):
+        self.__dict__ = MonoIsotopicElements.__we_are_all_one
+
+        if not hasattr(self, "rows"): # empty on first run
+            elements = Elements()
+            self.rows = []
+            # find monoisotopic data for each element
+            for s in set(elements.symbol.values): # unique symbols
+                tsub = elements.filter(elements.symbol == s)
+                neutrons = tsub.neutrons.values
+                t0   = tsub.filter(tsub.neutrons == min(neutrons))
+                self.rows.append(t0.rows[0])
+
+            self.colNames = elements.colNames
+            self.colTypes = elements.colTypes
+            self.colFormats = elements.colFormats
+            self.title = "Monoisotopic Elements"
+            self.meta  = dict()
+
+            self.updateIndices()
+            self.setupFormatters()
+            self.emptyColumnCache()
+            self.renameColumns(mass="m0")
+            self.sortBy("number")
+
+    def buildSymbolIndex(self):
+        symbols = self.symbol.values
+        self.symbolIndex = dict( (s,i) for (i,s) in enumerate(symbols))
+
+    def sortBy(self, *a, **kw):
+        super(MonoIsotopicElements, self).sortBy(*a, **kw)
+        self.buildSymbolIndex()
+
+    def rowFor(self, symbol):
+        return self.rows[self.symbolIndex.get(symbol)]
+
 
 
 if __name__ == "__main__":
