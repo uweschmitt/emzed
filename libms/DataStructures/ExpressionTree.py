@@ -18,7 +18,7 @@ def gt(a, x):
     return np.searchsorted(a, x, 'right')
 
 _basic_num_types = [int, long, float]
-_basic_types = [int, long, float, str]
+_basic_types = [int, long, float, str, type(None) ]
 _iterables = [list, np.ndarray]
 
 class Node(object):
@@ -118,9 +118,9 @@ class CompNode(Node):
         if ixr != None and type(lhs) in _basic_num_types:
             return self.rfastcomp(lhs, rhs, ixr), None
 
-        if type(lhs) == list and type(lhs[0]) != str:
+        if type(lhs) == list and type(lhs[0]) in _basic_num_types:
             lhs = np.array(lhs)
-        if type(rhs) == list and type(rhs[0]) != str:
+        if type(rhs) == list and type(rhs[0]) in _basic_num_types:
             rhs = np.array(rhs)
 
         if type(lhs) in _basic_num_types and type(rhs)==np.ndarray:
@@ -133,10 +133,11 @@ class CompNode(Node):
             assert len(lhs) == len(rhs)
             return self.comparator(lhs, rhs), None
 
-        if type(lhs) ==str and type(rhs) in _iterables:
+        if type(lhs) in _basic_types and type(rhs) in _iterables:
             return np.array([ self.comparator(lhs, r) for r in  rhs]), None
-        if  type(lhs) in _iterables and type(rhs) ==str:
+        if  type(lhs) in _iterables and type(rhs) in _basic_types:
             return np.array([ self.comparator(l, rhs) for l in  lhs]), None
+
         assert type(lhs) in _basic_types and type(rhs) in _basic_types
 
         return self.comparator(lhs, rhs), None
