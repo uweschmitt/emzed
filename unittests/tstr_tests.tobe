@@ -3,36 +3,36 @@
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
+0              1          1.000        hi          
 
 # (t.str > 'hi')
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.str >= 'hi')
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+0              1          1.000        hi          
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.str <= 'hi')
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
+0              1          1.000        hi          
 
 # (t.str >= 'a')
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+0              1          1.000        hi          
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.str >= 'z')
 id           int          float        str         
@@ -43,9 +43,9 @@ int          int          float        str
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+0              1          1.000        hi          
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.str == 'z')
 id           int          float        str         
@@ -56,14 +56,14 @@ int          int          float        str
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+0              1          1.000        hi          
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # t.str.startswith('hi')
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+0              1          1.000        hi          
+1              2          2.000        hi2         
+2              3          3.000        hi3         

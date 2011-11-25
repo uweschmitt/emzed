@@ -3,17 +3,17 @@
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+0              1          1.000        hi          
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.int > -1)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+0              1          1.000        hi          
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.int <= -1)
 id           int          float        str         
@@ -24,9 +24,9 @@ int          int          float        str
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+0              1          1.000        hi          
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.int == -1)
 id           int          float        str         
@@ -37,9 +37,9 @@ int          int          float        str
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+0              1          1.000        hi          
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.int <= -1)
 id           int          float        str         
@@ -55,9 +55,9 @@ int          int          float        str
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+0              1          1.000        hi          
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.int < -1)
 id           int          float        str         
@@ -73,17 +73,17 @@ int          int          float        str
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+0              1          1.000        hi          
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.int == t.int)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+0              1          1.000        hi          
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.int != t.int)
 id           int          float        str         
@@ -94,17 +94,17 @@ int          int          float        str
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+0              1          1.000        hi          
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.int > 0)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+0              1          1.000        hi          
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.int <= 0)
 id           int          float        str         
@@ -115,9 +115,9 @@ int          int          float        str
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+0              1          1.000        hi          
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.int == 0)
 id           int          float        str         
@@ -128,9 +128,9 @@ int          int          float        str
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+0              1          1.000        hi          
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.int <= 0)
 id           int          float        str         
@@ -146,9 +146,9 @@ int          int          float        str
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+0              1          1.000        hi          
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.int < 0)
 id           int          float        str         
@@ -164,17 +164,17 @@ int          int          float        str
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+0              1          1.000        hi          
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.int == t.int)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+0              1          1.000        hi          
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.int != t.int)
 id           int          float        str         
@@ -185,17 +185,17 @@ int          int          float        str
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+0              1          1.000        hi          
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.int > 0.5)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+0              1          1.000        hi          
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.int <= 0.5)
 id           int          float        str         
@@ -206,9 +206,9 @@ int          int          float        str
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+0              1          1.000        hi          
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.int == 0.5)
 id           int          float        str         
@@ -219,9 +219,9 @@ int          int          float        str
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+0              1          1.000        hi          
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.int <= 0.5)
 id           int          float        str         
@@ -237,9 +237,9 @@ int          int          float        str
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+0              1          1.000        hi          
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.int < 0.5)
 id           int          float        str         
@@ -255,17 +255,17 @@ int          int          float        str
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+0              1          1.000        hi          
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.int == t.int)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+0              1          1.000        hi          
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.int != t.int)
 id           int          float        str         
@@ -276,48 +276,48 @@ int          int          float        str
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+0              1          1.000        hi          
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.int > 1)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.int <= 1)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
+0              1          1.000        hi          
 
 # (t.int > 1)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.int == 1)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
+0              1          1.000        hi          
 
 # (t.int != 1)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.int <= 1)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
+0              1          1.000        hi          
 
 # (t.int < 1)
 id           int          float        str         
@@ -328,9 +328,9 @@ int          int          float        str
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+0              1          1.000        hi          
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.int < 1)
 id           int          float        str         
@@ -341,22 +341,22 @@ int          int          float        str
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
+0              1          1.000        hi          
 
 # (t.int != 1)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.int == t.int)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+0              1          1.000        hi          
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.int != t.int)
 id           int          float        str         
@@ -367,87 +367,87 @@ int          int          float        str
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.int > 2)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-2            3            3.0          hi3         
+2              3          3.000        hi3         
 
 # (t.int <= 2)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
+0              1          1.000        hi          
+1              2          2.000        hi2         
 
 # (t.int > 2)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-2            3            3.0          hi3         
+2              3          3.000        hi3         
 
 # (t.int == 2)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-1            2            2.0          hi2         
+1              2          2.000        hi2         
 
 # (t.int != 2)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-2            3            3.0          hi3         
+0              1          1.000        hi          
+2              3          3.000        hi3         
 
 # (t.int <= 2)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
+0              1          1.000        hi          
+1              2          2.000        hi2         
 
 # (t.int < 2)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
+0              1          1.000        hi          
 
 # (t.int >= 2)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.int < 2)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
+0              1          1.000        hi          
 
 # (t.int == 2)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-1            2            2.0          hi2         
+1              2          2.000        hi2         
 
 # (t.int != 2)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-2            3            3.0          hi3         
+0              1          1.000        hi          
+2              3          3.000        hi3         
 
 # (t.int == t.int)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+0              1          1.000        hi          
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.int != t.int)
 id           int          float        str         
@@ -458,26 +458,26 @@ int          int          float        str
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-2            3            3.0          hi3         
+2              3          3.000        hi3         
 
 # (t.int > 2.5)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-2            3            3.0          hi3         
+2              3          3.000        hi3         
 
 # (t.int <= 2.5)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
+0              1          1.000        hi          
+1              2          2.000        hi2         
 
 # (t.int > 2.5)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-2            3            3.0          hi3         
+2              3          3.000        hi3         
 
 # (t.int == 2.5)
 id           int          float        str         
@@ -488,36 +488,36 @@ int          int          float        str
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+0              1          1.000        hi          
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.int <= 2.5)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
+0              1          1.000        hi          
+1              2          2.000        hi2         
 
 # (t.int < 2.5)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
+0              1          1.000        hi          
+1              2          2.000        hi2         
 
 # (t.int >= 2.5)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-2            3            3.0          hi3         
+2              3          3.000        hi3         
 
 # (t.int < 2.5)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
+0              1          1.000        hi          
+1              2          2.000        hi2         
 
 # (t.int == 2.5)
 id           int          float        str         
@@ -528,17 +528,17 @@ int          int          float        str
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+0              1          1.000        hi          
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.int == t.int)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+0              1          1.000        hi          
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.int != t.int)
 id           int          float        str         
@@ -549,7 +549,7 @@ int          int          float        str
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-2            3            3.0          hi3         
+2              3          3.000        hi3         
 
 # (t.int > 3)
 id           int          float        str         
@@ -560,9 +560,9 @@ int          int          float        str
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+0              1          1.000        hi          
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.int > 3)
 id           int          float        str         
@@ -573,63 +573,63 @@ int          int          float        str
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-2            3            3.0          hi3         
+2              3          3.000        hi3         
 
 # (t.int != 3)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
+0              1          1.000        hi          
+1              2          2.000        hi2         
 
 # (t.int <= 3)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+0              1          1.000        hi          
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.int < 3)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
+0              1          1.000        hi          
+1              2          2.000        hi2         
 
 # (t.int >= 3)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-2            3            3.0          hi3         
+2              3          3.000        hi3         
 
 # (t.int < 3)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
+0              1          1.000        hi          
+1              2          2.000        hi2         
 
 # (t.int == 3)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-2            3            3.0          hi3         
+2              3          3.000        hi3         
 
 # (t.int != 3)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
+0              1          1.000        hi          
+1              2          2.000        hi2         
 
 # (t.int == t.int)
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
-0            1            1.0          hi          
-1            2            2.0          hi2         
-2            3            3.0          hi3         
+0              1          1.000        hi          
+1              2          2.000        hi2         
+2              3          3.000        hi3         
 
 # (t.int != t.int)
 id           int          float        str         
