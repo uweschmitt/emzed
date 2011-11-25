@@ -138,7 +138,7 @@ class CentwaveFeatureDetector(object):
             # parse csv and shift rt related values to undo rt modifiaction
             # as described above
             table = XCMSFeatureParser.parse(file(temp_output).readlines())
-            table.addConstantColumn("centwave_config", dict, None, dd)
+            table.addConstantColumn("centwave_config", dd, dict, None)
             table.meta["generator"] = "xcms.centwave"
             decorate(table, peakMap)
             return table
@@ -227,15 +227,15 @@ class MatchedFilterFeatureDetector(object):
 
             # parse csv and
             table = XCMSFeatureParser.parse(file(temp_output).readlines())
-            table.addConstantColumn("matchedfilter_config", dict, None, dd)
+            table.addConstantColumn("matchedfilter_config", dd, dict, None)
             table.meta["generator"] = "xcms.matchedfilter"
             decorate(table, peakMap)
             return table
 
 def decorate(table, peakMap):
-    table.addConstantColumn("peakmap", object, None, peakMap)
+    table.addConstantColumn("peakmap", peakMap, object, None)
     src = peakMap.meta.get("source","")
-    table.addConstantColumn("source", str, None, src)
-    table.addConstantColumn("polarity", str, None, peakMap.polarity)
+    table.addConstantColumn("source", src, str, None)
+    table.addConstantColumn("polarity", peakMap.polarity, str, None)
     table.addEnumeration()
     table.title = os.path.basename(src)

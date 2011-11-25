@@ -9,6 +9,7 @@ def testMatchedFilterFeatureDetector():
     det = libms.RConnect.MatchedFilterFeatureDetector()
     assert det.__doc__ != None
     table = det.process(ds)
+    print table.colNames
     assert len(table) == 742, len(table)
-    assert len(table.colNames) ==  17, len(table.colNames)
-    assert len(table.colTypes) ==  17
+    assert len(table.colNames) ==  18, len(table.colNames)
+    assert len(table.colTypes) ==  18

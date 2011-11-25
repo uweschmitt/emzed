@@ -22,6 +22,7 @@ class _CmdLineProgress(object):
             self.last = percent
 
 def commonTypeOfColumn(col):
+    col = list(col)
     if isinstance(col, np.ndarray):
         dtype = col.dtype
         if dtype in [np.int8, np.int16, np.int32]:
@@ -38,7 +39,10 @@ def commonTypeOfColumn(col):
         return float
     if int in types:
         return int
-    raise Exception("do not know how to find common type for %r" % types)
+    if len(types) == 1:
+        # unknown types as dict, object, ...
+        return types.pop()
+    raise Exception("do not know how to find common type for different types %r" % types)
 
 def bestConvert(val):
     try:
@@ -346,7 +350,7 @@ class Table(object):
         self.setupFormatters()
         self.emptyColumnCache()
 
-    def addColumn(self, name, what, type_=None, format=None):
+    def addColumn(self, name, what, type_=None, format=None, insertBefore=None):
         """
         adds a column **inplace**.
 
@@ -365,45 +369,74 @@ class Table(object):
         If no value *what* is given, the column consists
         of *None* values.
         """
+        assert isinstance(name, str) or isinstance(name, unicode),\
+               "colum name is not a  string"
+
+        if type_ is not None:
+            assert isinstance(type_, type), "type_ param is not a type"
+
         if name in self.colNames:
             raise Exception("column with name %s already exists" % name)
 
         if isinstance(what, Node):
-            return self._addColumnByExpression(name, what, type_, format)
+            return self._addColumnByExpression(name, what, type_, format,
+                                               insertBefore)
         elif callable(what):
-            return self._addColumnByCallback(name, what, type_, format)
+            return self._addColumnByCallback(name, what, type_, format,
+                                             insertBefore)
         else:
-            return self.addConstantColumn(name, what, type_, format)
+            return self.addConstantColumn(name, what, type_, format,
+                                          insertBefore)
 
-    def _addColumnByExpression(self, name, expr, type_, format):
+    def _addColumnByExpression(self, name, expr, type_, format, insertBefore):
         ctx = { self: self.getColumnCtx(expr.neededColumns()) }
         values, _ = expr.eval(ctx)
-        return self._addColumn(name, values, type_, format)
+        return self._addColumn(name, values, type_, format, insertBefore)
 
-    def _addColumnByCallback(self, name, callback, type_, format):
+    def _addColumnByCallback(self, name, callback, type_, format, insertBefore):
         values = [callback(self, r, name) for r in self.rows]
-        return self._addColumn(name, values, type_, format)
+        return self._addColumn(name, values, type_, format, insertBefore)
 
-    def _addColumn(self, name, values, type_, format):
+    def _addColumn(self, name, values, type_, format, insertBefore):
         if type_ is None:
             type_ = commonTypeOfColumn(values)
+            conv = type_
+        else:
+            conv = lambda x: x
         if format is None:
             format = standardFormats.get(type_)
 
-        self.colNames.append(name)
-        self.colTypes.append(type_)
-        self.colFormats.append(format)
-        for row, v in zip(self.rows, values):
-            row.append(type_(v))
+        if insertBefore is None:
+            self.colNames.append(name)
+            self.colTypes.append(type_)
+            self.colFormats.append(format)
+            for row, v in zip(self.rows, values):
+                try:
+                    row.append(type_(v))
+                except:
+                    row.append(v)  # type == object is not callable
+        else:
+            if isinstance(insertBefore, str):
+                if insertBefore not in self.colNames:
+                    raise Exception("column %s does not exist", insertBefore)
+                insertBefore = self.getIndex(insertBefore)
+                if insertBefore < 0: # incexing from back
+                    insertBefore += len(self.colNames)
+                self.colNames.insert(insertBefore, name)
+                self.colTypes.insert(insertBefore, type_)
+                self.colFormats.insert(insertBefore, format)
+                for row, v in zip(self.rows, values):
+                    row.insert(insertBefore, conv(v))
 
         self.setupFormatters()
         self.updateIndices()
 
-    def addConstantColumn(self, name, value, type_, format):
+    def addConstantColumn(self, name, value, type_, format, insertBefore=None):
         """
         see addColumn 
         """
-        return self._addColumn(name, [value]*len(self), type_, format)
+        return self._addColumn(name, [value]*len(self), type_, format,
+                              insertBefore)
 
     def replaceColumn(self, name, expr, format=None):
         """as *Table.addColumn*, but replaces a given column. Eg::
@@ -418,8 +451,8 @@ class Table(object):
            one still can change the format afterwards by using
            ``Table.setFormat()``
 
-        \\
         """
+        #TODO: same semantics as addColumn !
         ix = self.getIndex(name)
         oldtype = self.colTypes[ix]
         ctx = { self: self.getColumnCtx(expr.neededColumns()) }
