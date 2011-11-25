@@ -3,14 +3,15 @@ import sys, time, os
 import xml.etree.ElementTree  as etree
 import cPickle
 from ..DataStructures.Table import Table
+from ..Chemistry.Tools import monoisotopicMass
 
 
 class PubChemDB(object):
 
-    colNames = ["mw", "cid", "mf", "iupac", "synonyms", "url", "is_in_kegg",
+    colNames = ["m0", "mw", "cid", "mf", "iupac", "synonyms", "url", "is_in_kegg",
                 "is_in_hmdb"]
-    colTypes = [float, str, str, str, str, str, int, int ]
-    colFormats=["%.6f", "%s", "%s", "%s", None, "%s", "%d", "%d" ]
+    colTypes = [float, float, str, str, str, str, str, int, int ]
+    colFormats=["%.6f", "%.6f", "%s", "%s", "%s", None, "%s", "%d", "%d" ]
 
     @staticmethod
     def _get_count():
@@ -111,6 +112,7 @@ class PubChemDB(object):
         self.path = path
         if path is not None and os.path.exists(path):
             self.table = cPickle.load(open(path,"rb"))
+            self.table.updateIndices()
         else:
             self.table = self._emptyTable()
 
@@ -140,6 +142,9 @@ class PubChemDB(object):
         self.update(ids[:fetchmax])
         self.store()
 
+    def massCalculator(self, table, row, name):
+        return monoisotopicMass(table.get(row, "mf"))
+
     def update(self, ids):
 
         keggids = set(PubChemDB._get_uilist(source="KEGG"))
@@ -153,10 +158,18 @@ class PubChemDB(object):
             for mw, dd in PubChemDB._download(ids, keggids, hmdbids):
                 row = [ dd.get(n) for n in self.colNames ]
                 self.table.rows.append(row)
-        self.table.dropColumn("url")
+        try:
+            self.table.dropColumn("url")
+        except: 
+            pass
+        try:
+            self.table.dropColumn("m0")
+        except: 
+            pass
         url = "http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?cid="
-        self.table.addColumn("url", url+self.table.cid, type=str)
-        self.table.sortBy("mw")# build index
+        self.table.addColumn("url", url+self.table.cid, type_=str)
+        self.table.addColumn("m0", self.massCalculator, type_=float, format="%.7f", insertBefore="mw")
+        self.table.sortBy("m0")# build index
 
     def store(self, path=None):
         if path is None:
