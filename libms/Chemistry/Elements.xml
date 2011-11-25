@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- THIS TABLE IS FORM OPEN-MS PROJECT, WE ADDED SOME MORE ELEMENTS
+     WHICH ARE INDICATED BELOW -->
 <PARAMETERS>
 	<NODE name="Elements">
 		<NODE name="Hydrogen">
@@ -605,6 +607,7 @@
         </NODE>
       </NODE>
     </NODE>
+
     <NODE name="Mercury">
       <ITEM name="Name" value="Mercury" type="string" />
       <ITEM name="Symbol" value="Hg" type="string" />
@@ -637,6 +640,60 @@
         <NODE name="204">
           <ITEM name="RelativeAbundance" value="6.87" type="float" />
           <ITEM name="AtomicMass" value="203.9734939" type="float" />
+        </NODE>
+      </NODE>
+    </NODE>
+    <!-- ELEMENTS WHICH WERE NOT PROVIDED BY OPEN-MS AND WE ADDED THEM -->
+    <NODE name="Antimony">
+      <!-- SOURCE: http://en.wikipedia.org/wiki/Isotopes_of_antimony -->
+      <ITEM name="Name" value="Antimony" type="string" />
+      <ITEM name="Symbol" value="Sb" type="string" />
+      <ITEM name="AtomicNumber" value="51" type="int" />
+      <NODE name="Isotopes">
+        <NODE name="121">
+          <ITEM name="RelativeAbundance" value="57.21" type="float" />
+          <ITEM name="AtomicMass" value="120.9038157" type="float" />
+        </NODE>
+        <NODE name="123">
+          <ITEM name="RelativeAbundance" value="42.79" type="float" />
+          <ITEM name="AtomicMass" value="122.9042140" type="float" />
+        </NODE>
+      </NODE>
+    </NODE>
+    <NODE name="Tin">
+      <!-- SOURCE: http://en.wikipedia.org/wiki/Isotopes_of_tin -->
+      <ITEM name="Name" value="Tin" type="string" />
+      <ITEM name="Symbol" value="Sn" type="string" />
+      <ITEM name="AtomicNumber" value="50" type="int" />
+      <!-- just name isotopes with abundance > 1% -->
+      <NODE name="Isotopes">
+        <NODE name="116">
+          <ITEM name="RelativeAbundance" value="14.54" type="float" />
+          <ITEM name="AtomicMass" value="115.901741" type="float" />
+        </NODE>
+        <NODE name="117">
+          <ITEM name="RelativeAbundance" value="7.68" type="float" />
+          <ITEM name="AtomicMass" value="116.902952" type="float" />
+        </NODE>
+        <NODE name="118">
+          <ITEM name="RelativeAbundance" value="24.22" type="float" />
+          <ITEM name="AtomicMass" value="117.901603" type="float" />
+        </NODE>
+        <NODE name="119">
+          <ITEM name="RelativeAbundance" value="8.59" type="float" />
+          <ITEM name="AtomicMass" value="118.903308" type="float" />
+        </NODE>
+        <NODE name="120">
+          <ITEM name="RelativeAbundance" value="32.58" type="float" />
+          <ITEM name="AtomicMass" value="119.9021947" type="float" />
+        </NODE>
+        <NODE name="122">
+          <ITEM name="RelativeAbundance" value="4.63" type="float" />
+          <ITEM name="AtomicMass" value="121.9034390" type="float" />
+        </NODE>
+        <NODE name="124">
+          <ITEM name="RelativeAbundance" value="5.79" type="float" />
+          <ITEM name="AtomicMass" value="123.9052739" type="float" />
         </NODE>
       </NODE>
     </NODE>
