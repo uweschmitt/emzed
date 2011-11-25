@@ -368,6 +368,8 @@ class FeatureExplorer(QDialog):
             rtmin = row[getIndex("rtmin")]
             rtmax = row[getIndex("rtmax")]
             self.rtPlotter.setRangeSelectionLimits(rtmin, rtmax)
+            w = rtmax - rtmin
+            self.rtPlotter.setXAxisLimits(rtmin -w, rtmax + w)
 
             if self.isIntegrated:
 
@@ -387,8 +389,10 @@ class FeatureExplorer(QDialog):
                 intbegin = row[getIndex("intbegin")]
                 intend = row[getIndex("intend")]
                 self.rtPlotter.setRangeSelectionLimits(intbegin, intend)
+                w = intend - intbegin 
+                self.rtPlotter.setXAxisLimits(intbegin -w, intend + w)
 
-            self.rtPlotter.setXAxisLimits(0, self.maxRt)
+            #self.rtPlotter.setXAxisLimits(0, self.maxRt)
             self.rtPlotter.replot()
 
 def inspect(table):
