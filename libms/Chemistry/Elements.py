@@ -43,14 +43,14 @@ class Elements(Table):
                     value = getattr(entry, getters[entry.valueType()])()
                     data[element][kind] =  value
                 if kind == "Isotopes":
-                    neutrons = int(fields[3])
+                    massnumber = int(fields[3])
                     kind = fields[4]
                     if kind in ["RelativeAbundance", "AtomicMass"]:
                         entry = param.getValue(pyOpenMS.String(k))
                         value = getattr(entry, getters[entry.valueType()])()
-                    data[element]["Isotopes"][neutrons][kind]=value
+                    data[element]["Isotopes"][massnumber][kind]=value
 
-            colNames = ["number", "symbol", "name", "neutrons", "mass", "abundance"]
+            colNames = ["number", "symbol", "name", "massnumber", "mass", "abundance"]
             colTypes = [int, str, str, int, float, float]
             colFormats = ["%d", "%s", "%s", "%d", "%.10f", "%.3f" ]
 
@@ -80,8 +80,8 @@ class MonoIsotopicElements(Table):
             # find monoisotopic data for each element
             for s in set(elements.symbol.values): # unique symbols
                 tsub = elements.filter(elements.symbol == s)
-                neutrons = tsub.neutrons.values
-                t0   = tsub.filter(tsub.neutrons == min(neutrons))
+                massnumber = tsub.massnumber.values
+                t0   = tsub.filter(tsub.massnumber == min(massnumber))
                 self.rows.append(t0.rows[0])
 
             self.colNames = elements.colNames
@@ -104,8 +104,11 @@ class MonoIsotopicElements(Table):
         super(MonoIsotopicElements, self).sortBy(*a, **kw)
         self.buildSymbolIndex()
 
-    def rowFor(self, symbol):
-        return self.rows[self.symbolIndex.get(symbol)]
+    def getProperty(self, symbol, name):
+        if not symbol in self.symbolIndex:
+            return None
+        row = self.rows[self.symbolIndex.get(symbol)]
+        return self.get(row, name)
 
 
 
