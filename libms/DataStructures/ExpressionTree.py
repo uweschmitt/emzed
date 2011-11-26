@@ -458,10 +458,32 @@ class Column(Node):
     def neededColumns(self):
         return [ (self.table, self.colname), ]
 
-    def startswith(self, other):
+    def startsWith(self, other):
         return BinaryExpression(self, other, lambda a,b: a.startswith(b), "%s.startswith(%s)")
+
     def contains(self, other):
         return BinaryExpression(self, other, lambda a,b: b in a, "%s.contains(%s)")
+
+    def isIn(self, li):
+        return IsIn(self, li)
+
+class IsIn(Node):
+    def __init__(self, left, li):
+        self.left = left
+        self.li = li
+
+    def eval(self, ctx):
+        lhs, _ = self.left.eval(ctx)
+        if type(lhs) in _iterables:
+            return np.array([ l in self.li for l in lhs]), None
+        return lhs in self.li, None
+
+    def __str__(self):
+        return "%s isIn %s" % (str(self.left), self.li)
+
+    def neededColumns(self):
+        return self.left.neededColumns()
+
 
 class BinaryExpression(Node):
 

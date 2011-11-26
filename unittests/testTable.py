@@ -180,6 +180,10 @@ def run(t, colnames, rows):
     res = tn.join(t2, (tn.iii == tn.iii) & (t2.long==32323))
     assert len(res) == len(t2), len(res)
 
+    tx = tn.filter(tn.iii.isIn([1,4]))
+    assert len(tx) == 1
+    assert tx.iii.values == [1]
+
 
 def testDoubleColumnames():
     ex = None
