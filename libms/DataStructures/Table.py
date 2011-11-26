@@ -115,6 +115,11 @@ class Table(object):
         self.emptyColumnCache()
         self._name = str(self)
 
+        self.editableColumns = set()
+
+    def isEditable(self, colName):
+        return colName in self.editableColumns
+
     def emptyColumnCache(self):
         self.columnCache = dict()
 
@@ -209,7 +214,7 @@ class Table(object):
         row[ix] = value
 
     def get(self, row, colName):
-        """ returns value of column *colName* in a given *row*.
+        """ returns value of column *colName* in a given *row*#
 
             usage: ``table.get(table.rows[0], "mz")``
         """

@@ -3,6 +3,8 @@
 from PyQt4.QtGui import  *
 from PyQt4.QtCore import *
 
+import guidata
+
 from PlottingWidgets import RtPlotter, MzPlotter
 
 import sys
@@ -62,7 +64,7 @@ def populateTableWidget(tWidget, table):
                 item = ValuedQTableWidgetItem(i, value, tosee)
                 if len(tosee)>50:
                     item.setSizeHint(QSize(50,-1))
-                item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+                item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled | Qt.ItemIsEditable)
                 if type_ == float or type_ == int:
                     item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 font = item.font()
@@ -105,6 +107,7 @@ class FeatureExplorer(QDialog):
         self.setupLayout()
         self.populateTable()
         self.setWindowSize() # depends on table size
+        self.connectSignals()
 
         if table.title:
             title = table.title
@@ -219,12 +222,6 @@ class FeatureExplorer(QDialog):
         pol.setVerticalStretch(5)
         self.tw.setSizePolicy(pol)
 
-        # click at row head
-        self.connect(self.tw.verticalHeader(), SIGNAL("sectionClicked(int)"),
-                     self.rowClicked)
-        # click at cell
-        self.connect(self.tw, SIGNAL("cellClicked(int, int)"),
-                     self.cellClicked)
 
         if self.isIntegrated:
             self.intLabel = QLabel("Integration")
@@ -238,6 +235,16 @@ class FeatureExplorer(QDialog):
             self.reintegrateButton.setText("Integrate")
             self.connect(self.reintegrateButton, SIGNAL("clicked()"),
                          self.doIntegrate)
+
+    def connectSignals(self):
+        # click at row head
+        self.connect(self.tw.verticalHeader(), SIGNAL("sectionClicked(int)"),
+                     self.rowClicked)
+        # click at cell
+        self.connect(self.tw, SIGNAL("cellClicked(int, int)"),
+                     self.cellClicked)
+        self.connect(self.tw, SIGNAL("cellChanged(int, int)"),
+                     self.cellChanged)
 
     def intMethodChanged(self, i):
         pass
@@ -304,11 +311,28 @@ class FeatureExplorer(QDialog):
             self.mzPlotter.plot(peaks)
             self.mzPlotter.replot()
 
+    def cellChanged(self, rowIdx, colIdx):
+        item = self.tw.currentItem()
+        newvalue = item.text()
+        coltype = self.table.colTypes[colIdx]
+        try:
+            newvalue = coltype(newvalue)
+        except:
+            guidata.qapplication().beep()
+            item.setText(self.oldtext)
+            return
+        item.value = newvalue
+        self.table.rows[item.rowIndex][colIdx] =newvalue
+
     def cellClicked(self, rowIdx, colIdx):
         name = self.table.colNames[colIdx]
         item = self.tw.currentItem()
-        getIndex = self.table.getIndex
+        if self.table.isEditable(name):
+            self.oldtext = item.text()
+            self.tw.editItem(item)
+            return
 
+        getIndex = self.table.getIndex
         # trotz umsortierung :
         row = self.table.rows[item.rowIndex]
 
@@ -396,7 +420,6 @@ class FeatureExplorer(QDialog):
             self.rtPlotter.replot()
 
 def inspect(table):
-    import guidata
     app = guidata.qapplication()
     fe = FeatureExplorer(table)
     fe.raise_()
