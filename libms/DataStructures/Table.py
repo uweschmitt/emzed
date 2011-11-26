@@ -1,5 +1,6 @@
+import pdb
 import pyOpenMS as P
-import operator, copy, os, itertools, re, numpy, cPickle, sys
+import operator, copy, os, itertools, re, numpy, cPickle, sys, inspect
 from   ExpressionTree import Node, Column
 import numpy as np
 from   collections import Counter
@@ -93,6 +94,7 @@ class Table(object):
             message = "multiple columns: " + ", ".join(multiples)
             raise Exception(message)
 
+
         assert len(colNames) == len(colTypes)
         if rows is not None:
             for row in rows:
@@ -116,6 +118,15 @@ class Table(object):
         self._name = str(self)
 
         self.editableColumns = set()
+
+        # as we provide  access to colums via __getattr__, colnames must
+        # not be in objects __dict__ and must not be name of member
+        # functions:
+        memberNames = [name for name, obj in inspect.getmembers(self)]
+        for name in colNames:
+            if name in self.__dict__ or name in memberNames:
+                raise Exception("colName %s not allowed" % name)
+
 
     def isEditable(self, colName):
         return colName in self.editableColumns

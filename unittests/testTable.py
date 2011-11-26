@@ -194,3 +194,12 @@ def testDoubleColumnames():
     assert "col1" in ex
     assert "col2" not in ex
 
+def testDetectionOfUnallowdColumnNames():
+    ex = None
+    try:
+        Table(["__init__"], [int],["%d"])
+    except Exception, e:
+        ex = e.message
+    assert ex != None
+    assert "not allowed" in ex
+    assert "__init__" in ex
