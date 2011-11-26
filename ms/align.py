@@ -1,4 +1,5 @@
-def alignFeatureTables(tables, destination = None, nPeaks=-1, numBreakpoints=5):
+def alignFeatureTables(tables, destination = None, nPeaks=-1, numBreakpoints=5,
+                       forceAlign=False):
 
     import os.path
     import pyOpenMS as P
@@ -7,6 +8,18 @@ def alignFeatureTables(tables, destination = None, nPeaks=-1, numBreakpoints=5):
     import custom_dialogs
 
     for table in tables:
+        # collect all maps
+        maps = set(table.get(row, "peakmap") for row in table)
+        assert len(maps) == 1, "can only align features from one single peakmap"
+        map = maps.pop()
+        if forceAlign:
+            map.meta["aligned"]=False
+        else:
+            if map.meta.get("aligned"):
+                message = "there are already aligned peakmaps in the "\
+                          "tables.\nyou have to provide the forceAlign "\
+                          "parameter of this function\nto align all tables"
+                raise Exception(message)
         assert isinstance(table, Table), "non table object in tables"
         table.requireColumn("mz"), "need mz column for alignment"
         table.requireColumn("rt"), "need rt column for alignment"
@@ -42,20 +55,20 @@ def alignFeatureTables(tables, destination = None, nPeaks=-1, numBreakpoints=5):
         if fm is refmap:
             results.append(table)
             continue
-        sources = set(table.getColumn("source").values)
+        sources = set(table.source.values)
         assert len(sources)==1, "multiple sources in table"
         source = sources.pop()
         filename = os.path.basename(source)
         print "align", filename
-        fmneu, ts = __align(ma, refmap, fm, numBreakpoints)
-        __plot_and_save(ts, filename, destination)
-        __adaptRtValuesInTable(table, fmneu)
+        transformation = __computeTransformation(ma, refmap, fm, numBreakpoints)
+        __plot_and_save(transformation, filename, destination)
+        __adaptTable(table, transformation)
         results.append(table)
     for t in results:
         t.meta["aligned"] = True
     return results
 
-def __align(ma, refmap, fm, numBreakpoints):
+def __computeTransformation(ma, refmap, fm, numBreakpoints):
     # be careful: alignFeatureMaps modifies second arg,
     # so you MUST NOT put the arg as [] into this
     # function ! in this case you have no access to the calculated
@@ -71,46 +84,46 @@ def __align(ma, refmap, fm, numBreakpoints):
     pp.setValue(P.String("num_breakpoints"), P.DataValue(bps), P.String(),
                                              P.StringList())
     ma.fitModel(P.String("b_spline"), pp, ts)
-    # be careful: transformFeatureMaps modifies first arg,
-    # so you MUST NOT put the args as [refmamp, fm] into this
-    # function ! in this case you have no access to the transformed
-    # data.
-    toalign = [refmap, fm]
-    ma.transformFeatureMaps(toalign, ts)
-    fmneu = toalign[1]
-    assert fmneu is not fm # arg is modified !
-    # transformation done 
-    return fmneu, ts
+    return ts[1]
 
-def __plot_and_save(ts, filename, destination):
+def __plot_and_save(transformation, filename, destination):
     import numpy as np
     import pylab
     import os.path
-    dtp = ts[1].getDataPoints()
+    dtp = transformation.getDataPoints()
     x,y = zip(*dtp)
     x = np.array(x)
     y = np.array(y)
     pylab.clf()
     pylab.plot(x, y-x, ".")
     x.sort()
-    yn = [ ts[1].apply(xi) for xi in x]
+    yn = [ transformation.apply(xi) for xi in x]
     pylab.plot(x, yn-x)
     filename = os.path.splitext(filename)[0]+"_aligned.png"
     target_path = os.path.join(destination, filename)
     print "save", filename
     pylab.savefig(target_path)
 
-def __adaptRtValuesInTable(tableOld, fmapAligned):
-    # test for matching
-    assert fmapAligned.size() == len(tableOld)
-    irt = tableOld.getIndex("rt")
-    irtmin = tableOld.getIndex("rtmin")
-    irtmax = tableOld.getIndex("rtmax")
-    for i in range(len(tableOld)):
-        row = tableOld.rows[i]
-        rtold = row[irt]
-        rnew = fmapAligned[i].getRT()
-        diff = rnew - rtold
-        row[irt] = rnew
-        row[irtmin] += diff
-        row[irtmax] += diff
+def __adaptTable(table, transformation):
+    import copy
+    for row in table:
+        rtmin = table.get(row, "rtmin")
+        rtmax = table.get(row, "rtmax")
+        rt    = table.get(row, "rt")
+        table.set(row, "rtmin", transformation.apply(rtmin))
+        table.set(row, "rtmax", transformation.apply(rtmax))
+        table.set(row, "rt", transformation.apply(rt))
+        if "intbegin" in table.colNames:
+            intbegin = table.get(row, "intbegin")
+            intend = table.get(row, "intend")
+            table.set(row, "intbegin", transformation.apply(intbegin))
+            table.set(row, "intend", transformation.apply(intend))
+
+    # we know that there is only one peakmap in the table 
+    peakmap = table.get(table.rows[0], "peakmap")
+    peakmapNew = copy.deepcopy(peakmap)
+    peakmapNew.meta["aligned"] = True
+    for spec in peakmapNew:
+        spec.rt = transformation.apply(spec.rt)
+    for row in table:
+        table.set(row, "peakmap", peakmapNew)

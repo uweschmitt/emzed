@@ -77,7 +77,7 @@ class PeakMap(object):
         return [spec for spec in self.spectra if rtmin <= spec.rt <= rtmax]
 
     def levelOneSpecsInRange(self, rtmin, rtmax):
-        # rt values can be truncated/rounded from gui or other sources, 
+        # rt values can be truncated/rounded from gui or other sources,
         # so wie dither the limits a bit, spaces in realistic rt values
         # are much higher thae 1e-2 seconds
         return [spec for spec in self.spectra if rtmin-1e-2 <= spec.rt <= rtmax+1e-2
@@ -101,7 +101,7 @@ class PeakMap(object):
         meta = dict()
         meta["full_source"] = mse.getLoadedFilePath().c_str()
         meta["source"] = os.path.basename(meta.get("full_source"))
-        return clz(specs, meta) 
+        return clz(specs, meta)
 
     def __len__(self):
         return len(self.spectra)

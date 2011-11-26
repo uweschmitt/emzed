@@ -197,8 +197,19 @@ class Table(object):
             raise Exception("colname %s not in table" % colName)
         return idx
 
+    def set(self, row, colName, value):
+        """ sets *value* of column *colName* in a given *row*.
+
+            usage: ``table.set(table.rows[0], "mz", 252.83332)``
+        """
+        ix = self.getIndex(colName)
+        expectedType = self.colTypes[ix]
+        assert isinstance(value, expectedType),\
+               "expect value of type %s" % expectedType
+        row[ix] = value
+
     def get(self, row, colName):
-        """ returns value of column colName in a given row.
+        """ returns value of column *colName* in a given *row*.
 
             usage: ``table.get(table.rows[0], "mz")``
         """

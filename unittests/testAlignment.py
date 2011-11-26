@@ -9,30 +9,69 @@ def testPoseClustering():
     ft = ms.loadTable("data/features.table")
     irt = ft.getIndex("rt")
     before = np.array([ r[irt] for r in ft.rows])
+    peakmap = ft.get(ft.rows[0], "peakmap")
 
     # make copy and shift
     ft2=copy.deepcopy(ft)
-    ix = ft2.getIndex("rt")
-    for r in ft2.rows:
-        r[ix] += 2.0
+    def shift(t, col):
+        ix = t.getIndex(col)
+        for r in t.rows:
+            r[ix] += 2.0
+
+    shift(ft2, "rt")
+    shift(ft2, "rtmin")
+    shift(ft2, "rtmax")
+
+    pms = set(ft2.get(row, "peakmap") for row in ft2.rows)
+    pmrtsbefore = []
+    assert len(pms) == 1
+    for pm in pms:
+        for spec in pm:
+            pmrtsbefore.append(spec.rt)
+            spec.rt += 2.0
+
     # delete one row, so ft should become reference map !
     del ft2.rows[-1]
 
     ftneu, ft2neu = ms.alignFeatureTables([ft,ft2], "temp_output", nPeaks=9999,
                                           numBreakpoints=2)
     irt = ft.getIndex("rt")
-    def getrt(t):
-        return np.array([r[irt] for r in t.rows])
+    def getrt(t, what):
+        return  np.array([t.get(row, what) for row in t])
 
     # refmap ft should not be changed:
-    assert np.all(getrt(ftneu) == getrt(ft))
+    assert np.all(getrt(ftneu, "rt") == getrt(ft, "rt"))
+    assert np.all(getrt(ftneu, "rtmin") == getrt(ft, "rtmin"))
+    assert np.all(getrt(ftneu, "rtmax") == getrt(ft, "rtmax"))
+
     # but ft2 should:
-    assert np.linalg.norm(getrt(ft2neu) - getrt(ft2)) >= 7.9
+    assert np.linalg.norm(getrt(ft2neu, "rt") - getrt(ft2, "rt")) >= 7.9
+    assert np.linalg.norm(getrt(ft2neu, "rtmin") - getrt(ft2, "rtmin")) >= 7.9
+    assert np.linalg.norm(getrt(ft2neu, "rtmax") - getrt(ft2, "rtmax")) >= 7.9
 
     # now ftneu and ft2neu should be very near.
     # remenber: ft2 has not as much rows as ft, so:
-    assert np.linalg.norm(getrt(ft2neu) - getrt(ftneu)[:-1]) < 1e-6
+    assert np.linalg.norm(getrt(ft2neu, "rt") - getrt(ftneu, "rt")[:-1]) < 1e-6
+    assert np.linalg.norm(getrt(ft2neu, "rtmin") - getrt(ftneu, "rtmin")[:-1]) < 1e-6
+    assert np.linalg.norm(getrt(ft2neu, "rtmax") - getrt(ftneu, "rtmax")[:-1]) < 1e-6
 
+    def getrtsfrompeakmap(table):
+        pms = set(table.get(row, "peakmap") for row in table.rows)
+        assert len(pms) == 1
+        pm = pms.pop()
+        return np.array([ spec.rt for spec in pm])
+
+    assert np.linalg.norm(getrtsfrompeakmap(ft2neu)-getrtsfrompeakmap(ftneu))<1e-4
+
+    ex = None
+    try:
+        ftneu, ft2neu = ms.alignFeatureTables([ftneu,ft2neu], "temp_output", nPeaks=9999,
+                                              numBreakpoints=2)
+    except Exception, e:
+        ex = e
+    assert ex is not None, "aligning of aligned maps should not be possible"
     # alignmen should produce alignment map:
     assert os.path.exists("temp_output/test_aligned.png")
+
+    peakmapafter = ft.get(ft.rows[0], "peakmap")
 
