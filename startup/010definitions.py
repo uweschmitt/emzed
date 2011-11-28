@@ -7,18 +7,33 @@ __builtins__["MASS_N"] = 1.00866491600
 
 from libms.Chemistry.Elements import Elements, MonoIsotopicElements
 import new
+from collections import defaultdict
 mass = new.module("mass")
+abundance = new.module("abundance")
 
 mass.e = MASS_E
 mass.p = MASS_P
 mass.n = MASS_N
+
+
+abundances=defaultdict(dict)
+
 
 elements = Elements()
 for row in elements:
     sym = elements.get(row, "symbol")
     massnumber = elements.get(row, "massnumber")
     isomass = elements.get(row, "mass")
+    abu = elements.get(row, "abundance")
     setattr(mass, sym+str(massnumber), isomass)
+    setattr(abundance, sym+str(massnumber), abu)
+    abundances[sym][massnumber] = abu
+
+
+for k in abundances.keys():
+    setattr(abundance, k, abundances[k])
+
+
 
 monoelements = MonoIsotopicElements()
 for row in monoelements:
@@ -26,8 +41,10 @@ for row in monoelements:
     m0 = monoelements.get(row, "m0")
     setattr(mass, sym, m0)
 
+
 del elements
 del monoelements
+del abundances
 del Elements
 del MonoIsotopicElements
 del new
