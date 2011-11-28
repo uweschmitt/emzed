@@ -6,6 +6,7 @@ __builtins__["MASS_P"] = 1.007276466812
 __builtins__["MASS_N"] = 1.00866491600
 
 from libms.Chemistry.Elements import Elements, MonoIsotopicElements
+from libms.Chemistry.Tools import monoisotopicMass
 import new
 from collections import defaultdict
 mass = new.module("mass")
@@ -14,6 +15,8 @@ abundance = new.module("abundance")
 mass.e = MASS_E
 mass.p = MASS_P
 mass.n = MASS_N
+
+mass.of = monoisotopicMass
 
 
 abundances=defaultdict(dict)

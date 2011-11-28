@@ -33,7 +33,6 @@ class MzExplorer(QDialog):
         pass
 
     def processPeakmap(self, peakmap):
-        print len(peakmap.filter(lambda s: s.msLevel > 1))
         self.peakmap = peakmap.filter(lambda s: s.msLevel == 1)
         self.rts = np.array([s.rt for s in self.peakmap])
 
@@ -47,16 +46,12 @@ class MzExplorer(QDialog):
         title = os.path.basename(peakmap.meta.get("source", ""))
         self.setWindowTitle(title)
 
-    
-
     def updateChromatogram(self):
-
         min_, max_ = self.minMZ, self.maxMZ
         cc =[np.sum(spec.peaks[(spec.peaks[:,0] >= min_) * (spec.peaks[:,0] <= max_)][:, 1]) for spec in self.peakmap]
         self.chromatogram = np.array(cc)
 
     def connectSignalsAndSlots(self):
-
         self.connect(self.selectButton, SIGNAL("clicked()"), self.selectButtonPressed)
         self.connect(self.resetButton, SIGNAL("clicked()"), self.resetButtonPressed)
 
@@ -82,7 +77,6 @@ class MzExplorer(QDialog):
         self.updateChromatogram()
         self.plotChromatogramm()
     
-
     def setupLayout(self):
         vlayout = QVBoxLayout()
         self.setLayout(vlayout)
@@ -132,19 +126,15 @@ class MzExplorer(QDialog):
         self.rtPlotter.setYAxisLimits(0, max(self.chromatogram)*1.1)
 
     def plotMz(self):
-
         minRT = self.rtPlotter.minRTRangeSelected
         maxRT = self.rtPlotter.maxRTRangeSelected
-        
         if minRT is not None:
             peaks = np.vstack(( s.peaks for s in self.peakmap if minRT <= s.rt <= maxRT ))
         else:
             peaks = np.vstack(( s.peaks for s in self.peakmap ))
-
         self.mzPlotter.plot(peaks)
         self.mzPlotter.replot()
 
-    
 
 def inspectPeakMap(peakmap):
     """Testing this simple Qt/guiqwt example"""
