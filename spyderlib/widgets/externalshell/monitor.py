@@ -498,10 +498,16 @@ class Monitor(threading.Thread):
                     local_ns = {}
                     local_ns.update(self.pdb_obj.curframe.f_locals)
                     local_ns.update(self.locals)
-                    result = eval(command,
+                    try:
+                        result = eval(command,
                                   self.pdb_obj.curframe.f_globals, local_ns)
+                    except:
+                        result = None
                 else:
-                    result = eval(command, glbs, self.locals)
+                    try:
+                        result = eval(command, glbs, self.locals)
+                    except:
+                        result = None
                 if DEBUG:
                     logging.debug(" result: %r" % result)
                 self.locals["_"] = result
