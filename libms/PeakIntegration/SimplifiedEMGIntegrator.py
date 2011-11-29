@@ -40,28 +40,32 @@ class SimplifiedEMGIntegrator(PeakIntegrator):
         if len(rts)<4:
             rmse = 1.0/math.sqrt(len(rts))*np.linalg.norm(chromatogram)
             return 0.0, rmse, (0.0, rts[0], 1.0, 0.0)
-            
+
         imax = np.argmax(chromatogram)
         h = chromatogram[imax]
         z = rts[imax]
         w = s = 5.0
         rts = np.array(rts)
-        
+
         param = h, z, w, s
         if self.xtol is None:
-            param, ok = opt.leastsq(SimplifiedEMGIntegrator.__err, param, 
+            param, ok = opt.leastsq(SimplifiedEMGIntegrator.__err, param,
                                     args=(rts, chromatogram))
         else:
-            param, ok = opt.leastsq(SimplifiedEMGIntegrator.__err, param, 
+            param, ok = opt.leastsq(SimplifiedEMGIntegrator.__err, param,
                                   args=(rts, chromatogram), xtol=self.xtol)
         h, z, w, s = param
 
         if ok not in [1,2,3,4] or s<=0 or w<=0: # failed
+            print "fit failed"
             area = 0
             rmse = 1.0/math.sqrt(len(rts))*np.linalg.norm(chromatogram)
         else:
             smoothed = SimplifiedEMGIntegrator.__fun_eval(param, allrts)
-            smoothed[np.isnan(smoothed)]=0.0
+            isnan = np.isnan(smoothed)
+            if np.any(isnan):
+                print isnan
+            smoothed[isnan]=0.0
             area = self.trapez(allrts, smoothed)
             rmse = 1/math.sqrt(len(allrts)) * np.linalg.norm(smoothed - fullchromatogram)
 
