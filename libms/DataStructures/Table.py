@@ -108,6 +108,10 @@ class Table(object):
 
         self.colTypes = list(colTypes)
 
+        if any(type(t) in (np.float32, np.float64) for t in colTypes):
+            print "WARNING: using numpy floats instead of python floats "\
+                  "is not a good idea.\nTable operations may crash"
+
         self.colFormats = [None if f=="" else f for f in colFormats]
         self.setupFormatters()
 
@@ -412,12 +416,15 @@ class Table(object):
         if isinstance(what, Node):
             return self._addColumnByExpression(name, what, type_, format,
                                                insertBefore)
-        elif callable(what):
+        if callable(what):
             return self._addColumnByCallback(name, what, type_, format,
                                              insertBefore)
-        else:
-            return self.addConstantColumn(name, what, type_, format,
-                                          insertBefore)
+
+        if hasattr(what, "__iter__"):
+            return self._addColumFromIterable(name, what, type_, format,
+                                              insertBefore)
+
+        return self.addConstantColumn(name, what, type_, format, insertBefore)
 
     def _addColumnByExpression(self, name, expr, type_, format, insertBefore):
         ctx = { self: self.getColumnCtx(expr.neededColumns()) }
@@ -428,9 +435,17 @@ class Table(object):
         values = [callback(self, r, name) for r in self.rows]
         return self._addColumn(name, values, type_, format, insertBefore)
 
+    def _addColumFromIterable(self, name, iterable, type_, format, insertBefore):
+        values = list(iterable)
+        return self._addColumn(name, values, type_, format, insertBefore)
+
     def _addColumn(self, name, values, type_, format, insertBefore):
         if isinstance(values, np.ndarray):
             values = values.tolist()
+
+        assert len(values) == len(self), "lenght of new column %d does not "\
+                                         "fit number of rows %d in table"\
+                                         % (len(values), len(self))
         if type_ is None:
             type_ = commonTypeOfColumn(values)
             conv = type_
@@ -671,7 +686,9 @@ class Table(object):
         meta = {self: self.meta.copy(), t: t.meta.copy()}
         return Table(colNames, colTypes, colFormats, [], title, meta)
 
-    def _print(self, w=12, out=sys.stdout):
+    def _print(self, w=12, out=None):
+        if out is None:
+            out = sys.stdout
         #inner method is private, else the object can not be pickled !
         def _p(vals, w=w, out=out):
             expr = "%%-%ds" % w

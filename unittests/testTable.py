@@ -137,6 +137,8 @@ def run(t, colnames, rows):
     # computed by callback:
     tn.addColumn("squared", lambda t,r,n: t.get(r, "iii")**2)
 
+
+
     assert list(tn.getColumn("computed").values ) == [8080, 7441, 6161]
     assert list(tn.getColumn("squared").values ) == [9, 4, 1]
 
@@ -147,22 +149,22 @@ def run(t, colnames, rows):
 
     tn.dropColumn("computed")
     tn.dropColumn("squared")
-    assert tn.colNames == [ "id", "iii", "long", "x"]
+    assert tn.colNames == ["id", "iii", "long", "x"]
     assert len(tn) == 3
 
     tn.dropColumn("id")
     tn.dropColumn("x")
-    t2= tn.copy() 
-    res = tn.leftJoin(t2,tn.iii == tn.long)
+    t2 = tn.copy()
+    res = tn.leftJoin(t2, tn.iii == tn.long)
     assert len(res) == len(t2)
-    res = tn.leftJoin(t2,tn.iii == tn.iii)
+    res = tn.leftJoin(t2, tn.iii == tn.iii)
     assert len(res) == len(t2)**2
     res = tn.leftJoin(t2, (tn.iii == tn.iii) & (t2.long==32323))
     assert len(res) == len(t2)
 
-    res = tn.join(t2,tn.iii == tn.long)
+    res = tn.join(t2, tn.iii == tn.long)
     assert len(res) == 0
-    res = tn.join(t2,tn.iii == tn.iii)
+    res = tn.join(t2, tn.iii == tn.iii)
     assert len(res) == len(t2)**2, len(res)
     res = tn.join(t2, (tn.iii == tn.iii) & (t2.long==32323))
     assert len(res) == len(t2), len(res)
@@ -170,6 +172,11 @@ def run(t, colnames, rows):
     tx = tn.filter(tn.iii.isIn([1,4]))
     assert len(tx) == 1
     assert tx.iii.values == [1]
+    
+    tn.addColumn("li", [1,2,3])
+    assert len(tn) == 3
+    assert len(tn.colNames) == 3
+    assert "li" in tn.colNames
 
 def testSomePredicates():
     #build table
