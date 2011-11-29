@@ -106,6 +106,22 @@ class Node(object):
     def neededColumns(self):
         return self.left.neededColumns() + self.right.neededColumns()
 
+    # some helper functions
+    def startsWith(self, other):
+        return BinaryExpression(self, other, lambda a,b: a.startswith(b), "%s.startswith(%s)")
+
+    def contains(self, other):
+        return BinaryExpression(self, other, lambda a,b: b in a, "%s.contains(%s)")
+
+    def isIn(self, li):
+        return IsIn(self, li)
+
+    def inRange(self, minv, maxv):
+        return (self>=minv) & (self<=maxv)
+
+    def approxEqual(self, what, tol):
+        return self.inRange(what-tol, what+tol)
+
 
 class CompNode(Node):
 
@@ -300,7 +316,8 @@ class AlgebraicNode(Node):
                 raise Exception("sizes do not fit !")
             return np.array([ self.efun(l,r) for (l,r) in zip(lval,rval) ]), None
 
-        assert type(lhs) in _basic_types and type(rhs) in _basic_types
+        print lval, rval
+        assert type(lval) in _basic_types and type(rval) in _basic_types
         return [self.efun(lval, rval)], None
 
 
@@ -458,14 +475,6 @@ class Column(Node):
     def neededColumns(self):
         return [ (self.table, self.colname), ]
 
-    def startsWith(self, other):
-        return BinaryExpression(self, other, lambda a,b: a.startswith(b), "%s.startswith(%s)")
-
-    def contains(self, other):
-        return BinaryExpression(self, other, lambda a,b: b in a, "%s.contains(%s)")
-
-    def isIn(self, li):
-        return IsIn(self, li)
 
 class IsIn(Node):
     def __init__(self, left, li):

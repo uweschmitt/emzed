@@ -12,7 +12,7 @@ def testRunnerTable():
     #build table
     names="int long float str object array".split()
     types = [int, long, float, str, object, np.ndarray,]
-    formats = [ "%3d", "%d", "%.3f", "%s", "%r", "'array(%r)' % o.shape" ]
+    formats = [ "%3d", "%d", "%.3f", "%s", "%r", "'array(%r)' % (o.shape,)" ]
 
     row1 = [ 1, 12323L, 1.0, "hi", { 1: 1 },  np.array((1,2,3)) ]
     row2 = [ 2, 22323L, 2.0, "hi2", [2,3,], np.array(((2,3,4),(1,2,3))) ]
@@ -22,7 +22,6 @@ def testRunnerTable():
     t=Table(names, types, formats, rows, "testtabelle", meta=dict(why=42))
 
 
-
     run(t, names, [row1, row2, row3])
     # test pickle
     t = pickle.loads(pickle.dumps(t))
@@ -30,18 +29,6 @@ def testRunnerTable():
     ms.storeTable(t, "temp_output/test.table")
     t = ms.loadTable("temp_output/test.table")
     run(t, names, [row1, row2, row3])
-
-
-    #t = t.unique()
-    #run(t, names, [row1, row2, row3])
-
-    #t.rows.append(row1)
-    #t.rows.append(row2)
-
-    #assert len(t) == 5
-    #t=t.unique()
-    #assert len(t) == 3
-    #run(t, names, [row1, row2, row3])
 
 
 def run(t, colnames, rows):
@@ -65,7 +52,7 @@ def run(t, colnames, rows):
     assert content[2] == "1.000"
     assert content[3] == "hi"
     assert content[4] == repr({1:1})
-    assert content[5] == "array(3)"
+    assert content[5] == "array((3,))", content[5]
 
     assert set(t.getVisibleCols()) == { 'int', 'long', 'float', 'str',
                                         'object', 'array' }
@@ -183,6 +170,28 @@ def run(t, colnames, rows):
     tx = tn.filter(tn.iii.isIn([1,4]))
     assert len(tx) == 1
     assert tx.iii.values == [1]
+
+def testSomePredicates():
+    #build table
+    names="int long float str object array".split()
+    types = [int, long, float, str, object, np.ndarray,]
+    formats = [ "%3d", "%d", "%.3f", "%s", "%r", "'array%r' % (o.shape,)" ]
+
+    row1 = [ 1, 12323L, 1.0, "hi", { 1: 1 },  np.array((1,2,3)) ]
+    row2 = [ 2, 22323L, 2.0, "hi2", [2,3,], np.array(((2,3,4),(1,2,3))) ]
+    row3 = [ 3, 32323L, 3.0, "hi3", (3,) , np.array(((3,3,4,5),(1,2,3,4))) ]
+
+    rows = [row1, row2, row3]
+    t=Table(names, types, formats, rows, "testtabelle", meta=dict(why=42))
+
+    tn = t.filter((t.int+t.float).inRange(-1, 2))
+    assert len(tn) == 1
+    assert tn.get(tn.rows[0], "int") == 1
+
+    tn = t.filter(t.float.approxEqual(1.0, t.int/10))
+    assert len(tn) == 1
+    assert tn.get(tn.rows[0], "int") == 1
+
 
 
 def testDoubleColumnames():

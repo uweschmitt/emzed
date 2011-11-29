@@ -1,4 +1,3 @@
-import pdb
 import pyOpenMS as P
 import operator, copy, os, itertools, re, numpy, cPickle, sys, inspect
 from   ExpressionTree import Node, Column
@@ -52,7 +51,10 @@ def bestConvert(val):
         try:
             return float(val)
         except ValueError:
-            return str(val)
+            try:
+                return float(val.replace(",",".")) # probs with comma
+            except ValueError:
+                return str(val)
 
 def _formatter(f):
     """ helper, is toplevel for supporting pickling of Table """
@@ -219,9 +221,9 @@ class Table(object):
             usage: ``table.set(table.rows[0], "mz", 252.83332)``
         """
         ix = self.getIndex(colName)
-        expectedType = self.colTypes[ix]
-        assert isinstance(value, expectedType),\
-               "expect value of type %s" % expectedType
+        #expectedType = self.colTypes[ix]
+        #assert isinstance(value, expectedType),\
+               #"expect value of type %s" % expectedType
         row[ix] = value
 
     def get(self, row, colName):
@@ -377,7 +379,7 @@ class Table(object):
         self.setupFormatters()
         self.emptyColumnCache()
 
-    def addColumn(self, name, what, type_=None, format=None, insertBefore=None):
+    def addColumn(self, name, what, type_=None, format="", insertBefore=None):
         """
         adds a column **inplace**.
 
@@ -385,6 +387,8 @@ class Table(object):
             valid types described above.
           - format is a format string as "%d" or *None* or an executable
             string with python code.
+            If you use *format=""* the method will try to determine a
+            default format for the type.
 
         For the values *what* you can use
 
@@ -425,12 +429,14 @@ class Table(object):
         return self._addColumn(name, values, type_, format, insertBefore)
 
     def _addColumn(self, name, values, type_, format, insertBefore):
+        if isinstance(values, np.ndarray):
+            values = values.tolist()
         if type_ is None:
             type_ = commonTypeOfColumn(values)
             conv = type_
         else:
             conv = lambda x: x
-        if format is None:
+        if format == "":
             format = standardFormats.get(type_)
 
         if insertBefore is None:
@@ -458,7 +464,7 @@ class Table(object):
         self.setupFormatters()
         self.updateIndices()
 
-    def addConstantColumn(self, name, value, type_, format, insertBefore=None):
+    def addConstantColumn(self, name, value, type_=None, format="", insertBefore=None):
         """
         see addColumn 
         """
@@ -484,12 +490,14 @@ class Table(object):
         oldtype = self.colTypes[ix]
         ctx = { self: self.getColumnCtx(expr.neededColumns()) }
         values, _ = expr.eval(ctx)
+        if isinstance(values, np.ndarray):
+            values = values.tolist()
         t = commonTypeOfColumn(values)
 
-        if t == oldtype and format is not None:
+        if t == oldtype and format is None:
             f = self.colFormats[ix]
-        elif format is None:
-            f = format 
+        elif format is not None:
+            f = format
         else:
             f= standardFormats.get(t)
 
@@ -663,23 +671,23 @@ class Table(object):
         meta = {self: self.meta.copy(), t: t.meta.copy()}
         return Table(colNames, colTypes, colFormats, [], title, meta)
 
-    def _print(self, w=12):
+    def _print(self, w=12, out=sys.stdout):
         #inner method is private, else the object can not be pickled !
-        def _p(vals, w=w):
+        def _p(vals, w=w, out=out):
             expr = "%%-%ds" % w
             for v in vals:
-                print (expr % v),
+                print >> out, (expr % v),
 
         _p(self.colNames)
-        print
+        print >> out
         _p(re.match("<type '((\w|[.])+)'>|(\w+)", str(n)).groups()[0]  or str(n)
                                                    for n in self.colTypes)
-        print
+        print >> out
         _p(["------"] * len(self.colNames))
-        print
+        print >> out
         for row in self.rows:
             _p( fmt(value) for (fmt, value) in zip(self.colFormatters, row) )
-            print
+            print >> out
 
 
 def toOpenMSFeatureMap(table):
