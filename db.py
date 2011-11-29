@@ -37,9 +37,6 @@ elif len(missingIds):
         print
 
 # cleanup namespace
-db = new.module("db")
-db.pubchem=pubChemDB
-del pubChemDB
 del new
 del dbPath
 del newIds
