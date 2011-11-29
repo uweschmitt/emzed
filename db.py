@@ -2,7 +2,7 @@ print "LOAD PUBCHEM DB"
 print
 from configs import globalDataPath
 from libms.DataBases import PubChemDB
-import os, new
+import os
 
 dbPath = os.path.join(globalDataPath, "pubchem.db")
 pubChemDB = PubChemDB(dbPath)
@@ -37,7 +37,7 @@ elif len(missingIds):
         print
 
 # cleanup namespace
-del new
+del os
 del dbPath
 del newIds
 del missingIds

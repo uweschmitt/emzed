@@ -65,28 +65,28 @@ class Node(object):
         return NeNode(self, other)
 
     def __add__(self, other):
-        return AlgebraicNode(self, other, lambda a,b: a+b, "+")
+        return BinaryExpression(self, other, lambda a,b: a+b, "+")
 
     def __radd__(self, other):
-        return AlgebraicNode(other, self, lambda a,b: a+b, "+")
+        return BinaryExpression(other, self, lambda a,b: a+b, "+")
 
     def __sub__(self, other):
-        return AlgebraicNode(self, other, lambda a,b: a-b, "-")
+        return BinaryExpression(self, other, lambda a,b: a-b, "-")
 
     def __rsub__(self, other):
-        return AlgebraicNode(other, self, lambda a,b: a-b, "-")
+        return BinaryExpression(other, self, lambda a,b: a-b, "-")
 
     def __mul__(self, other):
-        return AlgebraicNode(self, other, lambda a,b: a*b, "*")
+        return BinaryExpression(self, other, lambda a,b: a*b, "*")
 
     def __rmul__(self, other):
-        return AlgebraicNode(other, self, lambda a,b: a*b, "*")
+        return BinaryExpression(other, self, lambda a,b: a*b, "*")
 
     def __div__(self, other):
-        return AlgebraicNode(self, other, lambda a,b: a/b, "/")
+        return BinaryExpression(self, other, lambda a,b: a/b, "/")
 
     def __rdiv__(self, other):
-        return AlgebraicNode(self, other, lambda a,b: a/b, "/")
+        return BinaryExpression(self, other, lambda a,b: a/b, "/")
 
     def __and__(self, other):
         return AndNode(self, other)
@@ -107,7 +107,7 @@ class Node(object):
         return self.left.neededColumns() + self.right.neededColumns()
 
     # some helper functions
-    def startsWith(self, other):
+    def startswith(self, other):
         return BinaryExpression(self, other, lambda a,b: a.startswith(b), "%s.startswith(%s)")
 
     def contains(self, other):
@@ -146,7 +146,8 @@ class CompNode(Node):
             return self.comparator(lhs, rhs), None
 
         if type(lhs) ==np.ndarray and type(rhs) ==np.ndarray:
-            assert len(lhs) == len(rhs)
+            assert len(lhs) == len(rhs), "maybe you have a np.float value in "\
+                                         "your table instead of a float"
             return self.comparator(lhs, rhs), None
 
         if type(lhs) in _basic_types and type(rhs) in _iterables:
@@ -253,10 +254,10 @@ class EqNode(CompNode):
         return Range(i1, i0+1, len(vec))
 
 
-class AlgebraicNode(Node):
+class BinaryExpression(Node):
 
     def __init__(self, left, right, efun, symbol):
-        super(AlgebraicNode, self).__init__(left, right)
+        super(BinaryExpression, self).__init__(left, right)
         self.efun = efun
         self.symbol = symbol
 
@@ -410,7 +411,7 @@ class Value(Node):
     def neededColumns(self):
         return []
 
-class Expression(Node):
+class UnaryExpression(Node):
 
     def __init__(self, efun, efunname, child):
         self.child = child
@@ -434,7 +435,7 @@ def wrapFun(name):
     def wrapper(x):
         origfun = getattr(np, name)
         if isinstance(x,Node):
-            return Expression(origfun, name,  x)
+            return UnaryExpression(origfun, name,  x)
         return origfun(x)
     return wrapper
 
@@ -492,29 +493,4 @@ class IsIn(Node):
 
     def neededColumns(self):
         return self.left.neededColumns()
-
-
-class BinaryExpression(Node):
-
-    def __init__(self, left, right, efun, format):
-        super(BinaryExpression, self).__init__(left, right)
-        self.efun = efun
-        self.format = format
-
-    def eval(self, ctx):
-        lhs, _ = self.left.eval(ctx)
-        rhs, _ = self.right.eval(ctx)
-        if type(lhs) in _basic_types and type(rhs) in _iterables:
-            return np.array([ self.efun(lhs, r) for r in rhs]), None
-        if type(rhs) in _basic_types and type(lhs) in _iterables:
-            return np.array([ self.efun(l, rhs) for l in lhs]), None
-        raise Exception("eval with %s and %s not possible" %(lhs, rhs))
-
-    def __str__(self):
-        return self.format % (str(self.left),str(self.right))
-
-    def neededColumns(self):
-        n1 = self.left.neededColumns()
-        n2 = self.right.neededColumns()
-        return n1+n2
 

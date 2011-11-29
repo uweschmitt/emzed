@@ -2,9 +2,8 @@ print "LOAD LOCAL DATA TABLES"
 print
 
 from configs import repositoryPathes
-import os, ms, glob, new
+import os, ms, glob
 from  libms.Chemistry.Elements import Elements
-from libms.DataBases import PubChemDB
 
 for path in ["tables"] + repositoryPathes:
     for p in glob.glob("%s/*.csv" % path):
@@ -31,41 +30,32 @@ elements = Elements()
 # next line only valid after execution of 100loadpubchem.py during
 # startup:
 
-import db
+if not os.environ.get("WITHOUT_PUBCHEM"):
+    import db
+    pc_full = db.pubChemDB.table
+    pc_kegg = pc_full.filter(pc_full.is_in_kegg == 1)
+    pc_hmdb = pc_full.filter(pc_full.is_in_hmdb == 1)
+    del db
 
-pc_full = db.pubChemDB.table
-pc_kegg = pc_full.filter(pc_full.is_in_kegg == 1)
-pc_hmdb = pc_full.filter(pc_full.is_in_hmdb == 1)
-
-
-del db
 del repositoryPathes
-
 try:
     del path
 except:
     pass
-
-
 try:
     del p
 except:
     pass
-
 try:
     del table
 except:
     pass
-
 try:
     del name
     del _
 except:
     pass
-
 del ms
 del os
 del glob
-del new
 del Elements
-del PubChemDB
