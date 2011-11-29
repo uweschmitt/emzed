@@ -276,20 +276,20 @@ class FeatureExplorer(QDialog):
         intrts, smoothed = integrator.getSmoothed(self.levelOneRts, params)
 
         # write values to table
-        getIndex = self.table.getIndex
-        row[getIndex("method")] = method
-        row[getIndex("intbegin")] = intBegin
-        row[getIndex("intend")] = intEnd
-        row[getIndex("area")] = area
-        row[getIndex("rmse")] = rmse
-        row[getIndex("params")] = params
+        t = self.table
+        self.table.set(row, "method", method)
+        self.table.set(row, "intbegin", intBegin)
+        self.table.set(row, "intend", intEnd)
+        self.table.set(row, "area", area)
+        self.table.set(row, "rmse", rmse)
+        self.table.set(row, "params", params)
 
         # format and write values to tableWidgetItems
         ft = self.table
-        strIntBegin = ft.colFormatters[getIndex("intbegin")](intBegin)
-        strIntEnd   = ft.colFormatters[getIndex("intend")](intEnd)
-        strArea     = ft.colFormatters[getIndex("area")](area)
-        strRmse     = ft.colFormatters[getIndex("rmse")](rmse)
+        strIntBegin = ft.get(ft.colFormatters, "intbegin")(intBegin)
+        strIntEnd   = ft.get(ft.colFormatters, "intend")(intEnd)
+        strArea     = ft.get(ft.colFormatters, "area")(area)
+        strRmse     = ft.get(ft.colFormatters, "rmse")(rmse)
 
         self.tw.item(widgetRowIdx, self.colIdxMap["intbegin"]).setText(strIntBegin)
         self.tw.item(widgetRowIdx, self.colIdxMap["intend"]).setText(strIntEnd)

@@ -34,12 +34,12 @@ def integrate(ftable, integratorid="std", showProgress = True):
     resultTable = ftable.buildEmptyClone()
 
     newCols = [ "intbegin", "intend", "method", "area", "rmse", "params",]
-    # remove old results if table was integrated before:
+    # drop columns which are integration related
     for col in newCols:
         if resultTable.hasColumn(col):
             resultTable.dropColumn(col)
 
-    resultTable.colNames += newCols 
+    resultTable.colNames += newCols
     resultTable.colTypes += [ float, float, str, float, float, object, ]
     fmt = '''"%.2fm" % o'''
     resultTable.colFormats += [ fmt, fmt, "%s", "%.2e", "%.2e", None, ]
@@ -59,10 +59,13 @@ def integrate(ftable, integratorid="std", showProgress = True):
         mzmin = ftable.get(row, "mzmin")
         mzmax = ftable.get(row, "mzmax")
         result = integrator.integrate(mzmin, mzmax, intbegin, intend)
-        newrow = row[:]
+        # take existing values which are not integration realated:
+        newrow = [ ftable.get(row, n) for n in resultTable.colNames\
+                                      if n not in newCols]
         newrow.extend([intbegin, intend, integratorid, result["area"],
                        result["rmse"], result["params"], ])
-        resultTable.rows.append(newrow)
+
+        resultTable.addRow(newrow)
 
     resultTable.meta["integrated"]=True
     resultTable.title = "integrated: "+resultTable.title

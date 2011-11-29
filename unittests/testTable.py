@@ -178,6 +178,24 @@ def run(t, colnames, rows):
     assert len(tn.colNames) == 3
     assert "li" in tn.colNames
 
+    tn.addRow([1, 1, 1])
+    assert len(tn) == 4
+
+    ex = None
+    try:
+        tn.addRow([1,2,3,2])
+    except Exception, e:
+        ex = e
+    assert ex is not None
+
+    ex = None
+    try:
+        tn.addRow(["a",1,2])
+    except Exception, e:
+        ex = e
+    assert ex is not None
+
+
 def testSomePredicates():
     #build table
     names="int long float str object array".split()

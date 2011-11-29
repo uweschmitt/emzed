@@ -115,7 +115,7 @@ class Table(object):
         self.colFormats = [None if f=="" else f for f in colFormats]
         self.setupFormatters()
 
-        self.rows     = rows 
+        self.rows = rows
         self.title = title
         self.meta = copy.copy(meta) if meta is not None else dict()
 
@@ -133,6 +133,17 @@ class Table(object):
             if name in self.__dict__ or name in memberNames:
                 raise Exception("colName %s not allowed" % name)
 
+    def addRow(self, row):
+        assert len(row) == len(self.colNames)
+        # check for conversion !
+        for i, (v, t) in enumerate(zip(row, self.colTypes)):
+            if t!= object:
+                try:
+                    t(v)
+                except:
+                    raise Exception("value %r in col %d can not be converted "\
+                                    "to type %s" % (v, i, t))
+        self.rows.append(row)
 
     def isEditable(self, colName):
         return colName in self.editableColumns
@@ -229,6 +240,7 @@ class Table(object):
         #assert isinstance(value, expectedType),\
                #"expect value of type %s" % expectedType
         row[ix] = value
+        self.emptyColumnCache()
 
     def get(self, row, colName):
         """ returns value of column *colName* in a given *row*#
