@@ -53,6 +53,15 @@ def populateTableWidget(tWidget, table):
 
     colidxmap = dict((name, i) for i, name in enumerate(headers))
 
+    tableColToWidgetCol = dict()
+    i = 0
+    for j in range(len(table.colNames)):
+        if table.colFormatters[j] is not None:
+            tableColToWidgetCol[j] = i
+            i+=1
+
+    widgetColToTableCol = dict( (v,k) for k,v in tableColToWidgetCol.items() )
+
     tWidget.setSortingEnabled(False)  # needs to be done before filling the table
 
     for i, row in enumerate(table.rows):
@@ -82,9 +91,9 @@ def populateTableWidget(tWidget, table):
     tWidget.setSortingEnabled(True)
     # adjust height of rows (normaly reduces size to a reasonable value)
     tWidget.verticalHeader().setResizeMode(QHeaderView.ResizeToContents)
-    return colidxmap
+    return colidxmap, tableColToWidgetCol, widgetColToTableCol
 
-class FeatureExplorer(QDialog):
+class TableExplorer(QDialog):
 
     def __init__(self, table):
         QDialog.__init__(self)
@@ -130,7 +139,8 @@ class FeatureExplorer(QDialog):
         self.setSizeGripEnabled(True)
 
     def populateTable(self):
-        self.colIdxMap = populateTableWidget(self.tw, self.table)
+        self.colIdxMap, self.tableColToWidgetCol, self.widgetColToTableCol\
+                                      = populateTableWidget(self.tw, self.table)
         idcol = self.colIdxMap.get("id", 0)
         self.tw.sortByColumn(idcol, Qt.AscendingOrder)
 
@@ -288,6 +298,7 @@ class FeatureExplorer(QDialog):
         self.table.set(row, "rmse", rmse)
         self.table.set(row, "params", params)
 
+
         # format and write values to tableWidgetItems
         ft = self.table
         strIntBegin = ft.get(ft.colFormatters, "intbegin")(intBegin)
@@ -316,22 +327,26 @@ class FeatureExplorer(QDialog):
             self.mzPlotter.replot()
 
     def cellChanged(self, rowIdx, colIdx):
+        return
         print "changed"
         item = self.tw.currentItem()
         print item.text()
         newvalue = item.text()
         coltype = self.table.colTypes[colIdx]
+        tableColIdx = self.widgetColToTableCol[colIdx]
+        print colIdx, tableColIdx
         try:
             newvalue = coltype(newvalue)
         except:
             guidata.qapplication().beep()
             # reset content
-            data = self.table.rows[item.rowIndex][colIdx]
-            fmt  = self.table.colFormatters[colIdx]
+            data = self.table.rows[item.rowIndex][tableColIdx]
+            fmt  = self.table.colFormatters[tableColIdx]
             item.setText(fmt(data))
             return
         item.value = newvalue
-        self.table.rows[item.rowIndex][colIdx] =newvalue
+        print item.rowIndex, self.colNames[tableColIdx], newvalue
+        self.table.rows[item.rowIndex][tableColIdx] =newvalue
 
     def cellClicked(self, rowIdx, colIdx):
         name = self.table.colNames[colIdx]
@@ -431,6 +446,6 @@ class FeatureExplorer(QDialog):
 
 def inspect(table):
     app = guidata.qapplication()
-    fe = FeatureExplorer(table)
+    fe = TableExplorer(table)
     fe.raise_()
     fe.exec_()

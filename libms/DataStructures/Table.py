@@ -145,7 +145,6 @@ class Table(object):
                                     "to type %s" % (v, i, t))
         self.rows.append(row)
 
-
     def isEditable(self, colName):
         return colName in self.editableColumns
 
@@ -203,6 +202,9 @@ class Table(object):
         self.__dict__ = dd
         self.setupFormatters()
         self.emptyColumnCache()
+        # version upgrade
+        if "editableColumns" not in dd:
+            self.editableColumns = set()
 
     def __iter__(self):
         return iter(self.rows)

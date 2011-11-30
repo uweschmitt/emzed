@@ -1,2 +1,2 @@
 from mzExplorer import inspectPeakMap, MzExplorer
-from FeatureExplorer import inspect, FeatureExplorer
+from TableExplorer import inspect, TableExplorer

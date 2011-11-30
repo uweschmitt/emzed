@@ -56,7 +56,7 @@ def patch_oedit():
             return dlg, lambda x: x
 
         elif isinstance(obj, libms.DataStructures.Table):
-            dlg = libms.Explorers.FeatureExplorer(obj)
+            dlg = libms.Explorers.TableExplorer(obj)
             return dlg, lambda x: x
 
         elif isinstance(obj, libms.DataStructures.Table):
