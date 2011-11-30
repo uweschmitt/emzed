@@ -82,7 +82,7 @@ class MonoIsotopicElements(Table):
                 tsub = elements.filter(elements.symbol == s)
                 massnumber = tsub.massnumber.values
                 t0   = tsub.filter(tsub.massnumber == min(massnumber))
-                self.rows.append(t0.rows[0])
+                self.rows.append(t0.rows[0][:])
 
             self.colNames = elements.colNames
             self.colTypes = elements.colTypes
@@ -94,6 +94,7 @@ class MonoIsotopicElements(Table):
             self.setupFormatters()
             self.emptyColumnCache()
             self.renameColumns(mass="m0")
+            self.dropColumn("abundance")
             self.sortBy("number")
 
     def buildSymbolIndex(self):

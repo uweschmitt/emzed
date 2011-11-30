@@ -1,5 +1,4 @@
 print "LOAD ABUNDANCES"
-print
 
 from libms.Chemistry.Elements import Elements
 from collections import defaultdict

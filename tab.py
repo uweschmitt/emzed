@@ -1,5 +1,4 @@
 print "LOAD LOCAL DATA TABLES"
-print
 
 from configs import repositoryPathes
 import os, ms, glob

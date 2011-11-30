@@ -1,5 +1,4 @@
 print "LOAD PUBCHEM DB"
-print
 from configs import globalDataPath
 from libms.DataBases import PubChemDB
 import os

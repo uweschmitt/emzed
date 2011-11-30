@@ -145,6 +145,7 @@ class Table(object):
                                     "to type %s" % (v, i, t))
         self.rows.append(row)
 
+
     def isEditable(self, colName):
         return colName in self.editableColumns
 
@@ -242,11 +243,24 @@ class Table(object):
         row[ix] = value
         self.emptyColumnCache()
 
-    def get(self, row, colName):
+    def get(self, row, colName=None):
         """ returns value of column *colName* in a given *row*#
 
             usage: ``table.get(table.rows[0], "mz")``
+
+            if *colName* is not provided, one gets the content of
+            the row as a dict mapping colnames to values.
+
+            **Note**: you can use this for other lists according
+            to columndata as
+
+            ``table.get(table.colTypes)`` gives you a dict for
+            getting a dict which maps colNames to the corresponding
+            colTypes.
+
         """
+        if colName is None:
+            return dict( (n, self.get(row, n)) for n in self.colNames )
         return row[self.getIndex(colName)]
 
     def getColumnCtx(self, needed):
