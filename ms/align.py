@@ -60,15 +60,15 @@ def alignFeatureTables(tables, destination = None, nPeaks=-1, numBreakpoints=5,
         source = sources.pop()
         filename = os.path.basename(source)
         print "align", filename
-        transformation = __computeTransformation(ma, refmap, fm, numBreakpoints)
-        __plot_and_save(transformation, filename, destination)
-        __adaptTable(table, transformation)
+        transformation = _computeTransformation(ma, refmap, fm, numBreakpoints)
+        _plot_and_save(transformation, filename, destination)
+        _adaptTable(table, transformation)
         results.append(table)
     for t in results:
         t.meta["aligned"] = True
     return results
 
-def __computeTransformation(ma, refmap, fm, numBreakpoints):
+def _computeTransformation(ma, refmap, fm, numBreakpoints):
     # be careful: alignFeatureMaps modifies second arg,
     # so you MUST NOT put the arg as [] into this
     # function ! in this case you have no access to the calculated
@@ -86,7 +86,7 @@ def __computeTransformation(ma, refmap, fm, numBreakpoints):
     ma.fitModel(P.String("b_spline"), pp, ts)
     return ts[1]
 
-def __plot_and_save(transformation, filename, destination):
+def _plot_and_save(transformation, filename, destination):
     import numpy as np
     import pylab
     import os.path
@@ -104,7 +104,7 @@ def __plot_and_save(transformation, filename, destination):
     print "save", filename
     pylab.savefig(target_path)
 
-def __adaptTable(table, transformation):
+def _adaptTable(table, transformation):
     import copy
     for row in table:
         rtmin = table.get(row, "rtmin")

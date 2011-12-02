@@ -6,6 +6,7 @@ from shell_helpers import *
 from align import *
 from isotope_calculator import *
 from tools import *
+from mzalign import mzalign
 
 from libms.Explorers       import inspectPeakMap, inspect
 from libms.gui.TableDialog import showTable
@@ -53,3 +54,4 @@ try:
     del tools
 except: 
     pass
+

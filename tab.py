@@ -4,7 +4,9 @@ from configs import repositoryPathes
 import os, ms, glob
 from  libms.Chemistry.Elements import Elements
 
-for path in ["tables"] + repositoryPathes:
+here = os.path.abspath(os.path.dirname(__file__))
+
+for path in [os.path.join(here, "tables")] + repositoryPathes:
     for p in glob.glob("%s/*.csv" % path):
         try:
             table = ms.loadCSV(p)
