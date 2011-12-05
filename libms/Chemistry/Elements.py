@@ -90,9 +90,7 @@ class MonoIsotopicElements(Table):
             self.title = "Monoisotopic Elements"
             self.meta  = dict()
 
-            self.updateIndices()
-            self.setupFormatters()
-            self.emptyColumnCache()
+            self.resetInternals()
             self.renameColumns(mass="m0")
             self.dropColumn("abundance")
             self.sortBy("number")

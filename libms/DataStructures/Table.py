@@ -106,7 +106,7 @@ class Table(object):
         else:
             rows = []
         self.colNames = list(colNames)
-        self.updateIndices()
+        self._updateIndices()
 
         self.colTypes = list(colTypes)
 
@@ -115,14 +115,14 @@ class Table(object):
                   "is not a good idea.\nTable operations may crash"
 
         self.colFormats = [None if f=="" else f for f in colFormats]
-        self.setupFormatters()
+        self._setupFormatters()
 
         self.rows = rows
         self.title = title
         self.meta = copy.copy(meta) if meta is not None else dict()
 
         self.primaryIndex = {}
-        self.emptyColumnCache()
+        self._emptyColumnCache()
         self._name = str(self)
 
         self.editableColumns = set()
@@ -136,6 +136,9 @@ class Table(object):
                 raise Exception("colName %s not allowed" % name)
 
     def addRow(self, row):
+        """ adds a new row to the table, checks if values in row are of
+            expected type or can be converted to this type """
+
         assert len(row) == len(self.colNames)
         # check for conversion !
         for i, (v, t) in enumerate(zip(row, self.colTypes)):
@@ -150,10 +153,10 @@ class Table(object):
     def isEditable(self, colName):
         return colName in self.editableColumns
 
-    def emptyColumnCache(self):
+    def _emptyColumnCache(self):
         self.columnCache = dict()
 
-    def updateIndices(self):
+    def _updateIndices(self):
         self.colIndizes = dict((n, i) for i, n in enumerate(self.colNames))
 
     def getVisibleCols(self):
@@ -168,9 +171,9 @@ class Table(object):
     def setFormat(self, colName, fmt):
         """ sets format of columns *colName* to format *fmt* """
         self.colFormats[self.getIndex(colName)] = fmt
-        self.setupFormatters()
+        self._setupFormatters()
 
-    def setupFormatters(self):
+    def _setupFormatters(self):
         self.colFormatters = [_formatter(f) for f in self.colFormats ]
 
     def __getattr__(self, name):
@@ -202,13 +205,13 @@ class Table(object):
 
     def __setstate__(self, dd):
         self.__dict__ = dd
-        self.setupFormatters()
-        self.emptyColumnCache()
+        self.resetInternals()
         # version upgrade
         if "editableColumns" not in dd:
             self.editableColumns = set()
 
     def __iter__(self):
+        """ returns iterator over rows """
         return iter(self.rows)
 
     def hasColumn(self, name):
@@ -245,7 +248,7 @@ class Table(object):
         #assert isinstance(value, expectedType),\
                #"expect value of type %s" % expectedType
         row[ix] = value
-        self.emptyColumnCache()
+        self.resetInternals()
 
     def get(self, row, colName=None):
         """ returns value of column *colName* in a given *row*#
@@ -267,7 +270,7 @@ class Table(object):
             return dict( (n, self.get(row, n)) for n in self.colNames )
         return row[self.getIndex(colName)]
 
-    def getColumnCtx(self, needed):
+    def _getColumnCtx(self, needed):
         names = [ n for (t,n) in needed if t==self ]
         return dict((n, (self.getColumn(n).getValues(),
                          self.primaryIndex.get(n))) for n in names)
@@ -300,8 +303,7 @@ class Table(object):
         self.colFormats.insert(0, fmt)
         for i, r in enumerate(self.rows):
             r.insert(0, i)
-        self.setupFormatters()
-        self.updateIndices()
+        self.resetInternals()
 
     def sortBy(self, colName, ascending=True):
         """
@@ -321,7 +323,7 @@ class Table(object):
             self.primaryIndex = {colName: True}
         else:
             self.primaryIndex = {}
-        self.emptyColumnCache()
+        self._emptyColumnCache()
 
 
     def copy(self):
@@ -347,8 +349,7 @@ class Table(object):
             if k not in self.colNames:
                 raise Exception("colum %s does not exist" % k)
         self.colNames = [ kw.get(n,n) for n in self.colNames]
-        self.emptyColumnCache()
-        self.updateIndices()
+        self.resetInternals()
 
     def __len__(self):
         return len(self.rows)
@@ -396,6 +397,8 @@ class Table(object):
 
 
     def buildEmptyClone(self):
+        """ returns empty table with same names, types, formatters,
+            title and meta data """
         return Table(self.colNames, self.colTypes, self.colFormats, [],
                      self.title, self.meta.copy())
 
@@ -409,9 +412,7 @@ class Table(object):
         del self.colTypes[ix]
         for row in self.rows:
             del row[ix]
-        self.updateIndices()
-        self.setupFormatters()
-        self.emptyColumnCache()
+        self.resetInternals()
 
     def addColumn(self, name, what, type_=None, format="", insertBefore=None):
         """
@@ -457,7 +458,7 @@ class Table(object):
         return self.addConstantColumn(name, what, type_, format, insertBefore)
 
     def _addColumnByExpression(self, name, expr, type_, format, insertBefore):
-        ctx = { self: self.getColumnCtx(expr.neededColumns()) }
+        ctx = { self: self._getColumnCtx(expr.neededColumns()) }
         values, _ = expr.eval(ctx)
         return self._addColumn(name, values, type_, format, insertBefore)
 
@@ -506,12 +507,11 @@ class Table(object):
                 for row, v in zip(self.rows, values):
                     row.insert(insertBefore, conv(v))
 
-        self.setupFormatters()
-        self.updateIndices()
+        self.resetInternals()
 
     def addConstantColumn(self, name, value, type_=None, format="", insertBefore=None):
         """
-        see addColumn 
+        see addColumn
         """
         return self._addColumn(name, [value]*len(self), type_, format,
                               insertBefore)
@@ -533,7 +533,7 @@ class Table(object):
         #TODO: same semantics as addColumn !
         ix = self.getIndex(name)
         oldtype = self.colTypes[ix]
-        ctx = { self: self.getColumnCtx(expr.neededColumns()) }
+        ctx = { self: self._getColumnCtx(expr.neededColumns()) }
         values, _ = expr.eval(ctx)
         if isinstance(values, np.ndarray):
             values = values.tolist()
@@ -551,9 +551,19 @@ class Table(object):
         self.colFormats[ix] = f
         for row, v in zip(self.rows, values):
             row[ix] = t(v)
-        self.setupFormatters()
-        self.updateIndices()
-        self.emptyColumnCache()
+
+        self.resetInternals()
+
+    def resetInternals(self):
+        """ must be called if one manipulates one of
+
+            - self.colNames
+            - self.colFormats
+            - self.rows
+        """
+        self._setupFormatters()
+        self._updateIndices()
+        self._emptyColumnCache()
 
     def unique(self):
         raise Exception("does not work")
@@ -575,7 +585,7 @@ class Table(object):
         if debug:
             print "#", expr
 
-        ctx = { self: self.getColumnCtx(expr.neededColumns()) }
+        ctx = { self: self._getColumnCtx(expr.neededColumns()) }
         flags, _ = expr.eval(ctx)
         filteredTable = self.buildEmptyClone()
         if flags is True:
@@ -623,13 +633,13 @@ class Table(object):
         """
         # no direct type check below, as databases decorate member tables:
         try:
-            t.getColumnCtx
+            t._getColumnCtx
         except:
             raise Exception("first arg is of wrong type")
         assert isinstance(expr, Node)
         if debug:
             print "# %s.join(%s, %s)" % (self._name, t._name, expr)
-        tctx = t.getColumnCtx(expr.neededColumns())
+        tctx = t._getColumnCtx(expr.neededColumns())
 
         cmdlineProgress = _CmdLineProgress(len(self))
         rows = []
@@ -668,13 +678,13 @@ class Table(object):
         """
         # no direct type check below, as databases decorate member tables:
         try:
-            t.getColumnCtx
+            t._getColumnCtx
         except:
             raise Exception("first arg is of wrong type")
         assert isinstance(expr, Node)
         if debug:
             print "# %s.leftJoin(%s, %s)" % (self._name, t._name, expr)
-        tctx = t.getColumnCtx(expr.neededColumns())
+        tctx = t._getColumnCtx(expr.neededColumns())
 
         filler = [None] * len(t.colNames)
         cmdlineProgress = _CmdLineProgress(len(self))

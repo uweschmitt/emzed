@@ -112,7 +112,7 @@ class PubChemDB(object):
         self.path = path
         if path is not None and os.path.exists(path):
             self.table = cPickle.load(open(path,"rb"))
-            self.table.updateIndices()
+            self.table.resetInternals()
         else:
             self.table = self._emptyTable()
 

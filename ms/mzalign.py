@@ -41,7 +41,7 @@ def mzalign(table, fullC13=False, tol=15*MMU, universal_metabolites=None,
     assert len(polarities) == 1, "multiple polarities in table"
     polarity = polarities.pop()
 
-    hypot = _buildHypotheseTable(polarity, univ, fullC13)
+    hypot = _buildHypotheseTable(polarity, univ.copy(), fullC13)
     real, tobe, matches = _findMzMatches(hypot, table, tol)
     if len(real)<=1:
         print "NOT ENOUGH MATCHES"

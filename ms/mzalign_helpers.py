@@ -158,13 +158,14 @@ after = set(locals().keys())
 
 todelete = [ o for n,o in locals().items() if n in after and n not in before]
 
-class _MatchSelector(QMainWindow):
+class _MatchSelector(QDialog):
 
     activeColor = "r"
     inactiveColor = "b"
 
     def __init__(self, tobe, real):
-        QMainWindow.__init__(self, None)
+        QDialog.__init__(self, None)
+        self.setWindowFlags(Qt.Window)
         self.setWindowTitle("Matched Feature Selector")
         self.real = _np.array(real)
         self.tobe = _np.array(tobe)
@@ -286,12 +287,12 @@ class _MatchSelector(QMainWindow):
         from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg
         from matplotlib.figure import Figure
 
-        self.mainFrame = QWidget()
+        #self.mainFrame = QWidget()
         # plot widget
         self.dpi = 80
         self.fig = Figure((8.0, 6.0), dpi=self.dpi)
         self.canvas = FigureCanvasQTAgg(self.fig)
-        self.canvas.setParent(self.mainFrame)
+        #self.canvas.setParent(self.mainFrame)
         self.upper = self.fig.add_subplot(211)
         self.lower = self.fig.add_subplot(212)
 
@@ -318,15 +319,15 @@ class _MatchSelector(QMainWindow):
         vbox.addWidget(self.canvas)
         vbox.addLayout(hbox)
 
-        self.mainFrame.setLayout(vbox)
-        self.setCentralWidget(self.mainFrame)
+        self.setLayout(vbox)
+        #self.setCentralWidget(self.mainFrame)
 
 def _findParametersManually(tobe, real):
     import guidata
     app = guidata.qapplication()
     m = _MatchSelector(tobe, real)
     m.show()
-    app.exec_()
+    m.exec_()
     if m.exitCode != 0:
         return None, None
     return m.transform, (m.real, m.tobe)

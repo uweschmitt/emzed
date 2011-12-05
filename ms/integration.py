@@ -43,8 +43,6 @@ def integrate(ftable, integratorid="std", showProgress = True):
     resultTable.colTypes += [ float, float, str, float, float, object, ]
     fmt = '''"%.2fm" % o'''
     resultTable.colFormats += [ fmt, fmt, "%s", "%.2e", "%.2e", None, ]
-    resultTable.setupFormatters()
-    resultTable.updateIndices()
 
     lastcent = -1
     for i, row in enumerate(ftable):
@@ -77,4 +75,5 @@ def integrate(ftable, integratorid="std", showProgress = True):
         print "needed %d minutes and %.1f seconds" % (minutes, seconds)
     else:
         print "needed %.1f seconds" % seconds
+    resultTable.resetInternals()
     return resultTable
