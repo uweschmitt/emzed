@@ -56,7 +56,7 @@ def mzalign(table, fullC13=False, tol=15*MMU, universal_metabolites=None,
         return
 
     if interactive:
-        ms.inspect(matches)
+        ms.inspect(matches, offerAbortOption=True)
 
     elif len(tobe) < minPoints:
         raise Exception("could only match %d peaks" % len(tobe))

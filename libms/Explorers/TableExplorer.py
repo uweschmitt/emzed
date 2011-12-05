@@ -95,7 +95,7 @@ def populateTableWidget(tWidget, table):
 
 class TableExplorer(QDialog):
 
-    def __init__(self, table):
+    def __init__(self, table, offerAbortOption):
         QDialog.__init__(self)
         self.setWindowFlags(Qt.Window)
 
@@ -116,6 +116,7 @@ class TableExplorer(QDialog):
         else:
             self.peakmap = None
 
+        self.offerAbortOption = offerAbortOption
         self.setupWidgets()
         self.setupLayout()
         self.populateTable()
@@ -171,8 +172,8 @@ class TableExplorer(QDialog):
         self.tw.setMinimumHeight(150)
 
     def setupLayout(self):
-        vlayouto = QVBoxLayout()
-        self.setLayout(vlayouto)
+        vlayout = QVBoxLayout()
+        self.setLayout(vlayout)
 
         vsplitter = QSplitter()
         vsplitter.setOrientation(Qt.Vertical)
@@ -207,7 +208,16 @@ class TableExplorer(QDialog):
 
         vsplitter.addWidget(self.tw)
 
-        vlayouto.addWidget(vsplitter)
+        vlayout.addWidget(vsplitter)
+
+        if self.offerAbortOption:
+            hbox = QHBoxLayout()
+            hbox.addWidget(self.abortButton)
+            hbox.setAlignment(self.abortButton, Qt.AlignVCenter)
+            hbox.addWidget(self.okButton)
+            hbox.setAlignment(self.okButton, Qt.AlignVCenter)
+            vlayout.addLayout(hbox)
+        
 
     def setupWidgets(self):
 
@@ -249,6 +259,21 @@ class TableExplorer(QDialog):
             self.reintegrateButton.setText("Integrate")
             self.connect(self.reintegrateButton, SIGNAL("clicked()"),
                          self.doIntegrate)
+
+        if self.offerAbortOption:
+            self.okButton = QPushButton("Ok")
+            self.abortButton = QPushButton("Abort")
+            self.connect(self.okButton, SIGNAL("clicked()"), self.ok)
+            self.connect(self.abortButton, SIGNAL("clicked()"), self.abort)
+            self.result = 1 # default for closing
+
+    def abort(self):
+        self.result = 1
+        self.close()
+
+    def ok(self):
+        self.result = 0
+        self.close()
 
     def connectSignals(self):
         # click at row head
@@ -444,8 +469,11 @@ class TableExplorer(QDialog):
             #self.rtPlotter.setXAxisLimits(0, self.maxRt)
             self.rtPlotter.replot()
 
-def inspect(table):
+def inspect(table, offerAbortOption=False):
     app = guidata.qapplication()
-    fe = TableExplorer(table)
-    fe.raise_()
-    fe.exec_()
+    explorer = TableExplorer(table, offerAbortOption)
+    explorer.raise_()
+    explorer.exec_()
+    if offerAbortOption:
+        if explorer.result == 1:
+            raise Exception("Dialog aborted by user")
