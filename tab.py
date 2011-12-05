@@ -11,7 +11,9 @@ for path in [os.path.join(here, "tables")] + repositoryPathes:
         try:
             table = ms.loadCSV(p)
         except Exception, e:
-            print "PARSTING",p,"FAILED"
+            import traceback
+            traceback.print_exc()
+            print "PARSING",p,"FAILED"
             continue
         name, _ = os.path.splitext(os.path.basename(p))
         exec("%s=table" % name)
@@ -20,7 +22,9 @@ for path in [os.path.join(here, "tables")] + repositoryPathes:
         try:
             table = ms.loadTable(p)
         except Exception, e:
-            print "PARSTING",p,"FAILED"
+            import traceback
+            traceback.print_exc()
+            print "PARSING",p,"FAILED"
             continue
         name, _ = os.path.splitext(os.path.basename(p))
         table.meta["loaded_from"] = os.path.abspath(p)
@@ -39,6 +43,7 @@ if not os.environ.get("WITHOUT_PUBCHEM"):
     del db
 
 del repositoryPathes
+del here
 try:
     del path
 except:
