@@ -150,6 +150,7 @@ def _plotAndSaveMatch(tobe, real, used, transform, path):
     pylab.subplot(2,1,2)
     pylab.plot(realUsed, tobeUsed-fittedUsed, "go")
     pylab.savefig(path)
+    pylab.close()
 
 before = set(locals().keys())
 from PyQt4.QtCore import *
