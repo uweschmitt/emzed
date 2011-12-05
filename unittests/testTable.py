@@ -241,3 +241,32 @@ def testDetectionOfUnallowdColumnNames():
     assert ex != None
     assert "not allowed" in ex
     assert "__init__" in ex
+
+
+def testWithEmtpyTables():
+    e = ms.toTable([], "x")
+    f = ms.toTable([], "y")
+    g = ms.toTable([1], "z")
+
+    assert len(e.filter(e.x == 0)) == 0
+    t1 = e.join(f, f.y == e.x)
+    assert len(t1) == 0
+    assert t1.colNames == ["x", "y"]
+    t1 = e.join(g, g.z == e.x)
+    assert len(t1) == 0
+    assert t1.colNames == ["x", "z"]
+    t1 = g.join(e, e.x == g.z)
+    assert len(t1) == 0
+    assert t1.colNames == ["z", "x"]
+
+    t1 = e.leftJoin(f, f.y == e.x)
+    assert len(t1) == 0
+    assert t1.colNames == ["x", "y"]
+    t1 = e.leftJoin(g, g.z == e.x)
+    assert len(t1) == 0
+    assert t1.colNames == ["x", "z"]
+    t1 = g.leftJoin(e, e.x == g.z)
+    assert len(t1) == 1
+    assert t1.colNames == ["z", "x"]
+    assert t1.rows[0] ==  [1, None]
+

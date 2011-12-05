@@ -33,6 +33,8 @@ def commonTypeOfColumn(col):
             return float
 
     types = set( type(c) for c in col )
+    if len(types)==0:
+        return object
     if str in types:
         return str
     if float in types:
@@ -575,14 +577,14 @@ class Table(object):
 
         ctx = { self: self.getColumnCtx(expr.neededColumns()) }
         flags, _ = expr.eval(ctx)
-        rv = self.buildEmptyClone()
+        filteredTable = self.buildEmptyClone()
         if flags is True:
-            rv.rows = self.rows[:]
+            filteredTable.rows = self.rows[:]
         elif flags is False:
-            rv.rows = []
+            filteredTable.rows = []
         else:
-            rv.rows = [ self.rows[n] for n, i in enumerate(flags) if i ]
-        return rv
+            filteredTable.rows = [ self.rows[n] for n, i in enumerate(flags) if i ]
+        return filteredTable
 
     def join(self, t, expr, debug = False):
         """joins two tables.

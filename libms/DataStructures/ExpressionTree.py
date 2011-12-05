@@ -134,9 +134,9 @@ class CompNode(Node):
         if ixr != None and type(lhs) in _basic_num_types:
             return self.rfastcomp(lhs, rhs, ixr), None
 
-        if type(lhs) == list and type(lhs[0]) in _basic_num_types:
+        if type(lhs) == list and len(lhs) and type(lhs[0]) in _basic_num_types:
             lhs = np.array(lhs)
-        if type(rhs) == list and type(rhs[0]) in _basic_num_types:
+        if type(rhs) == list and len(lhs) and type(rhs[0]) in _basic_num_types:
             rhs = np.array(rhs)
 
         if type(lhs) in _basic_num_types and type(rhs)==np.ndarray:
