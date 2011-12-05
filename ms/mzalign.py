@@ -9,8 +9,8 @@ def mzalign(table, fullC13=False, tol=15*MMU, universal_metabolites=None,
     import tab
     import os
     import numpy as np
-    import mzalign_helpers
-    from mzalign_helpers import (_buildHypotheseTable,
+    #import mzalign_helpers
+    from _mzalign_helpers import (_buildHypotheseTable,
                                  _findMzMatches,
                                  _findParametersAutomatically,
                                  _findParametersManually,

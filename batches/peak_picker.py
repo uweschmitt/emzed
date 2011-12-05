@@ -49,7 +49,7 @@ def runPeakPickerHiRes(pattern=None, destination=None, configid=None, **params):
     """
 
 
-    from BatchRunner import BatchRunner
+    from _BatchRunner import BatchRunner
     import configs
     import ms
     import os.path

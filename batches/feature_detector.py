@@ -1,10 +1,10 @@
-from BatchRunner import BatchRunner
-class FD(BatchRunner):
+import _BatchRunner
+class _FD(_BatchRunner.BatchRunner):
 
     def __init__(self, *a, **kw):
         import libms.RConnect
         libms.RConnect.RExecutor.findRHome() # throws exception if R is not found
-        super(FD, self).__init__(*a, **kw)
+        super(_FD, self).__init__(*a, **kw)
 
     def process(self, path):
         import ms
@@ -86,7 +86,7 @@ def runCentwave(pattern=None, destination=None, configid=None, **params):
     import configs
     import libms.RConnect
 
-    class P(FD):
+    class P(_FD):
 
         def setup(self, config):
             self.det = libms.RConnect.CentwaveFeatureDetector(**config)
@@ -149,7 +149,7 @@ def runMatchedFilter(pattern=None, destination=None, configid=None, **params):
     import libms.RConnect
     import configs
 
-    class P(FD):
+    class P(_FD):
 
         def setup(self, config):
             self.det = libms.RConnect.MatchedFilterFeatureDetector(**config)
