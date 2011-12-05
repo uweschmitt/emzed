@@ -17,4 +17,4 @@ M0;RT min;RT max;link to pubchem;compouind name;HMDB ID;MF;KEGG ID
 745,0911007;10,00;17,00;http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?cid=5884&loc=ec_rcs;"""NADPH""";HMDB00221;C21H30N7O17P3;C00005
 787,172783;14,50;18,50;http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?cid=446013&loc=ec_rcs;"""FADH""";HMDB01197;C27H35N9O15P2;C01352
 809,1257714;15,20;19,20;http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?cid=6302&loc=ec_rcs;"""Acetyl-CoA""";HMDB01206;C23H38N7O17P3S;C00024
-867,1312506;15,80;19,80;http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?cid=439161&loc=ec_rcs;"""Succinyl-CoA""";HMDB01022;C25H40N7O19P3S;C00091
+867,1312506;12,00;16,00;http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?cid=439161&loc=ec_rcs;"""Succinyl-CoA""";HMDB01022;C25H40N7O19P3S;C00091

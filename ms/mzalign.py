@@ -42,6 +42,12 @@ def mzalign(table, fullC13=False, tol=15*MMU, universal_metabolites=None,
     polarity = polarities.pop()
 
     hypot = _buildHypotheseTable(polarity, univ.copy(), fullC13)
+
+    if destination is not None:
+        basename = os.path.basename(source)
+        fname, _ = os.path.splitext(basename)
+        hypot.store(os.path.join(destination, fname+"_hypot.table"), True)
+
     real, tobe, matches = _findMzMatches(hypot, table, tol)
     if len(real)<=1:
         print "NOT ENOUGH MATCHES"
@@ -63,8 +69,6 @@ def mzalign(table, fullC13=False, tol=15*MMU, universal_metabolites=None,
             return
 
     if destination is not None:
-        basename = os.path.basename(source)
-        fname, _ = os.path.splitext(basename)
         matches.addColumn("error", np.linalg.norm(transform(real)-tobe), float,\
                           "%.3e")
         matches.store(os.path.join(destination, fname+"_mzalign.table"), True)

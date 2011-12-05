@@ -244,9 +244,8 @@ class Table(object):
             usage: ``table.set(table.rows[0], "mz", 252.83332)``
         """
         ix = self.getIndex(colName)
-        #expectedType = self.colTypes[ix]
-        #assert isinstance(value, expectedType),\
-               #"expect value of type %s" % expectedType
+        if type(value) in [np.float32, np.float64]:
+            value = float(value)
         row[ix] = value
         self.resetInternals()
 

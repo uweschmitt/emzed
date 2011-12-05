@@ -155,9 +155,22 @@ class CompNode(Node):
         if  type(lhs) in _iterables and type(rhs) in _basic_types:
             return np.array([ self.comparator(l, rhs) for l in  lhs]), None
 
-        assert type(lhs) in _basic_types and type(rhs) in _basic_types
+        if type(lhs) in _basic_types and type(rhs) in _basic_types:
+            return self.comparator(lhs, rhs), None
 
-        return self.comparator(lhs, rhs), None
+        t0 = ""
+        try:
+            t0 = type(lhs[0])
+        except:
+            pass
+
+        r0 = ""
+        try:
+            r0 = type(rhs[0])
+        except:
+            pass
+
+        raise "Can not handle %r or %r, resp %s or %s" % (lhs, rhs, t0, r0)
 
 def Range(start, end, len):
     rv = np.zeros((len,), dtype=np.bool)

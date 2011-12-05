@@ -295,8 +295,8 @@ aS'C00024'
 p124
 aa(lp125
 F867.13125060000004
-aF948
-aF1188
+aF720
+aF960
 aS'http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?cid=439161&loc=ec_rcs'
 p126
 aS'"Succinyl-CoA"'
@@ -343,7 +343,7 @@ p144
 I2
 ssS'_name'
 p145
-S'<libms.DataStructures.Table.Table object at 0x02352DF0>'
+S'<libms.DataStructures.Table.Table object at 0x07D8CE50>'
 p146
 sS'meta'
 p147
