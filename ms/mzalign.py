@@ -1,11 +1,6 @@
-import installConstants as _installConstants
-import mzalign_helpers 
-from mzalign_helpers import (_buildHypotheseTable,
-                             _findMzMatches,
-                             _findParametersAutomatically,
-                             _findParametersManually,
-                             _plotAndSaveMatch,
-                             _applyTransform )
+#encoding: utf-8
+
+import installConstants as _installConstants # installx MMU
 
 def mzalign(table, fullC13=False, tol=15*MMU, universal_metabolites=None,
             destination=None, minR2=0.95, minPoints=5, interactive=False):
@@ -14,6 +9,13 @@ def mzalign(table, fullC13=False, tol=15*MMU, universal_metabolites=None,
     import tab
     import os
     import numpy as np
+    import mzalign_helpers
+    from mzalign_helpers import (_buildHypotheseTable,
+                                 _findMzMatches,
+                                 _findParametersAutomatically,
+                                 _findParametersManually,
+                                 _plotAndSaveMatch,
+                                 _applyTransform )
 
     if not interactive:
         assert minR2 <= 1.0
@@ -80,4 +82,3 @@ def mzalign(table, fullC13=False, tol=15*MMU, universal_metabolites=None,
     _applyTransform(table, transform)
     print "DONE"
 
-del mzalign_helpers

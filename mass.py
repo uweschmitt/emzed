@@ -4,9 +4,9 @@ from libms.Chemistry.Elements import Elements, MonoIsotopicElements
 from libms.Chemistry.Tools import monoisotopicMass
 import installConstants
 
-e = MASS_E
-p = MASS_P
-n = MASS_N
+e = 5.4857990946e-4
+p = 1.007276466812
+p = 1.00866491600
 
 of = monoisotopicMass
 
