@@ -152,12 +152,8 @@ def _plotAndSaveMatch(tobe, real, used, transform, path):
     pylab.savefig(path)
     pylab.close()
 
-before = set(locals().keys())
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
-after = set(locals().keys())
-
-todelete = [ o for n,o in locals().items() if n in after and n not in before]
 
 class _MatchSelector(QDialog):
 
@@ -172,7 +168,7 @@ class _MatchSelector(QDialog):
         self.tobe = _np.array(tobe)
         self.savedReal = self.real.copy()
         self.savedTobe = self.tobe.copy()
-        self.exitCode = 0
+        self.exitCode = 1 # abort is default for closing
         self.setupMainFrame()
         self.indexOfActivePoint = -1
         self.update()
@@ -232,6 +228,7 @@ class _MatchSelector(QDialog):
         self.canvas.draw()
 
     def finish(self):
+        self.exitCode = 0
         self.close()
 
     def abort(self):

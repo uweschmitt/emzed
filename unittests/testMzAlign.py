@@ -6,11 +6,11 @@ def testMzAlign():
     before = tab.mz.values
     pm = tab.peakmap.values[0]
     s0 = pm.spectra[0].peaks[:,0]
-    ms.mzalign(tab, interactive=False, minPoints=4, destination="temp_output")
+    ms.mzalign(tab, interactive=False, minPoints=4, tol=14*MMU, destination="temp_output")
     after = tab.mz.values
     pm = tab.peakmap.values[0]
     s0 = pm.spectra[0].peaks[:,0]
-    assert abs(s0[0]-202.12123) < 1e-5
-    assert abs(after[0]-272.19923) < 1e-5
+    assert abs(s0[0]-202.1198425) < 1e-5, float(s0[0])
+    assert abs(after[0]-272.1978502) < 1e-5, float(after[0])
 
-    assert len(glob.glob("temp_output/2011-10-06_054_PKTB*"))==3
+    assert len(glob.glob("temp_output/2011-10-06_054_PKTB*"))==4
