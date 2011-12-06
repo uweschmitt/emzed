@@ -21,6 +21,13 @@ _basic_num_types = [int, long, float]
 _basic_types = [int, long, float, str, type(None) ]
 _iterables = [list, np.ndarray]
 
+def isNumericList(li):
+    if not isinstance(li, list):
+        return False
+    innertypes = set(type(item) for item in li)
+    innertypes.discard(None)
+    return all(i in _basic_num_types for i in innertypes)
+
 class Node(object):
 
     def __init__(self, left, right):
@@ -134,9 +141,9 @@ class CompNode(Node):
         if ixr != None and type(lhs) in _basic_num_types:
             return self.rfastcomp(lhs, rhs, ixr), None
 
-        if type(lhs) == list and len(lhs) and type(lhs[0]) in _basic_num_types:
+        if isNumericList(lhs):
             lhs = np.array(lhs)
-        if type(rhs) == list and len(rhs) and type(rhs[0]) in _basic_num_types:
+        if isNumericList(rhs):
             rhs = np.array(rhs)
 
         if type(lhs) in _basic_num_types and type(rhs)==np.ndarray:
@@ -278,9 +285,9 @@ class BinaryExpression(Node):
         lval, idxl = self.left.eval(ctx)
         rval, idxr = self.right.eval(ctx)
 
-        if type(lval) == list and lval and type(lval[0]) in _basic_num_types:
-            lval = np.array(lval)
-        if type(rval) == list and rval and type(rval[0]) in _basic_num_types:
+        if isNumericList(lval):
+                lval = np.array(lval)
+        if isNumericList(rval):
             rval = np.array(rval)
 
         if type(lval) in _basic_num_types and type(rval) == np.ndarray:
