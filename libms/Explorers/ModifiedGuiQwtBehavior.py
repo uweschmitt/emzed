@@ -141,13 +141,11 @@ class ModifiedCurvePlot(CurvePlot):
         """ reset axes of plot """
         self.reset_x_limits()
 
-    @memoize
     def get_items_of_class(self, clz):
         for item in self.items:
             if isinstance(item, clz):
                 yield item
 
-    @memoize
     def get_unique_item(self, clz):
         items = list(self.get_items_of_class(clz))
         if len(items) != 1:
@@ -304,14 +302,20 @@ class MzPlot(ModifiedCurvePlot):
         """ finds 10 next (distance in mz) peaks tu current marker and zooms to them
         """
 
-        mz = self.get_unique_item(Marker).xValue()
-        mzs, _ = self.get_unique_item(CurveItem).get_data()
+        if self.centralMz is None:
+            mz = self.get_unique_item(Marker).xValue()
+        else:
+            mz = self.centralMz
 
-        isort = np.argsort(np.abs(mzs - mz))
-        xsel = mzs[isort[:10]]
-        xmin, xmax = np.min(xsel), np.max(xsel)
+        print mz
+        self.update_plot_xlimits(mz-self.halfWindowWidth, mz+self.halfWindowWidth)
 
-        self.update_plot_xlimits(xmin, xmax)
+    def set_half_window_width(self, w2):
+        self.halfWindowWidth = w2
+
+    def set_central_mz(self, mz):
+        print "set", mz
+        self.centralMz = mz
 
     def register_c_callback(self, cb):
         self.c_call_back = cb

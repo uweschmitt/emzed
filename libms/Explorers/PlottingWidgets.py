@@ -12,6 +12,7 @@ from PyQt4.Qwt5 import QwtScaleDraw, QwtText
 
 import numpy as np
 import new
+import itertools
 
 
 def formatSeconds(seconds):
@@ -62,9 +63,7 @@ class RtPlotter(PlotterBase):
     def __init__(self, rangeSelectionCallback = None, numCurves=1, configs=None):
         super(RtPlotter, self).__init__("RT", "I")
 
-        
         self.rangeSelectionCallback = rangeSelectionCallback
-
 
         widget = self.widget
         widget.plot.__class__ = RtPlot
@@ -77,23 +76,6 @@ class RtPlotter(PlotterBase):
         self.pm = PlotManager(widget)
         self.pm.add_plot(widget.plot)
 
-        
-        self.curves  =[]
-
-        colors = "bgrkcmG"
-        for i in range(numCurves):
-            c = colors[i % len(colors)] # cycle through colors
-            if configs is None or configs[i] is None:
-                config = dict()
-            else:
-                config = configs[i]
-            if not "color" in config:
-                 config["color"] = c
-            curve = make.curve([], [], **config)
-            curve.__class__ = ModifiedCurveItem
-            widget.plot.add_item(curve)
-            self.curves.append(curve)
-
         t = self.pm.add_tool(RtSelectionTool)
         self.addTool(RtSelectionTool)
         self.pm.set_default_tool(t)
@@ -105,12 +87,23 @@ class RtPlotter(PlotterBase):
         t = self.pm.add_tool(tool)
         t.activate()
 
+    def plot(self, chromatograms):
+        allrts = set()
+        colors = "bgrkcmG"
+        self.widget.plot.del_all_items()
+        for (rts, chromatogram), c in zip(chromatograms, itertools.cycle(colors)):
+            curve = make.curve(rts, chromatogram, color=c)
+            curve.__class__ = ModifiedCurveItem
+            allrts.update(rts)
+            self.widget.plot.add_item(curve)
+        self.widget.plot.replot()
+        self.addRangeSelector(sorted(allrts))
 
-    def setRtValues(self, rtvalues):
+    def addRangeSelector(self, rtvalues):
 
         self.rtvalues = rtvalues
-        self.minRTRangeSelected = 0 
-        self.maxRTRangeSelected = 0 
+        self.minRTRangeSelected = 0
+        self.maxRTRangeSelected = 0
 
         range_ = SnappingRangeSelection(self.minRTRangeSelected, self.maxRTRangeSelected, self.rtvalues)
         setupStyleRangeMarker(range_)
@@ -135,27 +128,13 @@ class RtPlotter(PlotterBase):
         super(RtPlotter, self).setXAxisLimits(xmin, xmax)
         mid = 0.5*(xmin+xmax)
         #self.setRangeSelectionLimits(mid, mid)
-    
+
     def rangeSelectionHandler(self, obj, left, right):
         min_, max_ = sorted((left, right))
         self.minRTRangeSelected = min_
         self.maxRTRangeSelected = max_
         if self.rangeSelectionCallback is not None:
             self.rangeSelectionCallback()
-    
-    def plot(self, chromatogram, x=None, index=0):
-        if x is None:
-            x = self.rtvalues
-        self.curves[index].set_data(x, chromatogram)
-
-    def replot(self, index=None): 
-        if index is None:
-            indices = range(len(self.curves))
-        else:
-            indices = [index]
-        for i in indices:
-            self.curves[i].plot().replot()
-       
 
 class MzCursorInfo(ObjectInfo):
     def __init__(self, marker, line):
@@ -185,6 +164,8 @@ class MzPlotter(PlotterBase):
         # inject mofified behaviour of wigets plot attribute:
         widget.plot.__class__ = MzPlot
         widget.plot.register_c_callback(self.handle_c_pressed)
+        self.setHalfWindowWidth(0.05)
+
 
         # todo: refactor as helper
         a = QwtScaleDraw()
@@ -220,6 +201,12 @@ class MzPlotter(PlotterBase):
         widget.plot.add_item(marker)
         widget.plot.add_item(label)
         widget.plot.add_item(line)
+
+    def setHalfWindowWidth(self, w2):
+        self.widget.plot.set_half_window_width(w2)
+
+    def setCentralMz(self, mz):
+        self.widget.plot.set_central_mz(mz)
 
     def handle_c_pressed(self, p):
         if self.c_callback:
