@@ -1,3 +1,4 @@
+import pdb
 #encoding: utf-8
 
 from libms.DataStructures.Table import Table
@@ -269,4 +270,30 @@ def testWithEmtpyTables():
     assert len(t1) == 1
     assert t1.colNames == ["z", "x"]
     assert t1.rows[0] ==  [1, None]
+
+class ExceptionTester(object):
+
+    def __init__(self, *expected):
+        self.expected = expected
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        assert a[0] in self.expected
+        return True # suppress exceptoin
+
+def testWithNoneValues():
+    t = ms.toTable([1,2,None], "i")
+    with ExceptionTester(Exception):
+        t.filter(t.i >=1)._print()
+    with ExceptionTester(Exception):
+        t.filter(t.i <=1)._print()
+    with ExceptionTester(Exception):
+        t.filter(t.i >1)._print()
+    with ExceptionTester(Exception):
+        t.filter(t.i <1)._print()
+
+    assert len(t.filter(t.i == None)) == 1
+    assert len(t.filter(t.i != None)) == 2
 

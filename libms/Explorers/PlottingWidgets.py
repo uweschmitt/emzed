@@ -58,9 +58,7 @@ class PlotterBase(object):
 
 class RtPlotter(PlotterBase):
 
-
-
-    def __init__(self, rangeSelectionCallback = None, numCurves=1, configs=None):
+    def __init__(self, rangeSelectionCallback = None):
         super(RtPlotter, self).__init__("RT", "I")
 
         self.rangeSelectionCallback = rangeSelectionCallback
@@ -87,12 +85,19 @@ class RtPlotter(PlotterBase):
         t = self.pm.add_tool(tool)
         t.activate()
 
-    def plot(self, chromatograms):
+    def plot(self, chromatograms, configs=None):
         allrts = set()
         colors = "bgrkcmG"
         self.widget.plot.del_all_items()
-        for (rts, chromatogram), c in zip(chromatograms, itertools.cycle(colors)):
-            curve = make.curve(rts, chromatogram, color=c)
+        for i in range(len(chromatograms)):
+            rts, chromatogram = chromatograms[i]
+            config = None
+            if configs is not None:
+                config = configs[i]
+            if config is None:
+                color = colors[i%len(colors)]
+                config = dict(color=color)
+            curve = make.curve(rts, chromatogram, **config)
             curve.__class__ = ModifiedCurveItem
             allrts.update(rts)
             self.widget.plot.add_item(curve)
@@ -116,6 +121,9 @@ class RtPlotter(PlotterBase):
         cc = make.info_label("TR", [RtRangeSelectionInfo(range_)], title=None)
         cc.labelparam.label = ""
         self.widget.plot.add_item(cc)
+
+    def getRangeSelectionLimits(self):
+        return sorted( (self.range_._min,  self.range_._max) )
 
     def setRangeSelectionLimits(self, xleft, xright):
         self.minRTRangeSelected = xleft
@@ -153,9 +161,8 @@ class MzCursorInfo(ObjectInfo):
 
 class MzPlotter(PlotterBase):
 
-    def __init__(self, peakmap, c_callback=None):
+    def __init__(self, c_callback=None):
         super(MzPlotter, self).__init__("m/z", "I")
-        self.peakmap = peakmap 
 
         self.c_callback = c_callback
 
@@ -201,6 +208,9 @@ class MzPlotter(PlotterBase):
         widget.plot.add_item(marker)
         widget.plot.add_item(label)
         widget.plot.add_item(line)
+
+    def setPeakMap(peakmap):
+        self.peakmap = peakmap 
 
     def setHalfWindowWidth(self, w2):
         self.widget.plot.set_half_window_width(w2)

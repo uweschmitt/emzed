@@ -41,7 +41,7 @@ def integrate(ftable, integratorid="std", showProgress = True):
 
     resultTable.colNames += newCols
     resultTable.colTypes += [ float, float, str, float, float, object, ]
-    fmt = '''"%.2fm" % o'''
+    fmt = '''"%.2fm" % (o/60.0)'''
     resultTable.colFormats += [ fmt, fmt, "%s", "%.2e", "%.2e", None, ]
 
     lastcent = -1

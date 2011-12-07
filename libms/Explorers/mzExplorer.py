@@ -18,20 +18,14 @@ class MzExplorer(QDialog):
         self.setWindowFlags(Qt.Window)
 
     def setup(self, peakmap):
-
         self.processPeakmap(peakmap)
         self.setupPlotWidgets()
         self.setupInputWidgets()
         self.connectSignalsAndSlots()
         self.setupLayout()
-
         self.resetMzLimits()
         self.plotChromatogramm()
         self.plotMz()
-
-
-    def closeEvent(self, evt):
-        pass
 
     def processPeakmap(self, peakmap):
         self.peakmap = peakmap.filter(lambda s: s.msLevel == 1)
@@ -128,7 +122,8 @@ class MzExplorer(QDialog):
 
     def setupPlotWidgets(self):
         self.rtPlotter = RtPlotter(self.plotMz)
-        self.mzPlotter = MzPlotter(self.peakmap, self.handleCPressed)
+        self.mzPlotter = MzPlotter(self.handleCPressed)
+        self.mzPlotter.setPeakMap(self.peakmap)
 
         self.rtPlotter.setMinimumSize(600, 300)
         self.mzPlotter.setMinimumSize(600, 300)

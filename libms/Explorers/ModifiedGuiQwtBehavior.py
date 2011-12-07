@@ -307,7 +307,6 @@ class MzPlot(ModifiedCurvePlot):
         else:
             mz = self.centralMz
 
-        print mz
         self.update_plot_xlimits(mz-self.halfWindowWidth, mz+self.halfWindowWidth)
 
     def set_half_window_width(self, w2):
@@ -439,9 +438,7 @@ class SnappingRangeSelection(XRangeSelection):
         for item in self.plot().get_items():
             if isinstance(item, CurveItem):
                 xvals.append(np.array(item.get_data()[0]))
-
         return np.sort(np.hstack(xvals))
-
 
     def move_point_to(self, hnd, pos, ctrl=True, emitsignal=True):
         xvals = self.get_xvals()
@@ -454,7 +451,7 @@ class SnappingRangeSelection(XRangeSelection):
             imin = np.argmin(np.fabs(val-xvals))
             x = xvals[imin]
 
-        if self._min == self._max and not ctrl:
+        if 0 and self._min == self._max and not ctrl:
             self._min = x
             self._max = x
         else:
