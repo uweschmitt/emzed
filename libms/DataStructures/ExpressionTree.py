@@ -132,6 +132,11 @@ class Node(object):
 
 class CompNode(Node):
 
+    # comparing to None is allowed, is overidden in sublassess,
+    # as eg  None <= x or None >=x give hard to predict results
+    # and is very error prone
+    allowNone = True 
+
     def eval(self, ctx):
         lhs, ixl = self.left.eval(ctx)
         rhs, ixr = self.right.eval(ctx)
@@ -140,6 +145,14 @@ class CompNode(Node):
             return self.fastcomp(lhs, rhs, ixl), None
         if ixr != None and type(lhs) in _basic_num_types:
             return self.rfastcomp(lhs, rhs, ixr), None
+
+        if not self.allowNone:
+            if lhs == None or rhs==None:
+                raise Exception("comparing to None is not allowed")
+            if type(lhs) in [list, np.ndarray] and None in set(lhs):
+                raise Exception("comparing to None is not allowed")
+            if type(rhs) in [list, np.ndarray] and None in set(rhs):
+                raise Exception("comparing to None is not allowed")
 
         if isNumericList(lhs):
             lhs = np.array(lhs)
@@ -188,6 +201,7 @@ class LtNode(CompNode):
 
     symbol = "<"
     comparator = lambda self, a, b: a < b
+    allowNone = False
 
     def fastcomp(self, vec, refval, ix):
         i0 = lt(vec, refval)
@@ -202,6 +216,7 @@ class GtNode(CompNode):
 
     symbol = ">"
     comparator = lambda self, a, b: a > b
+    allowNone = False
 
     def fastcomp(self, vec, refval, ix):
         # ix not used, we know that vec is sorted
@@ -217,6 +232,7 @@ class LeNode(CompNode):
 
     symbol = "<="
     comparator = lambda self, a, b: a <= b
+    allowNone = False
 
     def fastcomp(self, vec, refval, ix):
         # ix not used, we know that vec is sorted
@@ -232,6 +248,7 @@ class GeNode(CompNode):
 
     symbol = ">="
     comparator = lambda self, a, b: a >= b
+    allowNone = False
 
     def fastcomp(self, vec, refval, ix):
         i0 = ge(vec, refval)

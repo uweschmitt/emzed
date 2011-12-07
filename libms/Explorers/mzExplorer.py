@@ -18,19 +18,14 @@ class MzExplorer(QDialog):
         self.setWindowFlags(Qt.Window)
 
     def setup(self, peakmap):
-
         self.processPeakmap(peakmap)
         self.setupPlotWidgets()
         self.setupInputWidgets()
         self.connectSignalsAndSlots()
         self.setupLayout()
-
         self.resetMzLimits()
         self.plotChromatogramm()
         self.plotMz()
-
-    def closeEvent(self, evt):
-        pass
 
     def processPeakmap(self, peakmap):
         self.peakmap = peakmap.filter(lambda s: s.msLevel == 1)
@@ -54,6 +49,8 @@ class MzExplorer(QDialog):
     def connectSignalsAndSlots(self):
         self.connect(self.selectButton, SIGNAL("clicked()"), self.selectButtonPressed)
         self.connect(self.resetButton, SIGNAL("clicked()"), self.resetButtonPressed)
+        self.connect(self.inputW2, SIGNAL("textEdited(QString)"), self.w2Updated)
+        self.connect(self.inputMZ, SIGNAL("textEdited(QString)"), self.mzUpdated)
 
     def selectButtonPressed(self):
         try:
@@ -61,7 +58,6 @@ class MzExplorer(QDialog):
             w2  = float(self.inputW2.text())
             self.minMZ= mz-w2
             self.maxMZ= mz+w2
-            #self.mzPlotter.setXAxisLimits(self.minMZ, self.maxMZ)
             self.updateChromatogram()
             self.plotChromatogramm()
         except Exception, e:
@@ -76,7 +72,7 @@ class MzExplorer(QDialog):
 
         self.updateChromatogram()
         self.plotChromatogramm()
-    
+
     def setupLayout(self):
         vlayout = QVBoxLayout()
         self.setLayout(vlayout)
@@ -106,24 +102,39 @@ class MzExplorer(QDialog):
 
         self.inputW2.setText("0.05")
 
+    def w2Updated(self, txt):
+        try:
+            self.mzPlotter.setHalfWindowWidth(float(txt))
+        except:
+            pass
+    def mzUpdated(self, txt):
+        txt = str(txt)
+        if txt.strip()=="":
+            self.mzPlotter.setCentralMz(None)
+            return
+        try:
+            self.mzPlotter.setCentralMz(float(txt))
+        except:
+            pass
+
     def handleCPressed(self, (mz, I)):
         self.inputMZ.setText("%.6f" % mz)
 
     def setupPlotWidgets(self):
         self.rtPlotter = RtPlotter(self.plotMz)
-        self.rtPlotter.setRtValues(self.rts)
-        self.mzPlotter = MzPlotter(self.peakmap, self.handleCPressed)
-
+        self.mzPlotter = MzPlotter(self.handleCPressed)
+        self.mzPlotter.setPeakMap(self.peakmap)
 
         self.rtPlotter.setMinimumSize(600, 300)
         self.mzPlotter.setMinimumSize(600, 300)
 
-        self.rtPlotter.setRangeSelectionLimits(self.rts[0], self.rts[0])
+        self.mzPlotter.setHalfWindowWidth(0.05)
+        self.mzPlotter.setCentralMz(None)
 
     def plotChromatogramm(self):
-        self.rtPlotter.plot(self.chromatogram)
-        self.rtPlotter.replot()
+        self.rtPlotter.plot([(self.rts, self.chromatogram)])
         self.rtPlotter.setYAxisLimits(0, max(self.chromatogram)*1.1)
+        self.rtPlotter.setRangeSelectionLimits(self.rts[0], self.rts[0])
 
     def plotMz(self):
         minRT = self.rtPlotter.minRTRangeSelected

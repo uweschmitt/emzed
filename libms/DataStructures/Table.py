@@ -3,9 +3,13 @@ import operator, copy, os, itertools, re, numpy, cPickle, sys, inspect
 from   ExpressionTree import Node, Column
 import numpy as np
 from   collections import Counter
+import types
 
 standardFormats = { int: "%d", long: "%d", float : "%.2f", str: "%s" }
 fms = "'%.2fm' % (o/60.0)"  # format seconds to floating point minutes
+
+class Bunch(dict):
+    __getattr__ = dict.__getitem__
 
 class _CmdLineProgress(object):
 
@@ -32,19 +36,17 @@ def commonTypeOfColumn(col):
         else:
             return float
 
-    types = set( type(c) for c in col )
-    if len(types)==0:
+    differentTypes = set( type(c) for c in col )
+    differentTypes.discard(types.NoneType)
+    if len(differentTypes)==0:
         return object
-    if str in types:
-        return str
-    if float in types:
-        return float
-    if int in types:
-        return int
-    if len(types) == 1:
-        # unknown types as dict, object, ...
-        return types.pop()
-    raise Exception("do not know how to find common type for different types %r" % types)
+    if len(differentTypes) == 1:
+        return differentTypes.pop()
+    differentTypes = set (type(bestConvert(c) for c in col ))
+    if len(differentTypes) == 1:
+        return differentTypes.pop()
+    raise Exception("do not know how to find common type for types %r"\
+                     % differentTypes)
 
 def bestConvert(val):
     try:
@@ -266,7 +268,7 @@ class Table(object):
 
         """
         if colName is None:
-            return dict( (n, self.get(row, n)) for n in self.colNames )
+            return Bunch( (n, self.get(row, n)) for n in self.colNames )
         return row[self.getIndex(colName)]
 
     def _getColumnCtx(self, needed):
