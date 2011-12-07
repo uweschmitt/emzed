@@ -6,7 +6,7 @@ from guiqwt.builder import make
 from guiqwt.label import ObjectInfo
 
 from ModifiedGuiQwtBehavior import *
-from Config import setupStyleRangeMarker, setupCommonStyle
+from Config import setupStyleRangeMarker, setupCommonStyle, setupStyleRtMarker
 
 from PyQt4.Qwt5 import QwtScaleDraw, QwtText
 
@@ -56,6 +56,15 @@ class PlotterBase(object):
     def replot(self):
         self.widget.plot.replot()
 
+class RtCursorInfo(ObjectInfo):
+    def __init__(self, marker):
+        self.marker = marker
+
+    def get_text(self):
+        rt = self.marker.xValue()
+        txt = "%.2fm" % (rt/60.0)
+        return txt
+
 class RtPlotter(PlotterBase):
 
     def __init__(self, rangeSelectionCallback = None):
@@ -77,6 +86,17 @@ class RtPlotter(PlotterBase):
         t = self.pm.add_tool(RtSelectionTool)
         self.addTool(RtSelectionTool)
         self.pm.set_default_tool(t)
+
+        marker = Marker(label_cb=self.widget.plot.label_info, constraint_cb=self.widget.plot.on_plot)
+        marker.rts = [0]
+        setupStyleRtMarker(marker)
+        marker.attach(self.widget.plot)
+        self.widget.plot.add_item(marker)
+        self.marker = marker
+
+        label = make.info_label("TL", [RtCursorInfo(marker)], title=None)
+        label.labelparam.label = ""
+        self.label=label
 
         self.minRTRangeSelected = None
         self.maxRTRangeSelected = None
@@ -101,8 +121,13 @@ class RtPlotter(PlotterBase):
             curve.__class__ = ModifiedCurveItem
             allrts.update(rts)
             self.widget.plot.add_item(curve)
+        allrts = sorted(allrts)
+        self.marker.rts = allrts
+        self.marker.attach(self.widget.plot)
+        self.widget.plot.add_item(self.label)
+        self.widget.plot.add_item(self.marker)
         self.widget.plot.replot()
-        self.addRangeSelector(sorted(allrts))
+        self.addRangeSelector(allrts)
 
     def addRangeSelector(self, rtvalues):
 

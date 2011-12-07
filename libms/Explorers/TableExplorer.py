@@ -56,6 +56,8 @@ class TableModel(QAbstractTableModel):
         if role == Qt.EditRole:
             colType = self.table.colTypes[cidx]
             if colType in [int, float, str]:
+                if shown.strip().endswith("m"):
+                    return shown
                 try:
                     colType(shown)
                     return shown
@@ -86,8 +88,12 @@ class TableModel(QAbstractTableModel):
             dataIdx = self.widgetColToDataCol[index.column()]
             expectedType = self.table.colTypes[dataIdx]
             if expectedType != object:
+                # QVariant -> QString -> str + strip:
+                value = str(value.toString()).strip()
+                if value.endswith("m"): # minutes
+                    value = 60.0 * float(value[:-1])
                 try:
-                    value = expectedType(value.toString())
+                    value = expectedType(value)
                 except Exception, e:
                     guidata.qapplication().beep()
                     return False
@@ -135,8 +141,7 @@ class TableExplorer(QDialog):
                                             "rtmin", "rtmax", "peakmap")
 
         self.isIntegrated = self.hasFeatures and \
-                            table.hasColumns("area", "rmse", "intbegin",
-                                             "intend")
+                            table.hasColumns("area", "rmse")
         self.table = table
         self.offerAbortOption = offerAbortOption
         self.currentRow = -1
@@ -182,16 +187,11 @@ class TableExplorer(QDialog):
             hsplitter.setOpaqueResize(False)
             hsplitter.addWidget(self.rtPlotter.widget)
 
-
-            vlayout2 = QVBoxLayout()
-            vlayout2.setSpacing(10)
-            vlayout2.setMargin(5)
             
-            vlayout2.addWidget(self.adaptRtButton)
-            vlayout2.setAlignment(self.adaptRtButton, Qt.AlignTop)
-            vlayout2.addSpacing(10)
-
             if self.isIntegrated:
+                vlayout2 = QVBoxLayout()
+                vlayout2.setSpacing(10)
+                vlayout2.setMargin(5)
                 vlayout2.addWidget(self.intLabel)
                 vlayout2.addWidget(self.chooseIntMethod)
                 vlayout2.addWidget(self.reintegrateButton)
@@ -200,8 +200,8 @@ class TableExplorer(QDialog):
                 vlayout2.setAlignment(self.chooseIntMethod, Qt.AlignTop)
                 vlayout2.setAlignment(self.reintegrateButton, Qt.AlignTop)
 
-            frame = QFrame()
-            frame.setLayout(vlayout2)
+                frame = QFrame()
+                frame.setLayout(vlayout2)
             #frame.setFrameStyle(QFrame.StyledPanel)
             hsplitter.addWidget(frame)
 
@@ -231,9 +231,6 @@ class TableExplorer(QDialog):
             self.rtPlotter.widget.setSizePolicy(pol)
             self.mzPlotter.widget.setSizePolicy(pol)
 
-            self.adaptRtButton = QPushButton()
-            self.adaptRtButton.setText("Adapt rt window")
-            self.connect(self.adaptRtButton, SIGNAL("clicked()"), self.adaptRt)
 
 
         self.tableView = QTableView(self)
@@ -316,17 +313,6 @@ class TableExplorer(QDialog):
     def intMethodChanged(self, i):
         pass
 
-    def adaptRt(self):
-        if self.currentRow < 0:
-            return # no row selected
-        row = self.model.getRow(self.currentRow)
-        rtmin, rtmax = self.rtPlotter.getRangeSelectionLimits()
-        self.model.set(self.currentRow, "rtmin", rtmin)
-        self.model.set(self.currentRow, "rtmax", rtmax)
-        self.model.set(self.currentRow, "rt", 0.5*(rtmin+rtmax)) # good choice ?
-        tl = self.model.createIndex(self.currentRow, 0)
-        tr = self.model.createIndex(self.currentRow, self.model.columnCount()-1)
-        self.model.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"), tl, tr)
 
     def doIntegrate(self):
         if self.currentRow < 0:
@@ -339,20 +325,19 @@ class TableExplorer(QDialog):
 
         row = self.model.getRow(self.currentRow)
 
-        intbegin, intend = self.rtPlotter.getRangeSelectionLimits()
+        rtmin, rtmax = self.rtPlotter.getRangeSelectionLimits()
 
         # integrate
-        res = integrator.integrate(row.mzmin, row.mzmax, intbegin, intend)
+        res = integrator.integrate(row.mzmin, row.mzmax, rtmin, rtmax)
         area = res["area"]
         rmse = res["rmse"]
         params = res["params"]
-        #intrts, smoothed = integrator.getSmoothed(self.currentRts, params)
 
         # write values to table
         t = self.table
         self.model.set(self.currentRow, "method", method)
-        self.model.set(self.currentRow, "intbegin", intbegin)
-        self.model.set(self.currentRow, "intend", intend)
+        self.model.set(self.currentRow, "rtmin", rtmin)
+        self.model.set(self.currentRow, "rtmax", rtmax)
         self.model.set(self.currentRow, "area", area)
         self.model.set(self.currentRow, "rmse", rmse)
         self.model.set(self.currentRow, "params", params)
@@ -362,7 +347,6 @@ class TableExplorer(QDialog):
         self.model.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"), tl, tr)
 
         self.updatePlots()
-        self.rtPlotter.setRangeSelectionLimits(intbegin, intend)
         self.rtPlotter.replot()
 
     def plotMz(self):
@@ -386,7 +370,6 @@ class TableExplorer(QDialog):
             self.updatePlots()
             rtmin = row.rtmin
             rtmax = row.rtmax
-            self.rtPlotter.setRangeSelectionLimits(rtmin, rtmax)
             w = rtmax - rtmin
             if w == 0:
                 w = 30.0 # seconds
@@ -424,6 +407,7 @@ class TableExplorer(QDialog):
             curves.append((intrts, smoothed))
 
         self.rtPlotter.plot(curves, self.plotconfigs)
+        self.rtPlotter.setRangeSelectionLimits(rtmin, rtmax)
 
 def inspect(table, offerAbortOption=False):
     app = guidata.qapplication()

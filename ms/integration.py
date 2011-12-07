@@ -33,16 +33,15 @@ def integrate(ftable, integratorid="std", showProgress = True):
 
     resultTable = ftable.buildEmptyClone()
 
-    newCols = [ "intbegin", "intend", "method", "area", "rmse", "params",]
+    newCols = [ "method", "area", "rmse", "params",]
     # drop columns which are integration related
     for col in newCols:
         if resultTable.hasColumn(col):
             resultTable.dropColumn(col)
 
     resultTable.colNames += newCols
-    resultTable.colTypes += [ float, float, str, float, float, object, ]
-    fmt = '''"%.2fm" % (o/60.0)'''
-    resultTable.colFormats += [ fmt, fmt, "%s", "%.2e", "%.2e", None, ]
+    resultTable.colTypes += [ str, float, float, object, ]
+    resultTable.colFormats += [ "%s", "%.2e", "%.2e", None, ]
 
     lastcent = -1
     for i, row in enumerate(ftable):
@@ -52,16 +51,16 @@ def integrate(ftable, integratorid="std", showProgress = True):
                 print cent*5,
                 sys.stdout.flush()
                 lastcent = cent
-        intbegin = ftable.get(row, "rtmin")
-        intend = ftable.get(row, "rtmax")
+        rtmin = ftable.get(row, "rtmin")
+        rtmax = ftable.get(row, "rtmax")
         mzmin = ftable.get(row, "mzmin")
         mzmax = ftable.get(row, "mzmax")
-        result = integrator.integrate(mzmin, mzmax, intbegin, intend)
+        result = integrator.integrate(mzmin, mzmax, rtmin, rtmax)
         # take existing values which are not integration realated:
         newrow = [ ftable.get(row, n) for n in resultTable.colNames\
                                       if n not in newCols]
-        newrow.extend([intbegin, intend, integratorid, result["area"],
-                       result["rmse"], result["params"], ])
+        newrow.extend([integratorid, result["area"], result["rmse"],\
+                       result["params"], ])
 
         resultTable.addRow(newrow)
 

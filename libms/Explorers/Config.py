@@ -32,6 +32,29 @@ def setupCommonStyle(line, marker):
    line.shapeparam.read_config(CONF, "plot", "shape/drag")
    line.shapeparam.update_shape(line)
 
+def setupStyleRtMarker(marker):
+   linecolor = "#909090"
+   edgeColor = "#005500"
+   faceColor = "#005500"
+   params = {
+       "marker/cross/symbol/marker": "Rect",
+       "marker/cross/symbol/size": 0,
+       "marker/cross/symbol/edgecolor": edgeColor,
+       "marker/cross/symbol/facecolor": faceColor,
+       "marker/cross/line/color" : linecolor,
+       "marker/cross/line/width": 1.0,
+       "marker/cross/line/style": "SolidLine",
+
+       "marker/cross/sel_symbol/size": 0,
+       "marker/cross/sel_line/color" : linecolor,
+       "marker/cross/sel_line/width": 1.0,
+       "marker/cross/sel_line/style": "SolidLine",
+       }
+   CONF.update_defaults(dict(plot=params))
+   marker.markerparam.read_config(CONF, "plot", "marker/cross")
+   marker.markerparam.update_marker(marker)
+
+
 def setupStyleRangeMarker(range_):
     params = {
              "range/line/style" : 'SolidLine',

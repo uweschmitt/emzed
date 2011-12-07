@@ -230,11 +230,12 @@ class RtPlot(ModifiedCurvePlot):
         item.move_point_to(1, (mid, 0), None)
         filter.plot.replot()
 
+
     def do_move_marker(self, evt):
-        """ called when mouse moving over canvas.
-            no extra actions in this plot
-        """
-        pass
+        marker = self.get_unique_item(Marker)
+        marker.move_local_point_to(0, evt.pos())
+        marker.setVisible(True)
+        self.replot()
 
     def move_selection_bounds(self, evt, filter_, selector):
         shift_pressed = evt.modifiers() == Qt.ShiftModifier
@@ -261,6 +262,20 @@ class RtPlot(ModifiedCurvePlot):
     def do_right_pressed(self, filter_, evt):
         self.move_selection_bounds(evt, filter_, lambda (a, b): b)
 
+    def label_info(self, x, y):
+        # label next to cursor turned off:
+        return None
+
+    def on_plot(self, x, y):
+        """ callback for marker: determine marked point based on cursors coordinates """
+        marker = self.get_unique_item(Marker)
+        rts = np.array(marker.rts)
+        if len(rts)==0:
+            return x, y
+        distances = np.abs(x-rts)
+        imin = np.argmin(distances)
+        self.current_peak = rts[imin], 0
+        return self.current_peak
 
 class MzPlot(ModifiedCurvePlot):
 
@@ -401,21 +416,6 @@ class ModifiedSegment(SegmentShape):
             painter.drawPolyline(other_points)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class SnappingRangeSelection(XRangeSelection):
 
     """ modification:
@@ -443,7 +443,7 @@ class SnappingRangeSelection(XRangeSelection):
     def move_point_to(self, hnd, pos, ctrl=True, emitsignal=True):
         xvals = self.get_xvals()
         x,y = pos
-    
+
         # modify pos to the next x-value
         # fast enough
         if len(xvals) > 0:
@@ -469,7 +469,7 @@ class SnappingRangeSelection(XRangeSelection):
 
     def get_neighbour_xvals(self, x):
         """ used for moving boundaries """
-    
+
         xvals = self.get_xvals()
         imin = np.argmin(np.fabs(x-xvals))
         if imin == 0: return xvals[0], xvals[1]
