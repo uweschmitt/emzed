@@ -302,3 +302,13 @@ def testSomeExpressions():
     tn = t.filter(t.mf.containsElement("Pb"))
     assert len(tn) == 3
 
+
+def testIfThenElse():
+    t = Table(["a", "b", "c"], [str, int, int], ["%s", "%d", "%d"],[])
+    t.rows.append(["0", 1, 2])
+    t.rows.append([None, 2, 1])
+    t._print()
+    t.addColumn("x", (t.a == None).thenElse(t.b, t.c))
+    t._print()
+
+

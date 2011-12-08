@@ -133,6 +133,9 @@ class Node(object):
     def approxEqual(self, what, tol):
         return self.inRange(what-tol, what+tol)
 
+    def thenElse(self, then, else_):
+        return IfThenElse(self, then, else_)
+
 
 class CompNode(Node):
 
@@ -489,6 +492,49 @@ class FunctionExpression(Node):
 
     def neededColumns(self):
         return self.child.neededColumns()
+
+
+
+class IfThenElse(Node):
+
+        def __init__(self, e1, e2, e3):
+            self.e1 = e1
+            self.e2 = e2
+            self.e3 = e3
+
+        def eval(self, ctx):
+            e1, _ = self.e1.eval(ctx)
+            e2, _ = self.e2.eval(ctx)
+            e3, _ = self.e3.eval(ctx)
+
+            size = self.evalsize(ctx)
+            if size == 1:
+                return e2 if e1 else e3, None
+            if not type(e1) in _iterables:
+                e1 = [ e1 ] * size
+            if not type(e2) in _iterables:
+                e2 = [ e2 ] * size
+            if not type(e3) in _iterables:
+                e3 = [ e3 ] * size
+
+            return [ e2i if e1i else e3i for (e1i, e2i, e3i)
+                     in zip(e1, e2, e3) ], None
+
+
+        def __str__(self):
+            return "%s(%s)" % (self.efunname, self.child)
+
+        def evalsize(self, ctx):
+            return max((self.e1.evalsize(ctx),
+                        self.e2.evalsize(ctx),
+                        self.e3.evalsize(ctx)))
+
+        def neededColumns(self):
+            return self.e1.neededColumns() \
+                   + self.e2.neededColumns() \
+                   + self.e3.neededColumns()
+
+
 
 def wrapFun(name):
     def wrapper(x):
