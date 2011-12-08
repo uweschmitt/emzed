@@ -60,6 +60,7 @@ class SimplifiedEMGIntegrator(PeakIntegrator):
             print "fit failed"
             area = 0
             rmse = 1.0/math.sqrt(len(rts))*np.linalg.norm(chromatogram)
+            param = 0, 0, 0, 0 # these params generate area=0
         else:
             smoothed = SimplifiedEMGIntegrator.__fun_eval(param, allrts)
             isnan = np.isnan(smoothed)

@@ -1,11 +1,28 @@
 
-def isotopeTable(mf, trunc=1e-3, probs=None):
-    import re
-    import math
+def singleIsotopeList(element, count):
+    import abundance
     import numpy as np
     #import scipy.signal
-    import itertools
-    from   collections import defaultdict
+    abundances = getattr(abundance, element)
+    vecsize = len(abundances)+10
+    vector  = np.zeros((vecsize,))
+    masses = sorted(abundances.keys())
+    m0 = masses[0]
+    for massnum in masses:
+        vector[massnum-m0] = abundances[massnum]
+
+    print vector
+    print np.fft.ifft(np.fft.fft(vector)**count).real
+    #r0 = scipy.signal.fftconvolve(r0, rn)
+
+
+
+
+
+def isotopeTable(mf, trunc=1e-3, probs=None):
+    import re
+    import numpy as np
+    #import scipy.signal
     from   libms.DataStructures.Table import Table
     atoms = re.findall("([CHNOPS])(\d*)", mf)
     flattened = []

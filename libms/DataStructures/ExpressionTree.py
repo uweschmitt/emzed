@@ -401,10 +401,10 @@ class LogicNode(Node):
             return np.array([bitop(l, ri) for ri in r])
         elif type(l) == list and type(r) == bool:
             return np.array([bitop(l, ri) for ri in r])
-        elif type(l) == type(r) == list:
-            return np.array([bitop(li, ri) for li,ri in zip(l,r)])
         elif type(l) == type(r) == np.ndarray:
             return bitop(l,r)
+        elif type(l) in _iterables and type(r) in _iterables:
+            return np.array([bitop(li, ri) for li,ri in zip(l,r)])
         raise Exception("bool op for %r and %r not defined" % (l, r))
 
 class AndNode(LogicNode):

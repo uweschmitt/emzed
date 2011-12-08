@@ -6,7 +6,7 @@ import installConstants
 
 e = 5.4857990946e-4
 p = 1.007276466812
-p = 1.00866491600
+n = 1.00866491600
 
 of = monoisotopicMass
 
