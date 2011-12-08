@@ -159,9 +159,9 @@ class TableExplorer(QDialog):
         self.setupLayout()
 
         #self.setMinimumHeight(600)
-        #sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        #self.setSizePolicy(sizePolicy)
-        #self.setSizeGripEnabled(True)
+        sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.setSizePolicy(sizePolicy)
+        self.setSizeGripEnabled(True)
 
     def paintEvent(self, *a):
         super(TableExplorer, self).paintEvent(*a)
@@ -169,7 +169,6 @@ class TableExplorer(QDialog):
         # enabling sort befor filling the table results in much slower
         # filling,
         if not self.tableView.isSortingEnabled():
-            print "paint hit"
             self.tableView.setSortingEnabled(True)
             self.tableView.resizeColumnsToContents()
 
@@ -202,8 +201,8 @@ class TableExplorer(QDialog):
 
                 frame = QFrame()
                 frame.setLayout(vlayout2)
-            #frame.setFrameStyle(QFrame.StyledPanel)
-            hsplitter.addWidget(frame)
+                #frame.setFrameStyle(QFrame.StyledPanel)
+                hsplitter.addWidget(frame)
 
             hsplitter.addWidget(self.mzPlotter.widget)
 
