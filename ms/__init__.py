@@ -1,5 +1,5 @@
 from load_utils import *
-from save_utils import *
+from store_utils import *
 from custom_dialogs import *
 from integration import *
 from shell_helpers import *
@@ -24,34 +24,34 @@ __builtins__["MASS_N"] = 1.00866491600
 # statements:
 try:
     del load_utils
-except: 
+except:
     pass
 try:
-    del save_utils
-except: 
+    del store_utils
+except:
     pass
 try:
     del custom_dialogs
-except: 
+except:
     pass
 try:
     del integration
-except: 
+except:
     pass
 try:
     del shell_helpers
-except: 
+except:
     pass
 try:
     del align
-except: 
+except:
     pass
 try:
     del isotope_calculator
-except: 
+except:
     pass
 try:
     del tools
-except: 
+except:
     pass
 

@@ -1,5 +1,5 @@
 
-def __fileDialog(startAt=None, onlyDirectories=False, anyFile=False, 
+def __fileDialog(startAt=None, onlyDirectories=False, anyFile=False,
                  multipleFiles=True, extensions=None, caption=None):
 
     import guidata

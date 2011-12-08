@@ -1,8 +1,11 @@
 
 
 def loadPeakMap(path=None):
+    """ loads mzXML, mzML and mzData files 
 
-    """ loads mzXML, mzML and mzData files """
+        If *path* is missing, a dialog for file selection is opened
+        instead.
+    """
 
     # local import in order to keep namespaces clean
     import ms
@@ -22,7 +25,11 @@ def loadPeakMap(path=None):
     return PeakMap.fromMSExperiment(experiment)
 
 def loadTable(path=None):
-    """ load pickled table """
+    """ load pickled table
+
+        If *path* is missing, a dialog for file selection is opened
+        instead.
+    """
 
     # local import in order to keep namespaces clean
     import ms
