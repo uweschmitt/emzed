@@ -1,9 +1,0 @@
-mz; mz_exact; rt; rtmin; rtmax; name; mode; url; error
-228.995813674; 229.010488384; 948.008972168; 714.0; 960.0; "D-Ribose 5-phosphate"; [M-H]-; http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?cid=77982&loc=ec_rcs; 0.0150626912863
-252.489482928; 252.489207234; 1113.14001465; 888.0; 1128.0; "Adenosine triphosphate"; [M-2H]--; http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?cid=5957&loc=ec_rcs; 0.0150626912863
-259.021401808; 259.021052984; 911.966003418; 714.0; 960.0; "Glucose 6-phosphate"; [M-H]-; http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?cid=208&loc=ec_rcs; 0.0150626912863
-275.016156379; 275.015967584; 1057.39001465; 840.0; 1080.0; "6-Phosphogluconic acid"; [M-H]-; http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?cid=91493&loc=ec_rcs; 0.0150626912863
-346.054249639; 346.054418784; 992.864990234; 768.0; 1008.0; "Adenosine monophosphate"; [M-H]-; http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?cid=6083&loc=ec_rcs; 0.0150626912863
-505.98617513; 505.987079384; 1115.07995605; 888.0; 1128.0; "Adenosine triphosphate"; [M-H]-; http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?cid=5957&loc=ec_rcs; 0.0150626912863
-505.986341641; 505.987079384; 1015.69000244; 888.0; 1128.0; "Adenosine triphosphate"; [M-H]-; http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?cid=5957&loc=ec_rcs; 0.0150626912863
-505.986398341; 505.987079384; 1049.51000977; 888.0; 1128.0; "Adenosine triphosphate"; [M-H]-; http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?cid=5957&loc=ec_rcs; 0.0150626912863
