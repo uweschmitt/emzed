@@ -42,7 +42,7 @@ def commonTypeOfColumn(col):
         return object
     if len(differentTypes) == 1:
         return differentTypes.pop()
-    differentTypes = set (type(bestConvert(c) for c in col ))
+    differentTypes = set (type(bestConvert(c)) for c in col )
     if len(differentTypes) == 1:
         return differentTypes.pop()
     raise Exception("do not know how to find common type for types %r"\
@@ -64,15 +64,17 @@ def _formatter(f):
     """ helper, is toplevel for supporting pickling of Table """
 
     if f is None:
-        def format(s):
+        def noneformat(s):
             return None
+        return noneformat
     elif f.startswith("%"):
-        def format(s, f=f):
+        def interpolationformat(s, f=f):
             return "-" if s is None else f % s
+        return interpolationformat
     else:
-        def format(s, f=f):
+        def evalformat(s, f=f):
             return "-" if s is None else eval(f, globals(), dict(o=s))
-    return format
+        return evalformat
 
 
 class Table(object):
