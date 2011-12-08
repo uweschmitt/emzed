@@ -1,12 +1,9 @@
-import pdb
 #encoding: utf-8
 
 from libms.DataStructures.Table import Table
 import ms
 import numpy as np
-import pickle, copy, os, re, sys
-import StringIO
-import difflib
+import pickle, os, re
 
 def testRunnerTable():
 
@@ -171,6 +168,7 @@ def run(t, colnames, rows):
     assert len(res) == len(t2), len(res)
 
     tx = tn.filter(tn.iii.isIn([1,4]))
+    tx._print()
     assert len(tx) == 1
     assert tx.iii.values == [1]
     
@@ -296,4 +294,11 @@ def testWithNoneValues():
 
     assert len(t.filter(t.i == None)) == 1
     assert len(t.filter(t.i != None)) == 2
+
+def testSomeExpressions():
+    t = ms.toTable(["Ag", "P", "Pb", "P3Pb", "PbP"], "mf")
+    tn = t.filter(t.mf.containsElement("P"))
+    assert len(tn) == 2
+    tn = t.filter(t.mf.containsElement("Pb"))
+    assert len(tn) == 3
 

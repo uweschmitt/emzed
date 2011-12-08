@@ -1,9 +1,5 @@
 import numpy as np
 import re
-import time
-import itertools
-import sys
-import math
 
 def le(a, x):
     return np.searchsorted(a, x, 'right')-1
@@ -111,7 +107,10 @@ class Node(object):
         return InvertNode(self)
 
     def neededColumns(self):
-        return self.left.neededColumns() + self.right.neededColumns()
+        lc = self.left.neededColumns()
+        if hasattr(self, "right"):
+            return lc + self.right.neededColumns()
+        return lc
 
     # some helper functions
     def startswith(self, other):
@@ -120,8 +119,13 @@ class Node(object):
     def contains(self, other):
         return BinaryExpression(self, other, lambda a,b: b in a, "%s.contains(%s)")
 
+    def containsElement(self, element):
+        return BinaryExpression(self, element,\
+               lambda a,b: b in re.findall("[A-Z][a-z]?\d*", a),\
+               "%s.containsElement(%s)")
+
     def isIn(self, li):
-        return IsIn(self, li)
+        return UnaryExpression(self, lambda a, b=li: a in b, "%%s.isIn(%s)"%li)
 
     def inRange(self, minv, maxv):
         return (self>=minv) & (self<=maxv)
@@ -448,7 +452,25 @@ class Value(Node):
     def neededColumns(self):
         return []
 
+
 class UnaryExpression(Node):
+
+    def __init__(self, left, efun, funname):
+        self.left = left
+        self.efun = efun
+        self.funname = funname
+
+    def eval(self, ctx):
+        vals, index = self.left.eval(ctx)
+        if type(vals) in _iterables:
+            return np.array([self.efun(v) for v in vals]), None
+        return self.efun(vals), None
+
+    def __str__(self):
+        return self.funname % self.left
+
+
+class FunctionExpression(Node):
 
     def __init__(self, efun, efunname, child):
         self.child = child
@@ -472,7 +494,7 @@ def wrapFun(name):
     def wrapper(x):
         origfun = getattr(np, name)
         if isinstance(x,Node):
-            return UnaryExpression(origfun, name,  x)
+            return FunctionExpression(origfun, name,  x)
         return origfun(x)
     return wrapper
 
@@ -514,20 +536,4 @@ class Column(Node):
         return [ (self.table, self.colname), ]
 
 
-class IsIn(Node):
-    def __init__(self, left, li):
-        self.left = left
-        self.li = li
-
-    def eval(self, ctx):
-        lhs, _ = self.left.eval(ctx)
-        if type(lhs) in _iterables:
-            return np.array([ l in self.li for l in lhs]), None
-        return lhs in self.li, None
-
-    def __str__(self):
-        return "%s isIn %s" % (str(self.left), self.li)
-
-    def neededColumns(self):
-        return self.left.neededColumns()
 
