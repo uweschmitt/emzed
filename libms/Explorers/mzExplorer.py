@@ -123,7 +123,6 @@ class MzExplorer(QDialog):
     def setupPlotWidgets(self):
         self.rtPlotter = RtPlotter(self.plotMz)
         self.mzPlotter = MzPlotter(self.handleCPressed)
-        self.mzPlotter.setPeakMap(self.peakmap)
 
         self.rtPlotter.setMinimumSize(600, 300)
         self.mzPlotter.setMinimumSize(600, 300)

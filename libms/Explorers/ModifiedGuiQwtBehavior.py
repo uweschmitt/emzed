@@ -451,7 +451,7 @@ class SnappingRangeSelection(XRangeSelection):
             imin = np.argmin(np.fabs(val-xvals))
             x = xvals[imin]
 
-        if 0 and self._min == self._max and not ctrl:
+        if self._min == self._max and not ctrl:
             self._min = x
             self._max = x
         else:

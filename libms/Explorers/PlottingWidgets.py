@@ -234,9 +234,6 @@ class MzPlotter(PlotterBase):
         widget.plot.add_item(label)
         widget.plot.add_item(line)
 
-    def setPeakMap(peakmap):
-        self.peakmap = peakmap 
-
     def setHalfWindowWidth(self, w2):
         self.widget.plot.set_half_window_width(w2)
 

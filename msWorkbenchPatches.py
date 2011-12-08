@@ -1,6 +1,5 @@
 # encoding: utf-8
-import sys
-import functools, inspect, sys
+import inspect, sys
 
 from config_logger import do_config
 do_config()
@@ -47,7 +46,6 @@ def patch_oedit():
 
         # for faster startup import appear not at top of file but here:
         import libms.Explorers
-        from  libms.gui.TableDialog import TableDialog
         import libms.DataStructures
 
         if isinstance(obj, libms.DataStructures.PeakMap):
@@ -56,11 +54,7 @@ def patch_oedit():
             return dlg, lambda x: x
 
         elif isinstance(obj, libms.DataStructures.Table):
-            dlg = libms.Explorers.TableExplorer(obj)
-            return dlg, lambda x: x
-
-        elif isinstance(obj, libms.DataStructures.Table):
-            dlg = TableDialog(obj)
+            dlg = libms.Explorers.TableExplorer(obj, False)
             return dlg, lambda x: x
 
         return objecteditor._orig_dialog_for(obj, obj_name)
@@ -206,7 +200,6 @@ def patch_external_shell():
     @replace(dicteditorutils.value_to_display, verbose=True)
     def  value_to_display(value, *a, **kw):
         import libms.DataStructures
-        import os.path
         trunc_len = kw.get("trunc_len", 80)
         truncate = kw.get("truncate", False)
         if isinstance(value, libms.DataStructures.PeakMap):

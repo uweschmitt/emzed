@@ -7,10 +7,8 @@ import guidata
 
 from PlottingWidgets import RtPlotter, MzPlotter
 
-import sys
 import numpy as np
 import configs
-import pprint
 import os
 
 
@@ -266,11 +264,12 @@ class TableExplorer(QDialog):
             self.result = 1 # default for closing
 
     def dataChanged(self, ix1, ix2):
-        row = ix1.row()
-        col = ix1.column()
-        if row == ix2.row() and col == ix2.column():
-            if row == self.currentRow:
-                self.updatePlots()
+        if self.hasFeatures:
+            row = ix1.row()
+            col = ix1.column()
+            if row == ix2.row() and col == ix2.column():
+                if row == self.currentRow:
+                    self.updatePlots()
 
     def abort(self):
         self.result = 1
@@ -333,7 +332,6 @@ class TableExplorer(QDialog):
         params = res["params"]
 
         # write values to table
-        t = self.table
         self.model.set(self.currentRow, "method", method)
         self.model.set(self.currentRow, "rtmin", rtmin)
         self.model.set(self.currentRow, "rtmax", rtmax)
