@@ -177,7 +177,7 @@ def run(t, colnames, rows):
     assert len(tn) == 3
     assert len(tn.colNames) == 3
     assert "li" in tn.colNames
-
+    
     tn.addRow([1, 1, 1])
     assert len(tn) == 4
 
@@ -244,9 +244,9 @@ def testDetectionOfUnallowdColumnNames():
 
 
 def testWithEmtpyTables():
-    e = ms.toTable([], "x")
-    f = ms.toTable([], "y")
-    g = ms.toTable([1], "z")
+    e = ms.toTable("x", [])
+    f = ms.toTable("y", [])
+    g = ms.toTable("z", [1])
 
     assert len(e.filter(e.x == 0)) == 0
     t1 = e.join(f, f.y == e.x)
@@ -283,7 +283,7 @@ class ExceptionTester(object):
         return True # suppress exceptoin
 
 def testWithNoneValues():
-    t = ms.toTable([1,2,None], "i")
+    t = ms.toTable("i", [1,2,None])
     with ExceptionTester(Exception):
         t.filter(t.i >=1)._print()
     with ExceptionTester(Exception):
@@ -297,7 +297,7 @@ def testWithNoneValues():
     assert len(t.filter(t.i != None)) == 2
 
 def testSomeExpressions():
-    t = ms.toTable(["Ag", "P", "Pb", "P3Pb", "PbP"], "mf")
+    t = ms.toTable("mf", ["Ag", "P", "Pb", "P3Pb", "PbP"])
     tn = t.filter(t.mf.containsElement("P"))
     assert len(tn) == 2
     tn = t.filter(t.mf.containsElement("Pb"))
@@ -342,6 +342,32 @@ def testDynamicColumnAttributes():
         raise Exception("t.aa should be deteted")
     except:
         pass
+
+
+def testSplitBy():
+    t = ms.toTable("a", [1,1,3,4])
+    t.addColumn("b", [1,1,3,3])
+    t.addColumn("c", [1,2,1,4])
+    t._print()
+    subts = t.splitBy("a")
+    assert len(subts) == 3
+    res = ms.mergeTables(subts)
+    assert len(res) == len(t)
+    subts[0]._print()
+    assert res.a.values == t.a.values
+    assert res.b.values == t.b.values
+    assert res.c.values == t.c.values
+
+    subts = t.splitBy("a", "c")
+    assert len(subts) == 4
+    res = ms.mergeTables(subts)
+    assert res.a.values == t.a.values
+    assert res.b.values == t.b.values
+    assert res.c.values == t.c.values
+
+
+
+    
 
 
 
