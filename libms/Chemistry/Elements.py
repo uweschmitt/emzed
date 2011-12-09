@@ -65,6 +65,10 @@ class Elements(Table):
                                            title="Elements")
             self.sortBy("number")
 
+        # borg pattern is shit for columns which hold a reference to the
+        # table which might change, but the columns stay the same !!!
+        self.resetInternals()
+
 
 class MonoIsotopicElements(Table):
 
@@ -94,6 +98,10 @@ class MonoIsotopicElements(Table):
             self.renameColumns(mass="m0")
             self.dropColumn("abundance")
             self.sortBy("number")
+
+        # borg pattern is shit for columns which hold a reference to the
+        # table which might change, but the columns stay the same !!!
+        self.resetInternals()
 
     def buildSymbolIndex(self):
         symbols = self.symbol.values
