@@ -371,7 +371,3 @@ def testConstantColumn():
     assert len(set(id(x) for x in t.b.values)) == 1
 
 
-    
-
-
-
