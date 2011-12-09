@@ -296,6 +296,13 @@ def testWithNoneValues():
     assert len(t.filter(t.i == None)) == 1
     assert len(t.filter(t.i != None)) == 2
 
+    t.addColumn("b", [2,3,None])
+    t.replaceColumn("b", t.b+1)
+
+    t.addRow([None, None])
+    t.addRow([3, None])
+    t.addRow([3, 3.0])
+
 def testSomeExpressions():
     t = ms.toTable("mf", ["Ag", "P", "Pb", "P3Pb", "PbP"])
     tn = t.filter(t.mf.containsElement("P"))
@@ -369,5 +376,6 @@ def testConstantColumn():
     t = ms.toTable("a",[1,2,3])
     t.addConstantColumn("b", dict())
     assert len(set(id(x) for x in t.b.values)) == 1
+
 
 
