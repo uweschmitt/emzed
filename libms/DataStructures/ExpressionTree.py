@@ -553,22 +553,46 @@ sqrt = wrapFun("sqrt")
 
 class Column(Node):
 
-    def __init__(self, table, colname, values):
+    def __init__(self, table, colname, idx):
         self.table = table
         self.colname = colname
-        self.values = values
+        self.idx = idx
+
+    def _setupValues(self):
+        # delayed lazy evaluation
+        if not hasattr(self, "values"):
+            self.values = [ row[self.idx] for row in self.table.rows ]
+
+    def __getattr__(self, name):
+        if name == "values":
+            self._setupValues()
+            return self.values
+        raise AttributeError("%s has no attribute %s" % (self, name))
+
+    def __getstate__(self):
+        dd = self.__dict__.copy()
+        if "values" in dd:
+            del dd["values"]
+        return dd
+
+    def __setstate__(self, dd):
+        self.__dict__ = dd
 
     def __iter__(self):
+        self._setupValues()
         return iter(self.values)
-
-    def getValues(self):
-        return self.values
 
     def eval(self, ctx):
         cx = ctx[self.table]
         return cx[self.colname]
 
     def __str__(self):
+        if not hasattr(self, "colname"):
+            raise Exception("colname missing")
+        if not hasattr(self, "table"):
+            raise Exception("table missing")
+        if not hasattr(self.table, "_name"):
+            raise Exception("table._name missing")
         return "%s.%s" % (self.table._name, self.colname)
 
     def evalsize(self, ctx):

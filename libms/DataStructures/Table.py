@@ -77,6 +77,10 @@ def _formatter(f):
         return evalformat
 
 
+
+
+
+
 class Table(object):
     """
     A table holds rows of the same lenght. Each Column of the table has
@@ -110,7 +114,6 @@ class Table(object):
         else:
             rows = []
         self.colNames = list(colNames)
-        self._updateIndices()
 
         self.colTypes = list(colTypes)
 
@@ -119,14 +122,12 @@ class Table(object):
                   "is not a good idea.\nTable operations may crash"
 
         self.colFormats = [None if f=="" else f for f in colFormats]
-        self._setupFormatters()
 
         self.rows = rows
         self.title = title
         self.meta = copy.copy(meta) if meta is not None else dict()
 
         self.primaryIndex = {}
-        self._emptyColumnCache()
         self._name = str(self)
 
         self.editableColumns = set()
@@ -138,6 +139,8 @@ class Table(object):
         for name in colNames:
             if name in self.__dict__ or name in memberNames:
                 raise Exception("colName %s not allowed" % name)
+
+        self.resetInternals()
 
     def addRow(self, row):
         """ adds a new row to the table, checks if values in row are of
@@ -156,9 +159,6 @@ class Table(object):
 
     def isEditable(self, colName):
         return colName in self.editableColumns
-
-    def _emptyColumnCache(self):
-        self.columnCache = dict()
 
     def _updateIndices(self):
         self.colIndizes = dict((n, i) for i, n in enumerate(self.colNames))
@@ -180,39 +180,33 @@ class Table(object):
     def _setupFormatters(self):
         self.colFormatters = [_formatter(f) for f in self.colFormats ]
 
-    def __getattr__(self, name):
-        if name in self.colNames:
-            return self.getColumn(name)
-        raise AttributeError("%s has no attribute %s" % (self, name))
 
     def getColumn(self, name):
         """ returns Column object for column *name*.
             to get the values of the colum you can use
             ``table.getColumn("index").values``
         """
-        if name in self.columnCache:
-            return self.columnCache[name]
-        ix = self.getIndex(name)
-        values = [ row[ix] for row in self.rows ]
-        rv = Column(self, name, values)
-        self.columnCache[name] = rv
-        return rv
+        return getattr(self, name)
+
+
+    def _setupColumnAttributes(self):
+        for name in self.colNames:
+            ix = self.getIndex(name)
+            col = Column(self, name, ix)
+            setattr(self, name, col)
 
     def __getstate__(self):
         """ for pickling. """
         dd = self.__dict__.copy()
         # self.colFormatters can not be pickled
         del dd["colFormatters"]
-        # for effiency:
-        del dd["columnCache"]
+        for name in self.colNames:
+            del dd[name]
         return dd
 
     def __setstate__(self, dd):
         self.__dict__ = dd
         self.resetInternals()
-        # version upgrade
-        if "editableColumns" not in dd:
-            self.editableColumns = set()
 
     def __iter__(self):
         """ returns iterator over rows """
@@ -275,7 +269,7 @@ class Table(object):
 
     def _getColumnCtx(self, needed):
         names = [ n for (t,n) in needed if t==self ]
-        return dict((n, (self.getColumn(n).getValues(),
+        return dict((n, (self.getColumn(n).values,
                          self.primaryIndex.get(n))) for n in names)
 
     def addEnumeration(self, colname="id"):
@@ -326,8 +320,6 @@ class Table(object):
             self.primaryIndex = {colName: True}
         else:
             self.primaryIndex = {}
-        self._emptyColumnCache()
-
 
     def copy(self):
         """ returns a deep copy of the table """
@@ -351,6 +343,8 @@ class Table(object):
         for k in kw.keys():
             if k not in self.colNames:
                 raise Exception("colum %s does not exist" % k)
+        for name in self.colNames:
+            delattr(self, name)
         self.colNames = [ kw.get(n,n) for n in self.colNames]
         self.resetInternals()
 
@@ -409,6 +403,7 @@ class Table(object):
         """ removes a column with given *name* from the table.
             Works **inplace**
         """
+        delattr(self, name)
         ix = self.getIndex(name)
         del self.colNames[ix]
         del self.colFormats[ix]
@@ -566,15 +561,7 @@ class Table(object):
         """
         self._setupFormatters()
         self._updateIndices()
-        self._emptyColumnCache()
-
-    def unique(self):
-        raise Exception("does not work")
-        rv = self.buildEmptyClone()
-        # rows as tuples, set does not like unhashable lists as elements
-        rows = set( tuple(row) for row in self.rows )
-        rv.rows = list(rows)
-        return rv
+        self._setupColumnAttributes()
 
     def filter(self, expr, debug = False):
         """builds a new table with columns selected according to *expr*. Eg ::

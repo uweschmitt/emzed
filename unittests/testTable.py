@@ -22,7 +22,8 @@ def testRunnerTable():
 
     run(t, names, [row1, row2, row3])
     # test pickle
-    t = pickle.loads(pickle.dumps(t))
+    dat = pickle.dumps(t)
+    t = pickle.loads(dat)
     run(t, names, [row1, row2, row3])
     ms.storeTable(t, "temp_output/test.table")
     t = ms.loadTable("temp_output/test.table")
@@ -310,5 +311,37 @@ def testIfThenElse():
     t._print()
     t.addColumn("x", (t.a == None).thenElse(t.b, t.c))
     t._print()
+
+
+def testDynamicColumnAttributes():
+    t = Table(["a", "b", "c"], [str, int, int], ["%s", "%d", "%d"],[])
+    t.a
+    t.b
+    t.c
+    assert len(t.a.values) == 0
+    assert len(t.b.values) == 0
+    assert len(t.c.values) == 0
+
+    t.renameColumns(a="aa")
+    assert "a" not in t.colNames
+    assert "aa"  in t.colNames
+    t.aa
+    try:
+        t.a
+        raise Exception("t.a should be deteted")
+    except:
+        pass
+
+    col = pickle.loads(pickle.dumps(t.aa))
+    assert len(col.values) == 0
+
+    t.dropColumn("aa")
+    assert "aa" not in t.colNames
+    try:
+        t.aa
+        raise Exception("t.aa should be deteted")
+    except:
+        pass
+
 
 
