@@ -3,7 +3,6 @@ import operator, copy, os, itertools, re, numpy, cPickle, sys, inspect
 from   ExpressionTree import Node, Column
 import numpy as np
 from   collections import Counter
-import types
 
 standardFormats = { int: "%d", long: "%d", float : "%.2f", str: "%s" }
 fms = "'%.2fm' % (o/60.0)"  # format seconds to floating point minutes
@@ -37,7 +36,7 @@ def commonTypeOfColumn(col):
             return float
 
     differentTypes = set( type(c) for c in col )
-    differentTypes.discard(types.NoneType)
+    differentTypes.discard(type(None))
     if len(differentTypes)==0:
         return object
     if len(differentTypes) == 1:

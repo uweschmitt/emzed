@@ -21,7 +21,7 @@ def isNumericList(li):
     if not isinstance(li, list):
         return False
     innertypes = set(type(item) for item in li)
-    innertypes.discard(None)
+    innertypes.discard(type(None))
     return all(i in _basic_num_types for i in innertypes)
 
 class Node(object):
@@ -142,16 +142,11 @@ class CompNode(Node):
     # comparing to None is allowed, is overidden in sublassess,
     # as eg  None <= x or None >=x give hard to predict results
     # and is very error prone
-    allowNone = True 
+    allowNone = True
 
     def eval(self, ctx):
         lhs, ixl = self.left.eval(ctx)
         rhs, ixr = self.right.eval(ctx)
-
-        if ixl != None and type(rhs) in _basic_num_types:
-            return self.fastcomp(lhs, rhs, ixl), None
-        if ixr != None and type(lhs) in _basic_num_types:
-            return self.rfastcomp(lhs, rhs, ixr), None
 
         if not self.allowNone:
             if lhs == None or rhs==None:
@@ -160,6 +155,11 @@ class CompNode(Node):
                 raise Exception("comparing to None is not allowed")
             if type(rhs) in [list, np.ndarray] and None in set(rhs):
                 raise Exception("comparing to None is not allowed")
+
+        if ixl != None and type(rhs) in _basic_num_types:
+            return self.fastcomp(lhs, rhs, ixl), None
+        if ixr != None and type(lhs) in _basic_num_types:
+            return self.rfastcomp(lhs, rhs, ixr), None
 
         if isNumericList(lhs):
             lhs = np.array(lhs)
@@ -310,12 +310,20 @@ class BinaryExpression(Node):
         rval, idxr = self.right.eval(ctx)
 
         if isNumericList(lval):
-                lval = np.array(lval)
+            lval = np.array(lval)
         if isNumericList(rval):
             rval = np.array(rval)
 
         if type(lval) in _basic_num_types and type(rval) == np.ndarray:
+            # numpy does not like [None, 1] + 1, which should be [None,
+            # 2] in my opinion. so :
+            # == None does not work, but None <= x for all values
+            if self.symbol in "+-*/":
+                indicesNone = rval <= None
+                rval[indicesNone] = 1.0  # 1.0 works for all operations
             res = self.efun(lval, rval)
+            if self.symbol in "+-*/":
+                res[indicesNone] = None
             # order preserving operations keep index idxr
             # c + vec, c * vec and c>0, c/vec and c<0 kepp order of vec
             # c - vec destroys it:
@@ -326,6 +334,15 @@ class BinaryExpression(Node):
             return res, None
 
         if  type(lval) == np.ndarray and type(rval) in _basic_num_types:
+            # numpy does not like [None, 1] + 1, which should be [None,
+            # 2] in my opinion. so :
+            # == None does not work, but None <= x for all values
+            if self.symbol in "+-*/":
+                indicesNone = lval <= None
+                lval[indicesNone] = 1.0  # 1.0 works for all operations
+            res = self.efun(lval, rval)
+            if self.symbol in "+-*/":
+                res[indicesNone] = None
             res = self.efun(lval, rval)
             # order preserving operations keep index idxr
             # vec +/- c, vec */ c and c>0 keep order of vec
@@ -349,7 +366,6 @@ class BinaryExpression(Node):
             res = self.efun(lval, rval)
             return self.efun(lval, rval), None
 
-        # all other variation (eg str, ...): 
         if type(lval) == list and type(rval) == list:
             if len(lval) != len(rval):
                 raise Exception("sizes do not fit !")
@@ -361,9 +377,8 @@ class BinaryExpression(Node):
                 raise Exception("sizes do not fit !")
             return np.array([ self.efun(l,r) for (l,r) in zip(lval,rval) ]), None
 
-        print lval, rval
         assert type(lval) in _basic_types and type(rval) in _basic_types
-        return [self.efun(lval, rval)], None
+        return self.efun(lval, rval), None
 
 
 class InvertNode(Node):
@@ -583,7 +598,10 @@ class Column(Node):
         return iter(self.values)
 
     def eval(self, ctx):
-        cx = ctx[self.table]
+        cx = ctx.get(self.table)
+        if cx is None:
+            raise Exception("context not correct. "\
+                            "did you use wrong table in expression ?")
         return cx[self.colname]
 
     def __str__(self):
