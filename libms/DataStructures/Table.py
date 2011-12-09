@@ -2,7 +2,6 @@ import pyOpenMS as P
 import operator, copy, os, itertools, re, numpy, cPickle, sys, inspect
 from   ExpressionTree import Node, Column
 import numpy as np
-import types
 from   collections import Counter
 
 standardFormats = { int: "%d", long: "%d", float : "%.2f", str: "%s" }
@@ -442,12 +441,16 @@ class Table(object):
             else:
                 raise Exception("can not join object %r" % table)
 
-        decls = set((tuple(t.colNames), tuple(t.colTypes)) for t in alltables)
-        if len(decls)>1:
-            pass
+        names = set((tuple(t.colNames)) for t in alltables)
+        if len(names)>1:
+            raise Exception("the columNames do not match")
 
+        types = set((tuple(t.colTypes)) for t in alltables)
+        if len(types)>1:
+            raise Exception("the columTypes do not match")
 
-
+        for t in alltables:
+            self.rows.extend(t.rows)
 
     def addColumn(self, name, what, type_=None, format="", insertBefore=None):
         """
@@ -472,6 +475,8 @@ class Table(object):
         """
         assert isinstance(name, str) or isinstance(name, unicode),\
                "colum name is not a  string"
+
+        import types
 
         if type_ is not None:
             assert isinstance(type_, type), "type_ param is not a type"
@@ -585,6 +590,9 @@ class Table(object):
         self.colTypes[ix] = t
         self.colFormats[ix] = f
         for row, v in zip(self.rows, values):
+            if t==object or v is None:
+                row[ix] = v
+            else:
                 row[ix] = t(v)
 
         self.resetInternals()
