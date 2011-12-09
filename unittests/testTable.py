@@ -302,6 +302,7 @@ def testWithNoneValues():
     t.addRow([None, None])
     t.addRow([3, None])
     t.addRow([3, 3.0])
+    assert t.b.values == [ 3, 4, None, None, None, 3]
 
 def testSomeExpressions():
     t = ms.toTable("mf", ["Ag", "P", "Pb", "P3Pb", "PbP"])
