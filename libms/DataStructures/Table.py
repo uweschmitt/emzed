@@ -141,6 +141,26 @@ class Table(object):
 
         self.resetInternals()
 
+    def info(self):
+        print
+        print "table info:"
+        print
+        print "  #rows =", len(self)
+        print
+        for i, p in enumerate(zip(self.colNames, self.colTypes,\
+                              self.colFormats)):
+            vals = getattr(self, p[0]).values
+            nones = sum( 1 for v in vals if v is None )
+            if nones == 0:
+                txt = "[no Nones]"
+            elif nones == 1:
+                txt = "[1 None]"
+            else:
+                txt = "[%d Nones]" % nones
+            print "   col #%-2d %-7s: %-10s %-15r %r" % ((i,txt)+p)
+        print
+
+
     def addRow(self, row):
         """ adds a new row to the table, checks if values in row are of
             expected type or can be converted to this type """
@@ -150,7 +170,7 @@ class Table(object):
         for i, (v, t) in enumerate(zip(row, self.colTypes)):
             if t!= object and v is not None:
                 try:
-                    t(v)
+                    row[i] = t(v)
                 except:
                     raise Exception("value %r in col %d can not be converted "\
                                     "to type %s" % (v, i, t))
@@ -567,7 +587,7 @@ class Table(object):
         return self._addColumn(name, [value]*len(self), type_, format,
                               insertBefore)
 
-    def replaceColumn(self, name, expr, format=None):
+    def replaceColumn(self, name, expr, format=None, type=None):
         """as *Table.addColumn*, but replaces a given column. Eg::
 
                  table.replaceColumn("mzmin", table.mzmin*0.9)
@@ -588,7 +608,10 @@ class Table(object):
         values, _ = expr.eval(ctx)
         if isinstance(values, np.ndarray):
             values = values.tolist()
-        t = commonTypeOfColumn(values)
+        if type is None:
+            t = commonTypeOfColumn(values)
+        else:
+            t = type
 
         if t == oldtype and format is None:
             f = self.colFormats[ix]
