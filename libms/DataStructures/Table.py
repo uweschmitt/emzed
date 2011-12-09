@@ -2,6 +2,7 @@ import pyOpenMS as P
 import operator, copy, os, itertools, re, numpy, cPickle, sys, inspect
 from   ExpressionTree import Node, Column
 import numpy as np
+import types
 from   collections import Counter
 
 standardFormats = { int: "%d", long: "%d", float : "%.2f", str: "%s" }
@@ -411,6 +412,43 @@ class Table(object):
             del row[ix]
         self.resetInternals()
 
+    def _splitBy(self, *colNames):
+        for name in colNames:
+            self.requireColumn(name)
+
+        groups = set()
+        for row in self.rows:
+            key = tuple( self.get(row, n) for n in colNames)
+            groups.add(key)
+
+        subTables = dict()
+        for row in self.rows:
+            key = tuple( self.get(row, n) for n in colNames)
+            if key not in subTables:
+                subTables[key] = self.buildEmptyClone()
+            subTables[key].rows.append(row)
+        splitedTables = subTables.values()
+        for table in splitedTables:
+            table.resetInternals()
+        return splitedTables
+
+    def _append(self, table, *tables):
+        alltables = []
+        for table in [table] + tables:
+            if type(table) == list:
+                alltables.extend(table)
+            elif isinstance(table, Table):
+                alltables.append(table)
+            else:
+                raise Exception("can not join object %r" % table)
+
+        decls = set((tuple(t.colNames), tuple(t.colTypes)) for t in alltables)
+        if len(decls)>1:
+            pass
+
+
+
+
     def addColumn(self, name, what, type_=None, format="", insertBefore=None):
         """
         adds a column **inplace**.
@@ -448,7 +486,7 @@ class Table(object):
             return self._addColumnByCallback(name, what, type_, format,
                                              insertBefore)
 
-        if hasattr(what, "__iter__"):
+        if type(what) in [list, tuple, types.GeneratorType, np.array]:
             return self._addColumFromIterable(name, what, type_, format,
                                               insertBefore)
 
@@ -547,7 +585,7 @@ class Table(object):
         self.colTypes[ix] = t
         self.colFormats[ix] = f
         for row, v in zip(self.rows, values):
-            row[ix] = t(v)
+                row[ix] = t(v)
 
         self.resetInternals()
 

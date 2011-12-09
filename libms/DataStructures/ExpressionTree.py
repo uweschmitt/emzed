@@ -151,7 +151,8 @@ class CompNode(Node):
         if not self.allowNone:
             if lhs == None or rhs==None:
                 raise Exception("comparing to None is not allowed")
-            if type(lhs) in [list, np.ndarray] and None in set(lhs):
+            # None in np.array does not work ! so
+            if type(lhs) == list and None in lhs or type(lhs)==np.ndarray and None in set(lhs):
                 raise Exception("comparing to None is not allowed")
             if type(rhs) in [list, np.ndarray] and None in set(rhs):
                 raise Exception("comparing to None is not allowed")
@@ -322,8 +323,18 @@ class BinaryExpression(Node):
                 indicesNone = rval <= None
                 rval[indicesNone] = 1.0  # 1.0 works for all operations
             res = self.efun(lval, rval)
-            if self.symbol in "+-*/":
-                res[indicesNone] = None
+            # np.any is needed, as res[indicesNone] = None raises
+            # exception even if there was no None in rval, that is
+            # any(indicesNone) is false
+            if self.symbol in "+-*/" and np.any(indicesNone):
+                try:
+                    res[indicesNone] = None
+                except:
+                    # trick: tolist converts all diff np types to
+                    # corresponding python type:
+                    raise Exception("None for columnType %s not allowed"\
+                                    % type(res[0].tolist()))
+
             # order preserving operations keep index idxr
             # c + vec, c * vec and c>0, c/vec and c<0 kepp order of vec
             # c - vec destroys it:
@@ -341,9 +352,17 @@ class BinaryExpression(Node):
                 indicesNone = lval <= None
                 lval[indicesNone] = 1.0  # 1.0 works for all operations
             res = self.efun(lval, rval)
-            if self.symbol in "+-*/":
-                res[indicesNone] = None
-            res = self.efun(lval, rval)
+            # np.any is needed, as res[indicesNone] = None raises
+            # exception even if there was no None in rval, that is
+            # any(indicesNone) is false
+            if self.symbol in "+-*/" and np.any(indicesNone):
+                try:
+                    res[indicesNone] = None
+                except:
+                    # trick: tolist converts all diff np types to 
+                    # corresponding python type:
+                    raise Exception("None for columnType %s not allowed"\
+                                    % type(res[0].tolist()))
             # order preserving operations keep index idxr
             # vec +/- c, vec */ c and c>0 keep order of vec
             if self.symbol in "+-" or (self.symbol in "*/" and rval > 0):
