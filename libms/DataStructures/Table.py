@@ -1,8 +1,8 @@
 import pyOpenMS as P
 import operator, copy, os, itertools, re, numpy, cPickle, sys, inspect
-from   ExpressionTree import Node, Column
+from   ExpressionTree import Node, Column, _basic_types
 import numpy as np
-from   collections import Counter
+from   collections import Counter, OrderedDict
 
 standardFormats = { int: "%d", long: "%d", float : "%.2f", str: "%s" }
 fms = "'%.2fm' % (o/60.0)"  # format seconds to floating point minutes
@@ -411,7 +411,7 @@ class Table(object):
             del row[ix]
         self.resetInternals()
 
-    def _splitBy(self, *colNames):
+    def splitBy(self, *colNames):
         for name in colNames:
             self.requireColumn(name)
 
@@ -420,7 +420,8 @@ class Table(object):
             key = tuple( self.get(row, n) for n in colNames)
             groups.add(key)
 
-        subTables = dict()
+        # preserve order of rows
+        subTables = OrderedDict()
         for row in self.rows:
             key = tuple( self.get(row, n) for n in colNames)
             if key not in subTables:
@@ -431,9 +432,9 @@ class Table(object):
             table.resetInternals()
         return splitedTables
 
-    def _append(self, table, *tables):
+    def append(self, table0, *tables):
         alltables = []
-        for table in [table] + tables:
+        for table in (table0,) + tables:
             if type(table) == list:
                 alltables.extend(table)
             elif isinstance(table, Table):
@@ -448,9 +449,9 @@ class Table(object):
         types = set((tuple(t.colTypes)) for t in alltables)
         if len(types)>1:
             raise Exception("the columTypes do not match")
-
         for t in alltables:
             self.rows.extend(t.rows)
+        self.resetInternals()
 
     def addColumn(self, name, what, type_=None, format="", insertBefore=None):
         """
@@ -530,10 +531,13 @@ class Table(object):
             self.colTypes.append(type_)
             self.colFormats.append(format)
             for row, v in zip(self.rows, values):
-                try:
-                    row.append(type_(v))
-                except:
-                    row.append(v)  # type == object is not callable
+                if type_ is not None and type_ in _basic_types:
+                    try:
+                        row.append(type_(v))
+                    except:
+                        row.append(v)  # type == object is not callable
+                else:
+                    row.append(v)
         else:
             if isinstance(insertBefore, str):
                 if insertBefore not in self.colNames:
@@ -553,6 +557,13 @@ class Table(object):
         """
         see addColumn
         """
+
+        if type_ is not None:
+            assert isinstance(type_, type), "type_ param is not a type"
+
+        if name in self.colNames:
+            raise Exception("column with name %s already exists" % name)
+
         return self._addColumn(name, [value]*len(self), type_, format,
                               insertBefore)
 
