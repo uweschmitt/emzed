@@ -148,7 +148,7 @@ class Table(object):
         assert len(row) == len(self.colNames)
         # check for conversion !
         for i, (v, t) in enumerate(zip(row, self.colTypes)):
-            if t!= object:
+            if t!= object and v is not None:
                 try:
                     t(v)
                 except:
