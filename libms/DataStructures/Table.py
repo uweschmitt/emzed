@@ -431,6 +431,20 @@ class Table(object):
             del row[ix]
         self.resetInternals()
 
+    def dropColumns(self, *names):
+        """ removes a column with given *name* from the table.
+            Works **inplace**
+        """
+        for name in names:
+            delattr(self, name)
+            ix = self.getIndex(name)
+            del self.colNames[ix]
+            del self.colFormats[ix]
+            del self.colTypes[ix]
+            for row in self.rows:
+                del row[ix]
+        self.resetInternals()
+
     def splitBy(self, *colNames):
         for name in colNames:
             self.requireColumn(name)

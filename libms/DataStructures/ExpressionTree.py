@@ -104,8 +104,7 @@ class Node(object):
         return XorNode(self, other)
 
     def __invert__(self):
-        return UnaryExpression(self, lambda a: ~a, "not %s")
-        return InvertNode(self)
+        return UnaryExpression(self, lambda a: not a, "not %s")
 
     def neededColumns(self):
         lc = self.left.neededColumns()
@@ -590,6 +589,10 @@ exp = wrapFun("exp")
 sin = wrapFun("sin")
 cos = wrapFun("cos")
 sqrt = wrapFun("sqrt")
+mean = wrapFun("mean")
+std = wrapFun("std")
+max = wrapFun("max")
+min = wrapFun("min")
 
 
 class Column(Node):
