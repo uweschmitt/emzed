@@ -41,13 +41,12 @@ def commonTypeOfColumn(col):
         return object
     if len(differentTypes) == 1:
         return differentTypes.pop()
-    differentTypes = set (type(bestConvert(c)) for c in col )
-    if len(differentTypes) == 1:
-        return differentTypes.pop()
     raise Exception("do not know how to find common type for types %r"\
                      % differentTypes)
 
+
 def bestConvert(val):
+    assert isinstance(val, str)
     try:
         return int(val)
     except ValueError:
