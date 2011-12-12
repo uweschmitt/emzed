@@ -121,7 +121,7 @@ class Node(object):
 
     def containsElement(self, element):
         return BinaryExpression(self, element,\
-               lambda a,b: b in re.findall("[A-Z][a-z]?\d*", a),\
+               lambda a,b: b in re.findall("([A-Z][a-z]?)\d*", a),\
                "%s.containsElement(%s)")
 
     def isIn(self, li):
