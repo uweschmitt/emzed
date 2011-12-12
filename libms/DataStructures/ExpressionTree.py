@@ -104,6 +104,7 @@ class Node(object):
         return XorNode(self, other)
 
     def __invert__(self):
+        return UnaryExpression(self, lambda a: ~a, "not %s")
         return InvertNode(self)
 
     def neededColumns(self):
@@ -139,9 +140,10 @@ class Node(object):
 
 class CompNode(Node):
 
-    # comparing to None is allowed, is overidden in sublassess,
-    # as eg  None <= x or None >=x give hard to predict results
-    # and is very error prone
+    # comparing to None is allowed by default, but is overidden in some
+    #  sublassess,
+    # as eg  None <= x or None >=x give hard to predict results  and  is
+    # very error prone:
     allowNone = True
 
     def eval(self, ctx):
@@ -150,12 +152,16 @@ class CompNode(Node):
 
         if not self.allowNone:
             if lhs == None or rhs==None:
-                raise Exception("comparing to None is not allowed")
-            # None in np.array does not work ! so
-            if type(lhs) == list and None in lhs or type(lhs)==np.ndarray and None in set(lhs):
-                raise Exception("comparing to None is not allowed")
+                raise Exception("comparing to None with '%s' is not allowed"\
+                                % self.symbol)
+            # comparint to None in np.array does not work ! so
+            if type(lhs) == list and None in lhs\
+                or type(lhs)==np.ndarray and None in set(lhs):
+                    raise Exception("comparing to None with '%s' is not allowed"\
+                                    % self.symbol)
             if type(rhs) in [list, np.ndarray] and None in set(rhs):
-                raise Exception("comparing to None is not allowed")
+                raise Exception("comparing to None with '%s' is not allowed"\
+                                % self.symbol)
 
         if ixl != None and type(rhs) in _basic_num_types:
             return self.fastcomp(lhs, rhs, ixl), None
@@ -198,7 +204,8 @@ class CompNode(Node):
         except:
             pass
 
-        raise "Can not handle %r or %r, resp %s or %s" % (lhs, rhs, t0, r0)
+        raise Exception("Can not handle %r or %r, resp %r or %r"\
+                        % (lhs, rhs, t0, r0))
 
 def Range(start, end, len):
     rv = np.zeros((len,), dtype=np.bool)
@@ -394,7 +401,7 @@ class BinaryExpression(Node):
         if type(lval) in _iterables and type(rval) in _iterables:
             if len(lval) != len(rval):
                 raise Exception("sizes do not fit !")
-            return np.array([ self.efun(l,r) for (l,r) in zip(lval,rval) ]), None
+            return np.array([self.efun(l,r) for (l,r) in zip(lval,rval)]), None
 
         assert type(lval) in _basic_types and type(rval) in _basic_types
         return self.efun(lval, rval), None
@@ -418,6 +425,22 @@ class InvertNode(Node):
 
     def neededColumns(self):
         return self.child.neededColumns()
+
+class UnaryExpression(Node):
+
+    def __init__(self, left, efun, funname):
+        self.left = left
+        self.efun = efun
+        self.funname = funname
+
+    def eval(self, ctx):
+        vals, index = self.left.eval(ctx)
+        if type(vals) in _iterables:
+            return np.array([self.efun(v) for v in vals]), None
+        return self.efun(vals), None
+
+    def __str__(self):
+        return self.funname % self.left
 
 
 class LogicNode(Node):
@@ -489,22 +512,6 @@ class Value(Node):
     def neededColumns(self):
         return []
 
-
-class UnaryExpression(Node):
-
-    def __init__(self, left, efun, funname):
-        self.left = left
-        self.efun = efun
-        self.funname = funname
-
-    def eval(self, ctx):
-        vals, index = self.left.eval(ctx)
-        if type(vals) in _iterables:
-            return np.array([self.efun(v) for v in vals]), None
-        return self.efun(vals), None
-
-    def __str__(self):
-        return self.funname % self.left
 
 
 class FunctionExpression(Node):

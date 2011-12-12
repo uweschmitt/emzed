@@ -107,6 +107,7 @@ def run_logics(t, col):
     expressions.append( (col >= 2) | (col <1) & False)
     expressions.append( Value(True))
     expressions.append( Value(False))
+    expressions.append( ~(col >= 2) & ~(col >=3))
     for e in expressions:
         print
         t.filter(e, debug=True)._print()
@@ -156,18 +157,6 @@ def testLeftJoin():
     compare(out, outf)
     outf = record(run_join_comp, [t1.leftJoin, t1, t2], "tljoin_comp.is")
     check(outf, "tljoin_comp.tobe")
-
-def testJoin():
-    t1 = setupTable()
-    t1._name ="t1"
-    t2 = setupTable()
-    t2._name ="t2"
-    out = record(run_join_int, [t1.join, t1, t2], "tjoin_int.is")
-    check(out, "tjoin_int.tobe")
-    outf = record(run_join_float, [t1.join, t1, t2], "tjoin_float.is")
-    compare(out, outf)
-    outf = record(run_join_comp, [t1.join, t1, t2], "tjoin_comp.is")
-    check(outf, "tjoin_comp.tobe")
 
 
 def run_join_int(jf, t1, t2):

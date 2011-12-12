@@ -69,3 +69,9 @@ int          int          float        str
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      
+
+# (~(t.int >= 2) & ~(t.int >= 3))
+id           int          float        str         
+int          int          float        str         
+------       ------       ------       ------      
+0              1          1.000        hi          

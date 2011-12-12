@@ -307,7 +307,7 @@ def testWithNoneValues():
 def testSomeExpressions():
     t = ms.toTable("mf", ["Ag", "P", "Pb", "P3Pb", "PbP"])
     tn = t.filter(t.mf.containsElement("P"))
-    assert len(tn) == 2
+    assert len(tn) == 3
     tn = t.filter(t.mf.containsElement("Pb"))
     assert len(tn) == 3
 
