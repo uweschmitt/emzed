@@ -41,26 +41,29 @@ def __fileDialog(startAt=None, onlyDirectories=False, anyFile=False,
 
 
 def askForDirectory(startAt=None):
-    """ 
-          asks for a single directory.
+    """
+    asks for a single directory.
 
-          you can provide a startup directory with parameter startAt.
+    you can provide a startup directory with parameter startAt.
 
-          returns the path to the selected diretory as a string,
-          or None if the user aborts the dialog.
+    returns the path to the selected diretory as a string,
+    or None if the user aborts the dialog.
     """
     return __fileDialog(startAt, onlyDirectories=True)[0]
 
 def askForSave(startAt=None, extensions=None):
 
-    """ 
+    """
           asks for a single file, which needs not to exist.
 
           you can provide a startup directory with parameter startAt.
           you can restrict the files by providing a list of extensions.
-          eg
+          eg::
+
               askForSave(extensions=["csv"])
-          or
+
+          or::
+
               askForSave(extensions=["mzXML", "mxData"])
 
           returns the path of the selected file as a string,
@@ -71,15 +74,18 @@ def askForSave(startAt=None, extensions=None):
 
 def askForSingleFile(startAt=None, extensions=None):
 
-    """ 
+    """
           asks for a single file.
 
           you can provide a startup directory with parameter startAt.
           you can restrict the files to select by providing a list
           of extensions.
-          eg
-              askForSingleFile(extensions=["csv"])
-          or
+          eg::
+             
+             askForSingleFile(extensions=["csv"])
+
+          or::
+
               askForSingleFile(extensions=["mzXML", "mxData"])
 
           returns the path of the selected file as a string,
@@ -88,15 +94,18 @@ def askForSingleFile(startAt=None, extensions=None):
     return __fileDialog(startAt, multipleFiles=False, extensions=extensions)[0]
 
 def askForMultipleFiles(startAt=None, extensions=None):
-    """ 
+    """
           asks for a single or multiple files.
 
           you can provide a startup directory with parameter startAt.
           you can restrict the files to select by providing a list
           of extensions.
-          eg
+          eg::
+
               askForSingleFile(extensions=["csv"])
-          or
+
+          or::
+
               askForSingleFile(extensions=["mzXML", "mxData"])
 
           returns the pathes of the selected files as a list of strings,
@@ -106,7 +115,7 @@ def askForMultipleFiles(startAt=None, extensions=None):
 
 
 def chooseConfig(configs, params):
-    
+
     from libms.gui.ConfigChooseDialog import ConfigChooseDialog
     import guidata
 

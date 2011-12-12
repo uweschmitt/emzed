@@ -34,10 +34,10 @@ class Node(object):
         self.left = left
         self.right = right
 
-    def evalsize(self, ctx):
-        # size of result when eval is called:
-        sl = self.left.evalsize(ctx)
-        sr = self.right.evalsize(ctx)
+    def _evalsize(self, ctx):
+        # size of result when _eval is called:
+        sl = self.left._evalsize(ctx)
+        sr = self.right._evalsize(ctx)
         if sl==1: # numpy and list coercing
             return sr
         if sr==1: # numpy and list coercing
@@ -106,10 +106,10 @@ class Node(object):
     def __invert__(self):
         return UnaryExpression(self, lambda a: not a, "not %s")
 
-    def neededColumns(self):
-        lc = self.left.neededColumns()
+    def _neededColumns(self):
+        lc = self.left._neededColumns()
         if hasattr(self, "right"):
-            return lc + self.right.neededColumns()
+            return lc + self.right._neededColumns()
         return lc
 
     # some helper functions
@@ -136,6 +136,36 @@ class Node(object):
     def thenElse(self, then, else_):
         return IfThenElse(self, then, else_)
 
+    def min(self):
+        return AggregateExpression(self, lambda v: min(v), "min(%s)")
+
+    def max(self):
+        return AggregateExpression(self, lambda v: max(v), "max(%s)")
+
+    def sum(self):
+        return AggregateExpression(self, lambda v: sum(v), "sum(%s)")
+
+    def mean(self):
+        return AggregateExpression(self, lambda v: np.mean(v).tolist(),\
+                                   "mean(%s)")
+
+    def std(self):
+        return AggregateExpression(self, lambda v: np.std(v).tolist(),\
+                                   "stddev(%s)")
+
+    def len(self):
+        return AggregateExpression(self, lambda v: len(v), "len(%s)",\
+                                   ignoreNone=False)
+
+    def countNone(self):
+        return AggregateExpression(self,\
+                                   lambda v: sum(1 for vi in v if vi is None),\
+                                   "notNone(%s)", ignoreNone=False)
+
+    def hasNone(self):
+        return AggregateExpression(self, lambda v: int(None in v) , "hasNone(%s)",\
+                                   ignoreNone=False)
+
 
 class CompNode(Node):
 
@@ -145,9 +175,9 @@ class CompNode(Node):
     # very error prone:
     allowNone = True
 
-    def eval(self, ctx):
-        lhs, ixl = self.left.eval(ctx)
-        rhs, ixr = self.right.eval(ctx)
+    def _eval(self, ctx):
+        lhs, ixl = self.left._eval(ctx)
+        rhs, ixr = self.right._eval(ctx)
 
         if not self.allowNone:
             if lhs == None or rhs==None:
@@ -307,14 +337,17 @@ class EqNode(CompNode):
 
 class BinaryExpression(Node):
 
+    # TODO: refactor dependcies based on symbol, -> extra flags in
+    # constructor.
+
     def __init__(self, left, right, efun, symbol):
         super(BinaryExpression, self).__init__(left, right)
         self.efun = efun
         self.symbol = symbol
 
-    def eval(self, ctx):
-        lval, idxl = self.left.eval(ctx)
-        rval, idxr = self.right.eval(ctx)
+    def _eval(self, ctx):
+        lval, idxl = self.left._eval(ctx)
+        rval, idxr = self.right._eval(ctx)
 
         if isNumericList(lval):
             lval = np.array(lval)
@@ -403,6 +436,9 @@ class BinaryExpression(Node):
             return np.array([self.efun(l,r) for (l,r) in zip(lval,rval)]), None
 
         assert type(lval) in _basic_types and type(rval) in _basic_types
+        if (lval is None or rval is None) and self.symbol in "+-*/":
+            return None, None
+
         return self.efun(lval, rval), None
 
 
@@ -411,19 +447,19 @@ class InvertNode(Node):
     def __init__(self, child):
         self.child = child
 
-    def eval(self, ctx):
-        val, _ = self.child.eval(ctx)
+    def _eval(self, ctx):
+        val, _ = self.child._eval(ctx)
         if type(val) in _basic_types:
             return not val, None
         elif type(val) in _iterables:
             return np.array([ not v for v in val ]), None
-        raise Exception("invert eval with%s not possible" % val)
+        raise Exception("invert _eval with%s not possible" % val)
 
     def __str__(self):
         return "~%s" % str(self.child)
 
-    def neededColumns(self):
-        return self.child.neededColumns()
+    def _neededColumns(self):
+        return self.child._neededColumns()
 
 class UnaryExpression(Node):
 
@@ -432,8 +468,8 @@ class UnaryExpression(Node):
         self.efun = efun
         self.funname = funname
 
-    def eval(self, ctx):
-        vals, index = self.left.eval(ctx)
+    def _eval(self, ctx):
+        vals, _ = self.left._eval(ctx)
         if type(vals) in _iterables:
             return np.array([self.efun(v) for v in vals]), None
         return self.efun(vals), None
@@ -441,6 +477,26 @@ class UnaryExpression(Node):
     def __str__(self):
         return self.funname % self.left
 
+class AggregateExpression(Node):
+
+    def __init__(self, left, efun, funname, ignoreNone=True):
+        self.left = left
+        self.efun = efun
+        self.funname = funname
+        self.ignoreNone = ignoreNone
+
+    def _eval(self, ctx):
+        vals, _ = self.left._eval(ctx)
+        if not type(vals) in _iterables:
+            vals = [vals]
+        if self.ignoreNone:
+            vals  = [ v for v in vals if v is not None]
+        if len(vals):
+            return self.efun(vals), None
+        return None, None
+
+    def __str__(self):
+        return self.funname % self.left
 
 class LogicNode(Node):
 
@@ -469,29 +525,29 @@ class LogicNode(Node):
 class AndNode(LogicNode):
 
     symbol = "&"
-    def eval(self, ctx):
-        lhs, _ = self.left.eval(ctx)
+    def _eval(self, ctx):
+        lhs, _ = self.left._eval(ctx)
         if type(lhs) == bool and not lhs:
-            return np.zeros((self.right.evalsize(ctx),), dtype=np.bool), None
-        rhs, _ = self.right.eval(ctx)
+            return np.zeros((self.right._evalsize(ctx),), dtype=np.bool), None
+        rhs, _ = self.right._eval(ctx)
         return self.richeval(lhs, rhs, lambda a,b: a & b), None
 
 class OrNode(LogicNode):
 
     symbol = "|"
-    def eval(self, ctx):
-        lhs, _ = self.left.eval(ctx)
+    def _eval(self, ctx):
+        lhs, _ = self.left._eval(ctx)
         if type(lhs)==bool and lhs:
-            return np.ones((self.right.evalsize(ctx),), dtype=np.bool), None
-        rhs, _ = self.right.eval(ctx)
+            return np.ones((self.right._evalsize(ctx),), dtype=np.bool), None
+        rhs, _ = self.right._eval(ctx)
         return self.richeval(lhs, rhs, lambda a,b: a | b), None
 
 class XorNode(LogicNode):
 
     symbol = "^"
-    def eval(self, ctx):
-        lhs, _ = self.left.eval(ctx)
-        rhs, _ = self.right.eval(ctx)
+    def _eval(self, ctx):
+        lhs, _ = self.left._eval(ctx)
+        rhs, _ = self.right._eval(ctx)
         return self.richeval(lhs, rhs, lambda a,b: (a & ~b) | (~a & b)), None
 
 
@@ -499,39 +555,42 @@ class Value(Node):
 
     def __init__(self, value):
         self.value = value
-    def eval(self, ctx):
+    def _eval(self, ctx):
         return self.value, None
 
     def __str__(self):
         return repr(self.value)
 
-    def evalsize(self, ctx):
+    def _evalsize(self, ctx):
         return 1
 
-    def neededColumns(self):
+    def _neededColumns(self):
         return []
 
 
 
 class FunctionExpression(Node):
 
-    def __init__(self, efun, efunname, child):
+    def __init__(self, efun, efunname, child, agg):
         self.child = child
         self.efun = efun
         self.efunname = efunname
+        self.agg = agg
 
-    def eval(self, ctx):
-        vals, index = self.child.eval(ctx)
+    def _eval(self, ctx):
+        vals, index = self.child._eval(ctx)
         return self.efun(vals), None
 
     def __str__(self):
         return "%s(%s)" % (self.efunname, self.child)
 
-    def evalsize(self, ctx):
-        return self.child.evalsize(ctx)
+    def _evalsize(self, ctx):
+        if self.agg:
+            return 1
+        return self.child._evalsize(ctx)
 
-    def neededColumns(self):
-        return self.child.neededColumns()
+    def _neededColumns(self):
+        return self.child._neededColumns()
 
 
 
@@ -542,12 +601,12 @@ class IfThenElse(Node):
             self.e2 = e2
             self.e3 = e3
 
-        def eval(self, ctx):
-            e1, _ = self.e1.eval(ctx)
-            e2, _ = self.e2.eval(ctx)
-            e3, _ = self.e3.eval(ctx)
+        def _eval(self, ctx):
+            e1, _ = self.e1._eval(ctx)
+            e2, _ = self.e2._eval(ctx)
+            e3, _ = self.e3._eval(ctx)
 
-            size = self.evalsize(ctx)
+            size = self._evalsize(ctx)
             if size == 1:
                 return e2 if e1 else e3, None
             if not type(e1) in _iterables:
@@ -564,38 +623,47 @@ class IfThenElse(Node):
         def __str__(self):
             return "%s(%s)" % (self.efunname, self.child)
 
-        def evalsize(self, ctx):
-            return max((self.e1.evalsize(ctx),
-                        self.e2.evalsize(ctx),
-                        self.e3.evalsize(ctx)))
+        def _evalsize(self, ctx):
+            return max((self.e1._evalsize(ctx),
+                        self.e2._evalsize(ctx),
+                        self.e3._evalsize(ctx)))
 
-        def neededColumns(self):
-            return self.e1.neededColumns() \
-                   + self.e2.neededColumns() \
-                   + self.e3.neededColumns()
+        def _neededColumns(self):
+            return self.e1._neededColumns() \
+                   + self.e2._neededColumns() \
+                   + self.e3._neededColumns()
 
 
 
-def wrapFun(name):
+def _wrapFun(name, agg=False):
     def wrapper(x):
         origfun = getattr(np, name)
         if isinstance(x,Node):
-            return FunctionExpression(origfun, name,  x)
+            return FunctionExpression(origfun, name,  x, agg)
         return origfun(x)
     return wrapper
 
-log = wrapFun("log")
-exp = wrapFun("exp")
-sin = wrapFun("sin")
-cos = wrapFun("cos")
-sqrt = wrapFun("sqrt")
-mean = wrapFun("mean")
-std = wrapFun("std")
-max = wrapFun("max")
-min = wrapFun("min")
+log = _wrapFun("log")
+exp = _wrapFun("exp")
+sin = _wrapFun("sin")
+cos = _wrapFun("cos")
+sqrt = _wrapFun("sqrt")
+
+max = _wrapFun("max", agg=True)
+min = _wrapFun("min", agg=True)
+mean = _wrapFun("mean", agg=True)
+std = _wrapFun("std", agg=True)
+sum = _wrapFun("sum", agg=True)
+count = _wrapFun("len", agg=True)
+
 
 
 class Column(Node):
+
+    """
+    represents a column in a *Table*.
+    Attribute Table.values is the content of the column.
+    """
 
     def __init__(self, table, colname, idx):
         self.table = table
@@ -626,7 +694,7 @@ class Column(Node):
         self._setupValues()
         return iter(self.values)
 
-    def eval(self, ctx):
+    def _eval(self, ctx):
         cx = ctx.get(self.table)
         if cx is None:
             raise Exception("context not correct. "\
@@ -642,15 +710,20 @@ class Column(Node):
             raise Exception("table._name missing")
         return "%s.%s" % (self.table._name, self.colname)
 
-    def evalsize(self, ctx):
+    def _evalsize(self, ctx):
         cx = ctx[self.table]
         rv, _ = cx[self.colname]
         if type(rv) in _basic_types:
             return 1
         return len(rv)
 
-    def neededColumns(self):
+    def _neededColumns(self):
         return [ (self.table, self.colname), ]
 
+    def _apply(self, fun):
+        filteredValues =[ v for v in self.values if v is not None]
+        if len(filteredValues):
+            return fun(filteredValues)
+        return None
 
 

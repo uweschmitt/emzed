@@ -297,12 +297,19 @@ def testWithNoneValues():
     assert len(t.filter(t.i != None)) == 2
 
     t.addColumn("b", [2,3,None])
+    assert t.colNames == ["i", "b"]
     t.replaceColumn("b", t.b+1)
+
+    assert t.colNames == ["i", "b"]
 
     t.addRow([None, None])
     t.addRow([3, None])
     t.addRow([3, 3.0])
     assert t.b.values == [ 3, 4, None, None, None, 3]
+
+    # check order
+    t.replaceColumn("i", t.i)
+    assert t.colNames == ["i", "b"]
 
 def testSomeExpressions():
     t = ms.toTable("mf", ["Ag", "P", "Pb", "P3Pb", "PbP"])
@@ -318,6 +325,7 @@ def testIfThenElse():
     t.rows.append([None, 2, 1])
     t._print()
     t.addColumn("x", (t.a == None).thenElse(t.b, t.c))
+    assert t.colNames==["a", "b", "c", "x"]
     t._print()
 
 

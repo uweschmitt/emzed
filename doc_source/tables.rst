@@ -12,4 +12,3 @@ snippet prints all values of the column *mz*::
      for row in table:
          print table.get(row, "mz")
 
-

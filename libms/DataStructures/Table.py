@@ -1,6 +1,6 @@
 import pyOpenMS as P
 import operator, copy, os, itertools, re, numpy, cPickle, sys, inspect
-from   ExpressionTree import Node, Column, _basic_types
+from   ExpressionTree import Node, Column
 import numpy as np
 from   collections import Counter, OrderedDict
 
@@ -37,7 +37,26 @@ def commonTypeOfColumn(col):
 
     differentTypes = set( type(c) for c in col )
     differentTypes.discard(type(None))
+
+    hasStr = str in differentTypes
+    hasInt = int in differentTypes
+    hasLong = long in differentTypes
+    hasFloat = float in differentTypes
+
+    differentTypes.discard(str)
+    differentTypes.discard(int)
+    differentTypes.discard(long)
+    differentTypes.discard(float)
+
     if len(differentTypes)==0:
+        if hasStr:
+            return str
+        if hasFloat:
+            return float
+        if hasLong:
+            return long
+        if hasInt:
+            return int
         return object
     if len(differentTypes) == 1:
         return differentTypes.pop()
@@ -156,7 +175,7 @@ class Table(object):
                 txt = "[1 None]"
             else:
                 txt = "[%d Nones]" % nones
-            print "   col #%-2d %-7s: %-10s %-15r %r" % ((i,txt)+p)
+            print "   col #%-2d %-12s: %-10s %-15r %r" % ((i,txt)+p)
         print
 
 
@@ -194,6 +213,9 @@ class Table(object):
         """ sets format of columns *colName* to format *fmt* """
         self.colFormats[self.getIndex(colName)] = fmt
         self._setupFormatters()
+
+    def setType(self, colName, type):
+        self.colTypes[self.getIndex(colName)] = type
 
     def _setupFormatters(self):
         self.colFormatters = [_formatter(f) for f in self.colFormats ]
@@ -421,6 +443,7 @@ class Table(object):
         """ removes a column with given *name* from the table.
             Works **inplace**
         """
+        self.requireColumn(name)
         delattr(self, name)
         ix = self.getIndex(name)
         del self.colNames[ix]
@@ -431,9 +454,13 @@ class Table(object):
         self.resetInternals()
 
     def dropColumns(self, *names):
-        """ removes a column with given *name* from the table.
+        """ removes columns with given *names* from the table.
             Works **inplace**
         """
+        # check all names before maninuplating the table,
+        # so this operation is atomic
+        for name in names:
+            self.requireColumn(name)
         for name in names:
             delattr(self, name)
             ix = self.getIndex(name)
@@ -486,13 +513,13 @@ class Table(object):
             self.rows.extend(t.rows)
         self.resetInternals()
 
-    def addColumn(self, name, what, type_=None, format="", insertBefore=None):
+    def replaceColumn(self, name, what, type_=None, format=""):
         """
-        adds a column **inplace**.
+        replaces column *name* **inplace**.
 
           - *name* is name of the new column, *type_* is one of the
             valid types described above.
-          - format is a format string as "%d" or *None* or an executable
+          - *format* is a format string as "%d" or *None* or an executable
             string with python code.
             If you use *format=""* the method will try to determine a
             default format for the type.
@@ -506,6 +533,43 @@ class Table(object):
 
         If no value *what* is given, the column consists
         of *None* values.
+        """
+
+        self.requireColumn(name)
+        # we do: 
+        #      add tempcol, then delete oldcol, then rename tempcol -> oldcol
+        # this is easier to implement, has no code duplication, but maybe a
+        # bit slower. but that does not matter at this point of time:
+        rv = self.addColumn(name+"__tmp", what, type_, format,\
+                            insertBefore=name)
+        self.dropColumn(name)
+        self.renameColumns(**{name+"__tmp": name})
+        return rv
+
+    def addColumn(self, name, what, type_=None, format="", insertBefore=None):
+        """
+        adds a column **inplace**.
+
+          - *name* is name of the new column, *type_* is one of the
+            valid types described above.
+          - *format* is a format string as "%d" or *None* or an executable
+            string with python code.
+            If you use *format=""* the method will try to determine a
+            default format for the type.
+
+        For the values *what* you can use
+
+           - an expression as
+           ``table.addColumn("diffrt", table.rtmax-table.rtmin)``
+           - a callback with signature ``callback(table, row, name)``
+           - a constant value
+
+        If you do not want the column be added at the end, one can use
+        *insertBefore*, which maybe the name of an existing column, or an
+        integer index (negative values allowed !).
+
+        If no value *what* is given, the column consists of *None* values.
+
         """
         assert isinstance(name, str) or isinstance(name, unicode),\
                "colum name is not a  string"
@@ -532,8 +596,8 @@ class Table(object):
         return self.addConstantColumn(name, what, type_, format, insertBefore)
 
     def _addColumnByExpression(self, name, expr, type_, format, insertBefore):
-        ctx = { self: self._getColumnCtx(expr.neededColumns()) }
-        values, _ = expr.eval(ctx)
+        ctx = { self: self._getColumnCtx(expr._neededColumns()) }
+        values, _ = expr._eval(ctx)
         return self._addColumn(name, values, type_, format, insertBefore)
 
     def _addColumnByCallback(self, name, callback, type_, format, insertBefore):
@@ -553,40 +617,43 @@ class Table(object):
                                          % (len(values), len(self))
         if type_ is None:
             type_ = commonTypeOfColumn(values)
-            conv = type_
-        else:
-            conv = lambda x: x
+        def conv(x, type_=type_):
+            if x is None:
+                return x
+            if type_ in [int, float, str, np.int32, np.int64, np.float32, np.float64]:
+                return type_(x)
+            return x
         if format == "":
             format = standardFormats.get(type_)
 
         if insertBefore is None:
-            self.colNames.append(name)
-            self.colTypes.append(type_)
-            self.colFormats.append(format)
+            # list.insert(len(list), ..) is the same as append(..) !
+            insertBefore = len(self.colNames)
+
+        # colname -> index
+        if isinstance(insertBefore, str):
+            if insertBefore not in self.colNames:
+                raise Exception("column %s does not exist", insertBefore)
+            insertBefore = self.getIndex(insertBefore)
+
+        # now insertBefore is an int, or something we can not handle
+        if isinstance(insertBefore, int):
+            if insertBefore < 0: # incexing from back
+                insertBefore += len(self.colNames)
+            self.colNames.insert(insertBefore, name)
+            self.colTypes.insert(insertBefore, type_)
+            self.colFormats.insert(insertBefore, format)
             for row, v in zip(self.rows, values):
-                if type_ is not None and type_ in _basic_types:
-                    try:
-                        row.append(type_(v))
-                    except:
-                        row.append(v)  # type == object is not callable
-                else:
-                    row.append(v)
+                row.insert(insertBefore, conv(v))
+
         else:
-            if isinstance(insertBefore, str):
-                if insertBefore not in self.colNames:
-                    raise Exception("column %s does not exist", insertBefore)
-                insertBefore = self.getIndex(insertBefore)
-                if insertBefore < 0: # incexing from back
-                    insertBefore += len(self.colNames)
-                self.colNames.insert(insertBefore, name)
-                self.colTypes.insert(insertBefore, type_)
-                self.colFormats.insert(insertBefore, format)
-                for row, v in zip(self.rows, values):
-                    row.insert(insertBefore, conv(v))
+            raise Exception("can not handle insertBefore=%r" % insertBefore)
+
 
         self.resetInternals()
 
-    def addConstantColumn(self, name, value, type_=None, format="", insertBefore=None):
+    def addConstantColumn(self, name, value, type_=None, format="",\
+                          insertBefore=None):
         """
         see addColumn
         """
@@ -600,49 +667,6 @@ class Table(object):
         return self._addColumn(name, [value]*len(self), type_, format,
                               insertBefore)
 
-    def replaceColumn(self, name, expr, format=None, type=None):
-        """as *Table.addColumn*, but replaces a given column. Eg::
-
-                 table.replaceColumn("mzmin", table.mzmin*0.9)
-
-           if the type of the column does not change, the format
-           is kept unless *format* paramter is given.
-           if the type changes and no format parameter is given,
-           a standard format is used.
-
-           one still can change the format afterwards by using
-           ``Table.setFormat()``
-
-        """
-        #TODO: same semantics as addColumn !
-        ix = self.getIndex(name)
-        oldtype = self.colTypes[ix]
-        ctx = { self: self._getColumnCtx(expr.neededColumns()) }
-        values, _ = expr.eval(ctx)
-        if isinstance(values, np.ndarray):
-            values = values.tolist()
-        if type is None:
-            t = commonTypeOfColumn(values)
-        else:
-            t = type
-
-        if t == oldtype and format is None:
-            f = self.colFormats[ix]
-        elif format is not None:
-            f = format
-        else:
-            f= standardFormats.get(t)
-
-        self.colNames[ix] = name
-        self.colTypes[ix] = t
-        self.colFormats[ix] = f
-        for row, v in zip(self.rows, values):
-            if t==object or v is None:
-                row[ix] = v
-            else:
-                row[ix] = t(v)
-
-        self.resetInternals()
 
     def resetInternals(self):
         """ must be called if one manipulates one of
@@ -654,6 +678,40 @@ class Table(object):
         self._setupFormatters()
         self._updateIndices()
         self._setupColumnAttributes()
+
+
+    def aggregate(self, expr, newName, colName0, *colNames):
+
+        colNames = (colName0,) + colNames
+        subTables = self.splitBy(*colNames)
+        if len(subTables) == 0:
+            rv = self.buildEmptyClone()
+            rv.colNames.append(newName)
+            rv.colTypes.append(object)
+            rv.colFormats.append("%r")
+            rv.resetInternals()
+            return rv
+
+        nc = expr._neededColumns()
+        for t,_ in nc:
+            if t!= self:
+                raise Exception("illegal expression")
+        names = [ n for (t,n) in nc ]
+        collectedValues = []
+        for t in subTables:
+            ctx = dict((n, (t.getColumn(n).values,
+                         t.primaryIndex.get(n))) for n in names)
+            values, _ = expr._eval({self: ctx})
+            values = np.array(values).tolist()
+            if isinstance(values, list):
+                assert len(values)==1, "non aggreg function used"
+                values = values[0]
+            collectedValues.extend([values]*len(t))
+
+        result = self.copy()
+        result.addColumn(newName, collectedValues)
+        return result
+
 
     def filter(self, expr, debug = False):
         """builds a new table with columns selected according to *expr*. Eg ::
@@ -667,8 +725,8 @@ class Table(object):
         if debug:
             print "#", expr
 
-        ctx = { self: self._getColumnCtx(expr.neededColumns()) }
-        flags, _ = expr.eval(ctx)
+        ctx = { self: self._getColumnCtx(expr._neededColumns()) }
+        flags, _ = expr._eval(ctx)
         filteredTable = self.buildEmptyClone()
         if flags is True:
             filteredTable.rows = self.rows[:]
@@ -721,14 +779,14 @@ class Table(object):
         assert isinstance(expr, Node)
         if debug:
             print "# %s.join(%s, %s)" % (self._name, t._name, expr)
-        tctx = t._getColumnCtx(expr.neededColumns())
+        tctx = t._getColumnCtx(expr._neededColumns())
 
         cmdlineProgress = _CmdLineProgress(len(self))
         rows = []
         for ii, r1 in enumerate(self.rows):
             r1ctx = dict((n, (v, None)) for (n,v) in zip(self.colNames, r1))
             ctx = {self:r1ctx, t:tctx}
-            flags,_ = expr.eval(ctx)
+            flags,_ = expr._eval(ctx)
             if type(flags) == bool:
                 if flags:
                     rows.extend([ r1 + row for row in t.rows])
@@ -766,7 +824,7 @@ class Table(object):
         assert isinstance(expr, Node)
         if debug:
             print "# %s.leftJoin(%s, %s)" % (self._name, t._name, expr)
-        tctx = t._getColumnCtx(expr.neededColumns())
+        tctx = t._getColumnCtx(expr._neededColumns())
 
         filler = [None] * len(t.colNames)
         cmdlineProgress = _CmdLineProgress(len(self))
@@ -775,7 +833,7 @@ class Table(object):
         for ii, r1 in enumerate(self.rows):
             r1ctx = dict((n, (v, None)) for (n,v) in zip(self.colNames, r1))
             ctx = {self:r1ctx, t:tctx}
-            flags,_ = expr.eval(ctx)
+            flags,_ = expr._eval(ctx)
             if flags is True:
                     rows.extend([ r1 + row for row in t.rows])
             elif flags is False:
