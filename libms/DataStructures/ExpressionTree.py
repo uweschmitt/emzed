@@ -142,36 +142,45 @@ class Node(object):
     def thenElse(self, then, else_):
         return IfThenElse(self, then, else_)
 
+    @property
     def min(self):
         return AggregateExpression(self, lambda v: min(v), "min(%s)")
 
+    @property
     def max(self):
         return AggregateExpression(self, lambda v: max(v), "max(%s)")
 
+    @property
     def sum(self):
         return AggregateExpression(self, lambda v: sum(v), "sum(%s)")
 
+    @property
     def mean(self):
         return AggregateExpression(self, lambda v: np.mean(v).tolist(),\
                                    "mean(%s)")
 
+    @property
     def std(self):
         return AggregateExpression(self, lambda v: np.std(v).tolist(),\
                                    "stddev(%s)")
 
+    @property
     def len(self):
         return AggregateExpression(self, lambda v: len(v), "len(%s)",\
                                    ignoreNone=False)
 
+    @property
     def countNone(self):
         return AggregateExpression(self,\
                                    lambda v: sum(1 for vi in v if vi is None),\
                                    "notNone(%s)", ignoreNone=False)
 
+    @property
     def hasNone(self):
         return AggregateExpression(self, lambda v: int(None in v) , "hasNone(%s)",\
                                    ignoreNone=False)
 
+    @property
     def uniqueNotNone(self):
         def select(values):
             diff = set(id(v) for v in values if v is not None)
@@ -179,7 +188,7 @@ class Node(object):
                 raise Exception("only None values in %s" % self)
             if len(diff) > 1:
                 raise Exception("more than one None value in %s" % self)
-            return diff.pop()
+            return [v for v in values if v is not None][0]
         return AggregateExpression(self, select, "uniqueNotNone(%s)",\
                                    ignoreNone=False)
 
@@ -515,6 +524,10 @@ class AggregateExpression(Node):
     def __str__(self):
         return self.funname % self.left
 
+    def __call__(self):
+        val, _ = self._eval(ctx=None)
+        return val
+
 class LogicNode(Node):
 
     def __init__(self, left, right):
@@ -727,6 +740,8 @@ class Column(Node):
         return iter(self.values)
 
     def _eval(self, ctx):
+        if ctx is None:
+            return self.values, None
         cx = ctx.get(self.table)
         if cx is None:
             raise Exception("context not correct. "\
