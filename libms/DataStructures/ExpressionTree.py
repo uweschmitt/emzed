@@ -192,6 +192,16 @@ class Node(object):
         return AggregateExpression(self, select, "uniqueNotNone(%s)",\
                                    ignoreNone=False)
 
+    def __call__(self):
+        val, _ = self._eval(ctx=None)
+        # works for lists, nubmers, objects: convers inner numpy dtypes
+        # to python types if present, else does nothing !!!!
+        return np.array(val).tolist()
+
+    def toTable(self, colName, fmt=None, type_=None, title="", meta=None):
+        from Table import Table
+        return Table.toTable(colName, self(), fmt, type_, title, meta)
+
 
 
 class CompNode(Node):
@@ -380,10 +390,17 @@ class BinaryExpression(Node):
         if isNumericList(rval):
             rval = np.array(rval)
 
+        # NOW lists with numeric contents are numpy arrays. all list
+        # below contain  strings or other nonnum objects.
+        # The array might contain None values.
+        # For +-*/ we want to have that the result is None if at least
+        # one of the operands is None.
+        # to acchieve this wie first determine the Nones of the operands
+        # set them to 1.0, perform the operation and insert Nones back
+        # to their former places.
+
         if type(lval) in _basic_num_types and type(rval) == np.ndarray:
-            # numpy does not like [None, 1] + 1, which should be [None,
-            # 2] in my opinion. so :
-            # == None does not work, but None <= x for all values
+            # '== None' does not work, but None <= x for all values
             if self.symbol in "+-*/":
                 indicesNone = rval <= None
                 rval[indicesNone] = 1.0  # 1.0 works for all operations
@@ -424,7 +441,7 @@ class BinaryExpression(Node):
                 try:
                     res[indicesNone] = None
                 except:
-                    # trick: tolist converts all diff np types to 
+                    # trick: tolist converts all diff np types to
                     # corresponding python type:
                     raise Exception("None for columnType %s not allowed"\
                                     % type(res[0].tolist()))
@@ -447,8 +464,23 @@ class BinaryExpression(Node):
         if type(lval) == type(rval) == np.ndarray:
             if len(lval) != len(rval):
                 raise Exception("sizes do not fit !")
+
+            if self.symbol in "+-*/":
+                # None handling trickery. SEE COMMETNS ABOVE !!!
+                indicesNone = (lval <= None) | (rval <= None)
+                lval[indicesNone] = 1.0
+                rval[indicesNone] = 1.0
+
             res = self.efun(lval, rval)
-            return self.efun(lval, rval), None
+            if self.symbol in "+-*/" and np.any(indicesNone):
+                try:
+                    res[indicesNone] = None
+                except:
+                    # trick: tolist converts all diff np types to
+                    # corresponding python type:
+                    raise Exception("None for columnType %s not allowed"\
+                                    % type(res[0].tolist()))
+            return res, None
 
         if type(lval) == list and type(rval) == list:
             if len(lval) != len(rval):
@@ -524,9 +556,6 @@ class AggregateExpression(Node):
     def __str__(self):
         return self.funname % self.left
 
-    def __call__(self):
-        val, _ = self._eval(ctx=None)
-        return val
 
 class LogicNode(Node):
 

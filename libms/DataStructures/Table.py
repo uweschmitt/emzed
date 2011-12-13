@@ -109,10 +109,6 @@ def _formatter(f):
         return evalformat
 
 
-
-
-
-
 class Table(object):
     """
     A table holds rows of the same lenght. Each Column of the table has
@@ -175,6 +171,9 @@ class Table(object):
         self.resetInternals()
 
     def info(self):
+        """
+        prints some table information and some table statistics
+        """
         print
         print "table info:"
         print
@@ -219,14 +218,16 @@ class Table(object):
                               if f is not None ]
 
     def getFormat(self, colName):
+        """ returns for format for the given column *colName* """
         return self.colFormats[self.getIndex(colName)]
 
-    def setFormat(self, colName, fmt):
-        """ sets format of columns *colName* to format *fmt* """
-        self.colFormats[self.getIndex(colName)] = fmt
+    def setFormat(self, colName, format):
+        """ sets format of column *colName* to format *format* """
+        self.colFormats[self.getIndex(colName)] = format
         self._setupFormatters()
 
-    def setType(self, colName, type):
+    def setType(self, colName, type_):
+        """ sets type of column *colName* to type *type_* """
         self.colTypes[self.getIndex(colName)] = type
 
     def _setupFormatters(self):
@@ -298,7 +299,7 @@ class Table(object):
         self.resetInternals()
 
     def get(self, row, colName=None):
-        """ returns value of column *colName* in a given *row*#
+        """ returns value of column *colName* in a given *row*
 
             usage: ``table.get(table.rows[0], "mz")``
 
@@ -500,6 +501,48 @@ class Table(object):
         self.resetInternals()
 
     def splitBy(self, *colNames):
+        """
+        generates a list of subtables, where the columns given by *colNames*
+        are unique.
+
+        If we have a table ``t1`` as
+
+        === === ===
+        a   b   c
+        === === ===
+        1   1   1
+        1   1   2
+        2   1   3
+        2   2   4
+        === === ===
+
+        ``res = t1.splitBy("a")`` results in a table ``res[0]`` as
+
+        === === ===
+        a   b   c
+        === === ===
+        1   1   1
+        1   1   2
+        === === ===
+
+        ``res[1]`` which is like
+
+        === === ===
+        a   b   c
+        === === ===
+        2   1   3
+        === === ===
+
+        and ``res[2]`` which is
+
+        === === ===
+        a   b   c
+        === === ===
+        2   2   4
+        === === ===
+
+
+        """
         for name in colNames:
             self.requireColumn(name)
 
@@ -520,9 +563,19 @@ class Table(object):
             table.resetInternals()
         return splitedTables
 
-    def append(self, table0, *tables):
+    def append(self, *tables):
+        """
+        appends *tables* to the existing table **inplace**. Can be called as ::
+
+              t1.append(t2, t3)
+              t1.append([t2, t3])
+              t1.append(t2, [t3, t4])
+
+        the column names and the column types have to match !
+        columnformat is taken from the original table.
+        """
         alltables = []
-        for table in (table0,) + tables:
+        for table in tables:
             if type(table) == list:
                 alltables.extend(table)
             elif isinstance(table, Table):
@@ -554,8 +607,8 @@ class Table(object):
 
         For the values *what* you can use
 
-           - an expression as
-           ``table.addColumn("diffrt", table.rtmax-table.rtmin)``
+           - an expression 
+             as ``table.addColumn("diffrt", table.rtmax-table.rtmin)``
            - a callback with signature ``callback(table, row, name)``
            - a constant value
 
@@ -587,8 +640,8 @@ class Table(object):
 
         For the values *what* you can use
 
-           - an expression as
-           ``table.addColumn("diffrt", table.rtmax-table.rtmin)``
+           - an expression 
+             as ``table.addColumn("diffrt", table.rtmax-table.rtmin)``
            - a callback with signature ``callback(table, row, name)``
            - a constant value
 
@@ -637,8 +690,9 @@ class Table(object):
         return self._addColumn(name, values, type_, format, insertBefore)
 
     def _addColumn(self, name, values, type_, format, insertBefore):
-        if isinstance(values, np.ndarray):
-            values = values.tolist()
+        # works for lists, nubmers, objects: convers inner numpy dtypes
+        # to python types if present, else does nothing !!!!
+        values = np.array(values).tolist()
 
         assert len(values) == len(self), "lenght of new column %d does not "\
                                          "fit number of rows %d in table"\
@@ -697,20 +751,25 @@ class Table(object):
 
 
     def resetInternals(self):
-        """ must be called if one manipulates one of
+        """ must be called after manipulation  of
 
             - self.colNames
             - self.colFormats
+
+        or
+
             - self.rows
         """
         self._setupFormatters()
         self._updateIndices()
         self._setupColumnAttributes()
 
-
-
-
     def uniqueRows(self):
+        """
+        extracts table with unique rows.
+        Two rows are equal if all fields, including **invisible**
+        columns (those with format=None) are equal.
+        """
         result = self.buildEmptyClone()
         keysSeen = set()
         for row in self.rows:
@@ -733,24 +792,24 @@ class Table(object):
 
         If we have a table ``t1`` with
 
-           ===    =====     ====
-           id     group     value 
-           ===    =====     ====
+           ===    =====     =====
+           id     group     value
+           ===    =====     =====
            0      1         10.0
            1      1         20.0
            2      2         30.0
-           ===    =====     ====
+           ===    =====     =====
 
        Then the result of ``t1.aggregate(t1.mean(), "mean_per_group", "group")``
        is
 
-           ===    =====     ====   ==============
+           ===    =====     =====  ==============
            id     group     value  mean_per_group
-           ===    =====     ====   ==============
+           ===    =====     =====  ==============
            0      1         10.0   15.0
            1      1         20.0   15.0
            2      2         30.0   30.0
-           ===    =====     ====   ==============
+           ===    =====     =====  ==============
 
         """
         subTables = self.splitBy(*groupByColumnNames)
@@ -772,6 +831,7 @@ class Table(object):
             ctx = dict((n, (t.getColumn(n).values,
                          t.primaryIndex.get(n))) for n in names)
             values, _ = expr._eval({self: ctx})
+            # works for numbers and objects to:
             values = np.array(values).tolist()
             if isinstance(values, list):
                 assert len(values)==1, "non aggreg function used"
@@ -953,6 +1013,35 @@ class Table(object):
         for row in self.rows:
             _p( fmt(value) for (fmt, value) in zip(self.colFormatters, row) )
             print >> out
+
+    @staticmethod
+    def toTable(colName, iterable,  format=None, type_=None, title="", meta=None):
+        """ generates a one-column table from an iterable, eg from a list,
+            colName is name for the column.
+
+            - if *type_* is not given a common type for all values is determined,
+            - if *format* is not given, a default format for *type_* is used.
+
+            further one can provide a title and meta data
+        """
+        if not isinstance(colName, str):
+            raise Exception("colName is not a string. The arguments of this "\
+                            "function changed in the past !")
+
+        from libms.DataStructures.Table import (commonTypeOfColumn,
+                                                standardFormats, Table)
+        values = list(iterable)
+        if type_ is None:
+            type_ = commonTypeOfColumn(values)
+        if format is None:
+            format = standardFormats.get(type_, "%r")
+        if meta is None:
+            meta = dict()
+        else:
+            meta = meta.copy()
+        rows = [[v] for v in values]
+        return Table([colName], [type_], [format], rows, title, meta)
+
 
 
 def toOpenMSFeatureMap(table):

@@ -36,7 +36,17 @@ def testColumnAggFunctions():
     assert t.b.countNone() == 3
 
     t.addColumn("c",[None, None, 1])
+
     assert t.c.uniqueNotNone() == 1
+
+    assert (t.a+t.c)() == [None, None , 4]
+    assert (t.a+t.c).sum() == 4
+    apc = (t.a+t.c).toTable("a_plus_c")
+    assert apc.colNames == ["a_plus_c"]
+    assert apc.colTypes == [int]
+    assert apc.a_plus_c() == [ None, None , 4]
+
+    assert (apc.a_plus_c - t.a)() == [None, None, 3]
 
 
 def testAggregateOperation():
