@@ -174,9 +174,12 @@ class Table(object):
         """
         prints some table information and some table statistics
         """
+        import pprint
         print
         print "table info:"
         print
+        print "   meta=",
+        pprint.pprint(self.meta, indent=4)
         print "   len=", len(self)
         print
         for i, p in enumerate(zip(self.colNames, self.colTypes,\
