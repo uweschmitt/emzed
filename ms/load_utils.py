@@ -57,7 +57,7 @@ def loadCSV(path=None, sep=";", **specialFormats):
         # remove clutter at right margin
         reader = csv.reader(fp, delimiter=sep)
         colNames = [n.strip().replace(" ","_") for n in reader.next()]
-        rows = [ [bestConvert(c) for c in row] for row in reader]
+        rows = [ [bestConvert(c.strip()) for c in row] for row in reader]
 
 
     columns = [[row[i] for row in rows] for i in range(len(colNames))]

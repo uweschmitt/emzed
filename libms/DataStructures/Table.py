@@ -404,7 +404,7 @@ class Table(object):
     def __len__(self):
         return len(self.rows)
 
-    def storeCSV(self, path):
+    def storeCSV(self, path, onlyVisibleColumns=True):
         """writes the table in .csv format. The *path* has to end with
            '.csv'.
 
@@ -417,12 +417,19 @@ class Table(object):
             raise Exception("%s has wrong filentype extension" % path)
         it = itertools
         for p in it.chain([path], ( "%s.%d" % (path, i) for i in it.count(1))):
-            if not os.path.exists(p):
+            if os.path.exists(p):
+                print p, "exists"
+            else:
                 print "write ", p
                 with file(p, "w") as fp:
-                    print >> fp, "; ".join(self.colNames)
+                    if onlyVisibleColumns:
+                        colNames = self.getVisibleCols()
+                    else:
+                        colNames = self.colNames
+                    print >> fp, "; ".join(colNames)
                     for row in self.rows:
-                        print >> fp, "; ".join(map(str, row))
+                        data = [self.get(row, v) for v in colNames]
+                        print >> fp, "; ".join(map(str, data))
                 break
 
     def store(self, path, forceOverwrite=False):

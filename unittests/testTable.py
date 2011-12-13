@@ -112,7 +112,19 @@ def run(t, colnames, rows):
 
     before = set(os.listdir("temp_output"))
     tn.storeCSV("temp_output/x.csv")
-    tn.storeCSV("temp_output/x.csv")
+
+    tnre  = ms.loadCSV("temp_output/x.csv")
+    assert len(tnre) == len(tn)
+    assert tnre.colNames == tn.colNames
+    assert tnre.id.values == tn.id.values
+    assert tnre.iii.values == tn.iii.values
+    assert tnre.long.values == tn.long.values
+    print tnre.x.values, tn.x.values
+    assert tnre.x.values == tn.x.values
+
+
+
+    tn.storeCSV("temp_output/x.csv", onlyVisibleColumns=False)
     after = set(os.listdir("temp_output"))
     # file written twice !
     assert len(after-before) == 2
@@ -223,7 +235,7 @@ def testDoubleColumnames():
     ex = None
     try:
         colnames = ["col0", "col0", "col1", "col1", "col2"]
-        t = Table(colnames, []*5, []*5)
+        Table(colnames, []*5, []*5)
     except Exception, e:
         ex = e.message
     assert ex != None
