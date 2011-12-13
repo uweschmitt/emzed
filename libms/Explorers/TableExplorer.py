@@ -200,10 +200,11 @@ class TableModel(QAbstractTableModel):
     LIGHT_BLUE = QColor(200, 200, 255)
     WHITE = QColor(255, 255, 255)
 
-    def __init__(self, table, parent):
+    def __init__(self, table, parent, dialog):
         super(TableModel, self).__init__(parent)
         self.table = table
         self.parent = parent
+        self.dialog = dialog
         nc = len(self.table.colNames)
         indizesOfVisibleCols = (j for j in range(nc)\
                                   if self.table.colFormats[j] is not None)
@@ -296,6 +297,7 @@ class TableModel(QAbstractTableModel):
             return
         self.actions.append(action)
         self.redoActions = []
+        self.dialog.updateMenubar()
 
     def infoLastAction(self):
         if len(self.actions):
@@ -312,6 +314,7 @@ class TableModel(QAbstractTableModel):
             action = self.actions.pop()
             action.undo()
             self.redoActions.append(action)
+            self.dialog.updateMenubar()
             return
         raise Exception("no action to be undone")
 
@@ -320,6 +323,7 @@ class TableModel(QAbstractTableModel):
             action = self.redoActions.pop()
             action.do()
             self.actions.append(action)
+            self.dialog.updateMenubar()
             return
         raise Exception("no action to be redone")
 
@@ -343,6 +347,7 @@ class TableExplorer(QDialog):
 
     def __init__(self, table, offerAbortOption):
         QDialog.__init__(self)
+
         self.setWindowFlags(Qt.Window)
 
         self.hasFeatures = table.hasColumns("mz", "mzmin", "mzmax", "rt",
@@ -380,6 +385,7 @@ class TableExplorer(QDialog):
             self.tableView.setSortingEnabled(True)
             self.tableView.resizeColumnsToContents()
             self.model.emptyActionStack()
+            self.updateMenubar()
 
     def setupLayout(self):
         vlayout = QVBoxLayout()
@@ -388,6 +394,11 @@ class TableExplorer(QDialog):
         vsplitter = QSplitter()
         vsplitter.setOrientation(Qt.Vertical)
         vsplitter.setOpaqueResize(False)
+
+        vsplitter.addWidget(self.menubar)
+        #qf = QFrame(self)
+        #qf.setFrameShape(QFrame.HLine)
+        #vsplitter.addWidget(qf)
 
         if self.hasFeatures:
 
@@ -426,7 +437,35 @@ class TableExplorer(QDialog):
             hbox.setAlignment(self.okButton, Qt.AlignVCenter)
             vlayout.addLayout(hbox)
 
+
+    def updateMenubar(self):
+        undoInfo = self.model.infoLastAction()
+        redoInfo = self.model.infoRedoAction()
+        self.undoAction.setEnabled(undoInfo != None)
+        self.redoAction.setEnabled(redoInfo != None)
+        if undoInfo:
+            self.undoAction.setText("Undo: %s" % undoInfo)
+        if redoInfo:
+            self.redoAction.setText("Redo: %s" % redoInfo)
+
     def setupWidgets(self):
+        self.tableView = QTableView(self)
+        self.model = TableModel(self.table, parent=self.tableView, dialog=self)
+
+        self.menubar = QMenuBar(self)
+        self.undoAction = QAction("Undo", self)
+        self.undoAction.setShortcut(QKeySequence("Ctrl+Z"))
+        self.menubar.connect(self.undoAction, SIGNAL("triggered()"), self.model.undoLastAction)
+        menu = QMenu("Edit", self.menubar)
+        menu.addAction(self.undoAction)
+
+        self.redoAction = QAction("Redo", self)
+        self.redoAction.setShortcut(QKeySequence("Ctrl+Y"))
+        self.menubar.connect(self.redoAction, SIGNAL("triggered()"), self.model.redoLastAction)
+        menu.addAction(self.redoAction)
+        self.menubar.addMenu(menu)
+        self.menu = menu
+
         if self.hasFeatures:
             self.plotconfigs = (None, dict(shade=0.35, linewidth=1, color="g") )
             self.rtPlotter = RtPlotter(rangeSelectionCallback=self.plotMz)
@@ -438,8 +477,7 @@ class TableExplorer(QDialog):
             self.rtPlotter.widget.setSizePolicy(pol)
             self.mzPlotter.widget.setSizePolicy(pol)
 
-        self.tableView = QTableView(self)
-        self.model = TableModel(self.table, parent=self.tableView)
+
         # disabling sort before filling the table results in much faster
         # setup. we enable sorting in self.paintEvent()
         self.tableView.setSortingEnabled(False)
@@ -537,6 +575,8 @@ class TableExplorer(QDialog):
 
         rtmin, rtmax = self.rtPlotter.getRangeSelectionLimits()
         self.model.integrate(self.currentRow, method, rtmin, rtmax)
+        self.updateMenubar()
+
 
     def plotMz(self):
         minRt=self.rtPlotter.minRTRangeSelected
