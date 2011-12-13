@@ -86,7 +86,11 @@ def _formatter(f):
         return noneformat
     elif f.startswith("%"):
         def interpolationformat(s, f=f):
-            return "-" if s is None else f % s
+            try:
+                return "-" if s is None else f % s
+            except:
+                print repr(s), repr(f)
+                return ""
         return interpolationformat
     else:
         def evalformat(s, f=f):
@@ -220,14 +224,12 @@ class Table(object):
     def _setupFormatters(self):
         self.colFormatters = [_formatter(f) for f in self.colFormats ]
 
-
     def getColumn(self, name):
         """ returns Column object for column *name*.
             to get the values of the colum you can use
             ``table.getColumn("index").values``
         """
         return getattr(self, name)
-
 
     def _setupColumnAttributes(self):
         for name in self.colNames:
@@ -342,6 +344,7 @@ class Table(object):
             r.insert(0, i)
         self.resetInternals()
 
+
     def sortBy(self, colName, ascending=True):
         """
         sorts table in respect of column named *colName* **inplace**.
@@ -355,11 +358,21 @@ class Table(object):
         can have only one index per table.
         """
         idx = self.colIndizes[colName]
-        self.rows.sort(key = operator.itemgetter(idx), reverse=not ascending)
+
+        decorated = [ (row[idx], i) for (i, row) in enumerate(self.rows) ]
+        decorated.sort(reverse=not ascending)
+        permutation = [i for (_, i) in decorated]
+
+        self.applyRowPermutation(permutation)
+
         if ascending:
             self.primaryIndex = {colName: True}
         else:
             self.primaryIndex = {}
+        return permutation
+
+    def applyRowPermutation(self, permutation):
+        self.rows = [ self.rows[permutation[i]] for i in range(len(permutation))]
 
     def copy(self):
         """ returns a deep copy of the table """

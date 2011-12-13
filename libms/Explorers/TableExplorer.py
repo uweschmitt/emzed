@@ -11,6 +11,189 @@ import numpy as np
 import configs
 import os
 
+class TableAction(object):
+
+    actionName = None
+
+    def __init__(self, model, **kw):
+        self.model = model
+        self.args = kw
+        self.__dict__.update(kw)
+        self.memory = None
+
+    def undo(self):
+        assert self.memory != None
+
+    def beginDelete(self, idx, idx2=None):
+        if idx2 is None:
+            idx2 = idx
+        self.model.beginRemoveRows(QModelIndex(), idx, idx2)
+
+    def endDelete(self):
+        self.model.endRemoveRows()
+
+    def beginInsert(self, idx, idx2=None):
+        if idx2 is None:
+            idx2 = idx
+        self.model.beginInsertRows(QModelIndex(), idx, idx2)
+
+    def endInsert(self):
+        self.model.endInsertRows()
+
+    def __str__(self):
+        args = ", ".join("%s: %s" % it for it in self.args.items())
+        return "%s(%s)" % (self.actionName, args)
+
+
+
+class DeleteRowAction(TableAction):
+
+    actionName = "delete row"
+
+    def __init__(self, model, idx):
+        super(DeleteRowAction, self).__init__(model, idx=idx)
+
+    def do(self):
+        self.beginDelete(self.idx)
+        table = self.model.table
+        self.memory = table.rows[self.idx][:]
+        del table.rows[self.idx]
+        self.endDelete()
+        return True
+
+    def undo(self):
+        super(DeleteRowAction, self).undo()
+        table = self.model.table
+        self.beginInsert(self.idx)
+        table.rows.insert(self.idx, self.memory)
+        self.endInsert()
+
+
+class CloneRowAction(TableAction):
+
+    actionName = "clone row"
+
+    def __init__(self, model, idx):
+        super(CloneRowAction, self).__init__(model, idx=idx)
+
+    def do(self):
+        self.beginInsert(self.idx+1)
+        table = self.model.table
+        table.rows.insert(self.idx+1, table.rows[self.idx][:])
+        self.memory = True
+        self.endInsert()
+        return True
+
+    def undo(self):
+        super(CloneRowAction, self).undo()
+        table = self.model.table
+        self.beginDelete(self.idx+1)
+        del table.rows[self.idx+1]
+        self.endDelete()
+
+class SortTableAction(TableAction):
+
+    actionName = "sort table"
+
+    def __init__(self, model, colIdx, order):
+        super(SortTableAction, self).__init__(model, colIdx=colIdx,\
+                                        order=order)
+
+    def do(self):
+        table = self.model.table
+        ascending = self.order == Qt.AscendingOrder
+        colName = table.colNames[self.colIdx]
+        # memory is the permutation which sorted the table rows
+        # sortBy returns this permutation:
+        self.memory = table.sortBy(colName, ascending)
+        self.model.reset()
+        return True
+
+    def undo(self):
+        super(SortTableAction, self).undo()
+        table = self.model.table
+        # calc inverse permuation:
+        decorated = [ (self.memory[i], i) for i in range(len(self.memory))]
+        decorated.sort()
+        invperm = [i for (_, i) in decorated]
+        table.applyRowPermutation(invperm)
+        self.model.reset()
+
+
+class ChangeValueAction(TableAction):
+
+    actionName = "change value"
+
+    def __init__(self, model, idx, dataColIdx, value):
+        super(ChangeValueAction, self).__init__(model, idx=idx,\
+                                                dataColIdx=dataColIdx,\
+                                                value=value)
+
+    def do(self):
+        table = self.model.table
+        row = table.rows[self.idx.row()]
+        self.memory = row[self.dataColIdx]
+        if self.memory == self.value: return False
+        row[self.dataColIdx] = self.value
+        self.model.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"),\
+                        self.idx, self.idx)
+        return True
+
+    def undo(self):
+        super(ChangeValueAction, self).undo()
+        table = self.model.table
+        table.rows[self.idx.row()][self.dataColIdx] = self.memory
+        self.model.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"),\
+                        self.idx, self.idx)
+
+class IntegrateAction(TableAction):
+
+    actionName = "integrate"
+
+    def __init__(self, model, idx, method, rtmin, rtmax):
+        super(IntegrateAction, self).__init__(model, idx=idx, method=method,
+                                        rtmin=rtmin, rtmax=rtmax, )
+
+    def do(self):
+        integrator = dict(configs.peakIntegrators)[self.method]
+        table = self.model.table
+        # returns Bunch
+        args = table.get(table.rows[self.idx], None)
+        integrator.setPeakMap(args.peakmap)
+
+        # integrate
+        res = integrator.integrate(args.mzmin, args.mzmax, self.rtmin, self.rtmax)
+        area = res["area"]
+        rmse = res["rmse"]
+        params = res["params"]
+
+        # var 'row' is a Bunch, so we have to get the row from direct access
+        # to table.rows:
+        self.memory = table.rows[self.idx][:]
+
+        # write values to table
+
+        row = table.rows[self.idx]
+        table.set(row, "method", self.method)
+        table.set(row, "rtmin", self.rtmin)
+        table.set(row, "rtmax", self.rtmax)
+        table.set(row, "area", area)
+        table.set(row, "rmse", rmse)
+        table.set(row, "params", params)
+        self.notifyGUI()
+        return True
+
+    def undo(self):
+        super(IntegrateAction, self).undo()
+        table = self.model.table
+        table.rows[self.idx] = self.memory
+        self.notifyGUI()
+
+    def notifyGUI(self):
+        tl = self.model.createIndex(self.idx, 0)
+        tr = self.model.createIndex(self.idx, self.model.columnCount()-1)
+        self.model.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"), tl, tr)
+
 
 class TableModel(QAbstractTableModel):
 
@@ -25,14 +208,19 @@ class TableModel(QAbstractTableModel):
         indizesOfVisibleCols = (j for j in range(nc)\
                                   if self.table.colFormats[j] is not None)
         self.widgetColToDataCol = dict(enumerate(indizesOfVisibleCols))
-        self.savedRows = list()
-        self.activeRow = None
+        self.emptyActionStack()
+
+        self.nonEditables=set()
+
+    def setNonEditables(self, dataColIndices):
+        self.nonEditables = dataColIndices
+
+    def emptyActionStack(self):
+        self.actions = []
+        self.redoActions = []
 
     def getRow(self, idx):
         return self.table.get(self.table.rows[idx], None)
-
-    def set(self, idx, name, value):
-        self.table.set(self.table.rows[idx], name, value)
 
     def hasSavedRows(self):
         return len(self.savedRows) > 0
@@ -79,6 +267,8 @@ class TableModel(QAbstractTableModel):
         if not index.isValid():
             return Qt.ItemIsEnabled
         default = super(TableModel, self).flags(index)
+        if self.widgetColToDataCol[index.column()] in self.nonEditables:
+            return default
         return Qt.ItemFlags(default | Qt.ItemIsEditable)
 
     def setData(self, index, value, role=Qt.EditRole):
@@ -92,41 +282,61 @@ class TableModel(QAbstractTableModel):
                     value = 60.0 * float(value[:-1])
                 try:
                     value = expectedType(value)
-                except Exception, e:
+                except Exception:
                     guidata.qapplication().beep()
                     return False
-            self.table.rows[index.row()][dataIdx] = value
-            self.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"),index,\
-                                                                     index)
+            self.runAction(ChangeValueAction, index, dataIdx, value)
             return True
         return False
 
-    def insertRows(self, position, rows=1, index=QModelIndex()):
-        self.beginInsertRows(QModelIndex(), position, position + rows -1)
-        self.table.rows.insert(position+1, self.table.rows[position][:])
-        self.endInsertRows()
+    def runAction(self, clz, *a):
+        action = clz(self, *a)
+        done = action.do()
+        if not done:
+            return
+        self.actions.append(action)
+        self.redoActions = []
+
+    def infoLastAction(self):
+        if len(self.actions):
+            return self.actions[-1].actionName
+        return None
+
+    def infoRedoAction(self):
+        if len(self.redoActions):
+            return self.redoActions[-1].actionName
+        return None
+
+    def undoLastAction(self):
+        if len(self.actions):
+            action = self.actions.pop()
+            action.undo()
+            self.redoActions.append(action)
+            return
+        raise Exception("no action to be undone")
+
+    def redoLastAction(self):
+        if len(self.redoActions):
+            action = self.redoActions.pop()
+            action.do()
+            self.actions.append(action)
+            return
+        raise Exception("no action to be redone")
+
+
+    def cloneRow(self, position):
+        self.runAction(CloneRowAction, position)
         return True
 
-    def undoLastDeletion(self, position):
-        self.beginInsertRows(QModelIndex(), position, position)
-        self.table.rows.insert(position+1, self.savedRows.pop())
-        self.endInsertRows()
-        return True
-
-    def removeRows(self, position, rows=1, index=QModelIndex()):
-        self.beginRemoveRows(QModelIndex(), position, position + rows - 1)
-        self.savedRows.append(self.table.rows[position])
-        del self.table.rows[position]
-        self.endRemoveRows()
-        if position == self.activeRow:
-            self.activeRow = None
+    def removeRow(self, position):
+        self.runAction(DeleteRowAction, position)
         return True
 
     def sort(self, colIdx, order=Qt.AscendingOrder):
-        dataIdx = self.widgetColToDataCol[colIdx]
-        self.table.sortBy(self.table.colNames[dataIdx],\
-                          ascending= (order==Qt.AscendingOrder))
-        self.reset()
+        self.runAction(SortTableAction, colIdx, order)
+
+    def integrate(self, idx, method, rtmin, rtmax):
+        self.runAction(IntegrateAction, idx, method, rtmin, rtmax)
 
 
 class TableExplorer(QDialog):
@@ -169,6 +379,7 @@ class TableExplorer(QDialog):
         if not self.tableView.isSortingEnabled():
             self.tableView.setSortingEnabled(True)
             self.tableView.resizeColumnsToContents()
+            self.model.emptyActionStack()
 
     def setupLayout(self):
         vlayout = QVBoxLayout()
@@ -184,7 +395,6 @@ class TableExplorer(QDialog):
             hsplitter.setOpaqueResize(False)
             hsplitter.addWidget(self.rtPlotter.widget)
 
-            
             if self.isIntegrated:
                 vlayout2 = QVBoxLayout()
                 vlayout2.setSpacing(10)
@@ -228,8 +438,6 @@ class TableExplorer(QDialog):
             self.rtPlotter.widget.setSizePolicy(pol)
             self.mzPlotter.widget.setSizePolicy(pol)
 
-
-
         self.tableView = QTableView(self)
         self.model = TableModel(self.table, parent=self.tableView)
         # disabling sort before filling the table results in much faster
@@ -255,6 +463,9 @@ class TableExplorer(QDialog):
             self.reintegrateButton.setText("Integrate")
             self.connect(self.reintegrateButton, SIGNAL("clicked()"),
                          self.doIntegrate)
+            noneditables=["method"]
+            self.model.setNonEditables([self.model.table.getIndex(nonedit)
+                                        for nonedit in noneditables])
 
         if self.offerAbortOption:
             self.okButton = QPushButton("Ok")
@@ -265,11 +476,9 @@ class TableExplorer(QDialog):
 
     def dataChanged(self, ix1, ix2):
         if self.hasFeatures:
-            row = ix1.row()
-            col = ix1.column()
-            if row == ix2.row() and col == ix2.column():
-                if row == self.currentRow:
-                    self.updatePlots()
+            minr, maxr = sorted((ix1.row(), ix2.row()))
+            if minr <= self.currentRow <= maxr:
+                self.updatePlots()
 
     def abort(self):
         self.result = 1
@@ -284,15 +493,22 @@ class TableExplorer(QDialog):
         menu = QMenu()
         cloneAction = menu.addAction("Clone row")
         removeAction = menu.addAction("Delete row")
-        if self.model.hasSavedRows():
-            undoAction = menu.addAction("Append last deleted row")
+        undoInfo = self.model.infoLastAction()
+        redoInfo = self.model.infoRedoAction()
+
+        if undoInfo is not None:
+            undoAction = menu.addAction("Undo %s" % undoInfo)
+        if redoInfo is not None:
+            redoAction = menu.addAction("Redo %s" % redoInfo)
         action = menu.exec_(self.tableView.verticalHeader().mapToGlobal(point))
         if action == removeAction:
-            self.model.removeRows(idx)
+            self.model.removeRow(idx)
         elif action == cloneAction:
-            self.model.insertRows(idx)
-        elif self.model.hasSavedRows() and action == undoAction:
-            self.model.undoLastDeletion(idx)
+            self.model.cloneRow(idx)
+        elif undoInfo is not None and action == undoAction:
+            self.model.undoLastAction()
+        elif redoInfo is not None and action == redoAction:
+            self.model.redoLastAction()
 
     def connectSignals(self):
         # click at row head
@@ -318,33 +534,9 @@ class TableExplorer(QDialog):
 
         # setup integrator
         method = str(self.chooseIntMethod.currentText()) # conv from qstring
-        integrator = dict(configs.peakIntegrators)[method]
-        integrator.setPeakMap(self.currentPeakMap)
-
-        row = self.model.getRow(self.currentRow)
 
         rtmin, rtmax = self.rtPlotter.getRangeSelectionLimits()
-
-        # integrate
-        res = integrator.integrate(row.mzmin, row.mzmax, rtmin, rtmax)
-        area = res["area"]
-        rmse = res["rmse"]
-        params = res["params"]
-
-        # write values to table
-        self.model.set(self.currentRow, "method", method)
-        self.model.set(self.currentRow, "rtmin", rtmin)
-        self.model.set(self.currentRow, "rtmax", rtmax)
-        self.model.set(self.currentRow, "area", area)
-        self.model.set(self.currentRow, "rmse", rmse)
-        self.model.set(self.currentRow, "params", params)
-
-        tl = self.model.createIndex(self.currentRow, 0)
-        tr = self.model.createIndex(self.currentRow, self.model.columnCount()-1)
-        self.model.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"), tl, tr)
-
-        self.updatePlots()
-        self.rtPlotter.replot()
+        self.model.integrate(self.currentRow, method, rtmin, rtmax)
 
     def plotMz(self):
         minRt=self.rtPlotter.minRTRangeSelected
@@ -381,7 +573,6 @@ class TableExplorer(QDialog):
         mzmax = row.mzmax
         rtmin = row.rtmin
         rtmax = row.rtmax
-        peakmap = row.peakmap
 
         chromatogram = [s.intensityInRange(mzmin, mzmax) for s in self.currentL1Spectra]
 
@@ -405,6 +596,7 @@ class TableExplorer(QDialog):
 
         self.rtPlotter.plot(curves, self.plotconfigs)
         self.rtPlotter.setRangeSelectionLimits(rtmin, rtmax)
+        self.rtPlotter.replot()
 
 def inspect(table, offerAbortOption=False):
     app = guidata.qapplication()

@@ -6,6 +6,7 @@ import numpy as np
 #d=ms.integrate(d, "trapez")
 #d.store("integrated.table", True)
 d=ms.loadTable("integrated.table")
+d.info()
 #d.dropColumn("area") # not integrated any more
 #print "loaded"
 #pm = d.get(d.rows[0], "peakmap")
