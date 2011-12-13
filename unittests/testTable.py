@@ -119,7 +119,6 @@ def run(t, colnames, rows):
     assert tnre.id.values == tn.id.values
     assert tnre.iii.values == tn.iii.values
     assert tnre.long.values == tn.long.values
-    print tnre.x.values, tn.x.values
     assert tnre.x.values == tn.x.values
 
 

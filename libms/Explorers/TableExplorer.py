@@ -574,7 +574,8 @@ class TableExplorer(QDialog):
         rtmin = row.rtmin
         rtmax = row.rtmax
 
-        chromatogram = [s.intensityInRange(mzmin, mzmax) for s in self.currentL1Spectra]
+        chromatogram = [s.intensityInRange(mzmin, mzmax)\
+                        for s in self.currentL1Spectra]
 
         # get ppm from  centwave if present, else ppm=10 as default
         ppm = row.get("centwave_config", dict(ppm=10))["ppm"]

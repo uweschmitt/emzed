@@ -39,12 +39,12 @@ def testAggregateOperation():
     t = ms.toTable("a", [ 1, 2, 2, 3, 3, 3, 3])
     t.addColumn("b", [None, None, 2, 0, 3, 4, 9])
     t._print()
-    t = t.aggregate(t.b.sum(), "sum", "a")
-    t = t.aggregate(t.b.hasNone(), "hasNone", "a")
-    t = t.aggregate(t.b.countNone(), "countNone", "a")
-    t = t.aggregate(t.b.len(), "len", "a")
-    t = t.aggregate(t.b.std()*t.b.std(), "var", "a")
-    t = t.aggregate(t.b.mean(), "mean", "a")
+    t.aggregate(t.b.sum(), "sum", "a")
+    t.aggregate(t.b.hasNone(), "hasNone", "a")
+    t.aggregate(t.b.countNone(), "countNone", "a")
+    t.aggregate(t.b.len(), "len", "a")
+    t.aggregate(t.b.std()*t.b.std(), "var", "a")
+    t.aggregate(t.b.mean(), "mean", "a")
     t._print(w=8)
     assert t.sum.values == [None, 2, 2, 16, 16, 16, 16]
     assert t.var.values == [None, 0, 0, 10.5, 10.5, 10.5, 10.5]
@@ -52,3 +52,13 @@ def testAggregateOperation():
     assert t.hasNone.values == [1, 1, 1, 0, 0, 0, 0]
     assert t.countNone.values == [1, 1, 1, 0, 0, 0, 0]
     assert t.len.values == [1, 2, 2, 4, 4, 4, 4]
+
+def testUniqeRows():
+    t = ms.toTable("a", [1,1,2,2,3,3])
+    t.addColumn("b",    [1,1,1,2,3,3])
+    u = t.uniqueRows()
+    assert u.a.values == [1,2,2,3]
+    assert u.b.values == [1,1,2,3]
+    assert len(u.colNames) == 2
+    u.info()
+

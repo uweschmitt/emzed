@@ -24,6 +24,12 @@ def isNumericList(li):
     innertypes.discard(type(None))
     return all(i in _basic_num_types for i in innertypes)
 
+def saveeval(expr, ctx):
+    try:
+        return  expr._eval(ctx)
+    except Exception, e:
+        raise Exception("eval of %s failed: %s" % (expr, e))
+
 class Node(object):
 
     def __init__(self, left, right):
@@ -166,6 +172,18 @@ class Node(object):
         return AggregateExpression(self, lambda v: int(None in v) , "hasNone(%s)",\
                                    ignoreNone=False)
 
+    def uniqueNotNone(self):
+        def select(values):
+            diff = set(id(v) for v in values if v is not None)
+            if len(diff) == 0:
+                raise Exception("only None values in %s" % self)
+            if len(diff) > 1:
+                raise Exception("more than one None value in %s" % self)
+            return diff.pop()
+        return AggregateExpression(self, select, "uniqueNotNone(%s)",\
+                                   ignoreNone=False)
+
+
 
 class CompNode(Node):
 
@@ -176,9 +194,8 @@ class CompNode(Node):
     allowNone = True
 
     def _eval(self, ctx):
-        lhs, ixl = self.left._eval(ctx)
-        rhs, ixr = self.right._eval(ctx)
-
+        lhs, ixl = saveeval(self.left, ctx)
+        rhs, ixr = saveeval(self.right, ctx)
         if not self.allowNone:
             if lhs == None or rhs==None:
                 raise Exception("comparing to None with '%s' is not allowed"\
@@ -346,8 +363,8 @@ class BinaryExpression(Node):
         self.symbol = symbol
 
     def _eval(self, ctx):
-        lval, idxl = self.left._eval(ctx)
-        rval, idxr = self.right._eval(ctx)
+        lval, idxl = saveeval(self.left, ctx)
+        rval, idxr = saveeval(self.right, ctx)
 
         if isNumericList(lval):
             lval = np.array(lval)
@@ -448,7 +465,7 @@ class InvertNode(Node):
         self.child = child
 
     def _eval(self, ctx):
-        val, _ = self.child._eval(ctx)
+        val, _ = saveeval(self.child, ctx)
         if type(val) in _basic_types:
             return not val, None
         elif type(val) in _iterables:
@@ -469,7 +486,7 @@ class UnaryExpression(Node):
         self.funname = funname
 
     def _eval(self, ctx):
-        vals, _ = self.left._eval(ctx)
+        vals, _ = saveeval(self.left, ctx)
         if type(vals) in _iterables:
             return np.array([self.efun(v) for v in vals]), None
         return self.efun(vals), None
@@ -486,7 +503,7 @@ class AggregateExpression(Node):
         self.ignoreNone = ignoreNone
 
     def _eval(self, ctx):
-        vals, _ = self.left._eval(ctx)
+        vals, _ = saveeval(self.left, ctx)
         if not type(vals) in _iterables:
             vals = [vals]
         if self.ignoreNone:
@@ -522,32 +539,33 @@ class LogicNode(Node):
             return np.array([bitop(li, ri) for li,ri in zip(l,r)])
         raise Exception("bool op for %r and %r not defined" % (l, r))
 
+
 class AndNode(LogicNode):
 
     symbol = "&"
     def _eval(self, ctx):
-        lhs, _ = self.left._eval(ctx)
+        lhs, _ = saveeval(self.left, ctx)
         if type(lhs) == bool and not lhs:
             return np.zeros((self.right._evalsize(ctx),), dtype=np.bool), None
-        rhs, _ = self.right._eval(ctx)
+        rhs, _ = saveeval(self.right, ctx)
         return self.richeval(lhs, rhs, lambda a,b: a & b), None
 
 class OrNode(LogicNode):
 
     symbol = "|"
     def _eval(self, ctx):
-        lhs, _ = self.left._eval(ctx)
+        lhs, _ = saveeval(self.left, ctx)
         if type(lhs)==bool and lhs:
             return np.ones((self.right._evalsize(ctx),), dtype=np.bool), None
-        rhs, _ = self.right._eval(ctx)
+        rhs, _ = saveeval(self.right, ctx)
         return self.richeval(lhs, rhs, lambda a,b: a | b), None
 
 class XorNode(LogicNode):
 
     symbol = "^"
     def _eval(self, ctx):
-        lhs, _ = self.left._eval(ctx)
-        rhs, _ = self.right._eval(ctx)
+        lhs, _ = saveeval(self.left, ctx)
+        rhs, _ = saveeval(self.right, ctx)
         return self.richeval(lhs, rhs, lambda a,b: (a & ~b) | (~a & b)), None
 
 
@@ -578,7 +596,7 @@ class FunctionExpression(Node):
         self.agg = agg
 
     def _eval(self, ctx):
-        vals, index = self.child._eval(ctx)
+        vals, index = saveeval(self.child, ctx)
         return self.efun(vals), None
 
     def __str__(self):
@@ -602,20 +620,34 @@ class IfThenElse(Node):
             self.e3 = e3
 
         def _eval(self, ctx):
-            e1, _ = self.e1._eval(ctx)
-            e2, _ = self.e2._eval(ctx)
-            e3, _ = self.e3._eval(ctx)
+            e1, _ = saveeval(self.e1, ctx)
+            e2, _ = saveeval(self.e2, ctx)
+            e3, _ = saveeval(self.e3, ctx)
 
             size = self._evalsize(ctx)
             if size == 1:
                 return e2 if e1 else e3, None
             if not type(e1) in _iterables:
                 e1 = [ e1 ] * size
+            elif isinstance(e1, np.ndarray):
+                # incl. conversion of array entries to python types here
+                e1 = e1.tolist()
+
             if not type(e2) in _iterables:
                 e2 = [ e2 ] * size
+            elif isinstance(e2, np.ndarray):
+                # incl. conversion of array entries to python types here
+                e2 = e2.tolist()
+
             if not type(e3) in _iterables:
                 e3 = [ e3 ] * size
+            elif isinstance(e3, np.ndarray):
+                # incl. conversion of array entries to python types here
+                e3 = e3.tolist()
 
+            # no numpy array here, this would not be much
+            # faster and we would have to do lots of decisions
+            # and extra handling here
             return [ e2i if e1i else e3i for (e1i, e2i, e3i)
                      in zip(e1, e2, e3) ], None
 

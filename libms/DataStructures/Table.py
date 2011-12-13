@@ -1,11 +1,22 @@
 import pyOpenMS as P
-import operator, copy, os, itertools, re, numpy, cPickle, sys, inspect
+import copy, os, itertools, re, numpy, cPickle, sys, inspect
 from   ExpressionTree import Node, Column
 import numpy as np
 from   collections import Counter, OrderedDict
 
 standardFormats = { int: "%d", long: "%d", float : "%.2f", str: "%s" }
 fms = "'%.2fm' % (o/60.0)"  # format seconds to floating point minutes
+
+def computekey(o):
+    if type(o) in [int, float, str, long]:
+        return o
+    if type(o) == dict:
+        return computekey(o.items())
+    if type(o) in [list, tuple]:
+        return tuple(computekey(oi) for oi in o)
+    print "HANDLE ", o
+    return id(o)
+
 
 class Bunch(dict):
     __getattr__ = dict.__getitem__
@@ -167,19 +178,16 @@ class Table(object):
         print
         print "table info:"
         print
-        print "  #rows =", len(self)
+        print "   len=", len(self)
         print
         for i, p in enumerate(zip(self.colNames, self.colTypes,\
                               self.colFormats)):
             vals = getattr(self, p[0]).values
             nones = sum( 1 for v in vals if v is None )
-            if nones == 0:
-                txt = "[no Nones]"
-            elif nones == 1:
-                txt = "[1 None]"
-            else:
-                txt = "[%d Nones]" % nones
-            print "   col #%-2d %-12s: %-10s %-15r %r" % ((i,txt)+p)
+            numvals = len(set(id(v) for v in vals))
+            txt = "[%d diff vals, %d Nones]" % (numvals, nones)
+            print "   #%-2d %-23s name=%-8r %-15r fmt=%r"\
+                  % ((i, txt)+p)
         print
 
 
@@ -497,13 +505,13 @@ class Table(object):
 
         groups = set()
         for row in self.rows:
-            key = tuple( self.get(row, n) for n in colNames)
+            key = computekey([self.get(row, n) for n in colNames])
             groups.add(key)
 
         # preserve order of rows
         subTables = OrderedDict()
         for row in self.rows:
-            key = tuple( self.get(row, n) for n in colNames)
+            key = computekey([self.get(row, n) for n in colNames])
             if key not in subTables:
                 subTables[key] = self.buildEmptyClone()
             subTables[key].rows.append(row)
@@ -700,10 +708,52 @@ class Table(object):
         self._setupColumnAttributes()
 
 
-    def aggregate(self, expr, newName, colName0, *colNames):
 
-        colNames = (colName0,) + colNames
-        subTables = self.splitBy(*colNames)
+
+    def uniqueRows(self):
+        result = self.buildEmptyClone()
+        keysSeen = set()
+        for row in self.rows:
+            key = computekey(row)
+            if key not in keysSeen:
+                result.rows.append(row)
+                keysSeen.add(key)
+        return result
+
+    def aggregate(self, expr, newName, *groupByColumnNames):
+
+        """
+        adds new aggregated column to table **inplace**.
+        *expr* calculates the aggregation.
+        the table can be split into several subtables by
+        providing extra *groupByColumnNames* parameters,
+        then the aggregation is only performed per group.
+        *newName* is the columnname for the aggregations.
+
+
+        If we have a table ``t1`` with
+
+           ===    =====     ====
+           id     group     value 
+           ===    =====     ====
+           0      1         10.0
+           1      1         20.0
+           2      2         30.0
+           ===    =====     ====
+
+       Then the result of ``t1.aggregate(t1.mean(), "mean_per_group", "group")``
+       is
+
+           ===    =====     ====   ==============
+           id     group     value  mean_per_group
+           ===    =====     ====   ==============
+           0      1         10.0   15.0
+           1      1         20.0   15.0
+           2      2         30.0   30.0
+           ===    =====     ====   ==============
+
+        """
+        subTables = self.splitBy(*groupByColumnNames)
         if len(subTables) == 0:
             rv = self.buildEmptyClone()
             rv.colNames.append(newName)
@@ -728,9 +778,7 @@ class Table(object):
                 values = values[0]
             collectedValues.extend([values]*len(t))
 
-        result = self.copy()
-        result.addColumn(newName, collectedValues)
-        return result
+        self.addColumn(newName, collectedValues)
 
 
     def filter(self, expr, debug = False):
