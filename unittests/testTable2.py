@@ -46,7 +46,7 @@ def testColumnAggFunctions():
     assert apc.colTypes == [int]
     assert apc.a_plus_c() == [ None, None , 4]
 
-    assert (apc.a_plus_c - t.a)() == [None, None, 3]
+    assert (apc.a_plus_c - t.a)() == [None, None, 1]
 
 
 def testAggregateOperation():
@@ -75,4 +75,11 @@ def testUniqeRows():
     assert u.b.values == [1,1,2,3]
     assert len(u.colNames) == 2
     u.info()
+
+
+def testAggWIthIterable():
+    t = ms.toTable("a", [ (1,2), None ])
+    t.aggregate(t.a.uniqueNotNone, "an")
+    assert t.an.values == [ (1,2), (1,2)]
+    assert t.a.values == [ (1,2), None]
 
