@@ -95,14 +95,14 @@ class SortTableAction(TableAction):
 
     actionName = "sort table"
 
-    def __init__(self, model, colIdx, order):
-        super(SortTableAction, self).__init__(model, colIdx=colIdx,\
+    def __init__(self, model, dataColIdx, order):
+        super(SortTableAction, self).__init__(model, dataColIdx=dataColIdx,\
                                         order=order)
 
     def do(self):
         table = self.model.table
         ascending = self.order == Qt.AscendingOrder
-        colName = table.colNames[self.colIdx]
+        colName = table.colNames[self.dataColIdx]
         # memory is the permutation which sorted the table rows
         # sortBy returns this permutation:
         self.memory = table.sortBy(colName, ascending)
@@ -337,7 +337,8 @@ class TableModel(QAbstractTableModel):
         return True
 
     def sort(self, colIdx, order=Qt.AscendingOrder):
-        self.runAction(SortTableAction, colIdx, order)
+        dataColIdx = self.widgetColToDataCol[colIdx]
+        self.runAction(SortTableAction, dataColIdx, order)
 
     def integrate(self, idx, method, rtmin, rtmax):
         self.runAction(IntegrateAction, idx, method, rtmin, rtmax)
@@ -345,45 +346,86 @@ class TableModel(QAbstractTableModel):
 
 class TableExplorer(QDialog):
 
-    def __init__(self, table, offerAbortOption):
+    def __init__(self, tables, offerAbortOption):
         QDialog.__init__(self)
 
         self.setWindowFlags(Qt.Window)
 
-        self.hasFeatures = table.hasColumns("mz", "mzmin", "mzmax", "rt",
-                                            "rtmin", "rtmax", "peakmap")
-
-        self.isIntegrated = self.hasFeatures and \
-                            table.hasColumns("area", "rmse")
-        self.table = table
         self.offerAbortOption = offerAbortOption
         self.currentRow = -1
 
-        if table.title:
-            title = table.title
-        else:
-            title = os.path.basename(table.meta.get("source",""))
-        if self.hasFeatures:
-            title += " aligned=%s" % table.meta.get("aligned", "False")
-        self.setWindowTitle(title)
+        sources = list()
+        for i, table in enumerate(tables):
+            if table.hasColumns("source"):
+                for source in set(table.source()):
+                    sources.append( ((i, source), table))
+            else:
+                sources.append( ((i, ""), table))
+
+        self.sources = sources
+        table = sources[0][1]
+        self.table = table
 
         self.setupWidgets()
         self.connectSignals()
         self.setupLayout()
 
-        #self.setMinimumHeight(600)
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.setSizePolicy(sizePolicy)
         self.setSizeGripEnabled(True)
 
+        self.hadFeatures = None
+        self.wasIntegrated = None
+        self.setup()
+
+    def determineTableClass(self):
+        hasFeatures = self.table.hasColumns("mz", "mzmin", "mzmax", "rt",
+                                       "rtmin", "rtmax", "peakmap")
+
+        isIntegrated = hasFeatures and self.table.hasColumns("area", "rmse")
+        return hasFeatures, isIntegrated
+
+    def setup(self):
+        table = self.table
+        hasFeatures, isIntegrated = self.determineTableClass()
+
+        if table.title:
+            title = table.title
+        else:
+            title = os.path.basename(table.meta.get("source",""))
+        if hasFeatures:
+            title += " aligned=%s" % table.meta.get("aligned", "False")
+        self.setWindowTitle(title)
+
+        if hasFeatures != self.hadFeatures:
+            self.setPlotVisibility(hasFeatures)
+            self.hadFeatures = hasFeatures
+            self.upperLayout.adjustSize()
+
+        if isIntegrated != self.wasIntegrated:
+            self.setIntegrationPanelVisiblity(isIntegrated)
+            self.wasIntegrated = isIntegrated
+
+        self.layout().layout()
+
+    def setPlotVisibility(self, doShow):
+        self.rtPlotter.widget.setVisible(doShow)
+        self.mzPlotter.widget.setVisible(doShow)
+
+    def setIntegrationPanelVisiblity(self, doShow):
+        self.integrationFrame.setVisible(doShow)
+
     def paintEvent(self, *a):
         super(TableExplorer, self).paintEvent(*a)
         # now the table is filled ! (and painted)
-        # enabling sort befor filling the table results in much slower
+        # enabling sort before filling the table results in much slower
         # filling,
         if not self.tableView.isSortingEnabled():
             self.tableView.setSortingEnabled(True)
             self.tableView.resizeColumnsToContents()
+            # at startup some sort happens automatically, and this
+            # sort gets automatically registered to the undo actions
+            # so we reset the undo stack here
             self.model.emptyActionStack()
             self.updateMenubar()
 
@@ -396,38 +438,34 @@ class TableExplorer(QDialog):
         vsplitter.setOpaqueResize(False)
 
         vsplitter.addWidget(self.menubar)
-        #qf = QFrame(self)
-        #qf.setFrameShape(QFrame.HLine)
-        #vsplitter.addWidget(qf)
 
-        if self.hasFeatures:
 
-            hsplitter = QSplitter()
-            hsplitter.setOpaqueResize(False)
-            hsplitter.addWidget(self.rtPlotter.widget)
+        hsplitter = QSplitter()
+        hsplitter.setOpaqueResize(False)
+        hsplitter.addWidget(self.rtPlotter.widget)
 
-            if self.isIntegrated:
-                vlayout2 = QVBoxLayout()
-                vlayout2.setSpacing(10)
-                vlayout2.setMargin(5)
-                vlayout2.addWidget(self.intLabel)
-                vlayout2.addWidget(self.chooseIntMethod)
-                vlayout2.addWidget(self.reintegrateButton)
-                vlayout2.addStretch()
-                vlayout2.setAlignment(self.intLabel, Qt.AlignTop)
-                vlayout2.setAlignment(self.chooseIntMethod, Qt.AlignTop)
-                vlayout2.setAlignment(self.reintegrateButton, Qt.AlignTop)
+        vlayout2 = QVBoxLayout()
+        vlayout2.setSpacing(10)
+        vlayout2.setMargin(5)
+        vlayout2.addWidget(self.intLabel)
+        vlayout2.addWidget(self.chooseIntMethod)
+        vlayout2.addWidget(self.reintegrateButton)
+        vlayout2.addStretch()
+        vlayout2.setAlignment(self.intLabel, Qt.AlignTop)
+        vlayout2.setAlignment(self.chooseIntMethod, Qt.AlignTop)
+        vlayout2.setAlignment(self.reintegrateButton, Qt.AlignTop)
 
-                frame = QFrame()
-                frame.setLayout(vlayout2)
-                #frame.setFrameStyle(QFrame.StyledPanel)
-                hsplitter.addWidget(frame)
+        self.integrationFrame = QFrame()
+        self.integrationFrame.setLayout(vlayout2)
+        hsplitter.addWidget(self.integrationFrame)
 
-            hsplitter.addWidget(self.mzPlotter.widget)
+        hsplitter.addWidget(self.mzPlotter.widget)
 
-            vsplitter.addWidget(hsplitter)
+        vsplitter.addWidget(hsplitter)
         vsplitter.addWidget(self.tableView)
         vlayout.addWidget(vsplitter)
+
+        self.upperLayout = hsplitter
 
         if self.offerAbortOption:
             hbox = QHBoxLayout()
@@ -448,6 +486,19 @@ class TableExplorer(QDialog):
         if redoInfo:
             self.redoAction.setText("Redo: %s" % redoInfo)
 
+    def selectTable(self, i, source, table):
+        for j, action in enumerate(self.tableActions):
+            txt = str(action.text())
+            if txt.startswith("*"):
+                txt = " "+txt[1:]
+                action.setText(txt)
+            if i==j:
+                action.setText("*"+txt)
+
+        self.table = table
+        self.setup()
+
+
     def setupWidgets(self):
         self.tableView = QTableView(self)
         self.model = TableModel(self.table, parent=self.tableView, dialog=self)
@@ -456,26 +507,43 @@ class TableExplorer(QDialog):
         self.undoAction = QAction("Undo", self)
         self.undoAction.setShortcut(QKeySequence("Ctrl+Z"))
         self.menubar.connect(self.undoAction, SIGNAL("triggered()"), self.model.undoLastAction)
-        menu = QMenu("Edit", self.menubar)
-        menu.addAction(self.undoAction)
 
         self.redoAction = QAction("Redo", self)
         self.redoAction.setShortcut(QKeySequence("Ctrl+Y"))
         self.menubar.connect(self.redoAction, SIGNAL("triggered()"), self.model.redoLastAction)
-        menu.addAction(self.redoAction)
-        self.menubar.addMenu(menu)
-        self.menu = menu
 
-        if self.hasFeatures:
-            self.plotconfigs = (None, dict(shade=0.35, linewidth=1, color="g") )
-            self.rtPlotter = RtPlotter(rangeSelectionCallback=self.plotMz)
-            self.rtPlotter.setMinimumSize(300, 150)
-            self.mzPlotter = MzPlotter()
-            self.mzPlotter.setMinimumSize(300, 150)
-            pol = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
-            pol.setVerticalStretch(5)
-            self.rtPlotter.widget.setSizePolicy(pol)
-            self.mzPlotter.widget.setSizePolicy(pol)
+        menu = QMenu("Edit", self.menubar)
+        menu.addAction(self.redoAction)
+        menu.addAction(self.undoAction)
+        self.menubar.addMenu(menu)
+
+        menu = QMenu("Choose Table", self.menubar)
+        self.tableActions = []
+        for (i,n), table in self.sources:
+            if table is self.table:
+                action = QAction("*[%d]: %s" % (i,n), self)
+            else:
+                action = QAction(" [%d]: %s" % (i,n), self)
+
+            action.setData(table)
+            def handler(i=i, n=n, table=table):
+                self.selectTable(i, n, table)
+            self.menubar.connect(action, SIGNAL("triggered()"), handler)
+            menu.addAction(action)
+            self.tableActions.append(action)
+
+        self.menubar.addMenu(menu)
+        self.chooseMenu = menu
+
+        self.plotconfigs = (None, dict(shade=0.35, linewidth=1, color="g") )
+        self.rtPlotter = RtPlotter(rangeSelectionCallback=self.plotMz)
+        self.rtPlotter.setMinimumSize(300, 100)
+        self.mzPlotter = MzPlotter()
+        self.mzPlotter.setMinimumSize(300, 100)
+        pol = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+        pol.setVerticalStretch(5)
+        self.rtPlotter.widget.setSizePolicy(pol)
+        self.mzPlotter.widget.setSizePolicy(pol)
 
 
         # disabling sort before filling the table results in much faster
@@ -485,25 +553,24 @@ class TableExplorer(QDialog):
         # following is much faster than # self.tableView.resizeColumnsToContents():
         self.tableView.setModel(self.model)
 
-        pol = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
-        pol.setVerticalStretch(5)
-        self.tableView.setSizePolicy(pol)
+        pol = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        #self.tableView.setSizePolicy(pol)
 
-        if self.isIntegrated:
-            self.intLabel = QLabel("Integration")
-            self.chooseIntMethod = QComboBox()
-            for name, _ in configs.peakIntegrators:
-                self.chooseIntMethod.addItem(name)
-            self.connect(self.chooseIntMethod,
-                         SIGNAL("currentIndexChanged(int)"),
-                         self.intMethodChanged)
-            self.reintegrateButton = QPushButton()
-            self.reintegrateButton.setText("Integrate")
-            self.connect(self.reintegrateButton, SIGNAL("clicked()"),
-                         self.doIntegrate)
-            noneditables=["method"]
-            self.model.setNonEditables([self.model.table.getIndex(nonedit)
-                                        for nonedit in noneditables])
+
+        self.intLabel = QLabel("Integration")
+        self.chooseIntMethod = QComboBox()
+        for name, _ in configs.peakIntegrators:
+            self.chooseIntMethod.addItem(name)
+        self.connect(self.chooseIntMethod,
+                     SIGNAL("currentIndexChanged(int)"),
+                     self.intMethodChanged)
+        self.reintegrateButton = QPushButton()
+        self.reintegrateButton.setText("Integrate")
+        self.connect(self.reintegrateButton, SIGNAL("clicked()"),
+                     self.doIntegrate)
+        noneditables=["method"]
+        self.model.setNonEditables([self.model.table.getIndex(nonedit)
+                                    for nonedit in noneditables])
 
         if self.offerAbortOption:
             self.okButton = QPushButton("Ok")
@@ -639,9 +706,9 @@ class TableExplorer(QDialog):
         self.rtPlotter.setRangeSelectionLimits(rtmin, rtmax)
         self.rtPlotter.replot()
 
-def inspect(table, offerAbortOption=False):
+def inspect(tables, offerAbortOption=False):
     app = guidata.qapplication()
-    explorer = TableExplorer(table, offerAbortOption)
+    explorer = TableExplorer(tables, offerAbortOption)
     explorer.raise_()
     explorer.exec_()
     if offerAbortOption:
