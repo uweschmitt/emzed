@@ -105,6 +105,10 @@ class RtPlotter(PlotterBase):
         t = self.pm.add_tool(tool)
         t.activate()
 
+    def reset(self):
+        self.plot([])
+        self.marker.rts = [0]
+
     def plot(self, chromatograms, configs=None):
         allrts = set()
         colors = "bgrkcmG"
@@ -159,8 +163,6 @@ class RtPlotter(PlotterBase):
 
     def setXAxisLimits(self, xmin, xmax):
         super(RtPlotter, self).setXAxisLimits(xmin, xmax)
-        mid = 0.5*(xmin+xmax)
-        #self.setRangeSelectionLimits(mid, mid)
 
     def rangeSelectionHandler(self, obj, left, right):
         min_, max_ = sorted((left, right))
@@ -249,4 +251,7 @@ class MzPlotter(PlotterBase):
 
         self.curve.plot().updateAxes()
         self.curve.plot().replot()
+
+    def reset(self):
+        self.plot(np.ndarray((0,2)))
 

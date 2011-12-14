@@ -16,6 +16,9 @@ d2=d.copy()
 d2.dropColumn("area")
 d3=d.copy()
 d3.dropColumn("mz")
-ms.inspect([d,d2,d3])
+import os
+os.environ["WITHOUT_PUBCHEM"]="1"
+import tab
+ms.inspect([d,d2,d3,tab.elements ])
 #ms.mzalign(d, interactive=True, destination=".")
 #ms.mzalign(d, interactive=True)

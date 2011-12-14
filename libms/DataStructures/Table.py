@@ -188,7 +188,7 @@ class Table(object):
             nones = sum( 1 for v in vals if v is None )
             numvals = len(set(id(v) for v in vals))
             txt = "[%d diff vals, %d Nones]" % (numvals, nones)
-            print "   #%-2d %-23s name=%-8r %-15r fmt=%r"\
+            print "   #%-2d %-25s name=%-8r %-15r fmt=%r"\
                   % ((i, txt)+p)
         print
 
@@ -695,7 +695,8 @@ class Table(object):
     def _addColumn(self, name, values, type_, format, insertBefore):
         # works for lists, nubmers, objects: convers inner numpy dtypes
         # to python types if present, else does nothing !!!!
-        values = np.array(values).tolist()
+        if type(values) == np.ndarray:
+            values = values.tolist()
 
         assert len(values) == len(self), "lenght of new column %d does not "\
                                          "fit number of rows %d in table"\
@@ -834,10 +835,11 @@ class Table(object):
             ctx = dict((n, (t.getColumn(n).values,
                          t.primaryIndex.get(n))) for n in names)
             values, _ = expr._eval({self: ctx})
-            # works for numbers and objects to:
-            values = np.array(values).tolist()
-            if isinstance(values, list):
+            # works for numbers and objects to, but not if values is
+            # iteraable:
+            if type(values) in [list, np.ndarray]:
                 assert len(values)==1, "non aggreg function used"
+                values = np.array(values).tolist()
                 values = values[0]
             collectedValues.extend([values]*len(t))
 
