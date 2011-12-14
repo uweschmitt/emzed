@@ -113,9 +113,6 @@ class PeakMap(object):
     def __len__(self):
         return len(self.spectra)
 
-    def __iter__(self):
-        return iter(self.spectra)
-
     def toMSExperiment(self):
         exp = pyOpenMS.MSExperiment()
         for spec in self.spectra:
