@@ -83,3 +83,11 @@ def testAggWIthIterable():
     assert t.an.values == [ (1,2), (1,2)]
     assert t.a.values == [ (1,2), None]
 
+def testSpecialFormats():
+    for name in ["mz", "mzmin", "mzmax", "mw", "m0"]:
+        t = ms.toTable(name, [ 1.0,2, None ])
+        assert t.colFormatters[0](1) == "1.00000", t.colFormatters[0](1)
+
+    for name in ["rt", "rtmin", "rtmax"]:
+        t = ms.toTable(name, [ 1.0,2, None ])
+        assert t.colFormatters[0](120) == "2.00m"
