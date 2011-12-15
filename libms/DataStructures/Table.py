@@ -7,6 +7,13 @@ from   collections import Counter, OrderedDict
 standardFormats = { int: "%d", long: "%d", float : "%.2f", str: "%s" }
 fms = "'%.2fm' % (o/60.0)"  # format seconds to floating point minutes
 
+def guessFormatFor(name, type_):
+    if type_ == float and name.startswith("m"):
+        return  "%.5f"
+    if type_ == float and name.startswith("rt"):
+        return fms
+    return standardFormats.get(name)
+
 def computekey(o):
     if type(o) in [int, float, str, long]:
         return o
@@ -710,7 +717,7 @@ class Table(object):
                 return type_(x)
             return x
         if format == "":
-            format = standardFormats.get(type_)
+            format = guessFormatFor(name, type_)
 
         if insertBefore is None:
             # list.insert(len(list), ..) is the same as append(..) !
@@ -838,7 +845,10 @@ class Table(object):
             # works for numbers and objects to, but not if values is
             # iteraable:
             if type(values) in [list, np.ndarray]:
-                assert len(values)==1, "non aggreg function used"
+                assert len(values)==1, "you did not use an aggregating "\
+                                       "expression, or you aggregate over "\
+                                       "a column which has lists or numpy "\
+                                       "arrays as entries"
                 values = np.array(values).tolist()
                 values = values[0]
             collectedValues.extend([values]*len(t))
@@ -1033,13 +1043,10 @@ class Table(object):
             raise Exception("colName is not a string. The arguments of this "\
                             "function changed in the past !")
 
-        from libms.DataStructures.Table import (commonTypeOfColumn,
-                                                standardFormats, Table)
         values = list(iterable)
         if type_ is None:
             type_ = commonTypeOfColumn(values)
-        if format is None:
-            format = standardFormats.get(type_, "%r")
+        format = format or guessFormatFor(colName, type_) or "%r"
         if meta is None:
             meta = dict()
         else:

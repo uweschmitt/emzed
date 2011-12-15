@@ -26,8 +26,15 @@ def run(integrator, areatobe, rmsetobe):
     print "area: is=%e  tobe=%e" % (area, areatobe)
     print "rmse: is=%e  tobe=%e" % (rmse, rmsetobe)
 
-    assert abs(area-areatobe) < .1,  area
-    assert abs(rmse-rmsetobe) < .1,  rmse
+
+    if areatobe >0 and rmsetobe > 0:
+        assert abs(area-areatobe)/areatobe < 1e-2,  area
+        assert abs(rmse-rmsetobe)/rmsetobe < 1e-2,  rmse
+    elif areatobe == 0.0:
+        assert area == 0.0, area
+    else:
+        assert rmse == 0.0, rmse
+
 
     params = result.get("params")
 
@@ -37,10 +44,24 @@ def run(integrator, areatobe, rmsetobe):
 
     return x,y, params
 
+def testNoIntegration():
+
+    integrator = dict(configs.peakIntegrators)["no_integration"]
+    integrator.setPeakMap(PeakMap([]))
+    result = integrator.integrate(0.0, 100.0, 0, 300)
+    assert result.get("area") == None
+    assert result.get("rmse") == None
+    assert result.get("params") == None
+
+    rts = range(0, 600)
+    x,y = integrator.getSmoothed(rts, result.get("params"))
+    assert x==[]
+    assert y==[]
+
 
 def testPeakIntegration():
 
-    integrator = dict(configs.peakIntegrators).get("asym_gauss")
+    integrator = dict(configs.peakIntegrators)["asym_gauss"]
     _, _, params = run(integrator, 30584.3, 7251.2)
 
     assert abs(params[0]- 36775.0) < 1.0, params[0]
@@ -48,15 +69,15 @@ def testPeakIntegration():
     assert abs(params[2]- 0.1921) < 0.001, params[2]
     assert abs(params[3]- 325.7) < 0.1, params[3]
 
-    integrator = dict(configs.peakIntegrators).get("emg_exakt")
+    integrator = dict(configs.peakIntegrators)["emg_exact"]
 
     run(integrator,  154542.79, 7.43274e3)
 
-    integrator = dict(configs.peakIntegrators).get("trapez")
+    integrator = dict(configs.peakIntegrators)["trapez"]
 
     run(integrator,  120481.9, 0.0)
 
-    integrator = dict(configs.peakIntegrators).get("std")
+    integrator = dict(configs.peakIntegrators)["std"]
     run(integrator,  119149.7, 6854.8)
 
 
@@ -74,7 +95,7 @@ def testTrapezIntegrationSimple():
 
     pm = PeakMap([s0,s1,s2,s3])
 
-    integrator = dict(configs.peakIntegrators).get("trapez")
+    integrator = dict(configs.peakIntegrators)["trapez"]
     integrator.setPeakMap(pm)
 
     assert integrator.integrate(1.4, 2.5, 0, 3)["area"] == 5.0

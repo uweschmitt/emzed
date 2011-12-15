@@ -75,7 +75,10 @@ class PeakMap(object):
                 if i%5==4:
                     print
             print
-        self.polarity = polarities.pop()
+        elif len(polarities)==1:
+            self.polarity = polarities.pop()
+        else:
+            self.polarity = None
 
     def filter(self, condition):
         return PeakMap([s for s in self.spectra if condition(s)], self.meta)
@@ -112,9 +115,6 @@ class PeakMap(object):
 
     def __len__(self):
         return len(self.spectra)
-
-    def __iter__(self):
-        return iter(self.spectra)
 
     def toMSExperiment(self):
         exp = pyOpenMS.MSExperiment()

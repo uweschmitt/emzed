@@ -1,7 +1,6 @@
 from PeakIntegrator import PeakIntegrator
 import numpy as np
 import scipy.optimize as opt
-import scipy.special  as special
 import math
 
 class AsymmetricGaussIntegrator(PeakIntegrator):
@@ -19,7 +18,7 @@ class AsymmetricGaussIntegrator(PeakIntegrator):
         A, s1, s2, mu = param
         isleft = rts < mu
         svec = s2 + isleft * (s1-s2)
-        rv = np.exp(-(rts-mu)**2 / svec ) 
+        rv = np.exp(-(rts-mu)**2 / svec )
         return A*rv
 
     @staticmethod
@@ -37,19 +36,18 @@ class AsymmetricGaussIntegrator(PeakIntegrator):
         if len(rts)<4:
             rmse = 1.0/math.sqrt(len(rts))*np.linalg.norm(chromatogram)
             return 0.0, rmse, (0.0, 1.0, 1.0, 0.0)
-            
+
         imax = np.argmax(chromatogram)
         A = chromatogram[imax]
         mu = rts[imax]
         s1 = s2 = 0.5 # 1.0
-        param = A, s1, s2, mu
         if self.gtol is None:
-            (A, s1, s2, mu), ok = opt.leastsq(AsymmetricGaussIntegrator.__err, 
-                                              (A, s1, s2, mu), 
+            (A, s1, s2, mu), ok = opt.leastsq(AsymmetricGaussIntegrator.__err,
+                                              (A, s1, s2, mu),
                                               args=(rts, chromatogram))
         else:
-            (A, s1, s2, mu), ok = opt.leastsq(AsymmetricGaussIntegrator.__err, 
-                                              (A, s1, s2, mu), gtol = self.gtol, 
+            (A, s1, s2, mu), ok = opt.leastsq(AsymmetricGaussIntegrator.__err,
+                                              (A, s1, s2, mu), gtol = self.gtol,
                                               args=(rts, chromatogram))
 
         if ok not in [1,2,3,4] or s1<0 or s2<0 : # failed
@@ -67,4 +65,3 @@ class AsymmetricGaussIntegrator(PeakIntegrator):
         return rtvalues, AsymmetricGaussIntegrator.__fun_eval(params, np.array(rtvalues))
 
 
-        

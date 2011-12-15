@@ -46,7 +46,7 @@ def testColumnAggFunctions():
     assert apc.colTypes == [int]
     assert apc.a_plus_c() == [ None, None , 4]
 
-    assert (apc.a_plus_c - t.a)() == [None, None, 3]
+    assert (apc.a_plus_c - t.a)() == [None, None, 1]
 
 
 def testAggregateOperation():
@@ -76,3 +76,18 @@ def testUniqeRows():
     assert len(u.colNames) == 2
     u.info()
 
+
+def testAggWIthIterable():
+    t = ms.toTable("a", [ (1,2), None ])
+    t.aggregate(t.a.uniqueNotNone, "an")
+    assert t.an.values == [ (1,2), (1,2)]
+    assert t.a.values == [ (1,2), None]
+
+def testSpecialFormats():
+    for name in ["mz", "mzmin", "mzmax", "mw", "m0"]:
+        t = ms.toTable(name, [ 1.0,2, None ])
+        assert t.colFormatters[0](1) == "1.00000", t.colFormatters[0](1)
+
+    for name in ["rt", "rtmin", "rtmax"]:
+        t = ms.toTable(name, [ 1.0,2, None ])
+        assert t.colFormatters[0](120) == "2.00m"
