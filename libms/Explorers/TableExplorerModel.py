@@ -211,8 +211,9 @@ class TableModel(QAbstractTableModel):
 
         self.nonEditables=set()
 
-    def setNonEditables(self, dataColIndices):
-        self.nonEditables = dataColIndices
+    def addNonEditable(self, name):
+        dataColIdx = self.table.getIndex(name)
+        self.nonEditables.add(dataColIdx)
 
     def emptyActionStack(self):
         self.actions = []
@@ -220,9 +221,6 @@ class TableModel(QAbstractTableModel):
 
     def getRow(self, idx):
         return self.table.get(self.table.rows[idx], None)
-
-    def hasSavedRows(self):
-        return len(self.savedRows) > 0
 
     def rowCount(self, index=QModelIndex()):
         return len(self.table)
@@ -338,16 +336,46 @@ class TableModel(QAbstractTableModel):
         self.runAction(SortTableAction, dataColIdx, colIdx, order)
 
     def integrate(self, idx, method, rtmin, rtmax):
-        print "integrate", self
         self.runAction(IntegrateAction, idx, method, rtmin, rtmax)
 
+    def foundPostfixes(self):
+        postfixes = set()
+        for c in self.table.colNames:
+            if "_" in c:
+                postfix = c.split("_", 1)[1]
+                postfixes.add(postfix)
+            else:
+                postfixes.add("")
+        return sorted(postfixes)
+
+    def eicColNames(self):
+        return ["mzmin", "mzmax", "rtmin", "rtmax", "peakmap"]
 
     def hasFeatures(self):
-        return self.table.hasColumns("mz", "mzmin", "mzmax", "rt",
-                                       "rtmin", "rtmax", "peakmap")
+        return self.checkFor(*self.eicColNames())
 
     def isIntegrated(self):
-        return self.hasFeatures() and self.table.hasColumns("area", "rmse")
+        if not self.hasFeatures():
+            return False
+        return self.checkFor("area", "rmse", "method")
+
+    def checkFor(self, *names):
+        """ checks if names or derived names are present in table at once
+            derived names are colum names postfixed with _1, _2, ....
+            which happens during join if column names appear twice.
+        """
+
+        for postfix in self.foundPostfixes():
+            colNames = [ n + postfix for n in names]
+            if self.table.hasColumns(*colNames):
+                return True
+        return False
+
+    def setNonEditable(self, colBaseName):
+        for postfix in self.foundPostfixes():
+            name = colBaseName+postfix
+            if self.table.hasColumns(name):
+                self.addNonEditable(name)
 
     def getTitle(self):
         if self.table.title:
@@ -357,4 +385,22 @@ class TableModel(QAbstractTableModel):
         if self.hasFeatures():
             title += " aligned=%s" % self.table.meta.get("aligned", "False")
         return title
+
+    def getEics(self, rowIdx):
+        eics = []
+        for p in self.foundPostfixes:
+            for name in self.eicColNames():
+                if not self.table.hasColumn(name+p):
+                    break
+            else:
+                row = self.table.get(self.table.rows[rowIdx],None)
+                mzmin = row["mzmin"+p]
+                mzmax = row["mzmax"+p]
+                rtmin = row["rtmin"+p]
+                rtmax = row["rtmax"+p]
+                peakmap = row["peakmap"+p]
+                eics.append(peakmap.chromatogramFor(mzmin, mzmax, rtmin, rtmax))
+
+
+
 

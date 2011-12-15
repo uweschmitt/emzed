@@ -42,6 +42,7 @@ class TableExplorer(QDialog):
 
     def setupWidgets(self):
         self.setupMenuBar()
+        self.setupTableViews()
         self.setupPlottingWidgets()
         self.setupIntegrationWidgets()
         if self.offerAbortOption:
@@ -51,8 +52,10 @@ class TableExplorer(QDialog):
         self.menubar = QMenuBar(self)
         menu = self.buildEditMenu()
         self.menubar.addMenu(menu)
-        menu = self.buildChooseTableMenu()
-        self.menubar.addMenu(menu)
+        self.chooseTableActions = []
+        if len(self.models)>1:
+            menu = self.buildChooseTableMenu()
+            self.menubar.addMenu(menu)
 
     def buildEditMenu(self):
         self.undoAction = QAction("Undo", self)
@@ -64,7 +67,12 @@ class TableExplorer(QDialog):
         menu.addAction(self.redoAction)
         return menu
 
-    def buildTableView(self, model):
+    def setupTableViews(self):
+        self.tableViews = []
+        for i, model in enumerate(self.models):
+            self.tableViews.append(self.setupTableViewFor(model))
+
+    def setupTableViewFor(self, model):
         tableView = QTableView(self)
 
         def handler(evt, view=tableView, model=model):
@@ -87,13 +95,10 @@ class TableExplorer(QDialog):
 
     def buildChooseTableMenu(self):
         menu = QMenu("Choose Table", self.menubar)
-        self.tableActions = []
-        self.tableViews = []
         for i, model in enumerate(self.models):
             action = QAction(" [%d]: %s" % (i,model.getTitle()), self)
             menu.addAction(action)
-            self.tableActions.append(action)
-            self.tableViews.append(self.buildTableView(model))
+            self.chooseTableActions.append(action)
         return menu
 
     def setupPlottingWidgets(self):
@@ -198,7 +203,7 @@ class TableExplorer(QDialog):
         self.integrationFrame.setVisible(doShow)
 
     def connectSignals(self):
-        for i, action in enumerate(self.tableActions):
+        for i, action in enumerate(self.chooseTableActions):
             def handler(i=i):
                 self.setupViewForTable(i)
             self.menubar.connect(action, SIGNAL("triggered()"), handler)
@@ -245,13 +250,15 @@ class TableExplorer(QDialog):
             self.redoAction.setText("Redo: %s" % redoInfo)
 
     def setupViewForTable(self, i):
-        for j, action in enumerate(self.tableActions):
-            txt = str(action.text())
+        for j, action in enumerate(self.chooseTableActions):
+            txt = str(action.text()) # QString -> Python str
             if txt.startswith("*"):
                 txt = " "+txt[1:]
                 action.setText(txt)
             if i==j:
                 action.setText("*"+txt[1:])
+
+        for j in range(len(self.models)):
             self.tableViews[j].setVisible(i==j)
 
         if self.model is not None:
@@ -259,11 +266,8 @@ class TableExplorer(QDialog):
         self.model = self.models[i]
         self.tableView = self.tableViews[i]
         self.setupModelDependendLook()
-
         if self.isIntegrated:
-            noneditables=["method"]
-            self.model.setNonEditables([self.model.table.getIndex(nonedit)
-                                        for nonedit in noneditables])
+            self.model.setNonEditable("method")
         self.updateMenubar()
         self.connectModelSignals()
 
@@ -305,13 +309,10 @@ class TableExplorer(QDialog):
             self.model.redoLastAction()
 
     def doIntegrate(self):
-        print "doIntegrate"
         if self.currentRow < 0:
             return # no row selected
 
-        # setup integrator
         method = str(self.chooseIntMethod.currentText()) # conv from qstring
-
         rtmin, rtmax = self.rtPlotter.getRangeSelectionLimits()
         self.model.integrate(self.currentRow, method, rtmin, rtmax)
 
@@ -328,21 +329,28 @@ class TableExplorer(QDialog):
 
     def rowClicked(self, rowIdx):
         self.currentRow = rowIdx
-        row = self.model.getRow(rowIdx)
         if self.hasFeatures:
-            self.currentPeakMap = row.peakmap
-            self.currentL1Spectra=  [spec for spec in row.peakmap if spec.msLevel == 1]
-            self.currentRts = [spec.rt for spec in self.currentL1Spectra]
-            self.updatePlots()
-            rtmin = row.rtmin
-            rtmax = row.rtmax
-            w = rtmax - rtmin
-            if w == 0:
-                w = 30.0 # seconds
-            self.rtPlotter.setXAxisLimits(rtmin -w, rtmax + w)
+            eics = self.model.getEics(rowIdx)
+            integrationCurves = self.model.getIntegrationCurves(rowIdx)
+            self.rtPlotter.plot(eics, integrationCurves)
+            spectra = self.model.getSpectra(rowIdx)
+            self.mzPlotter.plot(spectra)
+
+            #row = self.model.getRow(rowIdx)
+            #self.currentPeakMap = row.peakmap
+            #self.currentL1Spectra = [s for s in row.peakmap if s.msLevel == 1]
+            #self.currentRts = [spec.rt for spec in self.currentL1Spectra]
+            #self.updatePlots()
+            #rtmin = row.rtmin
+            #rtmax = row.rtmax
+            #w = rtmax - rtmin
+            #if w == 0:
+                #w = 30.0 # seconds
+            #self.rtPlotter.setXAxisLimits(rtmin -w, rtmax + w)
             if self.isIntegrated:
-                ix = self.chooseIntMethod.findText(row.method)
-                self.chooseIntMethod.setCurrentIndex(ix)
+                print "TODO"
+                #ix = self.chooseIntMethod.findText(row.method)
+                #self.chooseIntMethod.setCurrentIndex(ix)
 
     def updatePlots(self):
         row = self.model.getRow(self.currentRow)

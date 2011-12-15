@@ -39,8 +39,16 @@ class AsymmetricGaussIntegrator(PeakIntegrator):
 
         imax = np.argmax(chromatogram)
         A = chromatogram[imax]
-        mu = rts[imax]
-        s1 = s2 = 0.5 # 1.0
+        # mu as first moment
+        mu = sum( ci*ri for (ci,ri) in zip(chromatogram, rts))
+        mu /= sum( ci for ci in chromatogram)
+        # second moment as a guess for sigma
+        var1 = sum( ci * (ri-mu)**2 for (ci,ri) in zip(chromatogram, rts) if ri<=mu)
+        var1 /= sum(ci for (ci,ri) in zip(chromatogram, rts) if ri<=mu)
+        var2 = sum( ci * (ri-mu)**2 for (ci,ri) in zip(chromatogram, rts) if ri>=mu)
+        var2 /= sum(ci for (ci,ri) in zip(chromatogram, rts) if ri>=mu)
+        s1 = var1 if var1>0.5 else 0.5
+        s2 = var2 if var2>0.5 else 0.5
         if self.gtol is None:
             (A, s1, s2, mu), ok = opt.leastsq(AsymmetricGaussIntegrator.__err,
                                               (A, s1, s2, mu),
@@ -63,5 +71,3 @@ class AsymmetricGaussIntegrator(PeakIntegrator):
 
     def getSmoothed(self, rtvalues, params):
         return rtvalues, AsymmetricGaussIntegrator.__fun_eval(params, np.array(rtvalues))
-
-

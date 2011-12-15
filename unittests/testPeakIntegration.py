@@ -27,14 +27,14 @@ def run(integrator, areatobe, rmsetobe):
     print "rmse: is=%e  tobe=%e" % (rmse, rmsetobe)
 
 
-    if areatobe >0 and rmsetobe > 0:
-        assert abs(area-areatobe)/areatobe < 1e-2,  area
-        assert abs(rmse-rmsetobe)/rmsetobe < 1e-2,  rmse
-    elif areatobe == 0.0:
+    if area > 0:
+        assert abs(area-areatobe)/areatobe < .01,  area
+    else:
         assert area == 0.0, area
+    if rmse > 0:
+        assert abs(rmse-rmsetobe)/rmsetobe < .01,  rmse
     else:
         assert rmse == 0.0, rmse
-
 
     params = result.get("params")
 
@@ -62,12 +62,12 @@ def testNoIntegration():
 def testPeakIntegration():
 
     integrator = dict(configs.peakIntegrators)["asym_gauss"]
-    _, _, params = run(integrator, 30584.3, 7251.2)
+    _, _, params = run(integrator, 1.3775e5, 7.547e3)
 
-    assert abs(params[0]- 36775.0) < 1.0, params[0]
-    assert abs(params[1]- 0.2007) < 0.001, params[1]
-    assert abs(params[2]- 0.1921) < 0.001, params[2]
-    assert abs(params[3]- 325.7) < 0.1, params[3]
+    assert abs(params[0]- 8953.7) < 1.0, params
+    assert abs(params[1]- 51.72) < 0.01, params
+    assert abs(params[2]- 119.86) < 0.01, params
+    assert abs(params[3]- 320.3) < 0.1, params
 
     integrator = dict(configs.peakIntegrators)["emg_exact"]
 

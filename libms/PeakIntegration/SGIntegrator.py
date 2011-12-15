@@ -75,12 +75,12 @@ class SGIntegrator(SmoothedIntegrator):
     def smooth(self, allrts, rts, chromatogram):
         smoothed = self._savitzky_golay_smooth(chromatogram, self.weights)
         smoothed[smoothed<0]= 0  # clip negative values, result from some spikes
-
         missing = len(rts) - len(smoothed)
         if missing >0 : # pad zeros for very short eics
-            smoothed = np.hstack( [ np.zeros( ( missing/2, )), smoothed, np.zeros( (  missing - missing/2, )) ] )
+            smoothed = np.hstack( [ np.zeros( ( missing/2, )), smoothed,\
+                                    np.zeros( (  missing - missing/2, )) ] )
         if missing <0 : # pad zeros for very short eics
             missing = - missing
-            rts = np.hstack([rts[0]*np.ones( ( missing/2, )), rts, rts[-1]*np.ones( (  missing - missing/2, ))])
-
+            rts = np.hstack([rts[0]*np.ones( ( missing/2, )), rts,\
+                             rts[-1]*np.ones( (  missing - missing/2, ))])
         return rts, smoothed

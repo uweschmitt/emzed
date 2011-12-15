@@ -93,6 +93,18 @@ class PeakMap(object):
         return [spec for spec in self.spectra if rtmin-1e-2 <= spec.rt <= rtmax+1e-2
                                              and spec.msLevel == 1]
 
+
+    def chromatogram(self, mzmin, mzmax, rtmin=None, rtmax=None):
+        if rtmin is None:
+            rtmin = self.spectra[0].rt
+        if rtmax is None:
+            rtmax = self.spectra[-1].rt
+        specs = self.levelOneSpecsInRange(rtmin, rtmax)
+        rts = [s.rt for s in specs]
+        intensities = [s.intensityInRange(mzmin, mzmax) for s in specs]
+        return rts, intensities
+
+
     def allRts(self):
         return [spec.rt for spec in self.spectra]
 

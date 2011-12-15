@@ -1,10 +1,7 @@
 from PeakIntegrator import PeakIntegrator
 import numpy as np
 import scipy.optimize as opt
-import scipy.special  as special
 import math
-import sys
-import StringIO
 
 class SimplifiedEMGIntegrator(PeakIntegrator):
 
@@ -18,11 +15,11 @@ class SimplifiedEMGIntegrator(PeakIntegrator):
 
     @staticmethod
     def __fun_eval(param, rts):
-        h, z, w, s = param 
+        h, z, w, s = param
         inner = w*w/2.0/s/s - (rts-z)/s
         # avoid overflow: may happen if __fun_eval is called with full
         # rtrange (getSmoothed...), and s is small:
-        inner[inner>200] = 200 
+        inner[inner>200] = 200
         nominator = np.exp(inner)
         denominator = 1 + np.exp(-2.4055/math.sqrt(2.0) * ((rts-z)/w - w/s))
         return h*w/s * math.sqrt(2*math.pi) * nominator / denominator
@@ -33,7 +30,7 @@ class SimplifiedEMGIntegrator(PeakIntegrator):
 
     def integrator(self, allrts, fullchromatogram, rts, chromatogram):
 
-        """ 
+        """
              model is simplified EMG
         """
 
@@ -74,6 +71,3 @@ class SimplifiedEMGIntegrator(PeakIntegrator):
 
     def getSmoothed(self, rtvalues, params):
         return rtvalues, SimplifiedEMGIntegrator.__fun_eval(params, np.array(rtvalues))
-
-
-        

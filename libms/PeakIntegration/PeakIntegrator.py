@@ -15,17 +15,13 @@ class PeakIntegrator(object):
 
         assert self.peakMap is not None
 
-        #specs = self.peakMap.levelOneSpecsInRange(rtmin, rtmax)
-        fulldata  = [ (s.rt, s.intensityInRange(mzmin, mzmax)) for s in self.ms1specs]
-        data = [ (rt, i) for (rt, i) in fulldata if rtmin <= rt <= rtmax ]
-        if len(data) == 0:
-            return dict(area=0, rmse=0, params=None)
-        rts, chromatogram = zip(*data)
+        rts, chromatogram = self.peakMap.chromatogram(mzmin, mzmax, rtmin,\
+                                                      rtmax)
         if len(rts)==0:
             return dict(area=0, rmse=0, params=None)
 
-        allrts, fullchrom = zip(*fulldata)
-        area, rmse, params = self.integrator(self.allrts, fullchrom, rts,
+        allrts, fullchrom = self.peakMap.chromatogram(mzmin, mzmax)
+        area, rmse, params = self.integrator(allrts, fullchrom, rts,
                                              chromatogram)
 
         return dict(area=area, rmse=rmse, params=params)
@@ -51,12 +47,3 @@ if __name__ == "__main__":
         y = [1,2,1,4,-7]
 
         pi.trapez(x,y)
-
-            
-        
-
-        
-        
-
-
-
