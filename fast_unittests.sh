@@ -5,6 +5,7 @@
 ./run_tests.sh --tests=testExpressionTree.py $*
 ./run_tests.sh --tests=testMSTypes.py $*
 ./run_tests.sh --tests=testUtilityNamespaces.py $*
+./run_tests.sh --tests=testPeakIntegration.py $*
 python  << EOF
 import mass
 import abundance

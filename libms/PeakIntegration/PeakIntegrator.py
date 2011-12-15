@@ -30,7 +30,7 @@ class PeakIntegrator(object):
 
         return dict(area=area, rmse=rmse, params=params)
 
-    def smoothed(self, *a):
+    def getSmoothed(self, *a):
         raise Exception("not implemented")
 
     def trapez(self, x, y):
