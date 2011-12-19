@@ -1,6 +1,10 @@
 def alignFeatureTables(tables, destination = None, nPeaks=-1, numBreakpoints=5,
                        forceAlign=False):
 
+    """ aligns feature tables in respect to retetion times.
+        the algorithme produces new tables with aligend data.
+        input tables are not modified
+    """
     import os.path
     import pyOpenMS as P
     import copy

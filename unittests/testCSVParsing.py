@@ -1,4 +1,3 @@
-
 import ms
 def testCSVParsing():
     tab = ms.loadCSV("data/mass.csv", )
@@ -6,4 +5,3 @@ def testCSVParsing():
     assert tab.getFormat("RT_min") == "%.2f", tab.getFormat("RT_min")
     tab.setFormat("RT_min", fms)
     assert tab.getFormat("RT_min") == fms
-

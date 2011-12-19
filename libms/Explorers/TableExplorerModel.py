@@ -417,7 +417,8 @@ class TableModel(QAbstractTableModel):
         else:
             title = os.path.basename(table.meta.get("source",""))
         if self.hasFeatures():
-            title += " aligned=%s" % table.meta.get("aligned", "False")
+            title += " rt_aligned=%s" % table.meta.get("rt_aligned", "False")
+            title += " mz_aligned=%s" % table.meta.get("mz_aligned", "False")
         return title
 
     def prefixesSupportedBy(self, colNames):
