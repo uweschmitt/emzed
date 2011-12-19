@@ -6,9 +6,7 @@ def integrate(ftable, integratorid="std", showProgress = True):
     """
     from configs import peakIntegrators
     from libms.DataStructures.Table import Table
-    from libms.DataStructures.MSTypes import PeakMap
     import sys
-    import numpy as np
     import time
 
     assert isinstance(ftable, Table)
@@ -24,12 +22,6 @@ def integrate(ftable, integratorid="std", showProgress = True):
     if integrator is None:
         raise Exception("unknown integrator '%s'" % integratorid)
 
-    peakmaps = set(ftable.getColumn("peakmap").values)
-    assert len(peakmaps) == 1, "not exactly one peakmap in table"
-    peakmap = peakmaps.pop()
-    assert isinstance(peakmap, PeakMap)
-
-    integrator.setPeakMap(peakmap)
 
     resultTable = ftable.buildEmptyClone()
 
@@ -55,12 +47,18 @@ def integrate(ftable, integratorid="std", showProgress = True):
         rtmax = ftable.get(row, "rtmax")
         mzmin = ftable.get(row, "mzmin")
         mzmax = ftable.get(row, "mzmax")
-        result = integrator.integrate(mzmin, mzmax, rtmin, rtmax)
-        # take existing values which are not integration realated:
-        newrow = [ ftable.get(row, n) for n in resultTable.colNames\
+        peakmap = ftable.get(row, "peakmap")
+        newrow = [ftable.get(row, n) for n in resultTable.colNames\
                                       if n not in newCols]
-        newrow.extend([integratorid, result["area"], result["rmse"],\
-                       result["params"], ])
+        if rtmin is None or rtmax is None or mzmin is None or mzmax is None\
+                 or peakmap is None:
+            newrow.extend([None] * len(newCols))
+        else:
+            integrator.setPeakMap(peakmap)
+            result = integrator.integrate(mzmin, mzmax, rtmin, rtmax)
+            # take existing values which are not integration realated:
+            newrow.extend([integratorid, result["area"], result["rmse"],\
+                           result["params"], ])
 
         resultTable.addRow(newrow)
 

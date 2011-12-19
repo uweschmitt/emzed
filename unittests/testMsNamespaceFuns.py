@@ -3,6 +3,20 @@ import os.path as osp
 import numpy as np
 import copy
 
+def testIntegration():
+    ft = ms.loadTable("data/features.table")
+    # an invalid row should not stop integration, but result
+    # in None values for ms.integrate generated columns
+    ft.set(ft.rows[0], "mzmin", None)
+    ftr = ms.integrate(ft, "trapez")
+    assert len(ftr) == len(ft)
+    assert "area" in ftr.colNames
+    assert "rmse" in ftr.colNames
+    assert ftr.area.values[0] == None
+    assert ftr.rmse.values[0] == None
+    assert ftr.params.values[0] == None
+    assert ftr.method.values[0] == None
+
 
 def testLoadMap():
     from_ = "data/SHORT_MS2_FILE.mzXML"
@@ -23,7 +37,6 @@ def testLoadMap():
 def testAlignFeatureTables():
     ft = ms.loadTable("data/features.table")
     irt = ft.getIndex("rt")
-    before = np.array([ r[irt] for r in ft.rows])
 
     # make copy and shift
     ft2=copy.deepcopy(ft)
@@ -51,9 +64,4 @@ def testAlignFeatureTables():
     # alignmen should produce alignment map:
     assert osp.exists("temp_output/test_aligned.png")
 
-def testIntegration():
-    ft = ms.loadTable("data/features.table")
-    ftr = ms.integrate(ft, "trapez")
-    assert "area" in ftr.colNames
-    assert "rmse" in ftr.colNames
 
