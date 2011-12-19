@@ -70,7 +70,7 @@ id           int          float        str
 int          int          float        str         
 ------       ------       ------       ------      
 
-# (~(t.int >= 2) & ~(t.int >= 3))
+# (not (t.int >= 2) & not (t.int >= 3))
 id           int          float        str         
 int          int          float        str         
 ------       ------       ------       ------      

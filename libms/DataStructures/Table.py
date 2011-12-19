@@ -999,12 +999,10 @@ class Table(object):
         names2 = t.colNames
         colNames = []
         for name in names1:
-            if name in names2:
-                name = name+"_1"
             colNames.append(name)
         for name in names2:
             if name in names1:
-                name = name+"_2"
+                name = name+"_1"
             colNames.append(name)
         colFormats = self.colFormats + t.colFormats
         colTypes = self.colTypes + t.colTypes
