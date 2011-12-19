@@ -5,7 +5,7 @@ from ..DataStructures import *
 import os
 
 from ..intern_utils import TemporaryDirectoryWithBackup
-from pyOpenMS import MSExperiment, FileHandler, String
+from pyOpenMS import FileHandler
 
 
 def installXcmsIfNeeded():

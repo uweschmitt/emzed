@@ -16,7 +16,9 @@ for path in [os.path.join(here, "tables")] + repositoryPathes:
             print "PARSING",p,"FAILED"
             continue
         name, _ = os.path.splitext(os.path.basename(p))
+        table.title = name
         exec("%s=table" % name)
+        print "LOADED", name, "FROM", p
     # table files overrun csv files !
     for p in glob.glob("%s/*.table" % path):
         try:
@@ -27,8 +29,10 @@ for path in [os.path.join(here, "tables")] + repositoryPathes:
             print "PARSING",p,"FAILED"
             continue
         name, _ = os.path.splitext(os.path.basename(p))
+        table.title = name
         table.meta["loaded_from"] = os.path.abspath(p)
         exec("%s=table" % name)
+        print "LOADED", name, "FROM", p
 
 
 elements = Elements()
