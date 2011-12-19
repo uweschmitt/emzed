@@ -14,13 +14,11 @@ def replace( orig_func, target=None, verbose=False):
         if inspect.ismethod(orig_func):
             if target is None:
                 target =  orig_func.im_class
-            #LLL.debug("replace method %s in %s with %s" %( orig_func, target, new_func))
             setattr(target, orig_func.__name__, wrapper)
             setattr(target, "_orig_%s" % orig_func.__name__, orig_func)
         elif inspect.isfunction(orig_func):
             if target is None:
                 target = sys.modules[orig_func.__module__]
-            #LLL.debug("replace function %s in %s with %s" %( orig_func, target, new_func))
             setattr(target, orig_func.func_name, wrapper)
             setattr(target, "_orig_%s" % orig_func.__name__, orig_func)
         else:
@@ -46,14 +44,18 @@ def patch_oedit():
 
         # for faster startup import appear not at top of file but here:
         import libms.Explorers
-        import libms.DataStructures
+        from libms.DataStructures import PeakMap, Table
 
-        if isinstance(obj, libms.DataStructures.PeakMap):
+        if isinstance(obj, PeakMap):
             dlg = libms.Explorers.MzExplorer()
             dlg.setup(obj)
             return dlg, lambda x: x
 
-        elif isinstance(obj, libms.DataStructures.Table):
+        elif isinstance(obj, Table):
+            dlg = libms.Explorers.TableExplorer([obj], False)
+            return dlg, lambda x: [x]
+
+        elif isinstance(obj, list) and all(isinstance(t, Table) for t in obj):
             dlg = libms.Explorers.TableExplorer(obj, False)
             return dlg, lambda x: x
 
@@ -89,7 +91,7 @@ def patch_userconfig():
             ("console" ,"pythonstartup/custom") : False,
             ("console" ,"open_ipython_at_startup") : True,
             ("console" ,"open_python_at_startup") : False,
-            # imports are slow and insecure :
+            # automatic imports are slow and insecure :
             ("inspector", "automatic_import") : False,
         }
 
@@ -103,9 +105,12 @@ def patch_baseconfig():
     from spyderlib import baseconfig
     @replace(baseconfig.get_module_source_path, verbose=True)
     def patch(modname, basename=None):
-        if modname == "spyderlib.widgets.externalshell" and basename=="startup.py":
+        if modname == "spyderlib.widgets.externalshell"\
+            and basename=="startup.py":
             import os
-            return os.path.join(os.environ.get("MSWORKBENCH_HOME"), "patched_modules", "startup.py")
+            return os.path.join(os.environ.get("MSWORKBENCH_HOME"),
+                                "patched_modules",
+                                "startup.py")
         return baseconfig._orig_get_module_source_path(modname, basename)
 
 
@@ -124,28 +129,39 @@ def patch_spyder():
     def oedit_possible(self, key):
         return self.is_peakmap(key) \
             or self.is_table(key) \
+            or self.is_tablelist(key) \
             or RemoteDictEditorTableView._orig_oedit_possible(self, key)
 
     from spyderlib.widgets.externalshell.monitor import communicate
-    from spyderlib.widgets.externalshell.namespacebrowser import NamespaceBrowser
+    from spyderlib.widgets.externalshell.namespacebrowser\
+                                                 import NamespaceBrowser
 
     @add(NamespaceBrowser, verbose=True)
     def is_peakmap(self, name):
         """Return True if variable is a PeakMap"""
         return communicate(self._get_sock(),
-                   "isinstance(globals()['%s'], (libms.DataStructures.PeakMap))" % name)
+           "isinstance(globals()['%s'], (libms.DataStructures.PeakMap))" % name)
 
     @add(NamespaceBrowser, verbose=True)
     def is_table(self, name):
         """Return True if variable is a PeakMap"""
         return communicate(self._get_sock(),
-                   "isinstance(globals()['%s'], (libms.DataStructures.Table))" % name)
+             "isinstance(globals()['%s'], (libms.DataStructures.Table))" % name)
+
+    @add(NamespaceBrowser, verbose=True)
+    def is_tablelist(self, name):
+        """Return True if variable is a PeakMap"""
+        return communicate(self._get_sock(),
+            "isinstance(globals()['%s'], list) "\
+            "and all(isinstance(li, libms.DataStructures.Table "\
+            "        for li in globals()['%s'])")
 
     @replace(NamespaceBrowser.setup, verbose=True)
     def setup(self, *a, **kw):
         NamespaceBrowser._orig_setup(self, *a, **kw)
         self.editor.is_peakmap = self.is_peakmap
         self.editor.is_table = self.is_table
+        self.editor.is_tablelist = self.is_tablelist
 
     @replace(NamespaceBrowser.import_data, verbose=True)
     def import_data(self, filenames=None):
@@ -190,34 +206,53 @@ def patch_external_shell():
 
     @replace(dicteditorutils.get_type_string, verbose=True)
     def get_type_string( item ):
-        import libms.DataStructures
-        if isinstance(item, libms.DataStructures.PeakMap):
+        from libms.DataStructures import Table, PeakMap
+        if isinstance(item, list) and any(isinstance(ii, Table) for ii in item):
+            return "Table List"
+        if isinstance(item, PeakMap):
             return "PeakMap"
-        if isinstance(item, libms.DataStructures.Table):
+        if isinstance(item, Table):
             return "Table"
         return dicteditorutils._orig_get_type_string(item)
 
     @replace(dicteditorutils.value_to_display, verbose=True)
     def  value_to_display(value, *a, **kw):
-        import libms.DataStructures
+        from libms.DataStructures import Table, PeakMap
+        import os
+
         trunc_len = kw.get("trunc_len", 80)
         truncate = kw.get("truncate", False)
-        if isinstance(value, libms.DataStructures.PeakMap):
+        def trunc(what, trunc_len=trunc_len, truncate=truncate):
+            if truncate and len(what)>trunc_len:
+               return "..."+ res[(len(what) + 3 - trunc_len):]
+            return what
+
+        if isinstance(value, PeakMap):
             try:
-                res = value.meta.get("source", "")
-                if truncate and len(res)>trunc_len:
-                   res = "..."+ res[(len(res) + 3 - trunc_len):]
-                return res
+                return trunc(value.meta.get("source", ""))
             except Exception, e:
                 return "exception: "+e.message
-        if isinstance(value, libms.DataStructures.Table):
-            try:
-                res = value.meta.get("source", "")
-                if truncate and len(res)>trunc_len:
-                   res = "..."+ res[(len(res) + 3 - trunc_len):]
-                return res
-            except Exception, e:
-                return "exception: "+e.message
+
+        if isinstance(value, list) and\
+           any(isinstance(ii, Table) for ii in value):
+           names = [os.path.basename(d.title) for d in value
+                                              if isinstance(d, Table)]
+           prefix = os.path.commonprefix(names)
+           if len(prefix) == 0:
+               res = ", ".join(names)
+           else:
+               res = prefix+"*"
+           return "[%s]" % trunc(res, trunc_len=trunc_len-2)
+
+        if isinstance(value, Table):
+            if value.title:
+                res = value.title
+            else:
+                try:
+                    res = os.path.basename(value.meta.get("source", ""))
+                except Exception, e:
+                    return "exception: "+e.message
+            return trunc(res)
         return dicteditorutils._orig_value_to_display(value, *a, **kw)
 
     patch_oedit()
