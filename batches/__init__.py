@@ -1,6 +1,5 @@
 from feature_detector import *
 from peak_picker import *
-from alignment import *
 
 # remove clutter
 try:
@@ -9,9 +8,5 @@ except:
     pass
 try:
     del peak_picker
-except: 
-    pass
-try:
-    del alignment
 except: 
     pass

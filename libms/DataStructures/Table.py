@@ -12,7 +12,7 @@ def guessFormatFor(name, type_):
         return  "%.5f"
     if type_ == float and name.startswith("rt"):
         return fms
-    return standardFormats.get(name)
+    return standardFormats.get(type_)
 
 def computekey(o):
     if type(o) in [int, float, str, long]:

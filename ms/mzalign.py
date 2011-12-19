@@ -9,14 +9,12 @@ def mzalign(table, fullC13=False, tol=15*MMU, universal_metabolites=None,
     import tab
     import os
     import numpy as np
-    #import mzalign_helpers
     from _mzalign_helpers import (_buildHypotheseTable,
                                  _findMzMatches,
                                  _findParametersAutomatically,
                                  _findParametersManually,
                                  _plotAndSaveMatch,
                                  _applyTransform )
-
     if not interactive:
         assert minR2 <= 1.0
         assert minPoints > 1
@@ -79,6 +77,7 @@ def mzalign(table, fullC13=False, tol=15*MMU, universal_metabolites=None,
         path = os.path.join(destination, fname+"_mzalign.png")
         _plotAndSaveMatch(tobe, real, used, transform, path)
 
-    _applyTransform(table, transform)
+    transformedTable = _applyTransform(table, transform)
     print "DONE"
+    return transformedTable
 

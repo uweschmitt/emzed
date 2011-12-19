@@ -148,5 +148,5 @@ class PeakMap(object):
         exp.setLoadedFilePath(pyOpenMS.String(self.meta.get("source","")))
         return exp
 
-    def __getitem__(self, idx):
+    def x__getitem__(self, idx):
         return self.spectra[idx]

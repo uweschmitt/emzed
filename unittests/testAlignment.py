@@ -1,15 +1,12 @@
 from libms.Alignment import *
 import ms
 import os
-import pickle
 import numpy as np
 import copy
 
 def testPoseClustering():
     ft = ms.loadTable("data/features.table")
     irt = ft.getIndex("rt")
-    before = np.array([ r[irt] for r in ft.rows])
-    peakmap = ft.get(ft.rows[0], "peakmap")
 
     # make copy and shift
     ft2=copy.deepcopy(ft)
@@ -26,7 +23,7 @@ def testPoseClustering():
     pmrtsbefore = []
     assert len(pms) == 1
     for pm in pms:
-        for spec in pm:
+        for spec in pm.spectra:
             pmrtsbefore.append(spec.rt)
             spec.rt += 2.0
 
@@ -35,7 +32,6 @@ def testPoseClustering():
 
     ftneu, ft2neu = ms.alignFeatureTables([ft,ft2], "temp_output", nPeaks=9999,
                                           numBreakpoints=2)
-    irt = ft.getIndex("rt")
     def getrt(t, what):
         return  np.array([t.get(row, what) for row in t])
 
@@ -59,7 +55,7 @@ def testPoseClustering():
         pms = set(table.get(row, "peakmap") for row in table.rows)
         assert len(pms) == 1
         pm = pms.pop()
-        return np.array([ spec.rt for spec in pm])
+        return np.array([ spec.rt for spec in pm.spectra])
 
     assert np.linalg.norm(getrtsfrompeakmap(ft2neu)-getrtsfrompeakmap(ftneu))<1e-4
 
@@ -72,6 +68,3 @@ def testPoseClustering():
     assert ex is not None, "aligning of aligned maps should not be possible"
     # alignmen should produce alignment map:
     assert os.path.exists("temp_output/test_aligned.png")
-
-    peakmapafter = ft.get(ft.rows[0], "peakmap")
-

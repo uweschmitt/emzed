@@ -12,11 +12,12 @@ def alignFeatureTables(tables, destination = None, nPeaks=-1, numBreakpoints=5,
         maps = set(table.get(row, "peakmap") for row in table)
         assert len(maps) == 1, "can only align features from one single peakmap"
         map = maps.pop()
+        assert map != None, "None value for peakmaps not allowed"
         if forceAlign:
-            map.meta["aligned"]=False
+            map.meta["rt_aligned"]=False
         else:
-            if map.meta.get("aligned"):
-                message = "there are already aligned peakmaps in the "\
+            if map.meta.get("rt_aligned"):
+                message = "there are already rt_aligned peakmaps in the "\
                           "tables.\nyou have to provide the forceAlign "\
                           "parameter of this function\nto align all tables"
                 raise Exception(message)
@@ -62,10 +63,10 @@ def alignFeatureTables(tables, destination = None, nPeaks=-1, numBreakpoints=5,
         print "align", filename
         transformation = _computeTransformation(ma, refmap, fm, numBreakpoints)
         _plot_and_save(transformation, filename, destination)
-        _adaptTable(table, transformation)
+        _transformTable(table, transformation)
         results.append(table)
     for t in results:
-        t.meta["aligned"] = True
+        t.meta["rt_aligned"] = True
     return results
 
 def _computeTransformation(ma, refmap, fm, numBreakpoints):
@@ -104,8 +105,7 @@ def _plot_and_save(transformation, filename, destination):
     print "save", filename
     pylab.savefig(target_path)
 
-def _adaptTable(table, transformation):
-    import copy
+def _transformTable(table, transformation):
     for row in table:
         rtmin = table.get(row, "rtmin")
         rtmax = table.get(row, "rtmax")
@@ -119,11 +119,10 @@ def _adaptTable(table, transformation):
             table.set(row, "intbegin", transformation.apply(intbegin))
             table.set(row, "intend", transformation.apply(intend))
 
-    # we know that there is only one peakmap in the table 
-    peakmap = table.get(table.rows[0], "peakmap")
-    peakmapNew = copy.deepcopy(peakmap)
-    peakmapNew.meta["aligned"] = True
-    for spec in peakmapNew:
+    # we know that there is only one peakmap in the table
+    peakmap = table.peakmap.values[0]
+    peakmap.meta["rt_aligned"] = True
+    table.meta["rt_aligned"] = True
+    for spec in peakmap.spectra:
         spec.rt = transformation.apply(spec.rt)
-    for row in table:
-        table.set(row, "peakmap", peakmapNew)
+    table.replaceColumn("peakmap", peakmap)

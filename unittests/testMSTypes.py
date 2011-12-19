@@ -37,11 +37,10 @@ class TestMSTypes(object):
     def compare_exp(self, pm, exp, basename):
 
         assert len(pm) == exp.size()
-        assert len(list(pm)) == exp.size() # tests __iter__
 
-        assert (pm[0].rt-exp[0].getRT())/exp[0].getRT() < 1e-7
-        assert pm[0].msLevel == exp[0].getMSLevel()
-        assert pm[0].peaks.shape == (exp[0].size(), 2)
+        assert (pm.spectra[0].rt-exp[0].getRT())/exp[0].getRT() < 1e-7
+        assert pm.spectra[0].msLevel == exp[0].getMSLevel()
+        assert pm.spectra[0].peaks.shape == (exp[0].size(), 2)
 
     def compare_specs(self, spec, s0):
 
@@ -51,7 +50,6 @@ class TestMSTypes(object):
         assert spec.precursors == [ (1.0, 100) ], spec.precursors
         assert spec.polarity == "+"
 
-        assert len(list(spec)) == s0.size() # tests __iter__
         assert len(spec) == s0.size() 
 
 

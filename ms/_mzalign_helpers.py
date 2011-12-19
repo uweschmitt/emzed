@@ -57,10 +57,10 @@ def _findMzMatches(hypot, table, tol):
     mzfit = table.mz.approxEqual(hypot.mz, tol)
     matched = table.join(hypot, rtfit & mzfit)
     print len(matched), "MATCHED UNIV METABOLITES"
-    matched = matched.extractColumns("mz_1", "mz_2", "rt", "rtmin_2", "rtmax_2",
+    matched = matched.extractColumns("mz", "mz_1", "rt", "rtmin_1", "rtmax_1",
                                     "name", "mode", "url")
-    matched.renameColumns(mz_1="mz", mz_2="mz_exact", rtmin_2="rtmin",
-                         rtmax_2="rtmax")
+    matched.renameColumns(mz_1="mz_exact", rtmin_1="rtmin",
+                         rtmax_1="rtmax")
     matched.sortBy("mz")
     real = _np.array(matched.mz.values)
     tobe = _np.array(matched.mz_exact.values)
@@ -332,16 +332,17 @@ def _findParametersManually(tobe, real):
 
 def _applyTransform(table, transform):
     import copy
+    table = copy.deepcopy(table)
     for row in table:
         for name in "mz", "mzmin", "mzmax":
             table.set(row, name, transform(table.get(row, name)))
 
     peakmaps = set(table.get(row, "peakmap") for row in table)
     assert len(peakmaps) == 1, "can only align features from one single peakmap"
-    # make copy !
-    peakmap = copy.deepcopy(peakmaps.pop())
-    for spec in peakmap:
+    peakmap = peakmaps.pop()
+    for spec in peakmap.spectra:
         spec.peaks[:,0] = transform(spec.peaks[:,0])
-    for row in table:
-        table.set(row, "peakmap", peakmap)
+    table.replaceColumn("peakmap", peakmap)
+    table.meta["mz_aligned"]=True
+    return table
 
