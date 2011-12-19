@@ -1,6 +1,5 @@
 import os
 import pyOpenMS
-from collections import defaultdict
 
 from ..DataStructures import Table
 
@@ -88,9 +87,9 @@ class MonoIsotopicElements(Table):
                 t0   = tsub.filter(tsub.massnumber == min(massnumber))
                 self.rows.append(t0.rows[0][:])
 
-            self.colNames = elements.colNames
-            self.colTypes = elements.colTypes
-            self.colFormats = elements.colFormats
+            self.colNames = elements.colNames[:]
+            self.colTypes = elements.colTypes[:]
+            self.colFormats = elements.colFormats[:]
             self.title = "Monoisotopic Elements"
             self.meta  = dict()
 
@@ -102,6 +101,7 @@ class MonoIsotopicElements(Table):
         # borg pattern is shit for columns which hold a reference to the
         # table which might change, but the columns stay the same !!!
         self.resetInternals()
+
 
     def buildSymbolIndex(self):
         symbols = self.symbol.values
@@ -120,8 +120,7 @@ class MonoIsotopicElements(Table):
 
 
 if __name__ == "__main__":
-    print ElementData().getElements()
-    print ElementData().getSymbols()
+    print Elements().symbol.values
 
 
 

@@ -9,6 +9,8 @@ from PlottingWidgets import RtPlotter, MzPlotter
 
 import configs
 
+from ..DataStructures.Table import Table
+
 from TableExplorerModel import *
 
 def getColors(i, light=False):
@@ -94,11 +96,12 @@ class TableExplorer(QDialog):
     def setupTableViewFor(self, model):
         tableView = QTableView(self)
 
-        def handler(evt, view=tableView, model=model):
+        def handler(evt, view=tableView, model=model, self=self):
             if not view.isSortingEnabled():
                 view.setSortingEnabled(True)
                 view.resizeColumnsToContents()
                 model.emptyActionStack()
+                self.updateMenubar()
         tableView.showEvent = handler
 
         tableView.setModel(model)
@@ -299,8 +302,8 @@ class TableExplorer(QDialog):
         if len(self.choosePostfix) == 1:
             self.choosePostfix.setVisible(False)
 
-        self.updateMenubar()
         self.connectModelSignals()
+        self.updateMenubar()
 
     def dataChanged(self, ix1, ix2, src):
         if self.hasFeatures:
@@ -431,7 +434,7 @@ def inspect(what, offerAbortOption=False):
     if isinstance(what, Table):
         what = [what]
     app = guidata.qapplication()
-    explorer = TableExplorer(tables, offerAbortOption)
+    explorer = TableExplorer(what, offerAbortOption)
     explorer.raise_()
     explorer.exec_()
     if offerAbortOption:

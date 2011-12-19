@@ -223,6 +223,10 @@ class TableModel(QAbstractTableModel):
         self.table = table
         self.parent = parent
         nc = len(self.table.colNames)
+        table.info()
+        print self.table.colNames
+        print nc
+        print self.table.colFormats
         indizesOfVisibleCols = (j for j in range(nc)
                                   if self.table.colFormats[j] is not None)
         self.widgetColToDataCol = dict(enumerate(indizesOfVisibleCols))

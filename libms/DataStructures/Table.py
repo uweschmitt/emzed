@@ -183,7 +183,7 @@ class Table(object):
         """
         import pprint
         print
-        print "table info:"
+        print "table info:   title=", self.title
         print
         print "   meta=",
         pprint.pprint(self.meta, indent=4)
@@ -363,7 +363,6 @@ class Table(object):
             r.insert(0, i)
         self.resetInternals()
 
-
     def sortBy(self, colName, ascending=True):
         """
         sorts table in respect of column named *colName* **inplace**.
@@ -485,15 +484,7 @@ class Table(object):
         """ removes a column with given *name* from the table.
             Works **inplace**
         """
-        self.requireColumn(name)
-        delattr(self, name)
-        ix = self.getIndex(name)
-        del self.colNames[ix]
-        del self.colFormats[ix]
-        del self.colTypes[ix]
-        for row in self.rows:
-            del row[ix]
-        self.resetInternals()
+        return self.dropColumns(name)
 
     def dropColumns(self, *names):
         """ removes columns with given *names* from the table.
@@ -989,7 +980,7 @@ class Table(object):
             else:
                 rows.extend([r1 + filler])
             cmdlineProgress.progress(ii)
-        print
+
         table = self._buildJoinTable(t)
         table.rows = rows
         return table
