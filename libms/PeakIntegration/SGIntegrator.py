@@ -73,6 +73,8 @@ class SGIntegrator(SmoothedIntegrator):
         return np.convolve( w, y, mode='valid')
 
     def smooth(self, allrts, rts, chromatogram):
+        print min(allrts), max(allrts)
+        print min(rts), max(rts)
         smoothed = self._savitzky_golay_smooth(chromatogram, self.weights)
         smoothed[smoothed<0]= 0  # clip negative values, result from some spikes
         missing = len(rts) - len(smoothed)
@@ -83,4 +85,5 @@ class SGIntegrator(SmoothedIntegrator):
             missing = - missing
             rts = np.hstack([rts[0]*np.ones( ( missing/2, )), rts,\
                              rts[-1]*np.ones( (  missing - missing/2, ))])
+        print min(rts), max(rts)
         return rts, smoothed

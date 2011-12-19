@@ -392,6 +392,7 @@ class Table(object):
 
     def applyRowPermutation(self, permutation):
         self.rows = [ self.rows[permutation[i]] for i in range(len(permutation))]
+        self.resetInternals()
 
     def copy(self):
         """ returns a deep copy of the table """
@@ -469,7 +470,9 @@ class Table(object):
     def load(path):
         """loads a table stored with Table.store"""
         with open(path, "rb") as fp:
-            return cPickle.load(fp)
+            tab = cPickle.load(fp)
+            tab.meta["loaded_from"]=os.path.abspath(path)
+            return tab
 
 
     def buildEmptyClone(self):

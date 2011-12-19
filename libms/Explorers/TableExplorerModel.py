@@ -7,6 +7,7 @@ import guidata
 
 import configs
 import os
+import re
 
 class TableAction(object):
 
@@ -92,7 +93,7 @@ class SortTableAction(TableAction):
     actionName = "sort table"
 
     def __init__(self, model, dataColIdx, colIdx, order):
-        super(SortTableAction, self).__init__(model, dataColIdx=dataColIdx,\
+        super(SortTableAction, self).__init__(model, dataColIdx=dataColIdx,
                                         colIdx=colIdx, order=order)
         self.toview = dict(sortByColumn = colIdx,
                            ascending = (order == Qt.AscendingOrder))
@@ -122,8 +123,8 @@ class ChangeValueAction(TableAction):
     actionName = "change value"
 
     def __init__(self, model, idx, dataColIdx, value):
-        super(ChangeValueAction, self).__init__(model, idx=idx,\
-                                                dataColIdx=dataColIdx,\
+        super(ChangeValueAction, self).__init__(model, idx=idx,
+                                                dataColIdx=dataColIdx,
                                                 value=value)
         self.toview = dict(row=idx.row(), column=idx.column(), value=value)
 
@@ -133,35 +134,49 @@ class ChangeValueAction(TableAction):
         self.memory = row[self.dataColIdx]
         if self.memory == self.value: return False
         row[self.dataColIdx] = self.value
-        self.model.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"),\
-                        self.idx, self.idx)
+        self.model.emit(
+                  SIGNAL("dataChanged(QModelIndex,QModelIndex,PyQt_PyObject)"),
+                  self.idx,
+                  self.idx,
+                  self)
         return True
 
     def undo(self):
         super(ChangeValueAction, self).undo()
         table = self.model.table
         table.rows[self.idx.row()][self.dataColIdx] = self.memory
-        self.model.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"),\
-                        self.idx, self.idx)
+        self.model.emit(
+                  SIGNAL("dataChanged(QModelIndex,QModelIndex,PyQt_PyObject)"),
+                  self.idx,
+                  self.idx,
+                  self)
 
 class IntegrateAction(TableAction):
 
     actionName = "integrate"
 
-    def __init__(self, model, idx, method, rtmin, rtmax):
-        super(IntegrateAction, self).__init__(model, idx=idx, method=method,
-                                        rtmin=rtmin, rtmax=rtmax, )
-        self.toview = dict(rtmin=rtmin, rtmax=rtmax, method=method)
+    def __init__(self, model, idx, postfix, method, rtmin, rtmax):
+        super(IntegrateAction, self).__init__(model, idx=idx, postfix=postfix,
+                                              method=method, rtmin=rtmin,
+                                              rtmax=rtmax, )
+        self.toview = dict(rtmin=rtmin, rtmax=rtmax, method=method,
+                           postfix=postfix)
 
     def do(self):
+        #pyqtRemoveInputHook()
         integrator = dict(configs.peakIntegrators)[self.method]
         table = self.model.table
-        # returns Bunch
+        # returns Bunch which sublcasses dict
         args = table.get(table.rows[self.idx], None)
-        integrator.setPeakMap(args.peakmap)
+        postfix = self.postfix
+
+        integrator.setPeakMap(args["peakmap"+postfix])
 
         # integrate
-        res = integrator.integrate(args.mzmin, args.mzmax, self.rtmin, self.rtmax)
+        mzmin = args["mzmin"+postfix]
+        mzmax = args["mzmax"+postfix]
+        res = integrator.integrate(mzmin, mzmax, self.rtmin, self.rtmax)
+
         area = res["area"]
         rmse = res["rmse"]
         params = res["params"]
@@ -171,14 +186,14 @@ class IntegrateAction(TableAction):
         self.memory = table.rows[self.idx][:]
 
         # write values to table
-
         row = table.rows[self.idx]
-        table.set(row, "method", self.method)
-        table.set(row, "rtmin", self.rtmin)
-        table.set(row, "rtmax", self.rtmax)
-        table.set(row, "area", area)
-        table.set(row, "rmse", rmse)
-        table.set(row, "params", params)
+        table.set(row, "method"+postfix, self.method)
+        table.set(row, "rtmin"+postfix, self.rtmin)
+        table.set(row, "rtmax"+postfix, self.rtmax)
+        table.set(row, "area"+postfix, area)
+        table.set(row, "rmse"+postfix, rmse)
+        table.set(row, "params"+postfix, params)
+        args = table.get(table.rows[self.idx], None)
         self.notifyGUI()
         return True
 
@@ -191,7 +206,11 @@ class IntegrateAction(TableAction):
     def notifyGUI(self):
         tl = self.model.createIndex(self.idx, 0)
         tr = self.model.createIndex(self.idx, self.model.columnCount()-1)
-        self.model.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"), tl, tr)
+        self.model.emit(
+                  SIGNAL("dataChanged(QModelIndex,QModelIndex,PyQt_PyObject)"),
+                  tl,
+                  tr,
+                  self)
 
 
 class TableModel(QAbstractTableModel):
@@ -204,12 +223,13 @@ class TableModel(QAbstractTableModel):
         self.table = table
         self.parent = parent
         nc = len(self.table.colNames)
-        indizesOfVisibleCols = (j for j in range(nc)\
+        indizesOfVisibleCols = (j for j in range(nc)
                                   if self.table.colFormats[j] is not None)
         self.widgetColToDataCol = dict(enumerate(indizesOfVisibleCols))
         self.emptyActionStack()
 
         self.nonEditables=set()
+        self.postfixes = self.findPostfixes()
 
     def addNonEditable(self, name):
         dataColIdx = self.table.getIndex(name)
@@ -246,7 +266,7 @@ class TableModel(QAbstractTableModel):
                     return shown
                 except:
                     if colType == float:
-                        return "%.4f" % value
+                        return "-" if value is None else "%.4f" % value
                     return str(value)
             return str(value)
         return QVariant()
@@ -269,10 +289,13 @@ class TableModel(QAbstractTableModel):
         return Qt.ItemFlags(default | Qt.ItemIsEditable)
 
     def setData(self, index, value, role=Qt.EditRole):
+        assert isinstance(value, QVariant)
         if index.isValid() and 0 <= index.row() < len(self.table):
             dataIdx = self.widgetColToDataCol[index.column()]
             expectedType = self.table.colTypes[dataIdx]
-            if expectedType != object:
+            if value.toString().trimmed()=="-":
+                value = None
+            elif expectedType != object:
                 # QVariant -> QString -> str + strip:
                 value = str(value.toString()).strip()
                 if value.endswith("m"): # minutes
@@ -282,18 +305,18 @@ class TableModel(QAbstractTableModel):
                 except Exception:
                     guidata.qapplication().beep()
                     return False
-            self.runAction(ChangeValueAction, index, dataIdx, value)
-            return True
+            return self.runAction(ChangeValueAction, index, dataIdx, value)
         return False
 
     def runAction(self, clz, *a):
         action = clz(self, *a)
         done = action.do()
         if not done:
-            return
+            return done
         self.actions.append(action)
         self.redoActions = []
         self.parent.updateMenubar()
+        return done
 
     def infoLastAction(self):
         if len(self.actions):
@@ -335,72 +358,111 @@ class TableModel(QAbstractTableModel):
         dataColIdx = self.widgetColToDataCol[colIdx]
         self.runAction(SortTableAction, dataColIdx, colIdx, order)
 
-    def integrate(self, idx, method, rtmin, rtmax):
-        self.runAction(IntegrateAction, idx, method, rtmin, rtmax)
+    def integrate(self, idx, postfix, method, rtmin, rtmax):
+        self.runAction(IntegrateAction, postfix, idx, method, rtmin, rtmax)
 
-    def foundPostfixes(self):
+    def findPostfixes(self):
         postfixes = set()
         for c in self.table.colNames:
-            if "_" in c:
-                postfix = c.split("_", 1)[1]
-                postfixes.add(postfix)
-            else:
-                postfixes.add("")
+            postfix ="".join(re.findall("(_\d+)+?", c))
+            postfixes.add(postfix)
         return sorted(postfixes)
 
     def eicColNames(self):
-        return ["mzmin", "mzmax", "rtmin", "rtmax", "peakmap"]
+        return ["peakmap", "mzmin", "mzmax", "rtmin", "rtmax"]
+
+    def getEicValues(self, rowIdx, p):
+        get = lambda nn: self.table.get(self.table.rows[rowIdx], nn+p)
+        return dict((nn, get(nn)) for nn in self.eicColNames())
 
     def hasFeatures(self):
         return self.checkFor(*self.eicColNames())
 
+    def integrationColNames(self):
+        return ["area", "rmse", "method", "params"]
+
+    def getIntegrationValues(self, rowIdx, p):
+        get = lambda nn: self.table.get(self.table.rows[rowIdx], nn+p)
+        return dict((nn, get(nn)) for nn in self.integrationColNames())
+
     def isIntegrated(self):
-        if not self.hasFeatures():
-            return False
-        return self.checkFor("area", "rmse", "method")
+        return self.hasFeatures()\
+               and self.checkFor(*self.integrationColNames())
 
     def checkFor(self, *names):
         """ checks if names or derived names are present in table at once
             derived names are colum names postfixed with _1, _2, ....
             which happens during join if column names appear twice.
         """
-
-        for postfix in self.foundPostfixes():
+        for postfix in self.postfixes:
             colNames = [ n + postfix for n in names]
             if self.table.hasColumns(*colNames):
                 return True
         return False
 
     def setNonEditable(self, colBaseName):
-        for postfix in self.foundPostfixes():
+        for postfix in self.postfixes:
             name = colBaseName+postfix
             if self.table.hasColumns(name):
                 self.addNonEditable(name)
 
     def getTitle(self):
-        if self.table.title:
-            title = self.table.title
+        table = self.table
+        if table.title:
+            title = table.title
         else:
-            title = os.path.basename(self.table.meta.get("source",""))
+            title = os.path.basename(table.meta.get("source",""))
         if self.hasFeatures():
-            title += " aligned=%s" % self.table.meta.get("aligned", "False")
+            title += " aligned=%s" % table.meta.get("aligned", "False")
         return title
+
+    def prefixesSupportedBy(self, colNames):
+        for p in self.postfixes:
+            names = [ n+p for n in colNames ]
+            if not self.table.hasColumns(*names):
+                print "INCOMPLETE DATA %r" % names
+                continue
+            yield p
+
+    def getSmoothedEics(self, rowIdx, rts):
+        allsmoothed = []
+        for p in self.prefixesSupportedBy(self.integrationColNames()):
+            values = self.getIntegrationValues(rowIdx, p)
+            method = values["method"]
+            params = values["params"]
+            integrator = dict(configs.peakIntegrators)[method]
+            intrts, smoothed = integrator.getSmoothed(rts, params)
+            allsmoothed.append((intrts, smoothed))
+        return allsmoothed
+
+    def getPeakmaps(self, rowIdx):
+        peakMaps = []
+        for p in self.prefixesSupportedBy(["peakmap"]):
+            pm = self.table.get(self.table.rows[rowIdx], "peakmap"+p)
+            peakMaps.append(pm)
+        return peakMaps
 
     def getEics(self, rowIdx):
         eics = []
-        for p in self.foundPostfixes:
-            for name in self.eicColNames():
-                if not self.table.hasColumn(name+p):
-                    break
-            else:
-                row = self.table.get(self.table.rows[rowIdx],None)
-                mzmin = row["mzmin"+p]
-                mzmax = row["mzmax"+p]
-                rtmin = row["rtmin"+p]
-                rtmax = row["rtmax"+p]
-                peakmap = row["peakmap"+p]
-                eics.append(peakmap.chromatogramFor(mzmin, mzmax, rtmin, rtmax))
-
-
-
+        mzmins = []
+        mzmaxs = []
+        rtmins = []
+        rtmaxs = []
+        allrts = []
+        for p in self.prefixesSupportedBy(self.eicColNames()):
+            values = self.getEicValues(rowIdx, p)
+            pm = values["peakmap"]
+            mzmin = values["mzmin"]
+            mzmax = values["mzmax"]
+            rtmin = values["rtmin"]
+            rtmax = values["rtmax"]
+            rtmins.append(rtmin)
+            rtmaxs.append(rtmax)
+            chromo = pm.chromatogram(mzmin, mzmax)
+            eics.append(chromo)
+            allrts.extend(chromo[0])
+            mzmins.append(mzmin)
+            mzmaxs.append(mzmax)
+        return eics, min(mzmins), max(mzmaxs), min(rtmins), max(rtmaxs),\
+               sorted(allrts)
 

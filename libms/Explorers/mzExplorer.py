@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from PyQt4.QtGui import  QVBoxLayout, QDialog, QPainter, QMainWindow, QLabel, QLineEdit, QPushButton, QHBoxLayout
+from PyQt4.QtGui import  (QVBoxLayout, QDialog, QLabel, QLineEdit,\
+                          QPushButton, QHBoxLayout)
+
 from PyQt4.QtCore import Qt, SIGNAL
 
 import guidata
-import sys
 import os
 
 
@@ -128,21 +129,19 @@ class MzExplorer(QDialog):
         self.mzPlotter.setMinimumSize(600, 300)
 
         self.mzPlotter.setHalfWindowWidth(0.05)
-        self.mzPlotter.setCentralMz(None)
 
     def plotChromatogramm(self):
         self.rtPlotter.plot([(self.rts, self.chromatogram)])
+        self.rtPlotter.setXAxisLimits(self.rts[0], self.rts[-1])
         self.rtPlotter.setYAxisLimits(0, max(self.chromatogram)*1.1)
         self.rtPlotter.setRangeSelectionLimits(self.rts[0], self.rts[0])
+        self.rtPlotter.replot()
 
     def plotMz(self):
         minRT = self.rtPlotter.minRTRangeSelected
         maxRT = self.rtPlotter.maxRTRangeSelected
-        if minRT is not None:
-            peaks = np.vstack(( s.peaks for s in self.peakmap if minRT <= s.rt <= maxRT ))
-        else:
-            peaks = np.vstack(( s.peaks for s in self.peakmap ))
-        self.mzPlotter.plot(peaks)
+        peaks = self.peakmap.ms1Spectrum(minRT, maxRT)
+        self.mzPlotter.plot([peaks])
         self.mzPlotter.replot()
 
 
@@ -153,13 +152,12 @@ def inspectPeakMap(peakmap):
         raise Exception("empty peakmap")
 
     app = guidata.qapplication()
-    
+
     win = MzExplorer()
     win.setup(peakmap)
     win.activateWindow()
     win.raise_()
     win.exec_()
-    
 
 
     

@@ -7,13 +7,32 @@ import guidata
 
 from PlottingWidgets import RtPlotter, MzPlotter
 
-import numpy as np
 import configs
-import os
 
 from TableExplorerModel import *
 
+def getColors(i, light=False):
+     colors = [(0, 0, 150), (50, 50, 50), (0,100,0),
+                (100, 0, 0), (70, 70, 0), (100, 100, 0)]
+     c = colors[i % len(colors)]
+     if light:
+         c = tuple([min(i+50,  255) for i in c])
 
+     # create hex string  "#rrggbb":
+     return "#"+"".join( "%02x" % v  for v in c)
+
+def configsForEics(eics):
+    n = len(eics)
+    return [dict(linewidth=1.0, color=getColors(i)) for i in range(n)]
+
+def configsForSmootheds(smootheds):
+    n = len(smootheds)
+    return [dict(shade=0.35, linestyle="NoPen",
+                 color=getColors(i, light=True)) for i in range(n)]
+
+def configsForSpectra(spectra):
+    return [dict(color=getColors(i), linewidth=1)\
+                                      for i in range(len(spectra))]
 class TableExplorer(QDialog):
 
     def __init__(self, tables, offerAbortOption):
@@ -25,7 +44,7 @@ class TableExplorer(QDialog):
         self.model = None
         self.tableView = None
 
-        self.currentRow = -1
+        self.currentRowIdx = -1
         self.hadFeatures = None
         self.wasIntegrated = None
 
@@ -117,6 +136,9 @@ class TableExplorer(QDialog):
         self.chooseIntMethod = QComboBox()
         for name, _ in configs.peakIntegrators:
             self.chooseIntMethod.addItem(name)
+
+        self.choosePostfix = QComboBox()
+
         self.reintegrateButton = QPushButton()
         self.reintegrateButton.setText("Integrate")
 
@@ -161,6 +183,7 @@ class TableExplorer(QDialog):
         integrationLayout.setMargin(5)
         integrationLayout.addWidget(self.intLabel)
         integrationLayout.addWidget(self.chooseIntMethod)
+        integrationLayout.addWidget(self.choosePostfix)
         integrationLayout.addWidget(self.reintegrateButton)
         integrationLayout.addStretch()
         integrationLayout.setAlignment(self.intLabel, Qt.AlignTop)
@@ -224,7 +247,7 @@ class TableExplorer(QDialog):
             self.connect(self.abortButton, SIGNAL("clicked()"), self.abort)
 
     def disconnectModelSignals(self):
-        self.disconnect(self.model, SIGNAL("dataChanged(QModelIndex,QModelIndex)"),
+        self.disconnect(self.model, SIGNAL("dataChanged(QModelIndex,QModelIndex,PyQt_PyObject)"),
                      self.dataChanged)
         self.menubar.disconnect(self.undoAction, SIGNAL("triggered()"),\
                              self.model.undoLastAction)
@@ -232,7 +255,7 @@ class TableExplorer(QDialog):
                              self.model.redoLastAction)
 
     def connectModelSignals(self):
-        self.connect(self.model, SIGNAL("dataChanged(QModelIndex,QModelIndex)"),
+        self.connect(self.model, SIGNAL("dataChanged(QModelIndex,QModelIndex,PyQt_PyObject)"),
                      self.dataChanged)
         self.menubar.connect(self.undoAction, SIGNAL("triggered()"),\
                              self.model.undoLastAction)
@@ -268,14 +291,25 @@ class TableExplorer(QDialog):
         self.setupModelDependendLook()
         if self.isIntegrated:
             self.model.setNonEditable("method")
+
+        self.choosePostfix.clear()
+        for postfix in self.model.postfixes:
+            self.choosePostfix.addItem(repr(postfix))
+
+        if len(self.choosePostfix) == 1:
+            self.choosePostfix.setVisible(False)
+
         self.updateMenubar()
         self.connectModelSignals()
 
-    def dataChanged(self, ix1, ix2):
+    def dataChanged(self, ix1, ix2, src):
         if self.hasFeatures:
             minr, maxr = sorted((ix1.row(), ix2.row()))
-            if minr <= self.currentRow <= maxr:
-                self.updatePlots()
+            if minr <= self.currentRowIdx <= maxr:
+                if isinstance(src, IntegrateAction):
+                    self.updatePlots(reset=False)
+                else:
+                    self.updatePlots(reset=True)
 
     def abort(self):
         self.result = 1
@@ -309,82 +343,93 @@ class TableExplorer(QDialog):
             self.model.redoLastAction()
 
     def doIntegrate(self):
-        if self.currentRow < 0:
+        if self.currentRowIdx < 0:
             return # no row selected
 
-        method = str(self.chooseIntMethod.currentText()) # conv from qstring
+        # QString -> Python str:
+        method = str(self.chooseIntMethod.currentText())
+        # Again QString -> Python str.
+        # For better readibilty we put single quotes around the postfix
+        # entry in the QComboBox which we have to remove now:
+        postfix = str(self.choosePostfix.currentText()).strip("'")
         rtmin, rtmax = self.rtPlotter.getRangeSelectionLimits()
-        self.model.integrate(self.currentRow, method, rtmin, rtmax)
-
-    def plotMz(self):
-        minRt=self.rtPlotter.minRTRangeSelected
-        maxRt=self.rtPlotter.maxRTRangeSelected
-        pm = self.currentPeakMap
-        peaks = [s.peaks for s in pm.levelOneSpecsInRange(minRt, maxRt)]
-        if len(peaks):
-            peaks = np.vstack(peaks)
-            self.mzPlotter.plot(peaks)
-            self.mzPlotter.replot()
-
+        self.model.integrate(postfix, self.currentRowIdx, method, rtmin, rtmax)
 
     def rowClicked(self, rowIdx):
-        self.currentRow = rowIdx
-        if self.hasFeatures:
-            eics = self.model.getEics(rowIdx)
-            integrationCurves = self.model.getIntegrationCurves(rowIdx)
-            self.rtPlotter.plot(eics, integrationCurves)
-            spectra = self.model.getSpectra(rowIdx)
-            self.mzPlotter.plot(spectra)
+        if not self.hasFeatures: return
+        self.currentRowIdx = rowIdx
+        self.updatePlots(reset=True)
 
-            #row = self.model.getRow(rowIdx)
-            #self.currentPeakMap = row.peakmap
-            #self.currentL1Spectra = [s for s in row.peakmap if s.msLevel == 1]
-            #self.currentRts = [spec.rt for spec in self.currentL1Spectra]
-            #self.updatePlots()
-            #rtmin = row.rtmin
-            #rtmax = row.rtmax
-            #w = rtmax - rtmin
-            #if w == 0:
-                #w = 30.0 # seconds
-            #self.rtPlotter.setXAxisLimits(rtmin -w, rtmax + w)
-            if self.isIntegrated:
-                print "TODO"
-                #ix = self.chooseIntMethod.findText(row.method)
-                #self.chooseIntMethod.setCurrentIndex(ix)
 
-    def updatePlots(self):
-        row = self.model.getRow(self.currentRow)
-        mzmin = row.mzmin
-        mzmax = row.mzmax
-        rtmin = row.rtmin
-        rtmax = row.rtmax
+    def updatePlots(self, reset=False):
+        rowIdx = self.currentRowIdx
+        eics, mzmin, mzmax, rtmin, rtmax, allrts = self.model.getEics(rowIdx)
 
-        chromatogram = [s.intensityInRange(mzmin, mzmax)\
-                        for s in self.currentL1Spectra]
-
-        # get ppm from  centwave if present, else ppm=10 as default
-        ppm = row.get("centwave_config", dict(ppm=10))["ppm"]
-        w2 = row.mz * ppm * 1e-6 / 2.0
-        self.mzPlotter.setXAxisLimits(row.mz - w2, row.mz + w2)
-        maxchromo = max(s.intensityInRange(mzmin, mzmax) for s in self.currentL1Spectra if rtmin <= s.rt <=rtmax)
-
-        self.mzPlotter.setYAxisLimits(0, maxchromo)
-
-        curves = [ (self.currentRts, chromatogram) ]
-
+        curves = eics
+        configs = configsForEics(eics)
         if self.isIntegrated:
+            smootheds = self.model.getSmoothedEics(rowIdx, allrts)
+            rts, chromo = smootheds[0]
+            curves += smootheds
+            configs += configsForSmootheds(smootheds)
 
-            method = str(row.method) # qstring -> python string
-            integrator = dict(configs.peakIntegrators)[method]
+        if not reset:
+            rtmin, rtmax = self.rtPlotter.getRangeSelectionLimits()
+            xmin, xmax, ymin, ymax = self.rtPlotter.getLimits()
 
-            intrts, smoothed = integrator.getSmoothed(self.currentRts, row.params)
-            curves.append((intrts, smoothed))
+        self.rtPlotter.plot(curves, configs=configs, titles=None,
+                            withmarker=True)
 
-        self.rtPlotter.plot(curves, self.plotconfigs)
+        # allrts are sorted !
+        w = rtmax - rtmin
+        if w == 0:
+            w = 30.0 # seconds
         self.rtPlotter.setRangeSelectionLimits(rtmin, rtmax)
+        self.rtPlotter.setXAxisLimits(rtmin -w, rtmax + w)
         self.rtPlotter.replot()
+        if not reset:
+            self.rtPlotter.setXAxisLimits(xmin, xmax)
+            self.rtPlotter.setYAxisLimits(ymin, ymax)
+            self.rtPlotter.updateAxes()
+        self.plotMz(resetLimits=(mzmin, mzmax) if reset else None)
 
-def inspect(tables, offerAbortOption=False):
+    def plotMz(self, resetLimits=None):
+        """ this one is used from updatePlots and the rangeselectors
+            callback """
+        rtmin=self.rtPlotter.minRTRangeSelected
+        rtmax=self.rtPlotter.maxRTRangeSelected
+
+        # get spectra for current row in given rt-range:
+        peakmaps = self.model.getPeakmaps(self.currentRowIdx)
+        spectra = [pm.ms1Spectrum(rtmin, rtmax) for pm in peakmaps]
+
+        # plot spectra
+        configs = configsForSpectra(spectra)
+        titles = map(repr, self.model.postfixes)
+        self.mzPlotter.plot(spectra, configs, titles if len(titles)>1 else None)
+
+        if resetLimits:
+            mzmin, mzmax = resetLimits
+            Imaxes = []
+            for p  in spectra:
+                imin = p[:,0].searchsorted(mzmin)
+                imax = p[:,0].searchsorted(mzmax, side='right')
+                found = p[imin:imax,1]
+                if len(found):
+                    Imaxes.append(found.max())
+
+            if len(Imaxes) == 0:
+                Imax = 1.0
+            else:
+                Imax = max(Imaxes) * 1.2
+            self.mzPlotter.setXAxisLimits(mzmin, mzmax)
+            self.mzPlotter.reset_y_limits(0, Imax)
+        # plot() needs replot() afterwards !
+        self.mzPlotter.replot()
+
+def inspect(what, offerAbortOption=False):
+    if isinstance(what, Table):
+        what = [what]
     app = guidata.qapplication()
     explorer = TableExplorer(tables, offerAbortOption)
     explorer.raise_()

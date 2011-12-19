@@ -16,11 +16,15 @@ class SimplifiedEMGIntegrator(PeakIntegrator):
     @staticmethod
     def __fun_eval(param, rts):
         h, z, w, s = param
+        # avoid zero division
+        if s*s==0.0: s=1e-6
         inner = w*w/2.0/s/s - (rts-z)/s
         # avoid overflow: may happen if __fun_eval is called with full
         # rtrange (getSmoothed...), and s is small:
         inner[inner>200] = 200
         nominator = np.exp(inner)
+        # avoid zero division
+        if w==0: w=1e-6
         denominator = 1 + np.exp(-2.4055/math.sqrt(2.0) * ((rts-z)/w - w/s))
         return h*w/s * math.sqrt(2*math.pi) * nominator / denominator
 
@@ -53,8 +57,7 @@ class SimplifiedEMGIntegrator(PeakIntegrator):
                                   args=(rts, chromatogram), xtol=self.xtol)
         h, z, w, s = param
 
-        if ok not in [1,2,3,4] or s<=0 or w<=0: # failed
-            print "fit failed"
+        if ok not in [1,2,3,4] or w<=0: # failed
             area = 0
             rmse = 1.0/math.sqrt(len(rts))*np.linalg.norm(chromatogram)
             param = 0, 0, 0, 0 # these params generate area=0

@@ -7,5 +7,5 @@ import ms
 table = ms.loadTable("features.table")
 
 print table.rows[0]
-ms.inspect(table)
+ms.inspect([table])
 

@@ -37,9 +37,12 @@ class Spectrum(object):
         return iter(self.peaks)
 
     def intensityInRange(self, mzmin, mzmax):
+        return self.peaksInRange(mzmin, mzmax)[:,1].sum()
+
+    def peaksInRange(self, mzmin, mzmax):
         imin = self.peaks[:,0].searchsorted(mzmin)
         imax = self.peaks[:,0].searchsorted(mzmax, side='right')
-        return self.peaks[imin:imax,1].sum()
+        return self.peaks[imin:imax]
 
     def toMSSpectrum(self):
         spec = pyOpenMS.MSSpectrum()
@@ -104,6 +107,15 @@ class PeakMap(object):
         intensities = [s.intensityInRange(mzmin, mzmax) for s in specs]
         return rts, intensities
 
+    def ms1Spectrum(self, rtmin=None, rtmax=None):
+        if rtmin is None:
+            rtmin = self.spectra[0].rt
+        if rtmax is None:
+            rtmax = self.spectra[-1].rt
+        specs = self.levelOneSpecsInRange(rtmin, rtmax)
+        peaks = np.vstack([s.peaks for s in specs])
+        perm = np.argsort(peaks[:,0])
+        return peaks[perm,:]
 
     def allRts(self):
         return [spec.rt for spec in self.spectra]

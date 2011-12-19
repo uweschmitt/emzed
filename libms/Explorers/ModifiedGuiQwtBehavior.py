@@ -147,47 +147,55 @@ class ModifiedCurvePlot(CurvePlot):
                 yield item
 
     def get_unique_item(self, clz):
-        items = list(self.get_items_of_class(clz))
+        items = set(self.get_items_of_class(clz))
+        if len(items) == 0:
+            return None
         if len(items) != 1:
             raise Exception("%d instance(s) of %s among CurvePlots items !" % (len(items), clz))
-        return items[0]
+        return items.pop()
 
 
     def set_limit(self, ix, value):
         limits = list(self.get_plot_limits())
         limits[ix] = value
-        
         self.set_plot_limits(*limits)
-
 
     def reset_x_limits(self, xmin=None, xmax=None, fac=1.0):
         xvals = []
-        Delta = 0
         for item in self.items:
             if isinstance(item, CurveItem):
                 x, _ = item.get_data()
                 xvals.extend(list(x))
-
         if xmin is None:
-            xmin = min(xvals)/fac
+            if len(xvals):
+                xmin = min(xvals)/fac
+            else:
+                xmin = 0
         if xmax is None:
-            xmax = max(xvals)*fac
-        
+            if len(xvals):
+                xmax = max(xvals)*fac
+            else:
+                xmax = 1.0
         self.update_plot_xlimits(xmin, xmax)
 
-    def reset_y_limits(self, ymin=None, ymax=None, fac=1.0):
+    def reset_y_limits(self, ymin=None, ymax=None, fac=1.2):
         yvals = []
-        Delta = 0
+        #xmin, xmax, _, _ = self.get_plot_limits()
+
         for item in self.items:
             if isinstance(item, CurveItem):
-                _, y = item.get_data()
-                yvals.extend(list(y))
-
+                x, y = item.get_data()
+                yvals.extend(y)
         if ymin is None:
-            ymin = min(yvals)/fac
+            if len(yvals)>0:
+                ymin = min(yvals)/fac
+            else:
+                ymin = 0
         if ymax is None:
-            ymax = max(yvals)*fac
-
+            if len(yvals)>0:
+                ymax = max(yvals)*fac
+            else:
+                ymax = 1.0
         self.update_plot_ylimits(ymin, ymax)
 
     def update_plot_xlimits(self, xmin, xmax):
@@ -208,7 +216,8 @@ class RtPlot(ModifiedCurvePlot):
     """ modified behaviour:
             - space zooms to selected rt range
             - enter puts range marker to middle of currenct rt plot view
-            - right crsr + left csrs + shift and alt modifiers move boundaries of selection tool
+            - right crsr + left csrs + shift and alt modifiers move
+              boundaries of selection tool
     """
     def do_space_pressed(self, filter, evt):
         """ zoom to limits of snapping selection tool """
@@ -230,12 +239,12 @@ class RtPlot(ModifiedCurvePlot):
         item.move_point_to(1, (mid, 0), None)
         filter.plot.replot()
 
-
     def do_move_marker(self, evt):
         marker = self.get_unique_item(Marker)
-        marker.move_local_point_to(0, evt.pos())
-        marker.setVisible(True)
-        self.replot()
+        if marker is not None:
+            marker.move_local_point_to(0, evt.pos())
+            marker.setVisible(True)
+            self.replot()
 
     def move_selection_bounds(self, evt, filter_, selector):
         shift_pressed = evt.modifiers() == Qt.ShiftModifier
@@ -295,17 +304,19 @@ class MzPlot(ModifiedCurvePlot):
         return self.current_peak
 
     def next_peak_to(self, mz, I):
-        item = self.get_unique_item(CurveItem)
-        mzs, Is = item.get_data()
-        if len(mzs)==0:
-            return mz, I
-        # as xs and ys are on different scales we have to normalize distances
+
+        if self.all_peaks.shape[0] == 0: 
+            return mz,I
+
+        all_peaks = self.all_peaks-np.array((mz,I))
+
+        # scale according to zooms axis proportions:
         mzmin, mzmax, Imin, Imax = self.get_plot_limits()
-        mzs_scaled = (mzs - mz) / (mzmax - mzmin)
-        Is_scaled  = (Is - I) / (Imax - Imin)
-        distances = mzs_scaled ** 2 + Is_scaled ** 2
+        all_peaks /= np.array((mzmax-mzmin, Imax-Imin))
+        # find minimal distacne
+        distances = all_peaks[:,0] ** 2 + all_peaks[:,1]** 2
         imin = np.argmin(distances)
-        return mzs[imin], Is[imin]
+        return self.all_peaks[imin]
 
     def do_move_marker(self, evt):
         marker = self.get_unique_item(Marker)
@@ -314,7 +325,8 @@ class MzPlot(ModifiedCurvePlot):
         self.replot()
 
     def do_space_pressed(self, filter, evt):
-        """ finds 10 next (distance in mz) peaks tu current marker and zooms to them
+        """ finds 10 next (distance in mz) peaks tu current marker
+            and zooms to them
         """
 
         if self.centralMz is None:
@@ -322,7 +334,8 @@ class MzPlot(ModifiedCurvePlot):
         else:
             mz = self.centralMz
 
-        self.update_plot_xlimits(mz-self.halfWindowWidth, mz+self.halfWindowWidth)
+        self.update_plot_xlimits(mz-self.halfWindowWidth,\
+                                 mz+self.halfWindowWidth)
 
     def set_half_window_width(self, w2):
         self.halfWindowWidth = w2
