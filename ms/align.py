@@ -1,5 +1,8 @@
-def alignFeatureTables(tables, destination = None, nPeaks=-1, numBreakpoints=5,
-                       maxRtDifference = 100, forceAlign=False):
+import mass as _mass
+def alignFeatureTables(tables, refTable = None, destination = None,
+                       nPeaks=-1, numBreakpoints=5, maxRtDifference = 100,
+                       maxMzDifference = 0.3*_mass.H,
+                       forceAlign=False):
 
     """ aligns feature tables in respect to retetion times.
         the algorithme produces new tables with aligend data.
@@ -18,7 +21,10 @@ def alignFeatureTables(tables, destination = None, nPeaks=-1, numBreakpoints=5,
 
             - *forceAlign*: has to be *True* to align already rt aligned tables.
 
+            - *refTable*: extra reference table, if *None* the table
+              with most features among *tables* is taken.
     """
+
     import os.path
     import pyOpenMS as P
     import copy
@@ -63,19 +69,31 @@ def alignFeatureTables(tables, destination = None, nPeaks=-1, numBreakpoints=5,
                 P.DataValue(float(maxRtDifference)),
                 P.String(),
                 P.StringList())
+    pp.setValue(P.String("pairfinder:distance_MZ:max_difference"),
+                P.DataValue(float(maxMzDifference/_mass.H)), # masssunits->dalton
+                P.String(),
+                P.StringList())
+    pp.setValue(P.String("pairfinder:distance_MZ:unit"),
+                P.DataValue("Da"), # masssunits->dalton
+                P.String(),
+                P.StringList())
     ma.setParameters(pp)
 
     # convert to pyOpenMS types and find map with max num features which
     # is taken as refamp:
     fms = [ (toOpenMSFeatureMap(table), table) for table in tables]
-    refmap, reftable = max(fms, key=lambda (fm, t): fm.size())
-    print
-    print "refmap is", os.path.basename(reftable.meta.get("source","<noname>"))
-    print
+    if refTable is None:
+        refMap, refTable = max(fms, key=lambda (fm, t): fm.size())
+        print
+        print "refMap is",
+        print os.path.basename(refTable.meta.get("source","<noname>"))
+        print
+    else:
+        refMap = toOpenMSFeatureMap(refTable)
     results = []
     for fm, table in fms:
         table = copy.deepcopy(table) # so we do not modify existing table !
-        if fm is refmap:
+        if fm is refMap:
             results.append(table)
             continue
         sources = set(table.source.values)
@@ -83,7 +101,7 @@ def alignFeatureTables(tables, destination = None, nPeaks=-1, numBreakpoints=5,
         source = sources.pop()
         filename = os.path.basename(source)
         print "align", filename
-        transformation = _computeTransformation(ma, refmap, fm, numBreakpoints)
+        transformation = _computeTransformation(ma, refMap, fm, numBreakpoints)
         _plot_and_save(transformation, filename, destination)
         _transformTable(table, transformation)
         results.append(table)
@@ -91,14 +109,14 @@ def alignFeatureTables(tables, destination = None, nPeaks=-1, numBreakpoints=5,
         t.meta["rt_aligned"] = True
     return results
 
-def _computeTransformation(ma, refmap, fm, numBreakpoints):
+def _computeTransformation(ma, refMap, fm, numBreakpoints):
     # be careful: alignFeatureMaps modifies second arg,
     # so you MUST NOT put the arg as [] into this
     # function ! in this case you have no access to the calculated
     # transformations.
     import pyOpenMS as P
     ts = []
-    ma.alignFeatureMaps([refmap, fm], ts)
+    ma.alignFeatureMaps([refMap, fm], ts)
     assert len(ts) == 2 # ts is now filled !!!!
 
     # fit transformations with a spline

@@ -46,7 +46,9 @@ def testAlignFeatureTables():
     # delete one row, so ft should become reference map !
     del ft2.rows[-1]
 
-    ftneu, ft2neu = ms.alignFeatureTables([ft,ft2], "temp_output", nPeaks=9999,
+    ftneu, ft2neu = ms.alignFeatureTables([ft,ft2],
+                                          destination="temp_output",
+                                          nPeaks=9999,
                                           numBreakpoints=2)
     irt = ft.getIndex("rt")
     def getrt(t):
