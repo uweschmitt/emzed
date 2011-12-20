@@ -183,7 +183,7 @@ class Table(object):
         memberNames = [name for name, obj in inspect.getmembers(self)]
         for name in colNames:
             if name in self.__dict__ or name in memberNames:
-                raise Exception("colName %s not allowed" % name)
+                raise Exception("colName '%s' not allowed" % name)
 
         self.resetInternals()
 
@@ -304,7 +304,7 @@ class Table(object):
             """
         idx = self.colIndizes.get(colName, None)
         if idx is None:
-            raise Exception("colname %s not in table" % colName)
+            raise Exception("colname %r not in table" % colName)
         return idx
 
     def set(self, row, colName, value):
@@ -343,17 +343,17 @@ class Table(object):
         return dict((n, (self.getColumn(n).values,
                          self.primaryIndex.get(n))) for n in names)
 
-    def addEnumeration(self, colname="id"):
+    def addEnumeration(self, colName="id"):
         """ adds enumerated column as first column to table **inplace**.
 
-            if *colname* is not given the colname is "id"
+            if *colName* is not given the colName is "id"
 
             Enumeration starts with zero
         """
 
-        if colname in self.colNames:
-            raise Exception("column with name %s already exists")
-        self.colNames.insert(0, colname)
+        if colName in self.colNames:
+            raise Exception("column with name %r already exists" % colName)
+        self.colNames.insert(0, colName)
         self.colTypes.insert(0, int)
         if len(self)>99999:
             fmt = "%6d"
@@ -424,7 +424,7 @@ class Table(object):
         """
         for k in kw.keys():
             if k not in self.colNames:
-                raise Exception("colum %s does not exist" % k)
+                raise Exception("colum %r does not exist" % k)
         for name in self.colNames:
             delattr(self, name)
         self.colNames = [ kw.get(n,n) for n in self.colNames]
@@ -675,7 +675,7 @@ class Table(object):
             assert isinstance(type_, type), "type_ param is not a type"
 
         if name in self.colNames:
-            raise Exception("column with name %s already exists" % name)
+            raise Exception("column with name %r already exists" % name)
 
         if isinstance(what, Node):
             return self._addColumnByExpression(name, what, type_, format,
@@ -730,7 +730,7 @@ class Table(object):
         # colname -> index
         if isinstance(insertBefore, str):
             if insertBefore not in self.colNames:
-                raise Exception("column %s does not exist", insertBefore)
+                raise Exception("column %r does not exist", insertBefore)
             insertBefore = self.getIndex(insertBefore)
 
         # now insertBefore is an int, or something we can not handle
@@ -759,7 +759,7 @@ class Table(object):
             assert isinstance(type_, type), "type_ param is not a type"
 
         if name in self.colNames:
-            raise Exception("column with name %s already exists" % name)
+            raise Exception("column with name '%s' already exists" % name)
 
         return self._addColumn(name, [value]*len(self), type_, format,
                               insertBefore)
