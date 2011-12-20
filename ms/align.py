@@ -1,9 +1,23 @@
 def alignFeatureTables(tables, destination = None, nPeaks=-1, numBreakpoints=5,
-                       forceAlign=False):
+                       maxRtDifference = 100, forceAlign=False):
 
     """ aligns feature tables in respect to retetion times.
         the algorithme produces new tables with aligend data.
-        input tables are not modified
+        **input tables including the assiciatoted peakmap(s) are not modified**.
+
+        Parameters:
+
+            - *nPeaks*: max number of peaks matched by superimposer, -1
+              means: all peaks
+
+            - *maxRtDifference*: max allowed difference in rt values for
+              searching matching features.
+
+            - *numBreakpoints*: number of break points of fitted spline.
+              default:5, more points result in splines with higher variation.
+
+            - *forceAlign*: has to be *True* to align already rt aligned tables.
+
     """
     import os.path
     import pyOpenMS as P
@@ -43,6 +57,10 @@ def alignFeatureTables(tables, destination = None, nPeaks=-1, numBreakpoints=5,
     pp = ma.getDefaults()
     pp.setValue(P.String("superimposer:num_used_points"),
                 P.DataValue(nPeaks),
+                P.String(),
+                P.StringList())
+    pp.setValue(P.String("pairfinder:distance_RT:max_difference"),
+                P.DataValue(float(maxRtDifference)),
                 P.String(),
                 P.StringList())
     ma.setParameters(pp)

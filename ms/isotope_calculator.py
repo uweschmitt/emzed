@@ -1,26 +1,53 @@
 
 def singleIsotopeList(element, count):
     import abundance
+    import mass
     import numpy as np
     #import scipy.signal
     abundances = getattr(abundance, element)
-    vecsize = len(abundances)+10
+    vecsize = len(abundances)+5
     vector  = np.zeros((vecsize,))
     masses = sorted(abundances.keys())
     m0 = masses[0]
     for massnum in masses:
         vector[massnum-m0] = abundances[massnum]
 
-    print vector
-    print np.fft.ifft(np.fft.fft(vector)**count).real
-    #r0 = scipy.signal.fftconvolve(r0, rn)
+    peaks = []
+    probs = np.fft.ifft(np.fft.fft(vector)**count).real
+    for i in range(vecsize):
+        p = probs[i]
+        if p >= 0.01:
+            m = getattr(mass, element+str(i+m0))
+            peaks.append((m,p))
+    return peaks
 
 
+def gaussiansFor(mf):
+    import re
+    import itertools
+    atoms = re.findall("([A-Z][a-z]?)(\d*)", mf)
 
+    singleAtomPeaks = []
+    for symbol, count in atoms:
+        if count=="":
+            count = 1
+        print symbol, count
+        singleAtomPeaks.append(singleIsotopeList(symbol, int(count)))
+
+
+    result = []
+    for combination in itertools.product(*singleAtomPeaks):
+        totalmass = 0
+        totalp = 1.0
+        for mass, p in combination:
+            totalmass += mass
+            totalp *= p
+        if totalp >= 0.01:
+            result.append((totalmass, totalp))
+    return sorted(result)
 
 
 def isotopeTable(mf, trunc=1e-3, probs=None):
-    import re
     import numpy as np
     #import scipy.signal
     from   libms.DataStructures.Table import Table
