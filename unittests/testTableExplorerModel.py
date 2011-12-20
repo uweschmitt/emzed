@@ -48,7 +48,7 @@ def testTable2():
     t = buildTable2()
     recorder = RecordingObject()
     model = TableModel(t, recorder)
-    assert model.findPostfixes() == ["_1"]
+    assert model.postfixes == ["_1"]
     assert model.checkFor("mz", "rt", "rtmin", "rtmax", "mzmin", "mzmax",
                           "peakmap")
     assert not model.checkFor("mz_1")
@@ -173,7 +173,7 @@ def testSimpleTable():
     model.undoLastAction()
     assert model.table.mz.values == [ None, 2.5, 3.5]
 
-    assert model.findPostfixes() == [""]
+    assert model.postfixes == [""]
 
     assert model.hasFeatures()
     assert not model.isIntegrated()
@@ -194,7 +194,7 @@ def testMixedRows():
     recorder = RecordingObject()
     model = TableModel(tab, recorder)
 
-    assert model.findPostfixes() == [ "", "_1", "_1_1", "_1_2"]
+    assert model.postfixes == [ "", "_1", "_1_1", "_1_2"]
 
 
 

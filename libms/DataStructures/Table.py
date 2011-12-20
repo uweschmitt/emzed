@@ -25,6 +25,16 @@ def computekey(o):
     return id(o)
 
 
+def nextPostfix(postfixes):
+    maxlen = max( len(pf) for  pf in postfixes)
+    if maxlen == 0:
+        return "_1"
+    postfixes = [ pf for pf in postfixes if len(pf) == maxlen]
+    maxnum = max(int(pf.split("_")[-1]) for pf in postfixes)
+    fields = postfixes[0].split("_")
+    fields[-1]=str(maxnum+1)
+    return "_".join(fields)
+
 class Bunch(dict):
     __getattr__ = dict.__getitem__
 
@@ -895,7 +905,7 @@ class Table(object):
            1      110.0     20.0
            2      200.0     30.0
            ===    =====     ====
- 
+
            Then the result of ``t1.join(t2, (t1.mz >= t2.mz -20) & (t1.mz <= t2.mz + 20)``
            is
 
@@ -914,6 +924,9 @@ class Table(object):
         except:
             raise Exception("first arg is of wrong type")
         assert isinstance(expr, Node)
+
+        table = self._buildJoinTable(t)
+
         if debug:
             print "# %s.join(%s, %s)" % (self._name, t._name, expr)
         tctx = t._getColumnCtx(expr._neededColumns())
@@ -931,7 +944,6 @@ class Table(object):
                 rows.extend([ r1 + t.rows[n] for (n,i) in enumerate(flags) if i])
             cmdlineProgress.progress(ii)
         print
-        table = self._buildJoinTable(t)
         table.rows = rows
         return table
 
@@ -959,6 +971,9 @@ class Table(object):
         except:
             raise Exception("first arg is of wrong type")
         assert isinstance(expr, Node)
+
+        table = self._buildJoinTable(t)
+
         if debug:
             print "# %s.leftJoin(%s, %s)" % (self._name, t._name, expr)
         tctx = t._getColumnCtx(expr._neededColumns())
@@ -981,20 +996,23 @@ class Table(object):
                 rows.extend([r1 + filler])
             cmdlineProgress.progress(ii)
 
-        table = self._buildJoinTable(t)
         table.rows = rows
         return table
 
+    def findPostfixes(self):
+        """ finds postfixes as _1, _1_1, _2, ... in columNames,
+            an empty postfix "" is recognized too """
+        postfixes = set()
+        for c in self.colNames:
+            postfix ="".join(re.findall("(_\d+)+?", c))
+            postfixes.add(postfix)
+        return sorted(postfixes)
+
     def _buildJoinTable(self, t):
-        names1 = self.colNames
-        names2 = t.colNames
-        colNames = []
-        for name in names1:
-            colNames.append(name)
-        for name in names2:
-            if name in names1:
-                name = name+"_1"
-            colNames.append(name)
+
+        postfixes = self.findPostfixes()
+        newPostifx = nextPostfix(postfixes)
+        colNames = self.colNames + [ n+newPostifx for n in t.colNames ]
         colFormats = self.colFormats + t.colFormats
         colTypes = self.colTypes + t.colTypes
         title = "%s vs %s" % (self.title, t.title)

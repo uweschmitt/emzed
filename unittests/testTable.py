@@ -254,7 +254,7 @@ def testDetectionOfUnallowdColumnNames():
     assert "__init__" in ex
 
 
-def testWithEmtpyTables():
+def testWithEmtpyTablesAndTestColnameGeneration():
     e = ms.toTable("x", [])
     f = ms.toTable("y", [])
     g = ms.toTable("z", [1])
@@ -262,24 +262,29 @@ def testWithEmtpyTables():
     assert len(e.filter(e.x == 0)) == 0
     t1 = e.join(f, f.y == e.x)
     assert len(t1) == 0
-    assert t1.colNames == ["x", "y"]
+    assert t1.colNames == ["x", "y_1"]
     t1 = e.join(g, g.z == e.x)
     assert len(t1) == 0
-    assert t1.colNames == ["x", "z"]
+    assert t1.colNames == ["x", "z_1"]
     t1 = g.join(e, e.x == g.z)
     assert len(t1) == 0
-    assert t1.colNames == ["z", "x"]
+    assert t1.colNames == ["z", "x_1"]
 
     t1 = e.leftJoin(f, f.y == e.x)
     assert len(t1) == 0
-    assert t1.colNames == ["x", "y"]
+    assert t1.colNames == ["x", "y_1"]
     t1 = e.leftJoin(g, g.z == e.x)
     assert len(t1) == 0
-    assert t1.colNames == ["x", "z"]
+    assert t1.colNames == ["x", "z_1"]
     t1 = g.leftJoin(e, e.x == g.z)
     assert len(t1) == 1
-    assert t1.colNames == ["z", "x"]
+    assert t1.colNames == ["z", "x_1"]
     assert t1.rows[0] ==  [1, None]
+
+    t2 = t1.leftJoin(f, f.y == t1.x_1)
+    assert t2.colNames ==["z", "x_1", "y_2"]
+    assert len(t2) == 1
+
 
 class ExceptionTester(object):
 

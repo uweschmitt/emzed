@@ -1,4 +1,17 @@
 import ms
+
+from libms.DataStructures.Table import nextPostfix
+
+def testNextPostfix():
+
+    assert nextPostfix([""]) == "_1"
+    assert nextPostfix(["_1"]) == "_2"
+    assert nextPostfix(["_1", ""]) == "_2"
+    assert nextPostfix(["_1", "", "_2"]) == "_3"
+    assert nextPostfix(["_1", "", "_1_1"]) == "_1_2"
+    assert nextPostfix(["_1", "", "_1_1", "_1_11"]) == "_1_12"
+
+
 def testNumericSTuff():
     t = ms.toTable("a", [None, 2, 3])
     t._print()

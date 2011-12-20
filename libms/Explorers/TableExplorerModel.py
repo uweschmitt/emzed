@@ -9,6 +9,8 @@ import configs
 import os
 import re
 
+from ..DataStructures.Table import Table
+
 def isUrl(what):
     return what.startswith("http://")
 
@@ -226,17 +228,13 @@ class TableModel(QAbstractTableModel):
         self.table = table
         self.parent = parent
         nc = len(self.table.colNames)
-        table.info()
-        print self.table.colNames
-        print nc
-        print self.table.colFormats
         indizesOfVisibleCols = (j for j in range(nc)
                                   if self.table.colFormats[j] is not None)
         self.widgetColToDataCol = dict(enumerate(indizesOfVisibleCols))
         self.emptyActionStack()
 
         self.nonEditables=set()
-        self.postfixes = self.findPostfixes()
+        self.postfixes = table.findPostfixes()
 
     def addNonEditable(self, name):
         dataColIdx = self.table.getIndex(name)
@@ -379,12 +377,7 @@ class TableModel(QAbstractTableModel):
     def integrate(self, idx, postfix, method, rtmin, rtmax):
         self.runAction(IntegrateAction, postfix, idx, method, rtmin, rtmax)
 
-    def findPostfixes(self):
-        postfixes = set()
-        for c in self.table.colNames:
-            postfix ="".join(re.findall("(_\d+)+?", c))
-            postfixes.add(postfix)
-        return sorted(postfixes)
+    
 
     def eicColNames(self):
         return ["peakmap", "mzmin", "mzmax", "rtmin", "rtmax"]
