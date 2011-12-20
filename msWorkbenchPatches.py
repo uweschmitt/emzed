@@ -208,7 +208,7 @@ def patch_external_shell():
     def get_type_string( item ):
         from libms.DataStructures import Table, PeakMap
         if isinstance(item, list) and any(isinstance(ii, Table) for ii in item):
-            return "Table List"
+            return "[Table, ...]"
         if isinstance(item, PeakMap):
             return "PeakMap"
         if isinstance(item, Table):

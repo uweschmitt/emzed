@@ -16,6 +16,9 @@ def alignFeatureTables(tables, refTable = None, destination = None,
             - *maxRtDifference*: max allowed difference in rt values for
               searching matching features.
 
+            - *maxMzDifference*: max allowed difference in mz values for
+              searching matching features.
+
             - *numBreakpoints*: number of break points of fitted spline.
               default:5, more points result in splines with higher variation.
 
@@ -55,6 +58,14 @@ def alignFeatureTables(tables, refTable = None, destination = None,
             print "aborted"
             return
 
+    if refTable is not None:
+        maps = set(refTable.get(row, "peakmap") for row in refTable)
+        assert len(maps) == 1, "can only align features from one single peakmap"
+        map = maps.pop()
+        assert map != None, "None value for peakmaps not allowed"
+        refTable.requireColumn("mz"), "need mz column in reftable"
+        refTable.requireColumn("rt"), "need rt column in reftable"
+
     assert os.path.isdir(os.path.abspath(destination)), "target is no directory"
 
     # setup algorithm
@@ -85,7 +96,7 @@ def alignFeatureTables(tables, refTable = None, destination = None,
     if refTable is None:
         refMap, refTable = max(fms, key=lambda (fm, t): fm.size())
         print
-        print "refMap is",
+        print "REFMAP IS",
         print os.path.basename(refTable.meta.get("source","<noname>"))
         print
     else:
@@ -100,7 +111,9 @@ def alignFeatureTables(tables, refTable = None, destination = None,
         assert len(sources)==1, "multiple sources in table"
         source = sources.pop()
         filename = os.path.basename(source)
-        print "align", filename
+        print
+        print "ALIGN FEATURES FROM ", filename
+        print
         transformation = _computeTransformation(ma, refMap, fm, numBreakpoints)
         _plot_and_save(transformation, filename, destination)
         _transformTable(table, transformation)
@@ -132,6 +145,9 @@ def _plot_and_save(transformation, filename, destination):
     import pylab
     import os.path
     dtp = transformation.getDataPoints()
+    if len(dtp) == 0:
+        raise Exception("no matches found.")
+
     x,y = zip(*dtp)
     x = np.array(x)
     y = np.array(y)
@@ -142,7 +158,9 @@ def _plot_and_save(transformation, filename, destination):
     pylab.plot(x, yn-x)
     filename = os.path.splitext(filename)[0]+"_aligned.png"
     target_path = os.path.join(destination, filename)
-    print "save", filename
+    print
+    print "SAVE", filename
+    print
     pylab.savefig(target_path)
 
 def _transformTable(table, transformation):
