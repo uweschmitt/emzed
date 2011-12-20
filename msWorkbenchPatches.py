@@ -204,11 +204,25 @@ def patch_external_shell():
             return len(item)
         return dicteditorutils._orig_get_size(item)
 
+    """
+    @replace(dicteditorutils.get_type, verbose=True)
+    def get_type(item):
+        text = get_type_string(item)
+        if text is None:
+            text = unicode('unknown')
+        return text[text.find('.')+1:]
+    """
+
     @replace(dicteditorutils.get_type_string, verbose=True)
     def get_type_string( item ):
+        # if you return a string with dots the part until
+        # and including the first dot is ommited by
+        # dicteditorutils.get_type which leads to strange results
+
         from libms.DataStructures import Table, PeakMap
         if isinstance(item, list) and any(isinstance(ii, Table) for ii in item):
-            return "[Table, ...]"
+            # here I avoid dots by using the unicode char for "...":
+            return u"[Table, %s]" % unichr(0x2026) 
         if isinstance(item, PeakMap):
             return "PeakMap"
         if isinstance(item, Table):
