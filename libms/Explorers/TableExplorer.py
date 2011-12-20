@@ -228,6 +228,11 @@ class TableExplorer(QDialog):
     def setIntegrationPanelVisiblity(self, doShow):
         self.integrationFrame.setVisible(doShow)
 
+    def handleClick(self, index, model):
+        content = model.data(index)
+        if isUrl(content):
+            QDesktopServices.openUrl(QUrl(content))
+
     def connectSignals(self):
         for i, action in enumerate(self.chooseTableActions):
             def handler(i=i):
@@ -241,6 +246,9 @@ class TableExplorer(QDialog):
                          self.openContextMenu)
 
             self.connect(vh, SIGNAL("sectionClicked(int)"), self.rowClicked)
+            def handleClick(index, model=view.model()):
+                self.handleClick(index, model)
+            self.connect(view, SIGNAL("clicked(QModelIndex)"), handleClick)
 
         self.connect(self.reintegrateButton, SIGNAL("clicked()"),
                      self.doIntegrate)
@@ -250,16 +258,18 @@ class TableExplorer(QDialog):
             self.connect(self.abortButton, SIGNAL("clicked()"), self.abort)
 
     def disconnectModelSignals(self):
-        self.disconnect(self.model, SIGNAL("dataChanged(QModelIndex,QModelIndex,PyQt_PyObject)"),
-                     self.dataChanged)
+        self.disconnect(self.model,
+                   SIGNAL("dataChanged(QModelIndex,QModelIndex,PyQt_PyObject)"),
+                   self.dataChanged)
         self.menubar.disconnect(self.undoAction, SIGNAL("triggered()"),\
                              self.model.undoLastAction)
         self.menubar.disconnect(self.redoAction, SIGNAL("triggered()"),\
                              self.model.redoLastAction)
 
     def connectModelSignals(self):
-        self.connect(self.model, SIGNAL("dataChanged(QModelIndex,QModelIndex,PyQt_PyObject)"),
-                     self.dataChanged)
+        self.connect(self.model,
+                   SIGNAL("dataChanged(QModelIndex,QModelIndex,PyQt_PyObject)"),
+                   self.dataChanged)
         self.menubar.connect(self.undoAction, SIGNAL("triggered()"),\
                              self.model.undoLastAction)
         self.menubar.connect(self.redoAction, SIGNAL("triggered()"),\

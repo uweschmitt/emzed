@@ -9,6 +9,9 @@ import configs
 import os
 import re
 
+def isUrl(what):
+    return what.startswith("http://")
+
 class TableAction(object):
 
     actionName = None
@@ -273,6 +276,13 @@ class TableModel(QAbstractTableModel):
                         return "-" if value is None else "%.4f" % value
                     return str(value)
             return str(value)
+        if role == Qt.FontRole:
+            content = self.data(index)
+            if isUrl(content):
+                font = QFont(super(TableModel, self).data(index, Qt.DisplayRole))
+                font.setUnderline(True)
+                return font
+
         return QVariant()
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):
@@ -288,6 +298,9 @@ class TableModel(QAbstractTableModel):
         if not index.isValid():
             return Qt.ItemIsEnabled
         default = super(TableModel, self).flags(index)
+        #urls are not editable
+        if isUrl(str(self.data(index))):
+            return default
         if self.widgetColToDataCol[index.column()] in self.nonEditables:
             return default
         return Qt.ItemFlags(default | Qt.ItemIsEditable)
@@ -302,7 +315,8 @@ class TableModel(QAbstractTableModel):
             elif expectedType != object:
                 # QVariant -> QString -> str + strip:
                 value = str(value.toString()).strip()
-                if value.endswith("m"): # minutes
+                # minutes ?
+                if re.match("^((\d+m)|(\d*.\d+m))$", value):
                     value = 60.0 * float(value[:-1])
                 try:
                     value = expectedType(value)
@@ -421,7 +435,7 @@ class TableModel(QAbstractTableModel):
             title += " mz_aligned=%s" % table.meta.get("mz_aligned", "False")
         return title
 
-    def prefixesSupportedBy(self, colNames):
+    def postfixesSupportedBy(self, colNames):
         for p in self.postfixes:
             names = [ n+p for n in colNames ]
             if not self.table.hasColumns(*names):
@@ -431,7 +445,7 @@ class TableModel(QAbstractTableModel):
 
     def getSmoothedEics(self, rowIdx, rts):
         allsmoothed = []
-        for p in self.prefixesSupportedBy(self.integrationColNames()):
+        for p in self.postfixesSupportedBy(self.integrationColNames()):
             values = self.getIntegrationValues(rowIdx, p)
             method = values["method"]
             params = values["params"]
@@ -442,7 +456,7 @@ class TableModel(QAbstractTableModel):
 
     def getPeakmaps(self, rowIdx):
         peakMaps = []
-        for p in self.prefixesSupportedBy(["peakmap"]):
+        for p in self.postfixesSupportedBy(["peakmap"]):
             pm = self.table.get(self.table.rows[rowIdx], "peakmap"+p)
             peakMaps.append(pm)
         return peakMaps
@@ -454,7 +468,7 @@ class TableModel(QAbstractTableModel):
         rtmins = []
         rtmaxs = []
         allrts = []
-        for p in self.prefixesSupportedBy(self.eicColNames()):
+        for p in self.postfixesSupportedBy(self.eicColNames()):
             values = self.getEicValues(rowIdx, p)
             pm = values["peakmap"]
             mzmin = values["mzmin"]
@@ -470,4 +484,3 @@ class TableModel(QAbstractTableModel):
             mzmaxs.append(mzmax)
         return eics, min(mzmins), max(mzmaxs), min(rtmins), max(rtmaxs),\
                sorted(allrts)
-
