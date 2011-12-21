@@ -217,12 +217,10 @@ class Table(object):
         assert len(row) == len(self.colNames)
         # check for conversion !
         for i, (v, t) in enumerate(zip(row, self.colTypes)):
-            if t!= object and v is not None:
-                try:
+            if v is not None and t in [int, float, long, str]:
                     row[i] = t(v)
-                except:
-                    raise Exception("value %r in col %d can not be converted "\
-                                    "to type %s" % (v, i, t))
+            else:
+                row[i] = v
         self.rows.append(row)
 
     def isEditable(self, colName):
