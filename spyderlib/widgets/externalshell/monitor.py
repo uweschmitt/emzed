@@ -452,7 +452,7 @@ class Monitor(threading.Thread):
                     timeout = self.timeout if self.auto_refresh else None
                     if DEBUG:
                         logging.debug("timeout=%r" % timeout)
-                    command = read_packet(self.i_request, timeout=timeout)
+                    command = read_packet(self.i_request, timeout=None)
                     if command is None:
                         continue
                     timed_out = False
