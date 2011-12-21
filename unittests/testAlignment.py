@@ -1,4 +1,3 @@
-from libms.Alignment import *
 import ms
 import os
 import numpy as np
@@ -30,10 +29,10 @@ def testPoseClustering():
     # delete one row, so ft should become reference map !
     del ft2.rows[-1]
 
-    ftneu, ft2neu = ms.alignFeatureTables([ft,ft2], "temp_output", nPeaks=9999,
+    ftneu, ft2neu = ms.alignFeatureTables([ft,ft2], destination="temp_output", nPeaks=9999,
                                           numBreakpoints=2)
     def getrt(t, what):
-        return  np.array([t.get(row, what) for row in t])
+        return  np.array([t.get(row, what) for row in t.rows])
 
     # refmap ft should not be changed:
     assert np.all(getrt(ftneu, "rt") == getrt(ft, "rt"))
@@ -61,7 +60,7 @@ def testPoseClustering():
 
     ex = None
     try:
-        ftneu, ft2neu = ms.alignFeatureTables([ftneu,ft2neu], "temp_output", nPeaks=9999,
+        ftneu, ft2neu = ms.alignFeatureTables([ftneu,ft2neu], destination="temp_output", nPeaks=9999,
                                               numBreakpoints=2)
     except Exception, e:
         ex = e

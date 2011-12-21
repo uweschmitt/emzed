@@ -33,6 +33,9 @@ def alignFeatureTables(tables, refTable = None, destination = None,
     from  libms.DataStructures.Table import toOpenMSFeatureMap, Table
     import custom_dialogs
 
+    assert refTable is None or isinstance(refTable, Table)
+    assert destination is None or isinstance(destination, str)
+
     for table in tables:
         # collect all maps
         maps = set(table.peakmap.values)
@@ -164,10 +167,10 @@ def _plot_and_save(transformation, filename, destination):
 
 def _transformTable(table, transformation):
 
-    def _trans(column):
-        return [ transformation.apply(v) if v is not None else v for v in column.values ]
+    #def _trans(column):
+        #return [ transformation.apply(v) if v is not None else v for v in column.values ]
 
-    table.replaceColumn("rtmin", _trans(table.rtmin))
+    #table.replaceColumn("rtmin", _trans(table.rtmin))
     for row in table.rows:
         rtmin = table.get(row, "rtmin")
         rtmax = table.get(row, "rtmax")
