@@ -1,6 +1,6 @@
 import ms
 
-from libms.DataStructures.Table import nextPostfix
+from libms.DataStructures.Table import nextPostfix, Table
 
 def testNextPostfix():
 
@@ -10,6 +10,11 @@ def testNextPostfix():
     assert nextPostfix(["_1", "", "_2"]) == "_3"
     assert nextPostfix(["_1", "", "_1_1"]) == "_1_2"
     assert nextPostfix(["_1", "", "_1_1", "_1_11"]) == "_1_12"
+
+    t=Table(["a", "a_1", "b_2"], [int]*3, ["%d"]*3, [])
+    pf = nextPostfix(t.findPostfixes())
+    assert pf == "_3"
+    assert t.updatedColnames(pf) == ["a_3", "a_3", "b_3"]
 
 
 def testNumericSTuff():

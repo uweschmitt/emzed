@@ -1006,11 +1006,15 @@ class Table(object):
             postfixes.add(postfix)
         return sorted(postfixes)
 
+    def updatedColnames(self, newPostfix):
+        # relies on simple postfixes _x and not mixed onles like _1_2
+        return [ c.split("_",1)[0]+newPostfix for c in self.colNames]
+
     def _buildJoinTable(self, t):
 
         postfixes = self.findPostfixes()
-        newPostifx = nextPostfix(postfixes)
-        colNames = self.colNames + [ n+newPostifx for n in t.colNames ]
+        newPostfix = nextPostfix(postfixes)
+        colNames = self.colNames + list(t.updatedColnames(newPostfix))
         colFormats = self.colFormats + t.colFormats
         colTypes = self.colTypes + t.colTypes
         title = "%s vs %s" % (self.title, t.title)
