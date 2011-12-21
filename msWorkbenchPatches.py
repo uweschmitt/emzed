@@ -220,7 +220,7 @@ def patch_external_shell():
         # dicteditorutils.get_type which leads to strange results
 
         from libms.DataStructures import Table, PeakMap
-        if isinstance(item, list) and any(isinstance(ii, Table) for ii in item):
+        if isinstance(item, list) and all(isinstance(ii, Table) for ii in item):
             # here I avoid dots by using the unicode char for "...":
             return u"[Table, %s]" % unichr(0x2026) 
         if isinstance(item, PeakMap):
@@ -248,7 +248,7 @@ def patch_external_shell():
                 return "exception: "+e.message
 
         if isinstance(value, list) and\
-           any(isinstance(ii, Table) for ii in value):
+           all(isinstance(ii, Table) for ii in value):
            names = [os.path.basename(d.title) for d in value
                                               if isinstance(d, Table)]
            prefix = os.path.commonprefix(names)
