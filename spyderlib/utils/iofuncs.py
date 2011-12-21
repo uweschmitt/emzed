@@ -146,7 +146,7 @@ def save_dictionary(data, filename):
             if saved_arrays:
                 data['__saved_arrays__'] = saved_arrays
         pickle_filename = osp.splitext(filename)[0]+'.pickle'
-        cPickle.dump(data, file(pickle_filename, 'w'))
+        cPickle.dump(data, file(pickle_filename, 'w+b'))
         tar = tarfile.open(filename, "w")
         for fname in [pickle_filename]+[fn for fn in saved_arrays.itervalues()]:
             tar.add(osp.basename(fname))

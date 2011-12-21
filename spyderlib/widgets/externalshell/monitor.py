@@ -22,7 +22,7 @@ SUPPORTED_TYPES = get_supported_types()
 
 LOG_FILENAME = get_conf_path('monitor.log')
 
-DEBUG =  False
+DEBUG =  True
 
 if DEBUG:
     import logging
@@ -450,6 +450,8 @@ class Monitor(threading.Thread):
                 command = PACKET_NOT_RECEIVED
                 try:
                     timeout = self.timeout if self.auto_refresh else None
+                    if DEBUG:
+                        logging.debug("timeout=%r" % timeout)
                     command = read_packet(self.i_request, timeout=timeout)
                     if command is None:
                         continue
