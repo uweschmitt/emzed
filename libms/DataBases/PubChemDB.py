@@ -131,7 +131,7 @@ class PubChemDB(object):
         missing = []
         if counts!=len(self.table):
             uis = set(PubChemDB._get_uilist(maxIds))
-            known_uis = set(self.table.get(row, "cid") for row in self.table)
+            known_uis = set(self.table.cid.values)
             unknown = list(uis - known_uis)
             missing = list(known_uis-uis)
         return unknown, missing

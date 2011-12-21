@@ -3,7 +3,7 @@ print "LOAD ELEMENTS"
 from libms.Chemistry.Elements import Elements, MonoIsotopicElements
 
 elements = Elements()
-for row in elements:
+for row in elements.rows:
     symbol = elements.get(row, "symbol")
     massnumber = elements.get(row, "massnumber")
     data = elements.get(row)
@@ -12,7 +12,7 @@ for row in elements:
     exec("%s=data" % (symbol+str(massnumber)))
 
 monoelements = MonoIsotopicElements()
-for row in monoelements:
+for row in monoelements.rows:
     symbol = monoelements.get(row, "symbol")
     data = monoelements.get(row)
     del data["symbol"]

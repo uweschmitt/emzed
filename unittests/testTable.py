@@ -40,7 +40,7 @@ def run(t, colnames, rows):
 
     # test iteration
     content = []
-    for row in t:
+    for row in t.rows:
         for (cell, formatter) in zip(row, t.colFormatters):
             content.append( formatter(cell))
         break

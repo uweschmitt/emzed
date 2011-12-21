@@ -36,7 +36,7 @@ def integrate(ftable, integratorid="std", showProgress = True):
     resultTable.colFormats += [ "%s", "%.2e", "%.2e", None, ]
 
     lastcent = -1
-    for i, row in enumerate(ftable):
+    for i, row in enumerate(ftable.rows):
         if showProgress:
             cent = ((i+1)*20)/len(ftable) # integer div here !
             if cent != lastcent:

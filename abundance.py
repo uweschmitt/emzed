@@ -7,7 +7,7 @@ abundances=defaultdict(dict)
 
 
 elements = Elements()
-for row in elements:
+for row in elements.rows:
     sym = elements.get(row, "symbol")
     massnumber = elements.get(row, "massnumber")
     abu = elements.get(row, "abundance")

@@ -12,14 +12,14 @@ of = monoisotopicMass
 
 
 elements = Elements()
-for row in elements:
+for row in elements.rows:
     sym = elements.get(row, "symbol")
     massnumber = elements.get(row, "massnumber")
     isomass = elements.get(row, "mass")
     exec("%s=isomass" % (sym+str(massnumber)))
 
 monoelements = MonoIsotopicElements()
-for row in monoelements:
+for row in monoelements.rows:
     sym = monoelements.get(row, "symbol")
     m0 = monoelements.get(row, "m0")
     exec("%s=m0" % sym)

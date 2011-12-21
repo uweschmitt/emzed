@@ -1,7 +1,6 @@
-import mass as _mass
 def alignFeatureTables(tables, refTable = None, destination = None,
                        nPeaks=-1, numBreakpoints=5, maxRtDifference = 100,
-                       maxMzDifference = 0.3*_mass.H,
+                       maxMzDifference = 0.3,
                        forceAlign=False):
 
     """ aligns feature tables in respect to retetion times.
@@ -36,7 +35,7 @@ def alignFeatureTables(tables, refTable = None, destination = None,
 
     for table in tables:
         # collect all maps
-        maps = set(table.get(row, "peakmap") for row in table)
+        maps = set(table.peakmap.values)
         assert len(maps) == 1, "can only align features from one single peakmap"
         map = maps.pop()
         assert map != None, "None value for peakmaps not allowed"
@@ -59,7 +58,7 @@ def alignFeatureTables(tables, refTable = None, destination = None,
             return
 
     if refTable is not None:
-        maps = set(refTable.get(row, "peakmap") for row in refTable)
+        maps = set(refTable.peakmap.values)
         assert len(maps) == 1, "can only align features from one single peakmap"
         map = maps.pop()
         assert map != None, "None value for peakmaps not allowed"
@@ -81,7 +80,7 @@ def alignFeatureTables(tables, refTable = None, destination = None,
                 P.String(),
                 P.StringList())
     pp.setValue(P.String("pairfinder:distance_MZ:max_difference"),
-                P.DataValue(float(maxMzDifference/_mass.H)), # masssunits->dalton
+                P.DataValue(float(maxMzDifference)), # in dalton resp u. 
                 P.String(),
                 P.StringList())
     pp.setValue(P.String("pairfinder:distance_MZ:unit"),
@@ -164,7 +163,7 @@ def _plot_and_save(transformation, filename, destination):
     pylab.savefig(target_path)
 
 def _transformTable(table, transformation):
-    for row in table:
+    for row in table.rows:
         rtmin = table.get(row, "rtmin")
         rtmax = table.get(row, "rtmax")
         rt    = table.get(row, "rt")

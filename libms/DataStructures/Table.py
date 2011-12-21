@@ -277,7 +277,7 @@ class Table(object):
         self.__dict__ = dd
         self.resetInternals()
 
-    def __iter__(self):
+    def __x__iter__(self):
         """ returns iterator over rows """
         return iter(self.rows)
 
@@ -1014,7 +1014,9 @@ class Table(object):
 
         postfixes = self.findPostfixes()
         newPostfix = nextPostfix(postfixes)
-        colNames = self.colNames + list(t.updatedColnames(newPostfix))
+        #colNames = self.colNames + list(t.updatedColnames(newPostfix))
+        colNames = self.colNames + [ n+newPostfix for n in t.colNames]
+
         colFormats = self.colFormats + t.colFormats
         colTypes = self.colTypes + t.colTypes
         title = "%s vs %s" % (self.title, t.title)
