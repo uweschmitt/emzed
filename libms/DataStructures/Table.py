@@ -1014,8 +1014,8 @@ class Table(object):
 
         postfixes = self.findPostfixes()
         newPostfix = nextPostfix(postfixes)
-        #colNames = self.colNames + list(t.updatedColnames(newPostfix))
-        colNames = self.colNames + [ n+newPostfix for n in t.colNames]
+        colNames = self.colNames + list(t.updatedColnames(newPostfix))
+        #colNames = self.colNames + [ n+newPostfix for n in t.colNames]
 
         colFormats = self.colFormats + t.colFormats
         colTypes = self.colTypes + t.colTypes

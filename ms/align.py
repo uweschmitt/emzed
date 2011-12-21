@@ -163,6 +163,11 @@ def _plot_and_save(transformation, filename, destination):
     pylab.savefig(target_path)
 
 def _transformTable(table, transformation):
+
+    def _trans(column):
+        return [ transformation.apply(v) if v is not None else v for v in column.values ]
+
+    table.replaceColumn("rtmin", _trans(table.rtmin))
     for row in table.rows:
         rtmin = table.get(row, "rtmin")
         rtmax = table.get(row, "rtmax")

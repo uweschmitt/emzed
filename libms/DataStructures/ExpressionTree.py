@@ -796,10 +796,4 @@ class Column(Node):
     def _neededColumns(self):
         return [ (self.table, self.colname), ]
 
-    def _apply(self, fun):
-        filteredValues =[ v for v in self.values if v is not None]
-        if len(filteredValues):
-            return fun(filteredValues)
-        return None
-
 

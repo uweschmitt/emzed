@@ -432,7 +432,6 @@ class TableModel(QAbstractTableModel):
         for p in self.postfixes:
             names = [ n+p for n in colNames ]
             if not self.table.hasColumns(*names):
-                print "INCOMPLETE DATA %r" % names
                 continue
             yield p
 
