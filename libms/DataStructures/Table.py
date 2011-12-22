@@ -880,8 +880,9 @@ class Table(object):
             filteredTable.rows = []
         else:
             assert len(flags) == len(self),\
-                   "size of value of filter expression does not match table size"
-            filteredTable.rows = [ self.rows[n] for n, i in enumerate(flags) if i ]
+                   "result of filter expression does not match table size"
+            filteredTable.rows =\
+                          [self.rows[n] for n, i in enumerate(flags) if i]
         return filteredTable
 
     def join(self, t, expr, debug = False):
