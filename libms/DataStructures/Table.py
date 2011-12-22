@@ -1069,9 +1069,7 @@ class Table(object):
         else:
             meta = meta.copy()
         rows = [[v] for v in values]
-        return Table([colName], [type_], [format], rows, title, meta)
-
-
+        return Table([colName], [type_], [format], rows, meta=meta)
 
 def toOpenMSFeatureMap(table):
     table.requireColumn("mzmin")
@@ -1082,24 +1080,22 @@ def toOpenMSFeatureMap(table):
     table.requireColumn("rtmax")
 
     if "into" in table.colNames:
-        iarea = table.getIndex("into")
+        areas = table.into.values
     elif "area" in table.colNames:
-        iarea = table.getIndex("area")
+        areas = table.area.values
     else:
         print "features not integrated. I assume const intensity"
-        iarea = None
+        areas = [None] * len(table)
 
-    imz = table.getIndex("mz")
-    irt = table.getIndex("rt")
+
+    mzs = table.mz.values
+    rts = table.rt.values
     fm = P.FeatureMap()
 
-    for row in table.rows:
+    for (mz, rt, area) in zip(mzs, rts, areas):
         f = P.Feature()
-        f.setMZ(row[imz])
-        f.setRT(row[irt])
-        if iarea is not None:
-            f.setIntensity(row[iarea])
-        else:
-            f.setIntensity(1000.0)
+        f.setMZ(mz)
+        f.setRT(rt)
+        f.setIntensity(area if area is not None else 1000.0)
         fm.push_back(f)
     return fm

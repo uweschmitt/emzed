@@ -639,7 +639,7 @@ class FunctionExpression(Node):
 
     def _eval(self, ctx):
         vals, index = saveeval(self.child, ctx)
-        return self.efun(vals), None
+        return [ self.efun(v) if v is not None else None for v in vals], None
 
     def __str__(self):
         return "%s(%s)" % (self.efunname, self.child)
@@ -776,6 +776,9 @@ class Column(Node):
             raise Exception("context not correct. "\
                             "did you use wrong table in expression ?")
         return cx[self.colname]
+
+    def apply(self, fun):
+        return FunctionExpression(fun, str(fun), self, False)
 
     def __str__(self):
         if not hasattr(self, "colname"):

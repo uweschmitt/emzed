@@ -1,47 +1,29 @@
 print "LOAD MASSES"
 
-from libms.Chemistry.Elements import Elements, MonoIsotopicElements
-from libms.Chemistry.Tools import monoisotopicMass
-import installConstants
+from libms.Chemistry.Elements import (Elements as _Elements,
+                                      MonoIsotopicElements as _Mono)
+
+from libms.Chemistry.Tools import monoisotopicMass as _monoisotopicMass
 
 e = 5.4857990946e-4
 p = 1.007276466812
 n = 1.00866491600
 
-of = monoisotopicMass
+of = _monoisotopicMass
 
+_elements = _Elements()
+_symbols = _elements.symbol.values
+_massnumbers = _elements.massnumber.values
+_isomasses = _elements.mass.values
 
-elements = Elements()
-for row in elements.rows:
-    sym = elements.get(row, "symbol")
-    massnumber = elements.get(row, "massnumber")
-    isomass = elements.get(row, "mass")
-    exec("%s=isomass" % (sym+str(massnumber)))
+for (_sym, _massnumber, _isomass) in zip(_symbols, _massnumbers, _isomasses):
+    exec("%s=_isomass" % (_sym+str(_massnumber)))
 
-monoelements = MonoIsotopicElements()
-for row in monoelements.rows:
-    sym = monoelements.get(row, "symbol")
-    m0 = monoelements.get(row, "m0")
-    exec("%s=m0" % sym)
-
-del installConstants
-del monoisotopicMass
-del elements
-del monoelements
-del Elements
-del MonoIsotopicElements
-try:
-    del row
-    del sym
-    del isomass
-    del massnumber
-except: # loops where empty
-    pass
-
-try:
-    del m0
-except:
-    pass
+_mono =  _Mono()
+_symbols = _mono.symbol.values
+_m0s = _mono.m0.values
+for (_sym, _m0) in zip (_symbols, _m0s):
+    exec("%s=_m0" % _sym)
 
 
 

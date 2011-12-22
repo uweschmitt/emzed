@@ -1,33 +1,22 @@
 print "LOAD ELEMENTS"
 
-from libms.Chemistry.Elements import Elements, MonoIsotopicElements
+from libms.Chemistry.Elements import (Elements as _Elements,
+                                      MonoIsotopicElements as _Mono)
 
-elements = Elements()
-for row in elements.rows:
-    symbol = elements.get(row, "symbol")
-    massnumber = elements.get(row, "massnumber")
-    data = elements.get(row)
-    del data["symbol"]
-    del data["massnumber"]
-    exec("%s=data" % (symbol+str(massnumber)))
+_elements = _Elements()
+for _row in _elements.rows:
+    _symbol = _elements.get(_row, "symbol")
+    _massnumber = _elements.get(_row, "massnumber")
+    _data = _elements.get(_row)
+    del _data["symbol"]
+    del _data["massnumber"]
+    exec("%s=_data" % (_symbol+str(_massnumber)))
 
-monoelements = MonoIsotopicElements()
-for row in monoelements.rows:
-    symbol = monoelements.get(row, "symbol")
-    data = monoelements.get(row)
-    del data["symbol"]
-    exec("%s=data" % symbol)
-
-del elements
-del monoelements
-del Elements
-del MonoIsotopicElements
-try:
-    del row
-    del symbol
-    del data
-    del massnumber
-except: # loops where empty
-    pass
+_monoelements = _Mono()
+for _row in _monoelements.rows:
+    _symbol = _monoelements.get(_row, "symbol")
+    _data = _monoelements.get(_row)
+    del _data["symbol"]
+    exec("%s=_data" % _symbol)
 
 

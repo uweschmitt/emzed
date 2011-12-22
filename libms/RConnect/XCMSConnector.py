@@ -132,6 +132,9 @@ class CentwaveFeatureDetector(object):
                         q(status=4711)
                      """ % dd
 
+            del dd["temp_input"]
+            del dd["temp_output"]
+
             if RExecutor().run_command(script, td) != 4711:
                 raise Exception("R operation failed")
 
@@ -221,6 +224,9 @@ class MatchedFilterFeatureDetector(object):
                         write.table(xs@peaks, file=%(temp_output)r)
                         q(status=4711)
                      """ % dd
+
+            del dd["temp_input"]
+            del dd["temp_output"]
 
             if RExecutor().run_command(script, td) != 4711:
                 raise Exception("R opreation failed")

@@ -333,9 +333,9 @@ def _findParametersManually(tobe, real):
 def _applyTransform(table, transform):
     import copy
     table = copy.deepcopy(table)
-    for row in table.rows:
-        for name in "mz", "mzmin", "mzmax":
-            table.set(row, name, transform(table.get(row, name)))
+    table.replaceColumn("mz", table.mz.apply(transform))
+    table.replaceColumn("mzmin", table.mzmin.apply(transform))
+    table.replaceColumn("mzmax", table.mzmax.apply(transform))
 
     peakmaps = set(table.peakmap.values)
     assert len(peakmaps) == 1, "can only align features from one single peakmap"

@@ -167,22 +167,11 @@ def _plot_and_save(transformation, filename, destination):
 
 def _transformTable(table, transformation):
 
-    #def _trans(column):
-        #return [ transformation.apply(v) if v is not None else v for v in column.values ]
+    transfun = lambda x: transformation.apply(x)
 
-    #table.replaceColumn("rtmin", _trans(table.rtmin))
-    for row in table.rows:
-        rtmin = table.get(row, "rtmin")
-        rtmax = table.get(row, "rtmax")
-        rt    = table.get(row, "rt")
-        table.set(row, "rtmin", transformation.apply(rtmin))
-        table.set(row, "rtmax", transformation.apply(rtmax))
-        table.set(row, "rt", transformation.apply(rt))
-        if "intbegin" in table.colNames:
-            intbegin = table.get(row, "intbegin")
-            intend = table.get(row, "intend")
-            table.set(row, "intbegin", transformation.apply(intbegin))
-            table.set(row, "intend", transformation.apply(intend))
+    table.replaceColumn("rt", table.rt.apply(transfun))
+    table.replaceColumn("rtmin", table.rtmin.apply(transfun))
+    table.replaceColumn("rtmax", table.rtmax.apply(transfun))
 
     # we know that there is only one peakmap in the table
     peakmap = table.peakmap.values[0]

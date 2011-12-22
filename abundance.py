@@ -1,34 +1,24 @@
 print "LOAD ABUNDANCES"
 
-from libms.Chemistry.Elements import Elements
-from collections import defaultdict
+from libms.Chemistry.Elements import Elements as _Elements
+from collections import defaultdict as _defaultdict
 
-abundances=defaultdict(dict)
-
-
-elements = Elements()
-for row in elements.rows:
-    sym = elements.get(row, "symbol")
-    massnumber = elements.get(row, "massnumber")
-    abu = elements.get(row, "abundance")
-    exec("%s=abu" % (sym+str(massnumber)))
-    abundances[sym][massnumber] = abu
+_abu=_defaultdict(dict)
 
 
-for k in abundances.keys():
-    exec("%s=abundances['%s']" % (k, k))
+_elements = _Elements()
+_symbols = _elements.symbol.values
+_massnumbers = _elements.massnumber.values
+_abundances = _elements.abundance.values
 
-del elements
-del abundances
-del defaultdict
-del Elements
-try:
-    del row
-    del sym
-    del abu
-    del massnumber
-    del k
-except: # loops where empty
-    pass
+for _symbol, _massnumber, _abundance in zip(_symbols,
+                                           _massnumbers,
+                                           _abundances):
+    exec("%s=_abundance" % (_symbol+str(_massnumber)))
+    _abu[_symbol][_massnumber] = _abundance
+
+
+for _k in _abu.keys():
+    exec("%s=_abu['%s']" % (_k, _k))
 
 
