@@ -210,7 +210,7 @@ class Table(object):
         print
 
 
-    def addRow(self, row):
+    def addRow(self, row, doResetInternals=True):
         """ adds a new row to the table, checks if values in row are of
             expected type or can be converted to this type """
 
@@ -222,6 +222,9 @@ class Table(object):
             else:
                 row[i] = v
         self.rows.append(row)
+        if doResetInternals:
+            self.resetInternals()
+
 
     def isEditable(self, colName):
         return colName in self.editableColumns
