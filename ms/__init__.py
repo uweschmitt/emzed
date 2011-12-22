@@ -6,6 +6,7 @@ from shell_helpers import *
 from align import *
 from isotope_calculator import *
 from tools import *
+from statistics import *
 from mzalign import mzalign
 
 from libms.Explorers       import inspectPeakMap, inspect
