@@ -66,6 +66,15 @@ def testColumnAggFunctions():
 
     assert (apc.a_plus_c - t.a)() == [None, None, 1]
 
+    # column from other table !
+    t.addColumn("apc", apc.a_plus_c)
+    assert t.apc.values==[None, None, 4], t.apc.values
+
+    # column from other table !
+    t2 = t.filter(apc.a_plus_c)
+    assert len(t2) == 1
+    assert  t2.apc.values == [4]
+
 
 def testAggregateOperation():
     t = ms.toTable("a", [ 1, 2, 2, 3, 3, 3, 3])

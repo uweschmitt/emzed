@@ -790,6 +790,8 @@ class Column(Node):
         return "%s.%s" % (self.table._name, self.colname)
 
     def _evalsize(self, ctx):
+        if ctx is None:
+            return len(self.values)
         cx = ctx[self.table]
         rv, _ = cx[self.colname]
         if type(rv) in _basic_types:

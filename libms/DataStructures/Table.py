@@ -692,8 +692,7 @@ class Table(object):
         return self.addConstantColumn(name, what, type_, format, insertBefore)
 
     def _addColumnByExpression(self, name, expr, type_, format, insertBefore):
-        ctx = { self: self._getColumnCtx(expr._neededColumns()) }
-        values, _ = expr._eval(ctx)
+        values, _ = expr._eval(None)
         return self._addColumn(name, values, type_, format, insertBefore)
 
     def _addColumnByCallback(self, name, callback, type_, format, insertBefore):
@@ -873,14 +872,15 @@ class Table(object):
         if debug:
             print "#", expr
 
-        ctx = { self: self._getColumnCtx(expr._neededColumns()) }
-        flags, _ = expr._eval(ctx)
+        flags, _ = expr._eval(None)
         filteredTable = self.buildEmptyClone()
         if flags is True:
             filteredTable.rows = self.rows[:]
         elif flags is False:
             filteredTable.rows = []
         else:
+            assert len(flags) == len(self),\
+                   "size of value of filter expression does not match table size"
             filteredTable.rows = [ self.rows[n] for n, i in enumerate(flags) if i ]
         return filteredTable
 
