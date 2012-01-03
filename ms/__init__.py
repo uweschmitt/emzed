@@ -10,10 +10,8 @@ from statistics import *
 from mzalign import mzalign
 
 from libms.Explorers       import inspectPeakMap, inspect
-from libms.gui.TableDialog import showTable
 
-__all__ = [ "inspectMap", "inspectFeatures", "showTable",
-            "alignFeatureTables" ]
+__all__ = [ "inspectMap", "inspectFeatures", "alignFeatureTables" ]
 
 __builtins__["MMU"] = 0.001
 __builtins__["MASS_E"] = 5.4857990946e-4
