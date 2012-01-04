@@ -9,10 +9,14 @@ def testIdGen():
     t._print()
     assert t.mf.values == ["S4C4"] * 3
     # rounding error less than 5e-3:
+
+    t.abundance /= t.abundance.sum()
+
     assert numpy.max(numpy.array(t.abundance.values)-[0.8, 0.06, 0.14]) <= 5e-3
     assert numpy.max(numpy.array(t.mass.values)-[175.888283, 176.889972, 177.884079]) < 5e-7
 
     t = ms.isotopeDistributionTable("S4C4", R=10000, fullC13=True)
+    t.abundance /= t.abundance.sum()
     t._print()
     assert len(t) == 3
     assert t.mf.values == ["S4C4"] * 3
@@ -20,6 +24,7 @@ def testIdGen():
     assert numpy.max(numpy.array(t.mass.values)-[179.901703, 180.901090, 181.897499]) < 5e-7
 
     t = ms.isotopeDistributionTable("C4", R=10000, C=dict(C12=0.5, C13=0.5))
+    t.abundance /= t.abundance.sum()
     t._print()
     assert len(t) == 5
     assert t.mf.values == ["C4"] * 5

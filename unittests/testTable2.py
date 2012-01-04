@@ -103,6 +103,21 @@ def testUniqeRows():
     assert len(u.colNames) == 2
     u.info()
 
+def testInplaceColumnmodification():
+    t = ms.toTable("a", [1,2,3,4])
+    t.a += 1
+    assert t.a.values == [ 2,3,4,5]
+    t.a *= 2
+    assert t.a.values == [ 4,6,8,10]
+    t.a /= 2
+    assert t.a.values == [ 2,3,4,5]
+    t.a -= 1
+    assert t.a.values == [ 1, 2,3,4]
+
+    t.a.modify(lambda v: 0)
+    assert t.a.values == [ 0, 0, 0, 0]
+
+
 
 def testAggWIthIterable():
     t = ms.toTable("a", [ (1,2), None ])

@@ -746,19 +746,19 @@ class Column(Node):
 
     def _setupValues(self):
         # delayed lazy evaluation
-        if not hasattr(self, "values"):
-            self.values = [ row[self.idx] for row in self.table.rows ]
+        if not hasattr(self, "_values"):
+            self._values = [ row[self.idx] for row in self.table.rows ]
 
-    def __getattr__(self, name):
-        if name == "values":
-            self._setupValues()
-            return self.values
-        raise AttributeError("%s has no attribute %s" % (self, name))
+    @property
+    def values(self):
+        self._setupValues()
+        return self._values
+        #raise AttributeError("%s has no attribute %s" % (self, name))
 
     def __getstate__(self):
         dd = self.__dict__.copy()
-        if "values" in dd:
-            del dd["values"]
+        if "_values" in dd:
+            del dd["_values"]
         return dd
 
     def __setstate__(self, dd):
@@ -801,4 +801,24 @@ class Column(Node):
     def _neededColumns(self):
         return [ (self.table, self.colname), ]
 
+    def modify(self, operation):
+        self.table.replaceColumn(self.colname, map(operation, self.values))
+        if hasattr(self, "_values"):
+            del self._values
+
+    def __iadd__(self, value):
+        self.modify(lambda v, value=value: v+value)
+        return self
+
+    def __isub__(self, value):
+        self.modify(lambda v, value=value: v-value)
+        return self
+
+    def __imul__(self, value):
+        self.modify(lambda v, value=value: v*value)
+        return self
+
+    def __idiv__(self, value):
+        self.modify(lambda v, value=value: v/value)
+        return self
 
