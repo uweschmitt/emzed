@@ -1,4 +1,5 @@
 #!/bin/sh
+./run_tests.sh --tests=testAnova.py $*
 ./run_tests.sh --tests=testIDGen.py $*
 ./run_tests.sh --tests=testTable.py $*
 ./run_tests.sh --tests=testTable2.py $*
