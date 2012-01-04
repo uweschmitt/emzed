@@ -1,6 +1,6 @@
 import ms
 
-from libms.DataStructures.Table import nextPostfix, Table
+from libms.DataStructures.Table import nextPostfix, Table, toOpenMSFeatureMap
 
 def testNextPostfix():
 
@@ -118,3 +118,19 @@ def testSpecialFormats():
     for name in ["rt", "rtmin", "rtmax"]:
         t = ms.toTable(name, [ 1.0,2, None ])
         assert t.colFormatters[0](120) == "2.00m"
+
+
+class testXYZ(object):
+
+    def testToOpenMSFeatureMap(self):
+        t = Table("mz rt".split(), [float, float], 2 * ["%.6f"])
+        fm = toOpenMSFeatureMap(t)
+        assert fm.size() == 0
+
+        t.addRow([1.0, 2.0])
+        fm = toOpenMSFeatureMap(t)
+        assert fm.size() == 1
+
+        f = fm[0]
+        assert f.getMZ() == 1.0 # == ok, as no digits after decimal point
+        assert f.getRT() == 2.0 # dito

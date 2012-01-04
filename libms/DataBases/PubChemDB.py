@@ -1,5 +1,5 @@
 import urllib, urllib2
-import sys, time, os
+import time, os
 import xml.etree.ElementTree  as etree
 import cPickle
 from ..DataStructures.Table import Table
@@ -175,7 +175,8 @@ class PubChemDB(object):
         if path is None:
             path = self.path
         assert path is not None, "no path given in constructor nor as argument"
-        cPickle.dump(self.table, open(path,"wb"))
+        # + for win issues on network drives:
+        cPickle.dump(self.table, open(path,"w+b"))
 
     def __getattr__(self, colName):
         return getattr(self.table, colName)

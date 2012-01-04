@@ -473,7 +473,7 @@ class Table(object):
             raise Exception("%s has wrong extension, need .table" % path)
         if not forceOverwrite and os.path.exists(path):
             raise Exception("%s exists. You may use forceOverwrite=True" % path)
-        with open(path, "wb") as fp:
+        with open(path, "w+b") as fp:
             cPickle.dump(self, fp)
 
     @staticmethod
@@ -1073,12 +1073,8 @@ class Table(object):
         return Table([colName], [type_], [format], rows, meta=meta)
 
 def toOpenMSFeatureMap(table):
-    table.requireColumn("mzmin")
-    table.requireColumn("mzmax")
     table.requireColumn("mz")
     table.requireColumn("rt")
-    table.requireColumn("rtmax")
-    table.requireColumn("rtmax")
 
     if "into" in table.colNames:
         areas = table.into.values
