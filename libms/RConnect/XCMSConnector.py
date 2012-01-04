@@ -69,7 +69,7 @@ class CentwaveFeatureDetector(object):
     """
 
     __doc__ += "".join(file(path).readlines())
-    #__doc__ = unicode(__doc__, "latin-1").encode("latin-1")
+    __doc__ = unicode(__doc__, "utf-8")
 
     standardConfig = dict(   ppm=25,
                              peakwidth=(20,50),
@@ -150,7 +150,7 @@ class MatchedFilterFeatureDetector(object):
 
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "matchedFilter.txt")
 
-    __doc__ = u""" MatchedFilterFeatureDetector
+    __doc__ = """ MatchedFilterFeatureDetector
 
     usage:
 
@@ -164,8 +164,8 @@ class MatchedFilterFeatureDetector(object):
 
     """
 
-    __doc__ += u"".join(file(path).readlines())
-    #__doc__ = unicode(__doc__, "latin-1").encode("latin-1")
+    __doc__ += "".join(file(path).readlines())
+    __doc__ = unicode(__doc__, "utf-8")
 
     standardConfig = dict(   fwhm = 30,
                              sigma = 30/2.3548,

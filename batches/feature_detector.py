@@ -62,7 +62,7 @@ def runCentwave(pattern=None, destination=None, configid=None, **params):
               runCentwave(ppm=13):
                      asks for source files and target directory
                      runs centwave with modified ppm=13 parameter.
-                     
+
               runCentwave(pattern):
                      looks for map files matching pattern
                      resulting csv files are stored next to input map file
@@ -75,7 +75,7 @@ def runCentwave(pattern=None, destination=None, configid=None, **params):
               runCentwave(pattern, destination):
                      looks for map files matching pattern
                      resulting csv files are stored at destination directory
-                    
+
               runCentwave(pattern, destination, ppm=17, peakwidth=(5,100) ):
                      looks for map files matching pattern
                      resulting csv files are stored at destination directory
@@ -92,7 +92,7 @@ def runCentwave(pattern=None, destination=None, configid=None, **params):
             self.det = libms.RConnect.CentwaveFeatureDetector(**config)
 
     return P(configs.centwaveConfig, True).run(pattern, destination, configid, **params)
-            
+
 import libms.RConnect as __libmsrconnect
 runCentwave.__doc__ += __libmsrconnect.CentwaveFeatureDetector.__doc__
 

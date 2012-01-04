@@ -13,6 +13,8 @@ Functions in the ms package
 .. autofunction:: ms.chooseConfig
 .. autofunction:: ms.integrate
 .. autofunction:: ms.unpack
+.. autofunction:: ms.isotopeDistributionTable
+.. autofunction:: ms.plotIsotopeDistribution
 
 
 

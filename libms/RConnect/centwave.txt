@@ -127,7 +127,7 @@ Author(s):
 
 References:
 
-     Ralf Tautenhahn, Christoph Böttcher, and Steffen Neumann "Highly
+     Ralf Tautenhahn, Christoph BÃ¶ttcher, and Steffen Neumann "Highly
      sensitive feature detection for high resolution LC/MS" BMC
      Bioinformatics 2008, 9:504
 
