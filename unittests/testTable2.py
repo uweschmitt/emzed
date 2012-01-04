@@ -80,12 +80,12 @@ def testAggregateOperation():
     t = ms.toTable("a", [ 1, 2, 2, 3, 3, 3, 3])
     t.addColumn("b", [None, None, 2, 0, 3, 4, 9])
     t._print()
-    t.aggregate(t.b.sum, "sum", "a")
-    t.aggregate(t.b.hasNone, "hasNone", "a")
-    t.aggregate(t.b.countNone, "countNone", "a")
-    t.aggregate(t.b.len, "len", "a")
-    t.aggregate(t.b.std*t.b.std, "var", "a")
-    t.aggregate(t.b.mean, "mean", "a")
+    t = t.aggregate(t.b.sum, "sum", groupBy="a")
+    t = t.aggregate(t.b.hasNone, "hasNone", groupBy="a")
+    t = t.aggregate(t.b.countNone, "countNone", groupBy="a")
+    t = t.aggregate(t.b.len, "len", groupBy="a")
+    t = t.aggregate(t.b.std*t.b.std, "var", groupBy="a")
+    t = t.aggregate(t.b.mean, "mean", groupBy="a")
     t._print(w=8)
     assert t.sum.values == [None, 2, 2, 16, 16, 16, 16]
     assert t.var.values == [None, 0, 0, 10.5, 10.5, 10.5, 10.5]
@@ -106,7 +106,7 @@ def testUniqeRows():
 
 def testAggWIthIterable():
     t = ms.toTable("a", [ (1,2), None ])
-    t.aggregate(t.a.uniqueNotNone, "an")
+    t = t.aggregate(t.a.uniqueNotNone, "an")
     assert t.an.values == [ (1,2), (1,2)]
     assert t.a.values == [ (1,2), None]
 

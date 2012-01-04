@@ -794,40 +794,101 @@ class Table(object):
                 keysSeen.add(key)
         return result
 
-    def aggregate(self, expr, newName, *groupByColumnNames):
+    def aggregate(self, expr, newName, groupBy=None):
 
         """
         adds new aggregated column to table **inplace**.
         *expr* calculates the aggregation.
         the table can be split into several subtables by
-        providing extra *groupByColumnNames* parameters,
+        providing an extra *groupBy* parameter,
+        which can be a colummname or a list of columnames,
         then the aggregation is only performed per group.
-        *newName* is the columnname for the aggregations.
 
+        In each group the values corresponding to *groupBy*
+        are constant.
+
+        *newName* is the columnname for the aggregations.
 
         If we have a table ``t1`` with
 
-           ===    =====     =====
-           id     group     value
-           ===    =====     =====
+           ===    ======    =====
+           id     source    value
+           ===    ======    =====
            0      1         10.0
            1      1         20.0
            2      2         30.0
-           ===    =====     =====
+           ===    ======    =====
 
-       Then the result of ``t1.aggregate(t1.mean(), "mean_per_group", "group")``
-       is
+        Then the result of
 
-           ===    =====     =====  ==============
-           id     group     value  mean_per_group
-           ===    =====     =====  ==============
+        ``t1.aggregate(t1.value.mean, "mean_per_source", groupBy="source")``
+
+        is
+
+           ===    ======    =====  ===============
+           id     source    value  mean_per_source
+           ===    ======    =====  ===============
            0      1         10.0   15.0
            1      1         20.0   15.0
            2      2         30.0   30.0
-           ===    =====     =====  ==============
+           ===    ======    =====  ===============
+
+        Here we got two different row groups, in each group the value of *source*
+        is constant. So we have one group:
+
+           ===    ======    =====
+           id     source    value
+           ===    ======    =====
+           0      1         10.0
+           1      1         20.0
+           ===    ======    =====
+
+        and second one which is:
+
+           ===    ======    =====
+           id     source    value
+           ===    ======    =====
+           2      2         30.0
+           ===    ======    =====
+
+        Without grouping
+        the full table is one row group and the statement
+
+        ``t1.aggregate(t1.value.mean, "mean_per_source")``
+
+        results in:
+
+           ===    ======    =====  ===============
+           id     source    value  mean_per_source
+           ===    ======    =====  ===============
+           0      1         10.0   20.0
+           1      1         20.0   20.0
+           2      2         30.0   20.0
+           ===    ======    =====  ===============
+
+
+        And if we group by identical (id, source) pairs, each row is in separate
+        group and so
+
+        ``t1.aggregate(t1.value.mean, "mean_per_source", groupBy=["id", "source"])``
+
+        delivers:
+
+           ===    ======    =====  ===============
+           id     source    value  mean_per_source
+           ===    ======    =====  ===============
+           0      1         10.0   10.0
+           1      1         20.0   20.0
+           2      2         30.0   30.0
+           ===    ======    =====  ===============
 
         """
-        subTables = self.splitBy(*groupByColumnNames)
+        if isinstance(groupBy, str):
+            groupBy = [groupBy]
+        elif groupBy is None:
+            groupBy = []
+
+        subTables = self.splitBy(*groupBy)
         if len(subTables) == 0:
             rv = self.buildEmptyClone()
             rv.colNames.append(newName)
@@ -857,8 +918,9 @@ class Table(object):
                 values = values[0]
             collectedValues.extend([values]*len(t))
 
-        self.addColumn(newName, collectedValues)
-
+        result = self.copy()
+        result.addColumn(newName, collectedValues)
+        return result
 
     def filter(self, expr, debug = False):
         """builds a new table with columns selected according to *expr*. Eg ::
