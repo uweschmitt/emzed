@@ -18,5 +18,76 @@ def testOnColumns():
     assert abs(p-0.033894)/0.033894 < 1e-4
 
 def testOnTables():
-    pass
+    setOne = []
+    t = ms.toTable("compound", ["A", "B"])
+    t.addColumn("area", [ 1.0, 2.0])
+    setOne.append(t)
+
+    t = t.copy()
+    t.area += 0.01
+    setOne.append(t)
+
+    t = t.copy()
+    t.replaceColumn("area",[None, 4.2])
+    setOne.append(t)
+
+    t = t.copy()
+    t.replaceColumn("area",[1.3, 4.7])
+    setOne.append(t)
+
+    t = t.copy()
+    t.replaceColumn("area",[2.3, 8.7])
+    setOne.append(t)
+
+    setTwo = []
+
+    t = t.copy()
+    t.replaceColumn("area",[2.2, 7.7])
+    setTwo.append(t)
+
+    t = t.copy()
+    t.replaceColumn("area",[2.2, 7.7])
+    setTwo.append(t)
+
+    t = t.copy()
+    t.replaceColumn("area",[2.2, 7.7])
+    setTwo.append(t)
+
+    t = t.copy()
+    t.replaceColumn("area",[2.6, 7.6])
+    setTwo.append(t)
+
+    t = t.copy()
+    t.replaceColumn("area",[2.2, 7.7])
+    setTwo.append(t)
+
+    t = t.copy()
+    t.replaceColumn("area",[2.9, 7.6])
+    setTwo.append(t)
+
+    tresult = ms.oneWayAnovaOnTables(setOne, setTwo, idColumn="compound",
+                                                     valueColumn="area")
+
+    assert tresult.id.values == ["A", "B"]
+    assert tresult.n1.values == [4, 5]
+    assert tresult.n2.values == [6, 6]
+
+    assert abs(tresult.p_value.values[0]-9.11e-3)/9.11e-3 < 1e-2
+    assert abs(tresult.p_value.values[1]-1.44e-2)/1.44e-2 < 1e-2
+
+    assert tresult.title=="ANOVA ANALYSIS"
+
+    tresult = ms.kruskalWallisOnTables(setOne, setTwo, idColumn="compound",
+                                                     valueColumn="area")
+
+    assert tresult.id.values == ["A", "B"]
+    assert tresult.n1.values == [4, 5]
+    assert tresult.n2.values == [6, 6]
+
+
+    assert abs(tresult.p_value.values[0]-7.84e-2)/7.84e-2 < 1e-2
+    assert abs(tresult.p_value.values[1]-9.18e-2)/9.18e-2 < 1e-2
+
+    assert tresult.title=="KRUSKAL WALLIS ANALYSIS"
+
 
