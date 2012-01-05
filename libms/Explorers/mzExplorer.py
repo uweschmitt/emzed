@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from PyQt4.QtGui import  (QVBoxLayout, QDialog, QLabel, QLineEdit,\
-                          QPushButton, QHBoxLayout)
+                          QPushButton, QHBoxLayout, QComboBox)
 
 from PyQt4.QtCore import Qt, SIGNAL
 
@@ -29,10 +29,12 @@ class MzExplorer(QDialog):
         self.plotMz()
 
     def processPeakmap(self, peakmap):
-        self.peakmap = peakmap.filter(lambda s: s.msLevel == 1)
-        self.rts = np.array([s.rt for s in self.peakmap])
+        self.level1Peakmap = peakmap.filter(lambda s: s.msLevel == 1)
+        self.levelNSpecs = [ s for s in peakmap.spectra if s.msLevel > 1 ]
 
-        mzvals = np.hstack([ spec.peaks[:,0] for spec in peakmap ])
+        self.rts = np.array([s.rt for s in self.level1Peakmap.spectra])
+
+        mzvals = np.hstack([ spec.peaks[:,0] for spec in peakmap.spectra ])
         self.absMinMZ = np.min(mzvals)
         self.absMaxMZ = np.max(mzvals)
         self.minMZ = self.absMinMZ
@@ -44,7 +46,9 @@ class MzExplorer(QDialog):
 
     def updateChromatogram(self):
         min_, max_ = self.minMZ, self.maxMZ
-        cc =[np.sum(spec.peaks[(spec.peaks[:,0] >= min_) * (spec.peaks[:,0] <= max_)][:, 1]) for spec in self.peakmap]
+        cc =[np.sum(spec.peaks[(spec.peaks[:,0] >= min_)\
+                              *(spec.peaks[:,0] <= max_)][:, 1])\
+             for spec in self.level1Peakmap.spectra]
         self.chromatogram = np.array(cc)
 
     def connectSignalsAndSlots(self):
@@ -52,6 +56,8 @@ class MzExplorer(QDialog):
         self.connect(self.resetButton, SIGNAL("clicked()"), self.resetButtonPressed)
         self.connect(self.inputW2, SIGNAL("textEdited(QString)"), self.w2Updated)
         self.connect(self.inputMZ, SIGNAL("textEdited(QString)"), self.mzUpdated)
+        if self.chooseLevelNSpec:
+            self.connect(self.chooseLevelNSpec, SIGNAL("activated(int)"), self.levelNSpecChosen)
 
     def selectButtonPressed(self):
         try:
@@ -63,6 +69,16 @@ class MzExplorer(QDialog):
             self.plotChromatogramm()
         except Exception, e:
             print e
+
+    def levelNSpecChosen(self, idx):
+        if idx == 0:
+            self.plotMz()
+        else:
+            spec = self.levelNSpecs[idx-1]
+            self.mzPlotter.plot([spec.peaks])
+            self.mzPlotter.resetAxes()
+            self.mzPlotter.replot()
+        self.rtPlotter.setEnabled(idx==0)
 
     def resetButtonPressed(self):
         self.resetMzLimits()
@@ -89,6 +105,8 @@ class MzExplorer(QDialog):
         vlayout.addLayout(hlayout)
 
         vlayout.addWidget(self.rtPlotter.widget)
+        if self.chooseLevelNSpec:
+            vlayout.addWidget(self.chooseLevelNSpec)
         vlayout.addWidget(self.mzPlotter.widget)
 
     def setupInputWidgets(self):
@@ -100,8 +118,20 @@ class MzExplorer(QDialog):
         self.selectButton.setText("Select")
         self.resetButton = QPushButton()
         self.resetButton.setText("Reset")
-
         self.inputW2.setText("0.05")
+
+        if len(self.levelNSpecs):
+            self.chooseLevelNSpec = QComboBox()
+            self.chooseLevelNSpec.addItem("Only Level 1 Spectra")
+            for s in self.levelNSpecs:
+                mzs = [ mz for (mz, I) in s.precursors ]
+                txt = "RT = %.2fm msLevel=%d" % (s.rt/60.0, s.msLevel)
+                precursors = ", ".join("%.6f" % mz for mz in mzs)
+                if precursors:
+                    txt += " precursor mzs = %s" % precursors
+                self.chooseLevelNSpec.addItem(txt)
+        else:
+            self.chooseLevelNSpec = None
 
     def w2Updated(self, txt):
         try:
@@ -140,7 +170,8 @@ class MzExplorer(QDialog):
     def plotMz(self):
         minRT = self.rtPlotter.minRTRangeSelected
         maxRT = self.rtPlotter.maxRTRangeSelected
-        peaks = self.peakmap.ms1Spectrum(minRT, maxRT)
+        peaks = self.level1Peakmap.ms1Spectrum(minRT, maxRT)
+        self.mzPlotter.resetAxes()
         self.mzPlotter.plot([peaks])
         self.mzPlotter.replot()
 
