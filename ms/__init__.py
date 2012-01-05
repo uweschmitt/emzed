@@ -53,4 +53,8 @@ try:
     del tools
 except:
     pass
+try:
+    del statistics
+except:
+    pass
 
