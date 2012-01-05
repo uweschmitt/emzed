@@ -6,18 +6,24 @@ def _setupIsotopeDistributionGenerator(formula, R, fullC13, minp, **kw):
     return IsotopeDistributionGenerator(formula, R, minp, **kw)
 
 
-def plotIsotopeDistribution(formula, R=None, fullC13=False, minp=0.01, **kw):
+def plotIsotopeDistribution(formula, R=None, fullC13=False, minp=0.01,
+                            plotGauss=True, **kw):
     """
     plots isotopedistribution for molecule with given mass formula *formula*.
+    for all parameters, despite *plotGauss*: see isotopeDistributionTable()
 
-    for parameters: see isotopeDistributionTable()
+    If *plotGauss* is *True*, bell shaped curves are plotted, else the
+    centroids according to the used resolution are shown.
+
+    For low *minp* the choice *plotGauss=False* the plot is drawn faster.
     """
     gen = _setupIsotopeDistributionGenerator(formula, R, fullC13, minp, **kw)
-    gen.show()
+    gen.show(plotGauss)
 
 def isotopeDistributionTable(formula, R=None, fullC13=False, minp=0.01, **kw):
     """
-    generates Table for most common isotopes of molecule with given mass *formula*
+    generates Table for most common isotopes of molecule with given mass 
+    *formula*.
 
     If the resolution *R* is given, the measurment device is simulated, and
     overlapping peaks may merge.

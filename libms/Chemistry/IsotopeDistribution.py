@@ -145,16 +145,15 @@ class IsotopeDistributionGenerator(object):
             centroids = self._detectMaxima(groupedPeaks)
             allCentroids.extend(centroids)
 
-
         return normalized(allCentroids)
 
-    def plot(self):
+    def plot(self, plotGauss=True):
         import pylab as pl
         minMass = self.centroids[0][0]
         maxMass = self.centroids[-1][0]
-        if self.R is not None:
+        if self.R is not None and plotGauss:
             # decay to one percent at shfit w2:
-            massrange = np.arange(minMass-0.1, maxMass+0.1, 5.0/self.R)
+            massrange = np.arange(minMass-0.1, maxMass+0.1, 50.0/self.R)
             measured = self.measuredIntensity(massrange)
             pl.plot(massrange, measured)
         else:
@@ -163,9 +162,14 @@ class IsotopeDistributionGenerator(object):
             # draw sticks
             for m, a in self.centroids:
                 pl.plot([m, m], [0,a], "b")
-    def show(self):
+
+        # rescale y axis, looks better:
+        ymin, ymax = pl.ylim()
+        pl.ylim(ymin, ymax*1.1)
+
+    def show(self, plotGauss=True):
         import pylab as pl
-        self.plot()
+        self.plot(plotGauss)
         pl.show()
 
     def getCentroids(self):
