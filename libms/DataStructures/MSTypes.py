@@ -1,8 +1,6 @@
 import pyOpenMS
 import numpy as np
-from copy import deepcopy, copy
 import os.path
-
 
 class Spectrum(object):
 
@@ -96,7 +94,6 @@ class PeakMap(object):
         return [spec for spec in self.spectra if rtmin-1e-2 <= spec.rt <= rtmax+1e-2
                                              and spec.msLevel == 1]
 
-
     def chromatogram(self, mzmin, mzmax, rtmin=None, rtmax=None):
         if rtmin is None:
             rtmin = self.spectra[0].rt
@@ -147,6 +144,3 @@ class PeakMap(object):
         exp.updateRanges()
         exp.setLoadedFilePath(pyOpenMS.String(self.meta.get("source","")))
         return exp
-
-    def x__getitem__(self, idx):
-        return self.spectra[idx]
