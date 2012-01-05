@@ -22,7 +22,6 @@ def integrate(ftable, integratorid="std", showProgress = True):
     if integrator is None:
         raise Exception("unknown integrator '%s'" % integratorid)
 
-
     resultTable = ftable.buildEmptyClone()
 
     newCols = [ "method", "area", "rmse", "params",]

@@ -56,7 +56,7 @@ class PlotterBase(object):
         self.widget.plot.reset_x_limits(xmin, xmax, fac)
 
     def reset_y_limits(self, ymin=None, ymax=None, fac=1.2):
-        pelf.widget.plot.reset_y_limits(ymin, ymax, fac)
+        self.widget.plot.reset_y_limits(ymin, ymax, fac)
 
     def set_limit(self, ix, value):
         self.widget.plot.set_limit(ix, value)

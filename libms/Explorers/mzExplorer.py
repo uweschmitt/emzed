@@ -124,11 +124,11 @@ class MzExplorer(QDialog):
             self.chooseLevelNSpec = QComboBox()
             self.chooseLevelNSpec.addItem("Only Level 1 Spectra")
             for s in self.levelNSpecs:
+                txt = "rt=%.2fm, level=%d" % (s.rt/60.0, s.msLevel)
                 mzs = [ mz for (mz, I) in s.precursors ]
-                txt = "RT = %.2fm msLevel=%d" % (s.rt/60.0, s.msLevel)
                 precursors = ", ".join("%.6f" % mz for mz in mzs)
                 if precursors:
-                    txt += " precursor mzs = %s" % precursors
+                    txt += ", precursor mzs=[%s]" % precursors
                 self.chooseLevelNSpec.addItem(txt)
         else:
             self.chooseLevelNSpec = None

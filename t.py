@@ -1,3 +1,4 @@
 import ms
-ds=ms.loadPeakMap("unittests/data/SHORT_MS2_FILE.mzData")
-ms.inspectPeakMap(ds)
+import tab
+t=ms.loadTable("ms2feat.table")
+ms.inspect([t, tab.elements, t])

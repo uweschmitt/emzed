@@ -65,6 +65,7 @@ class TableExplorer(QDialog):
         self.setupMenuBar()
         self.setupTableViews()
         self.setupPlottingWidgets()
+        self.chooseSpectrum = QComboBox()
         self.setupIntegrationWidgets()
         if self.offerAbortOption:
             self.setupAcceptButtons()
@@ -160,6 +161,7 @@ class TableExplorer(QDialog):
 
         vsplitter.addWidget(self.menubar)
         vsplitter.addWidget(self.layoutWidgetsAboveTable())
+        vsplitter.addWidget(self.chooseSpectrum)
 
         for view in self.tableViews:
             vsplitter.addWidget(view)
@@ -208,13 +210,17 @@ class TableExplorer(QDialog):
 
         self.setWindowTitle(self.model.getTitle())
 
+        self.chooseSpectrum.setVisible(False)
         if hasFeatures != self.hadFeatures:
             self.setPlotVisibility(hasFeatures)
             self.hadFeatures = hasFeatures
+            # default: invisible, only activated when row clicked and
+            # level >= 2 spectra are available
         if isIntegrated != self.wasIntegrated:
             self.setIntegrationPanelVisiblity(isIntegrated)
             self.wasIntegrated = isIntegrated
         if hasFeatures:
+            self.rtPlotter.setEnabled(True)
             self.resetPlots()
 
     def setPlotVisibility(self, doShow):
@@ -252,6 +258,9 @@ class TableExplorer(QDialog):
 
         self.connect(self.reintegrateButton, SIGNAL("clicked()"),
                      self.doIntegrate)
+
+        self.connect(self.chooseSpectrum, SIGNAL("activated(int)"),
+                     self.spectrumChosen)
 
         if self.offerAbortOption:
             self.connect(self.okButton, SIGNAL("clicked()"), self.ok)
@@ -316,6 +325,7 @@ class TableExplorer(QDialog):
         self.updateMenubar()
 
     def dataChanged(self, ix1, ix2, src):
+        # updates plots
         if self.hasFeatures:
             minr, maxr = sorted((ix1.row(), ix2.row()))
             if minr <= self.currentRowIdx <= maxr:
@@ -371,8 +381,39 @@ class TableExplorer(QDialog):
     def rowClicked(self, rowIdx):
         if not self.hasFeatures: return
         self.currentRowIdx = rowIdx
+        self.rtPlotter.setEnabled(True)
         self.updatePlots(reset=True)
+        if self.hasFeatures:
+            self.setupSpectrumChooser()
 
+    def setupSpectrumChooser(self):
+        # delete QComboBox:
+        while self.chooseSpectrum.count():
+            self.chooseSpectrum.removeItem(0)
+
+        # get current spectra
+        rowidx = self.currentRowIdx
+        postfixes, spectra = self.model.getLevelNSpectra(rowidx, minLevel=2)
+        self.currentLevelNSpecs = []
+
+        if not len(spectra):
+            self.chooseSpectrum.setVisible(False)
+            return
+
+        self.chooseSpectrum.setVisible(True)
+        self.chooseSpectrum.addItem("Show only Level 1 spectra")
+        for postfix, s in zip(postfixes, spectra):
+            if postfix != "":
+                txt = postfix+", "
+            else:
+                txt = ""
+            txt += "rt=%.2fm, level=%d" % (s.rt/60.0, s.msLevel)
+            mzs = [ mz for (mz, I) in s.precursors ]
+            precursors = ", ".join("%.6f" % mz for mz in mzs)
+            if precursors:
+                txt += ", precursor mzs=[%s]" % precursors
+            self.chooseSpectrum.addItem(txt)
+            self.currentLevelNSpecs.append(s)
 
     def updatePlots(self, reset=False):
         rowIdx = self.currentRowIdx
@@ -405,6 +446,20 @@ class TableExplorer(QDialog):
             self.rtPlotter.setYAxisLimits(ymin, ymax)
             self.rtPlotter.updateAxes()
         self.plotMz(resetLimits=(mzmin, mzmax) if reset else None)
+
+    def spectrumChosen(self, idx):
+        if idx==0:
+            self.rtPlotter.setEnabled(True)
+            self.chooseIntMethod.setEnabled(True)
+            self.reintegrateButton.setEnabled(True)
+            self.plotMz()
+        else:
+            self.rtPlotter.setEnabled(False)
+            self.chooseIntMethod.setEnabled(False)
+            self.reintegrateButton.setEnabled(False)
+            self.mzPlotter.plot([self.currentLevelNSpecs[idx-1].peaks])
+            self.mzPlotter.resetAxes()
+            self.mzPlotter.replot()
 
     def plotMz(self, resetLimits=None):
         """ this one is used from updatePlots and the rangeselectors

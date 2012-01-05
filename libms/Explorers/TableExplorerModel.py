@@ -9,8 +9,6 @@ import configs
 import os
 import re
 
-from ..DataStructures.Table import Table
-
 def isUrl(what):
     return what.startswith("http://")
 
@@ -209,13 +207,17 @@ class IntegrateAction(TableAction):
         self.notifyGUI()
 
     def notifyGUI(self):
+        print "notify", self.idx
         tl = self.model.createIndex(self.idx, 0)
         tr = self.model.createIndex(self.idx, self.model.columnCount()-1)
+        # this one updates plots
         self.model.emit(
                   SIGNAL("dataChanged(QModelIndex,QModelIndex,PyQt_PyObject)"),
                   tl,
                   tr,
                   self)
+        # this one updates cells in table
+        self.model.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"), tl, tr)
 
 
 class TableModel(QAbstractTableModel):
@@ -377,8 +379,6 @@ class TableModel(QAbstractTableModel):
     def integrate(self, idx, postfix, method, rtmin, rtmax):
         self.runAction(IntegrateAction, postfix, idx, method, rtmin, rtmax)
 
-    
-
     def eicColNames(self):
         return ["peakmap", "mzmin", "mzmax", "rtmin", "rtmax"]
 
@@ -452,6 +452,20 @@ class TableModel(QAbstractTableModel):
             pm = self.table.get(self.table.rows[rowIdx], "peakmap"+p)
             peakMaps.append(pm)
         return peakMaps
+
+    def getLevelNSpectra(self, rowIdx, minLevel=2, maxLevel=999):
+        spectra=[]
+        postfixes = []
+        for p in self.postfixesSupportedBy(self.eicColNames()):
+            values = self.getEicValues(rowIdx, p)
+            pm = values["peakmap"]
+            rtmin = values["rtmin"]
+            rtmax = values["rtmax"]
+            for spec in pm.levelNSpecs(minLevel, maxLevel):
+                if rtmin <= spec.rt <= rtmax:
+                    spectra.append(spec)
+                    postfixes.append(p)
+        return postfixes, spectra
 
     def getEics(self, rowIdx):
         eics = []

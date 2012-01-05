@@ -2,6 +2,22 @@ import pyOpenMS
 import numpy as np
 import os.path
 
+
+def memoize(function):
+    """ decorator for caching results """
+    memo = {}
+
+    def wrapper(*args):
+        if args in memo:
+            return memo[args]
+        else:
+            rv = function(*args)
+            memo[args] = rv
+            return rv
+
+    return wrapper
+
+
 class Spectrum(object):
 
     def __init__(self, peaks, rt, msLevel, polarity, precursors=[]):
@@ -117,8 +133,13 @@ class PeakMap(object):
     def allRts(self):
         return [spec.rt for spec in self.spectra]
 
+    @memoize
     def levelOneRts(self):
         return [spec.rt for spec in self.spectra if spec.msLevel == 1]
+
+    @memoize
+    def levelNSpecs(self, minN, maxN):
+        return [spec for spec in self.spectra if minN <= spec.msLevel <= maxN]
 
     def shiftRt(self, delta):
         for spec in self.spectra:

@@ -1,5 +1,5 @@
 
-import _winreg, os, glob, tempfile, subprocess, sys, win32api
+import _winreg, os, glob, subprocess, sys, win32api
 from   os.path import dirname, abspath, join
 
 # all installled libs will get to local folder
