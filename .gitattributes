@@ -1,0 +1,2 @@
+*.table -crlf 
+*/*.table -crlf 

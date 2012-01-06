@@ -10,6 +10,7 @@ from statistics import *
 from mzalign import mzalign
 
 from libms.Explorers       import inspectPeakMap, inspect
+from libms.gui.DialogBuilder import DialogBuilder, showWarning
 
 __all__ = [ "inspectMap", "inspectFeatures", "alignFeatureTables" ]
 
