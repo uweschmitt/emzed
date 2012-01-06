@@ -4,7 +4,7 @@ import ms
 
 # A simple one, only ask for one integer value:
 
-value = ms.DialogBuilder().addInt("Integer Wert:").show()
+value = ms.DialogBuilder().addInt("Integer Wert:").addInstruction("Hier Zahlenwert eingeben\nund sonst nix").show()
 print "user entered", value
 
 value1, value2 = ms.DialogBuilder().addInt("Integer Wert:")\

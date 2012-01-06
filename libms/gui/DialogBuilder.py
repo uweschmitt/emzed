@@ -39,6 +39,7 @@ class DialogBuilder(object):
         self.attrnum = 0
         self.title = title
         self.items = []
+        self.instructions = []
         self.fieldNames = []
         self.buttonCounter = 0
 
@@ -94,6 +95,10 @@ class DialogBuilder(object):
             return stub
         raise AttributeError("%r has no attribute '%s'" % (self, name))
 
+    def addInstruction(self, what):
+        self.instructions.append(what)
+        return self
+
     def addButton(self, label, callback, help=None):
         """ addButton is not handled by __getattr__, as it need special
             handling.
@@ -142,7 +147,8 @@ class DialogBuilder(object):
         # with the  given attributes:
         clz = type("Dialog", (dt.DataSet,), attributes)
         # as said: the docstring is rendered as the dialogues title:
-        clz.__doc__ = self.title
+        clz.__doc__ = self.title+"\n"+"\n".join(self.instructions)
+        print clz.__doc__
 
         # open dialog now !!!
         instance = clz()
