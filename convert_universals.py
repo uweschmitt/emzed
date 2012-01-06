@@ -4,7 +4,7 @@ import ms
 
 
 universal = ms.loadCSV(r"tables\universal_metabolites.csv")
-universal.renameColumns(RT_max="rtmax", RT_min="rtmin", M0="m0", link_to_pubchem="url", compouind_name="name", MF="mf")
+universal.renameColumns(RT_max="rtmax", RT_min="rtmin", M0="m0", link_to_pubchem="url", compouind_name="name", MF="mf", )
 universal.replaceColumn("rtmax", universal.rtmax * 60)
 universal.replaceColumn("rtmin", universal.rtmin * 60)
 

@@ -42,8 +42,8 @@ elements = Elements()
 if not os.environ.get("WITHOUT_PUBCHEM"):
     import db
     pc_full = db.pubChemDB.table
-    pc_kegg = pc_full.filter(pc_full.is_in_kegg == 1)
-    pc_hmdb = pc_full.filter(pc_full.is_in_hmdb == 1)
+    pc_kegg = pc_full.filter(pc_full.isInKEGG == 1)
+    pc_hmdb = pc_full.filter(pc_full.isInHMDB == 1)
     del db
 
 del repositoryPathes

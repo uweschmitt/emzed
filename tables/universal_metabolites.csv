@@ -1,4 +1,4 @@
-M0;RT min;RT max;link to pubchem;compouind name;HMDB ID;MF;KEGG ID
+M0;RT min;RT max;link to pubchem;compouind name;HMDBID;MF;KEGGID
 118,0266084;12,40;16,40;http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?cid=1110&loc=ec_rcs;"""Succinic acid""";HMDB00254;C4H6O4;C00042
 134,021523;12,50;16,50;http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?cid=525&loc=ec_rcs;"""Malic acid""";HMDB00744;C4H6O5;C00149
 146,021523;12,80;16,80;http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?cid=51&loc=ec_rcs;"""Oxoglutaric acid""";HMDB00208;C5H6O5;C00026

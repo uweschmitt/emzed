@@ -21,10 +21,10 @@ I4
 sS'url'
 p10
 I3
-sS'KEGG_ID'
+sS'KEGGID'
 p11
 I7
-sS'HMDB_ID'
+sS'HMDBID'
 p12
 I5
 sS'rtmin'
@@ -356,7 +356,7 @@ p150
 (dp151
 sS'_name'
 p152
-S'<libms.DataStructures.Table.Table object at 0x0817D0B0>'
+S'<libms.DataStructures.Table.Table object at 0x0818F470>'
 p153
 sS'colNames'
 p154
