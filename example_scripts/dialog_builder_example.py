@@ -1,5 +1,6 @@
 import sys
 sys.path.insert(0, "..")
+sys.path.insert(0, ".")
 import ms
 
 # A simple one, only ask for one integer value:

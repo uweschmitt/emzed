@@ -8,8 +8,6 @@ repositoryPathes = [ globalDataPath, "$HOME/msworkbench_modules" ]
 
 from libms.RConnect.XCMSConnector import CentwaveFeatureDetector, MatchedFilterFeatureDetector
 
-
-
 cwfstd = CentwaveFeatureDetector.standardConfig
 centwaveConfig = [   ("std", "standard config orbitrap", cwfstd) ]
 

@@ -8,6 +8,7 @@ from isotope_calculator import *
 from tools import *
 from statistics import *
 from mzalign import mzalign
+from metlin import matchMetlin
 
 from libms.Explorers       import inspectPeakMap, inspect
 from libms.gui.DialogBuilder import DialogBuilder, showWarning, showInformation
@@ -56,6 +57,11 @@ except:
     pass
 try:
     del statistics
+except:
+    pass
+
+try:
+    del metlin
 except:
     pass
 
