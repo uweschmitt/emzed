@@ -32,6 +32,10 @@ def showWarning(message):
     guidata.qapplication().beep()
     QMessageBox.warning(None, "Warning", message)
 
+def showInformation(message):
+    guidata.qapplication().beep()
+    QMessageBox.information(None, "Warning", message)
+
 class DialogBuilder(object):
 
     def __init__(self, title="Dialog"):
