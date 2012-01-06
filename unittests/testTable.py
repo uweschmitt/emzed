@@ -148,7 +148,6 @@ def run(t, colnames, rows):
     tn.addColumn("squared", lambda t,r,n: t.get(r, "iii")**2)
 
 
-
     assert list(tn.getColumn("computed").values ) == [8080, 7441, 6161]
     assert list(tn.getColumn("squared").values ) == [9, 4, 1]
 
@@ -157,8 +156,12 @@ def run(t, colnames, rows):
     assert list(tn.getColumn("squared").values ) == [10, 5, 2]
     assert len(tn.colNames)  == 6
 
-    tn.dropColumn("computed")
-    tn.dropColumn("squared")
+    tx  = tn.copy()
+    tx.dropColumns("squared", "computed")
+    assert tx.colNames == ["id", "iii", "long", "x"]
+    assert len(tx) == 3
+
+    tn.dropColumns("computed", "squared")
     assert tn.colNames == ["id", "iii", "long", "x"]
     assert len(tn) == 3
 

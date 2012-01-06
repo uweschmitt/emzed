@@ -507,7 +507,10 @@ class Table(object):
             self.requireColumn(name)
         for name in names:
             delattr(self, name)
-            ix = self.getIndex(name)
+
+        indices = [ self.getIndex(n) for n in names ]
+        indices.sort()
+        for ix in reversed(indices):
             del self.colNames[ix]
             del self.colFormats[ix]
             del self.colTypes[ix]
@@ -1074,14 +1077,13 @@ class Table(object):
 
     def updatedColnames(self, newPostfix):
         # relies on simple postfixes _x and not mixed onles like _1_2
-        return [ c.split("_",1)[0]+newPostfix for c in self.colNames]
+        return [ c.rsplit("_",1)[0]+newPostfix for c in self.colNames]
 
     def _buildJoinTable(self, t):
 
         postfixes = self.findPostfixes()
         newPostfix = nextPostfix(postfixes)
         colNames = self.colNames + list(t.updatedColnames(newPostfix))
-        #colNames = self.colNames + [ n+newPostfix for n in t.colNames]
 
         colFormats = self.colFormats + t.colFormats
         colTypes = self.colTypes + t.colTypes
