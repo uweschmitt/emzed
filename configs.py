@@ -1,10 +1,5 @@
 #encoding: utf-8
 
-# modules are searched in this order, search ends at first hit
-# configs are read in this order, so local configs overrun global configs
-globalDataPath = "C:/TMP"
-repositoryPathes = [ globalDataPath, "$HOME/msworkbench_modules" ]
-
 
 from libms.RConnect.XCMSConnector import CentwaveFeatureDetector, MatchedFilterFeatureDetector
 
@@ -38,8 +33,16 @@ dd = dict(gapcost=float(1), affinegapcost=float(0.5), scorefunction="s")
 mapAlignmentAlgorithmSpectrumAlignmentConfig = [ ( "std", dd ) ]
 
 import os.path
+import sys
 
 from string import Template
+
+# modules are searched in this order, search ends at first hit
+# configs are read in this order, so local configs overrun global configs
+
+import userConfig
+repositoryPathes = [ userConfig.getExchangeFolder(), userConfig.getDataHome() ]
+
 
 for p in repositoryPathes:
     pp = os.path.join(Template(p).substitute(os.environ), "configs.py")
