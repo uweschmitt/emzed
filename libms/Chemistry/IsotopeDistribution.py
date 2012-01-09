@@ -151,7 +151,7 @@ class IsotopeDistributionGenerator(object):
         import pylab as pl
         minMass = self.centroids[0][0]
         maxMass = self.centroids[-1][0]
-        if self.R is not None and plotGauss:
+        if self.R is not None or plotGauss:
             # decay to one percent at shfit w2:
             massrange = np.arange(minMass-0.1, maxMass+0.1, 50.0/self.R)
             measured = self.measuredIntensity(massrange)
