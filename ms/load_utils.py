@@ -9,10 +9,13 @@ def loadPeakMap(path=None):
 
     # local import in order to keep namespaces clean
     import ms
+    import sys
     from   pyOpenMS import MSExperiment, FileHandler
     from   libms.DataStructures import PeakMap
 
-    if path is None:
+    if isinstance(path, unicode):
+        path = path.encode(sys.getfilesystemencoding())
+    elif path is None:
         path = ms.askForSingleFile(extensions="mzML mzXML mzData".split())
         if path is None:
             return None
@@ -33,9 +36,12 @@ def loadTable(path=None):
 
     # local import in order to keep namespaces clean
     import ms
+    import sys
     from   libms.DataStructures.Table import Table
 
-    if path is None:
+    if isinstance(path, unicode):
+        path = path.encode(sys.getfilesystemencoding())
+    elif path is None:
         path = ms.askForSingleFile(extensions=["table"])
         if path is None:
             return None
@@ -45,11 +51,12 @@ def loadTable(path=None):
 def loadCSV(path=None, sep=";", **specialFormats):
     # local import in order to keep namespaces clean
     import ms
-    import csv, os.path
+    import csv, os.path, sys
     from   libms.DataStructures.Table import (Table, commonTypeOfColumn,\
                                               bestConvert, guessFormatFor)
-
-    if path is None:
+    if isinstance(path, unicode):
+        path = path.encode(sys.getfilesystemencoding())
+    elif path is None:
         path = ms.askForSingleFile(extensions=["csv"])
         if path is None:
             return None

@@ -3,13 +3,13 @@
 class BatchRunner(object):
 
     """ Base class for batch jobs on the file system.
-        Uses template pattern 
+        Uses template pattern
     """
 
     def __init__(self, config=None, collectResults = False):
         self.config = config
         self.collectResults = collectResults
-        
+
     def setup(self, conf):
         """ setup processor with config conf if needed """
         raise NotImplementedError("you have to override this method")
@@ -49,7 +49,7 @@ class BatchRunner(object):
                 else:
                     print "invalid configid %r" % configid
                     return
-                        
+
             elif len(self.config) > 1:
                 config = ms.chooseConfig(self.config,  params)
             else:
@@ -58,7 +58,7 @@ class BatchRunner(object):
             config.update(params)
 
         self.setup(config)
-        
+
         count = 0
         results = []
         for path in files:

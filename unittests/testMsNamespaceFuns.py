@@ -4,7 +4,10 @@ import numpy as np
 import copy
 
 def testIntegration():
+
+    # test with and without unicode:
     ft = ms.loadTable("data/features.table")
+    ft = ms.loadTable(u"data/features.table")
     # an invalid row should not stop integration, but result
     # in None values for ms.integrate generated columns
     ft.set(ft.rows[0], "mzmin", None)
@@ -19,19 +22,18 @@ def testIntegration():
 
 
 def testLoadMap():
-    from_ = "data/SHORT_MS2_FILE.mzXML"
+    from_ = u"data/SHORT_MS2_FILE.mzXML"
     ds = ms.loadPeakMap(from_)
-
     assert osp.basename(ds.meta.get("source")) ==  osp.basename(from_)
 
-    ms.storePeakMap(ds, "temp_output/utilstest.mzML")
-    ds2 = ms.loadPeakMap("temp_output/utilstest.mzML")
-
+    # with unicode
+    ms.storePeakMap(ds, u"temp_output/utilstest.mzML")
+    ds2 = ms.loadPeakMap(u"temp_output/utilstest.mzML")
     assert len(ds)==len(ds2)
 
+    # without unicode
     ms.storePeakMap(ds2, "temp_output/utilstest.mzData")
     ds3 = ms.loadPeakMap("temp_output/utilstest.mzData")
-
     assert len(ds)==len(ds3)
 
 def testAlignFeatureTables():

@@ -25,7 +25,13 @@ def testRunnerTable():
     dat = pickle.dumps(t)
     t = pickle.loads(dat)
     run(t, names, [row1, row2, row3])
-    ms.storeTable(t, "temp_output/test.table")
+    ms.storeTable(t, u"temp_output/test.table")
+    try:
+        ms.storeTable(t, "temp_output/test.table")
+        assert False, "no exception thrown althoug file should exist!"
+    except:
+        pass
+    ms.storeTable(t, "temp_output/test.table", True)
     t = ms.loadTable("temp_output/test.table")
     run(t, names, [row1, row2, row3])
 
@@ -111,7 +117,7 @@ def run(t, colnames, rows):
     assert list(tn.x) == ["hi"]*len(tn)
 
     before = set(os.listdir("temp_output"))
-    tn.storeCSV("temp_output/x.csv")
+    tn.storeCSV(u"temp_output/x.csv")
 
     tnre  = ms.loadCSV("temp_output/x.csv")
     assert len(tnre) == len(tn)

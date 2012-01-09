@@ -31,11 +31,11 @@ class RExecutor(object):
     @staticmethod
     def findRHome():
         pathToR = None
-        for finder in  [
-                         lambda : RExecutor.path_from(_winreg.HKEY_CURRENT_USER),
-                         lambda : RExecutor.path_from(_winreg.HKEY_LOCAL_MACHINE),
-                         lambda : os.environ.get("R_HOME"),
-                         RExecutor.parse_path_variable,
+        for finder in [
+                       lambda : RExecutor.path_from(_winreg.HKEY_CURRENT_USER),
+                       lambda : RExecutor.path_from(_winreg.HKEY_LOCAL_MACHINE),
+                       lambda : os.environ.get("R_HOME"),
+                       RExecutor.parse_path_variable,
                        ]:
             try:
                 pathToR = finder()

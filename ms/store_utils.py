@@ -6,9 +6,12 @@ def storePeakMap(pm, path=None):
 
     # local import in order to keep namespaces clean
     import ms
+    import sys
     from pyOpenMS import FileHandler
 
-    if path is None:
+    if isinstance(path, unicode):
+        path = path.encode(sys.getfilesystemencoding())
+    elif path is None:
         path = ms.askForSave(extensions="mzML mzXML mzData".split())
         if path is None:
             return None
@@ -27,8 +30,11 @@ def storeTable(tab, path=None, forceOverwrite=False):
 
     # local import in order to keep namespaces clean
     import ms
+    import sys
 
-    if path is None:
+    if isinstance(path, unicode):
+        path = path.encode(sys.getfilesystemencoding())
+    elif path is None:
         startAt = tab.meta.get("loaded_from", "")
         path = ms.askForSave(extensions=["table"], startAt=startAt)
         if path is None:
@@ -40,8 +46,11 @@ def storeCSV(tab, path=None):
 
     # local import in order to keep namespaces clean
     import ms
+    import sys
 
-    if path is None:
+    if isinstance(path, unicode):
+        path = path.encode(sys.getfilesystemencoding())
+    elif path is None:
         path = ms.askForSave(extensions=["csv"])
         if path is None:
             return None
