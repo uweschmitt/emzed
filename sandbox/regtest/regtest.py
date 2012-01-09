@@ -32,10 +32,6 @@ def run_test(path):
         run_callable(fun, out, name)
     return out.getvalue()
 
-def strip_traling_empty_lines(li):
-    while li and li[-1].strip()=="":
-        li=li[:-1]
-
 usage="usage: %prog [options] file1.py .."
 parser = OptionParser(usage)
 parser.add_option("-r", "--reset", dest="reset", 
@@ -76,10 +72,3 @@ for f in args:
             exitstatus = 1
 
 exit(exitstatus)
-
-
-
-
-
-
-

@@ -176,6 +176,7 @@ class MzExplorer(QDialog):
         self.mzPlotter.replot()
 
 
+__avoidcleanup = []
 def inspectPeakMap(peakmap):
     """Testing this simple Qt/guiqwt example"""
 
@@ -185,6 +186,7 @@ def inspectPeakMap(peakmap):
     app = guidata.qapplication()
 
     win = MzExplorer()
+    __avoidcleanup.append(win)
     win.setup(peakmap)
     win.activateWindow()
     win.raise_()

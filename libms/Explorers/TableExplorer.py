@@ -495,11 +495,13 @@ class TableExplorer(QDialog):
         # plot() needs replot() afterwards !
         self.mzPlotter.replot()
 
+__avoidcleanup=[]
 def inspect(what, offerAbortOption=False):
     if isinstance(what, Table):
         what = [what]
     app = guidata.qapplication()
     explorer = TableExplorer(what, offerAbortOption)
+    __avoidcleanup.append(explorer)
     explorer.raise_()
     explorer.exec_()
     if offerAbortOption:
