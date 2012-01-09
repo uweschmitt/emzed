@@ -2,7 +2,7 @@ print "LOAD NAMESPACE libms"
 import libms
 print "LOAD NAMESPACE ms"
 import ms
-print "LOAD NAMESPACE b"
+print "LOAD NAMESPACE batches"
 import batches
 print
 import db

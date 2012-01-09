@@ -243,7 +243,9 @@ class MainWindow(QMainWindow):
         
         self.dialog_manager = DialogManager()
         
-        self.init_workdir = options.working_directory
+        #self.init_workdir = options.working_directory
+        import userConfig
+        self.init_workdir = userConfig.getDataHome() 
         self.debug = options.debug
         self.profile = options.profile
         self.multithreaded = options.multithreaded

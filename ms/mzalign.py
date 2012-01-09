@@ -2,7 +2,7 @@
 
 import installConstants as _installConstants # installx MMU
 
-def mzalign(table, fullC13=False, tol=15*MMU, universal_metabolites=None,
+def mzalign(table, fullC13=False, tol=15*MMU, mz_reference_table=None,
             destination=None, minR2=0.95, minPoints=5, interactive=False):
 
     import ms
@@ -23,9 +23,9 @@ def mzalign(table, fullC13=False, tol=15*MMU, universal_metabolites=None,
     assert len(sources) == 1
     source = sources.pop()
 
-    if universal_metabolites is None:
-        universal_metabolites = tab.universal_metabolites
-    univ = universal_metabolites
+    if mz_reference_table is None:
+        mz_reference_table = tab.universal_metabolites
+    univ = mz_reference_table
     univ.requireColumn("m0")
     univ.requireColumn("rtmin")
     univ.requireColumn("rtmax")

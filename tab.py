@@ -16,6 +16,7 @@ for path in [os.path.join(here, "tables")] + repositoryPathes:
             print "PARSING",p,"FAILED"
             continue
         name, _ = os.path.splitext(os.path.basename(p))
+        name = name.replace(" ","_")
         table.title = name
         exec("%s=table" % name)
         print "LOADED", name, "FROM", p
@@ -29,11 +30,11 @@ for path in [os.path.join(here, "tables")] + repositoryPathes:
             print "PARSING",p,"FAILED"
             continue
         name, _ = os.path.splitext(os.path.basename(p))
+        name = name.replace(" ","_")
         table.title = name
         table.meta["loaded_from"] = os.path.abspath(p)
         exec("%s=table" % name)
         print "LOADED", name, "FROM", p
-
 
 elements = Elements()
 # next line only valid after execution of 100loadpubchem.py during
