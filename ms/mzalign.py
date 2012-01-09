@@ -5,6 +5,9 @@ import installConstants as _installConstants # installx MMU
 def mzalign(table, fullC13=False, tol=15*MMU, mz_reference_table=None,
             destination=None, minR2=0.95, minPoints=5, interactive=False):
 
+    """
+    """
+
     import ms
     import tab
     import os

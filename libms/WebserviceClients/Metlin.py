@@ -8,7 +8,7 @@ from ..DataStructures.Table import Table
 
 rootUrl = "http://metlin.scripps.edu/"
 batchUrl = "http://metlin.scripps.edu/metabo_batch_list.php"
-batchSize = 50
+batchSize = 100
 
 # inputmass is str ! so we can match later without floating
 # points accuracy issues.
@@ -20,6 +20,7 @@ class MetlinMatcher(object):
 
     @staticmethod
     def _query(masses, ppm, polarity):
+        print len(masses)
         for m in masses:
             assert isinstance(m, str), "masses must be passed as strings"
         dd = dict()
@@ -61,8 +62,9 @@ class MetlinMatcher(object):
         colFormats = [ _defaultFormats.get(n, "%s") for n in colNames ]
         transformedRows = []
         for row in allRows:
-            row = [ t(v) for t,v in zip(colTypes, row) ]
-            transformedRows.append(row)
+            if len(row) >0 :
+                row = [ t(v) for t,v in zip(colTypes, row) ]
+                transformedRows.append(row)
         return Table(colNames, colTypes, colFormats, transformedRows,
                      title="metlin")
 
