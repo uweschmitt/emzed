@@ -22,12 +22,12 @@ def matchMetlin(table, massColumn, ppm):
             table.dropColumn(internalRefColumn)
             return table
 
-        result = table.leftJoin(metlinMatch, table.__massmatch == metlinMatch.inputmass)
+        result = table.leftJoin(metlinMatch, table.getColumn(internalRefColumn)\
+                                            == metlinMatch.inputmass)
+        result.dropColumn(internalRefColumn)
     finally:
         if table.hasColumn(internalRefColumn):
             table.dropColumn(internalRefColumn)
-        if result.hasColumn(internalRefColumn):
-            result.dropColumn(internalRefColumn)
     return result
 
 
