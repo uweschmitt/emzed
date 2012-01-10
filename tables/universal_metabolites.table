@@ -41,12 +41,12 @@ p16
 (dp17
 S'loaded_from'
 p18
-S'c:\\Dokumente und Einstellungen\\Administrator\\Eigene Dateien\\msWorkbench\\tables\\universal_metabolites.csv'
+S'c:\\Dokumente und Einstellungen\\Administrator\\Eigene Dateien\\msWorkbench\\tables\\universal_metabolites.table'
 p19
 ssS'colFormats'
 p20
 (lp21
-S'%.2f'
+S'%.6f'
 p22
 aS'"%.2fm" % (o/60.0)'
 p23
@@ -349,7 +349,7 @@ aS'C00091'
 p147
 aasS'title'
 p148
-S'universal_metabolites.csv'
+S'universal_metabolites'
 p149
 sS'primaryIndex'
 p150
