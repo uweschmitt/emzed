@@ -126,6 +126,8 @@ def _calculateParameters(real, tobe, p=1.01):
     imax = _np.argmax(resid)
     valmax = resid[imax]
     fitted = fittedShift + real
+    a = float(a)
+    b = float(b)
     transform = lambda x: a*x + b +x
     return transform, r, imax, fitted, resid
 
