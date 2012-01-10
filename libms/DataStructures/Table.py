@@ -117,7 +117,6 @@ def _formatter(f):
             try:
                 return "-" if s is None else f % s
             except:
-                print repr(s), repr(f)
                 return ""
         return interpolationformat
     else:
