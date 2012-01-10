@@ -1,5 +1,6 @@
 
 import sys
+sys.path.insert(0, "..")
 import cStringIO
 
 import ms, mass, elements, abundance
