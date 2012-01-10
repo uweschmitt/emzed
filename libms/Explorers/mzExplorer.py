@@ -191,6 +191,9 @@ def inspectPeakMap(peakmap):
     win.activateWindow()
     win.raise_()
     win.exec_()
+    del win.level1Peakmap
+    del win.levelNSpecs
+    del win.rts
 
 
     

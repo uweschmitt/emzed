@@ -504,6 +504,8 @@ def inspect(what, offerAbortOption=False):
     __avoidcleanup.append(explorer)
     explorer.raise_()
     explorer.exec_()
+    # partial cleanup
+    del explorer.models
     if offerAbortOption:
         if explorer.result == 1:
             raise Exception("Dialog aborted by user")
