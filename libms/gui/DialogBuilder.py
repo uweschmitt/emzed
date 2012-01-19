@@ -38,6 +38,19 @@ def showInformation(message):
 
 class DialogBuilder(object):
 
+    # dynamic creation of __doc__
+    _docStrings = []
+    for _itemName, _item in di.__dict__.items():
+        if _itemName.endswith("Item"):
+            _docString = getattr(_item, "__doc__")
+            if _docString is None:
+                _docString = ""
+            _dynamicMethodName = "add"+_itemName[:-4]
+            _docStrings.append(_dynamicMethodName+"(...):\n"+_docString)
+
+    __doc__ = "\n".join(_docStrings)
+
+
     def __init__(self, title="Dialog"):
 
         self.attrnum = 0
@@ -46,6 +59,7 @@ class DialogBuilder(object):
         self.instructions = []
         self.fieldNames = []
         self.buttonCounter = 0
+
 
     def __getattr__(self, name):
         """ dynamically provides methods which start with "add...", eg
@@ -72,9 +86,8 @@ class DialogBuilder(object):
         if name.startswith("add"):
 
             def stub(label, *a, **kw):
-                """ this function registers corresponding subclass of
-                    DataItem
-                """
+                #this function registers corresponding subclass of
+                #    DataItem
                 fieldName = _translateLabelToFieldname(label)
                 # check if fieldName is valid in Python:
                 try:
@@ -96,6 +109,12 @@ class DialogBuilder(object):
                 self.fieldNames.append(fieldName)
                 return self
 
+            # add docstring dynamically
+            item = getattr(di, name[3:]+"Item")
+            docString = getattr(item, "__doc__")
+            docString = "" if  docString is None else docString
+            docString = "-\n\n"+name+"(...):\n"+docString
+            stub.__doc__ = docString
             return stub
         raise AttributeError("%r has no attribute '%s'" % (self, name))
 
@@ -164,6 +183,5 @@ class DialogBuilder(object):
         if len(result) == 1:
             result = result[0]
         return result
-
 
 
