@@ -16,6 +16,9 @@ def storePeakMap(pm, path=None):
         if path is None:
             return None
 
+    if sys.platform == "win32":
+        path = path.replace("/","\\") # needed for network shares
+
     experiment = pm.toMSExperiment()
     fh = FileHandler()
     fh.storeExperiment(path, experiment)

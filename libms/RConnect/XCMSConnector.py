@@ -101,6 +101,10 @@ class CentwaveFeatureDetector(object):
             temp_input = os.path.join(td, "input.mzData")
             temp_output = os.path.join(td, "output.csv")
 
+            # needed for network shares:
+            if sys.platform == "win32":
+                temp_input = temp_input.replace("/","\\")
+
             FileHandler().storeExperiment(temp_input, peakMap.toMSExperiment())
 
             dd = self.config.copy()
@@ -197,6 +201,10 @@ class MatchedFilterFeatureDetector(object):
 
             temp_input = os.path.join(td, "input.mzData")
             temp_output = os.path.join(td, "output.csv")
+            
+            # needed for network shares:
+            if sys.platform == "win32":
+                temp_input = temp_input.replace("/","\\")
 
             FileHandler().storeExperiment(temp_input, peakMap.toMSExperiment())
 

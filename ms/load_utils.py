@@ -23,6 +23,8 @@ def loadPeakMap(path=None):
 
     experiment = MSExperiment()
     fh  = FileHandler()
+    if sys.platform == "win32":
+        path = path.replace("/","\\") # needed for network shares
     fh.loadExperiment(path, experiment)
 
     return PeakMap.fromMSExperiment(experiment)
