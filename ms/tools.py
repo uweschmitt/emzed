@@ -13,4 +13,14 @@ def mergeTables(tables):
 def openInBrowser(urlPath):
     from PyQt4.QtGui import QDesktopServices
     from PyQt4.QtCore import QUrl
-    QDesktopServices.openUrl(QUrl(urlPath))
+    import os.path
+
+    url = QUrl(urlPath)
+    scheme = url.scheme()
+    if scheme not in ["http", "ftp", "mailto"]:
+        # C:/ or something simiar:
+        if os.path.splitdrive(urlPath)[0] != "":
+            url = QUrl("file:///"+urlPath)
+    ok = QDesktopServices.openUrl(url)
+    if not ok:
+        raise Exception("could not open '%s'" % url.toString())
