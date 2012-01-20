@@ -42,7 +42,7 @@ keeper = DialogKeeper()
 def dialog_for(obj, obj_name):
 
     """ uschmitt: this code was at the heart of oedit(). I introduced 
-        an indirection here so that i can monkey patch oedit to show msExpert 
+        an indirection here so that i can monkey patch oedit to show eMZed 
         related data
     """
 
@@ -92,7 +92,6 @@ def oedit(obj, modal=True, namespace=None):
     so it can be called directly from the interpreter)
     """
     # Local import
-
 
     from spyderlib.utils.qthelpers import qapplication
     app = qapplication()

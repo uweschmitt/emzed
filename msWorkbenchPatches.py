@@ -46,6 +46,8 @@ def patch_oedit():
         import libms.Explorers
         from libms.DataStructures import PeakMap, Table
 
+        print "oedit ", obj
+
         if isinstance(obj, PeakMap):
             dlg = libms.Explorers.MzExplorer()
             dlg.setup(obj)
@@ -88,11 +90,11 @@ def patch_userconfig():
         override_defaults = {
             ("console" ,"pythonstartup/default") : True,
             ("console" ,"pythonstartup/custom") : False,
-            ("console" ,"pythonstartup/custom") : False,
             ("console" ,"open_ipython_at_startup") : True,
             ("console" ,"open_python_at_startup") : False,
             # automatic imports are slow and insecure :
             ("inspector", "automatic_import") : False,
+            ("variable_explorer", "remote_editing") : True,
         }
 
         value = override_defaults.get((section,option))
@@ -168,14 +170,6 @@ def patch_spyder():
         NamespaceBrowser._orig_import_data(self, filenames)
         self.save_button.setEnabled(self.filename is not None)
 
-    from spyderlib.widgets.externalshell.monitor import REMOTE_SETTINGS
-    @add(NamespaceBrowser, verbose=True)
-    def get_view_settings(self):
-        """Return dict editor view settings"""
-        settings = {}
-        for name in REMOTE_SETTINGS:
-            settings[name] = getattr(self, name)
-        return settings
 
     @add(NamespaceBrowser, verbose=True)
     def get_remote_view_settings(self):
@@ -204,14 +198,6 @@ def patch_external_shell():
             return len(item)
         return dicteditorutils._orig_get_size(item)
 
-    """
-    @replace(dicteditorutils.get_type, verbose=True)
-    def get_type(item):
-        text = get_type_string(item)
-        if text is None:
-            text = unicode('unknown')
-        return text[text.find('.')+1:]
-    """
 
     @replace(dicteditorutils.get_type_string, verbose=True)
     def get_type_string( item ):
@@ -249,7 +235,7 @@ def patch_external_shell():
 
         if isinstance(value, list) and\
            all(isinstance(ii, Table) for ii in value):
-           names = [os.path.basename(d.title) for d in value
+           names = [os.path.basename(d.title or "") for d in value
                                               if isinstance(d, Table)]
            prefix = os.path.commonprefix(names)
            if len(prefix) == 0:
