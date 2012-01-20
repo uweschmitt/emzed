@@ -11,14 +11,13 @@ Outline explorer widget
     This module is not used anymore in Spyder since v1.1.0.
     However, it will still be part of spyderlib module for a little while -
     we never know, it could be useful...
+    
+    See spyderlib.widgets.editortools.OutlineExplorerWidget for new version.
 ********************************************************************************
 """
 
 import os.path as osp
 import sys
-
-# For debugging purpose:
-STDOUT = sys.stdout
 
 from spyderlib.qt.QtGui import QTreeWidgetItem
 from spyderlib.qt.QtCore import SIGNAL

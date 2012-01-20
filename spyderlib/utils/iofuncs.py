@@ -13,9 +13,13 @@ Note: 'load' functions has to return a dictionary from which a globals()
 
 from __future__ import with_statement
 
-import sys, os, cPickle, tarfile, os.path as osp, shutil, warnings
-
-STDERR = sys.stderr
+import sys
+import os
+import cPickle
+import tarfile
+import os.path as osp
+import shutil
+import warnings
 
 
 try:
@@ -71,7 +75,7 @@ except ImportError:
 
 
 try:
-    import PIL.Image
+    from spyderlib.pil_patch import Image
     if sys.byteorder == 'little':
         _ENDIAN = '<'
     else:
@@ -91,7 +95,7 @@ try:
               "YCbCr": ('|u1', 4),
               }
     def __image_to_array(filename):
-        img = PIL.Image.open(filename)
+        img = Image.open(filename)
         try:
             dtype, extra = DTYPES[img.mode]
         except KeyError:
@@ -146,7 +150,7 @@ def save_dictionary(data, filename):
             if saved_arrays:
                 data['__saved_arrays__'] = saved_arrays
         pickle_filename = osp.splitext(filename)[0]+'.pickle'
-        cPickle.dump(data, file(pickle_filename, 'w+b'))
+        cPickle.dump(data, file(pickle_filename, 'w'))
         tar = tarfile.open(filename, "w")
         for fname in [pickle_filename]+[fn for fn in saved_arrays.itervalues()]:
             tar.add(osp.basename(fname))
@@ -194,7 +198,7 @@ def load_dictionary(filename):
     return data, error_message
 
 
-from spyderlib.baseconfig import get_conf_path
+from spyderlib.baseconfig import get_conf_path, STDERR
 
 SAVED_CONFIG_FILES = ('.inspector', '.onlinehelp', '.path', '.pylint.results',
                       '.spyder.ini', '.temp.py', '.temp.spydata', 'template.py',

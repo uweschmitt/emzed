@@ -15,10 +15,10 @@ class DialogKeeper(QObject):
         QObject.__init__(self)
         self.dialogs = {}
         self.namespace = None
-        
+
     def set_namespace(self, namespace):
         self.namespace = namespace
-    
+
     def create_dialog(self, dialog, refname, func):
         self.dialogs[id(dialog)] = dialog, refname, func
         self.connect(dialog, SIGNAL('accepted()'),
@@ -28,12 +28,12 @@ class DialogKeeper(QObject):
         dialog.show()
         dialog.activateWindow()
         dialog.raise_()
-        
+
     def editor_accepted(self, dialog_id):
         dialog, refname, func = self.dialogs[dialog_id]
         self.namespace[refname] = func(dialog)
         self.dialogs.pop(dialog_id)
-        
+
     def editor_rejected(self, dialog_id):
         self.dialogs.pop(dialog_id)
 
@@ -45,7 +45,7 @@ def dialog_for(obj, obj_name):
         an indirection here so that i can monkey patch oedit to show msExpert 
         related data
     """
-    
+
     from spyderlib.widgets.texteditor import TextEditor
     from spyderlib.widgets.dicteditorutils import (ndarray, FakeObject,
                                                    Image, is_known_type)
@@ -67,16 +67,13 @@ def dialog_for(obj, obj_name):
         if not dialog.setup_and_check(data, title=obj_name,
                                       readonly=readonly):
             return 
-        import PIL.Image
-        conv_func = lambda data: PIL.Image.fromarray(data, mode=obj.mode)
+        from spydlerlib.pil_patch import Image
+        conv_func = lambda data: Image.fromarray(data, mode=obj.mode)
     elif isinstance(obj, (str, unicode)):
         dialog = TextEditor(obj, title=obj_name, readonly=readonly)
-    elif isinstance(obj, (dict, tuple, list)):
+    else:
         dialog = DictEditor()
         dialog.setup(obj, title=obj_name, readonly=readonly)
-    else:
-
-        raise RuntimeError("Unsupported datatype")
 
     return dialog, conv_func
 
@@ -87,19 +84,19 @@ def oedit(obj, modal=True, namespace=None):
     (if Cancel is pressed, return None)
 
     The object 'obj' is a container
-    
+
     Supported container types:
     dict, list, tuple, str/unicode or numpy.array
-    
+
     (instantiate a new QApplication if necessary,
     so it can be called directly from the interpreter)
     """
     # Local import
-   
-    
+
+
     from spyderlib.utils.qthelpers import qapplication
     app = qapplication()
-    
+
     if modal:
         obj_name = ''
     else:
@@ -117,24 +114,25 @@ def oedit(obj, modal=True, namespace=None):
 
     def end_func(dialog):
         return conv_func(dialog.get_value())
-    
+
     if modal:
         if dialog.exec_():
             return end_func(dialog)
     else:
         keeper.create_dialog(dialog, obj_name, end_func)
         import os
-        replaced_pyqt_inputhook = os.environ.get("REPLACE_PYQT_INPUTHOOK", ""
-                                                 ).lower() == "true"
-        if os.name == 'nt' and not replaced_pyqt_inputhook \
+        qt_inputhook = os.environ.get("INSTALL_QT_INPUTHOOK",
+                                      "").lower() == "true"
+        if os.name == 'nt' and not qt_inputhook \
            and not os.environ.get('IPYTHON', False):
             app.exec_()
 
 
 def test():
     """Run object editor test"""
-    import datetime, numpy as np, PIL.Image
-    image = PIL.Image.fromarray(np.random.random_integers(255, size=(100, 100)))
+    import datetime, numpy as np
+    from spyderlib.pil_patch import Image
+    image = Image.fromarray(np.random.random_integers(255, size=(100, 100)))
     example = {'str': 'kjkj kj k j j kj k jkj',
                'list': [1, 3, 4, 'kjkj', None],
                'dict': {'d': 1, 'a': np.random.rand(10, 10), 'b': [1, 2]},
@@ -145,10 +143,15 @@ def test():
                'datetime': datetime.datetime(1945, 5, 8),
                }
     image = oedit(image)
+    class Foobar(object):
+        def __init__(self):
+            self.text = "toto"
+    foobar = Foobar()
+    print oedit(foobar)
     print oedit(example)
     print oedit(np.random.rand(10, 10))
     print oedit(oedit.__doc__)
     print example
-    
+
 if __name__ == "__main__":
     test()

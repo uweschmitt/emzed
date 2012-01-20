@@ -19,11 +19,10 @@ from spyderlib.qt.QtGui import (QVBoxLayout, QPrintDialog, QSplitter, QToolBar,
 from spyderlib.qt.QtCore import SIGNAL, QByteArray, Qt, Slot
 from spyderlib.qt.compat import to_qvariant, from_qvariant, getopenfilenames
 
-import os, sys, time, re
+import os
+import time
+import re
 import os.path as osp
-
-# For debugging purpose:
-STDOUT = sys.stdout
 
 # Local imports
 from spyderlib.utils import encoding, sourcecode, codeanalysis
@@ -37,7 +36,6 @@ from spyderlib.widgets.editor import (ReadWriteStatus, EncodingStatus,
                                       CursorPositionStatus, EOLStatus,
                                       EditorSplitter, EditorStack, Printer,
                                       EditorMainWindow)
-from spyderlib.widgets.sourcecode import codeeditor
 from spyderlib.plugins import SpyderPluginWidget, PluginConfigPage
 from spyderlib.plugins.runconfig import (RunConfigDialog, RunConfigOneDialog,
                                          get_run_configuration)
@@ -112,6 +110,8 @@ class EditorConfigPage(PluginConfigPage):
         occurence_spin = self.create_spinbox("", " ms",
                                              'occurence_highlighting/timeout',
                                              min_=100, max_=1000000, step=100)
+        self.connect(occurence_box, SIGNAL("toggled(bool)"),
+                     occurence_spin.setEnabled)
         occurence_layout = QHBoxLayout()
         occurence_layout.addWidget(occurence_box)
         occurence_layout.addWidget(occurence_spin)
@@ -167,9 +167,12 @@ class EditorConfigPage(PluginConfigPage):
             rope_label.setWordWrap(True)
         
         sourcecode_group = QGroupBox(_("Source code"))
-        closepar_box = newcb(_("Automatic parentheses, braces and "
-                                     "brackets insertion"),
+        closepar_box = newcb(_("Automatic insertion of parentheses, braces, "
+                                                      "brackets and quotes"),
                              'close_parentheses')
+        add_colons_box = newcb(_("Automatic insertion of colons after 'for', "
+                                                          "'if', 'def', etc"),
+                               'add_colons')
         autounindent_box = newcb(_("Automatic indentation after 'else', "
                                    "'elif', etc."), 'auto_unindent')
         indent_chars_box = self.create_combobox(_("Indentation characters: "),
@@ -264,6 +267,7 @@ class EditorConfigPage(PluginConfigPage):
         sourcecode_layout = QVBoxLayout()
         sourcecode_layout.addWidget(closepar_box)
         sourcecode_layout.addWidget(autounindent_box)
+        sourcecode_layout.addWidget(add_colons_box)
         sourcecode_layout.addWidget(indent_chars_box)
         sourcecode_layout.addWidget(tabwidth_spin)
         sourcecode_layout.addWidget(tab_mode_box)
@@ -579,9 +583,11 @@ class Editor(SpyderPluginWidget):
                 triggered=self.save_as)
         print_preview_action = create_action(self, _("Print preview..."),
                 tip=_("Print preview..."), triggered=self.print_preview)
-        print_action = create_action(self, _("&Print..."),
+        self.print_action = create_action(self, _("&Print..."),
                 icon='print.png', tip=_("Print current file..."),
                 triggered=self.print_file)
+        self.register_shortcut(self.print_action, context="Editor",
+        	name="Print", default="Ctrl+P")
         self.close_action = create_action(self, _("&Close"),
                 icon='fileclose.png', tip=_("Close current file"),
                 triggered=self.close_file)
@@ -792,13 +798,13 @@ class Editor(SpyderPluginWidget):
                              self.recent_file_menu, self.save_action,
                              self.save_all_action, save_as_action,
                              self.revert_action, 
-                             None, print_preview_action, print_action,
+                             None, print_preview_action, self.print_action,
                              None, self.close_action,
                              self.close_all_action, None]
         self.main.file_menu_actions += file_menu_actions
         file_toolbar_actions = [self.new_action, self.open_action,
                                 self.save_action, self.save_all_action,
-                                print_action]
+                                self.print_action]
         self.main.file_toolbar_actions += file_toolbar_actions
         
         self.edit_menu_actions = [self.toggle_comment_action,
@@ -843,12 +849,12 @@ class Editor(SpyderPluginWidget):
                 blockcomment_action, unblockcomment_action, self.winpdb_action]
         self.file_dependent_actions = self.pythonfile_dependent_actions + \
                 [self.save_action, save_as_action, print_preview_action,
-                 print_action, self.save_all_action, gotoline_action,
+                 self.print_action, self.save_all_action, gotoline_action,
                  workdir_action, self.close_action, self.close_all_action,
                  self.toggle_comment_action, self.revert_action,
                  self.indent_action, self.unindent_action]
         self.stack_menu_actions = [self.save_action, save_as_action,
-                                   print_action, None, run_action, debug_action,
+                                   self.print_action, None, run_action, debug_action,
                                    configure_action, None, gotoline_action,
                                    workdir_action, None, self.close_action]
         
@@ -952,6 +958,7 @@ class Editor(SpyderPluginWidget):
             ('set_calltips_enabled',                'calltips'),
             ('set_go_to_definition_enabled',        'go_to_definition'),
             ('set_close_parentheses_enabled',       'close_parentheses'),
+            ('set_add_colons_enabled',              'add_colons'),
             ('set_auto_unindent_enabled',           'auto_unindent'),
             ('set_indent_chars',                    'indent_chars'),
             ('set_tab_stop_width',                  'tab_stop_width'),
@@ -1313,7 +1320,7 @@ class Editor(SpyderPluginWidget):
         self.recent_files.insert(0, fname)
         if len(self.recent_files) > self.get_option('max_recent_files'):
             self.recent_files.pop(-1)
-
+    
     def _clone_file_everywhere(self, finfo):
         """Clone file (*src_editor* widget) in all editorstacks
         Cloning from the first editorstack in which every single new editor
@@ -1334,9 +1341,16 @@ class Editor(SpyderPluginWidget):
         encoding_match = re.search('-*- coding: ?([a-z0-9A-Z\-]*) -*-', text)
         if encoding_match:
             enc = encoding_match.group(1)
+        # Initialize template variables
+        username = os.environ.get('USERNAME', None) # Windows, Linux
+        if not username:
+            username = os.environ.get('USER', '-')  # Mac OS
+        VARS = {
+            'date':time.ctime(),
+            'username':username,
+        }
         try:
-            text = text % {'date': time.ctime(),
-                           'username': os.environ.get('USERNAME', '-')}
+            text = text % VARS
         except:
             pass
         create_fname = lambda n: unicode(_("untitled")) + ("%d.py" % n)
@@ -1905,6 +1919,8 @@ class Editor(SpyderPluginWidget):
             gotodef_o = self.get_option(gotodef_n)
             closepar_n = 'close_parentheses'
             closepar_o = self.get_option(closepar_n)
+            add_colons_n = 'add_colons'
+            add_colons_o = self.get_option(add_colons_n)
             autounindent_n = 'auto_unindent'
             autounindent_o = self.get_option(autounindent_n)
             indent_chars_n = 'indent_chars'
@@ -1977,6 +1993,8 @@ class Editor(SpyderPluginWidget):
                     editorstack.set_go_to_definition_enabled(gotodef_o)
                 if closepar_n in options:
                     editorstack.set_close_parentheses_enabled(closepar_o)
+                if add_colons_n in options:
+                    editorstack.set_add_colons_enabled(add_colons_o)
                 if autounindent_n in options:
                     editorstack.set_auto_unindent_enabled(autounindent_o)
                 if indent_chars_n in options:

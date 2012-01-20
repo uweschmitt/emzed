@@ -16,30 +16,21 @@ from spyderlib.utils.dochelpers import (getargtxt, getdoc, getsource,
 from spyderlib.utils.bsdsocket import (communicate, read_packet, write_packet,
                                        PACKET_NOT_RECEIVED)
 from spyderlib.utils.module_completion import moduleCompletion
-from spyderlib.baseconfig import get_conf_path, get_supported_types
+from spyderlib.baseconfig import get_conf_path, get_supported_types, DEBUG
 
 SUPPORTED_TYPES = get_supported_types()
 
 LOG_FILENAME = get_conf_path('monitor.log')
-
-DEBUG =  False
 
 if DEBUG:
     import logging
     logging.basicConfig(filename=get_conf_path('monitor_debug.log'),
                         level=logging.DEBUG)
 
-REMOTE_SETTINGS = ('itermax', 'exclude_private', 'exclude_uppercase',
+REMOTE_SETTINGS = ('check_all', 'exclude_private', 'exclude_uppercase',
                    'exclude_capitalized', 'exclude_unsupported',
                    'excluded_names', 'truncate', 'minmax', 'collvalue',
                    'inplace', 'remote_editing', 'autorefresh')
-
-def monitor_set_remote_view_settings(sock, namespacebrowser):
-    """Set monitor's remote view settings from namespacebrowser instance"""
-    settings = {}
-    for name in REMOTE_SETTINGS:
-        settings[name] = getattr(namespacebrowser, name)
-    communicate(sock, '__set_remote_view_settings__()', settings=[settings])
 
 def get_remote_data(data, settings, mode, more_excluded_names=None):
     """
@@ -48,15 +39,13 @@ def get_remote_data(data, settings, mode, more_excluded_names=None):
         * settings: variable explorer settings (dictionary)
         * mode (string): 'editable' or 'picklable'
         * more_excluded_names: additional excluded names (list)
-        * itermax: maximum iterations when walking in sequences
-          (dict, list, tuple)
     """
     from spyderlib.widgets.dicteditorutils import globalsfilter
     assert mode in SUPPORTED_TYPES.keys()
     excluded_names = settings['excluded_names']
     if more_excluded_names is not None:
         excluded_names += more_excluded_names
-    return globalsfilter(data, itermax=settings['itermax'],
+    return globalsfilter(data, check_all=settings['check_all'],
                          filters=tuple(SUPPORTED_TYPES[mode]),
                          exclude_private=settings['exclude_private'],
                          exclude_uppercase=settings['exclude_uppercase'],
@@ -69,8 +58,8 @@ def make_remote_view(data, settings, more_excluded_names=None):
     Make a remote view of dictionary *data*
     -> globals explorer
     """
-    from spyderlib.widgets.dicteditorutils import (get_type, get_size,
-                                              get_color_name, value_to_display)
+    from spyderlib.widgets.dicteditorutils import (get_human_readable_type,
+                                    get_size, get_color_name, value_to_display)
     assert all([name in REMOTE_SETTINGS for name in settings])
     data = get_remote_data(data, settings, mode='editable',
                            more_excluded_names=more_excluded_names)
@@ -79,7 +68,7 @@ def make_remote_view(data, settings, more_excluded_names=None):
         view = value_to_display(value, truncate=settings['truncate'],
                                 minmax=settings['minmax'],
                                 collvalue=settings['collvalue'])
-        remote[key] = {'type':  get_type(value),
+        remote[key] = {'type':  get_human_readable_type(value),
                        'size':  get_size(value),
                        'color': get_color_name(value),
                        'view':  view}
@@ -88,43 +77,30 @@ def make_remote_view(data, settings, more_excluded_names=None):
 
 def monitor_save_globals(sock, settings, filename):
     """Save globals() to file"""
-    return communicate(sock, '__save_globals__(globals())',
+    return communicate(sock, '__save_globals__()',
                        settings=[settings, filename])
 
 def monitor_load_globals(sock, filename, ext):
     """Load globals() from file"""
-    return communicate(sock, '__load_globals__(globals())',
-                       settings=[filename, ext])
+    return communicate(sock, '__load_globals__()', settings=[filename, ext])
 
 def monitor_get_global(sock, name):
     """Get global variable *name* value"""
-    return communicate(sock, '__get_global__(globals(), "%s")' % name)
+    return communicate(sock, '__get_global__("%s")' % name)
 
 def monitor_set_global(sock, name, value):
     """Set global variable *name* value to *value*"""
-    return communicate(sock, '__set_global__(globals(), "%s")' % name,
+    return communicate(sock, '__set_global__("%s")' % name,
                        settings=[value])
 
 def monitor_del_global(sock, name):
     """Del global variable *name*"""
-    return communicate(sock, '__del_global__(globals(), "%s")' % name)
+    return communicate(sock, '__del_global__("%s")' % name)
 
 def monitor_copy_global(sock, orig_name, new_name):
     """Copy global variable *orig_name* to *new_name*"""
-    return communicate(sock, '__copy_global__(globals(), "%s", "%s")' \
+    return communicate(sock, '__copy_global__("%s", "%s")' \
                        % (orig_name, new_name))
-
-def monitor_is_none(sock, name):
-    """Return True if object is None"""
-    return communicate(sock, "globals()['%s'] is None" % name)
-
-def monitor_is_array(sock, name):
-    """Return True if object is an instance of class numpy.ndarray"""
-    return communicate(sock, 'is_array(globals(), "%s")' % name)
-
-def monitor_is_image(sock, name):
-    """Return True if object is an instance of class PIL.Image.Image"""
-    return communicate(sock, 'is_image(globals(), "%s")' % name)
 
 
 def _getcdlistdir():
@@ -161,10 +137,12 @@ class Monitor(threading.Thread):
         self.n_request.connect( (host, notification_port) )
         write_packet(self.n_request, shell_id)
         
-        self.locals = {"refresh": self.enable_refresh_after_eval,
+        self._mlocals = {
+                       "refresh": self.enable_refresh_after_eval,
                        "setlocal": self.setlocal,
                        "is_array": self.is_array,
                        "is_image": self.is_image,
+                       "get_globals_keys": self.get_globals_keys,
                        "getcomplist": self.getcomplist,
                        "getmodcomplist": self.getmodcomplist,
                        "getcdlistdir": _getcdlistdir,
@@ -173,12 +151,12 @@ class Monitor(threading.Thread):
                        "getsyspath": self.getsyspath,
                        "getenv": self.getenv,
                        "setenv": self.setenv,
-                       "isdefined": isdefined,
+                       "isdefined": self.isdefined,
                        "thread": thread,
                        "toggle_inputhook_flag": self.toggle_inputhook_flag,
                        "set_monitor_timeout": self.set_timeout,
                        "set_monitor_auto_refresh": self.set_auto_refresh,
-                       "__set_remote_view_settings__":
+                       "set_remote_view_settings":
                                                 self.set_remote_view_settings,
                        "__get_dir__": self.get_dir,
                        "__iscallable__": self.iscallable,
@@ -193,7 +171,95 @@ class Monitor(threading.Thread):
                        "__save_globals__": self.saveglobals,
                        "__load_globals__": self.loadglobals,
                        "_" : None}
-                       
+        self._mglobals = None
+
+    @property
+    def pdb_frame(self):
+        """Return current Pdb frame if there is any"""
+        if self.pdb_obj is not None and self.pdb_obj.curframe is not None:
+            return self.pdb_obj.curframe
+
+    @property
+    def pdb_locals(self):
+        """Return current Pdb frame locals if available
+        Otherwise return an empty dictionary"""
+        if self.pdb_frame:
+            return self.pdb_obj.curframe_locals
+        else:
+            return {}
+
+    def mlocals(self):
+        """Return current locals -- handles Pdb frames"""
+        ns = {}
+        ns.update(self._mlocals)
+        ns.update(self.pdb_locals)
+        return ns
+
+    def mglobals(self):
+        """Return current globals -- handles Pdb frames"""
+        if self.pdb_frame is not None:
+            return self.pdb_frame.f_globals
+        else:
+            if self._mglobals is None:
+                from __main__ import __dict__ as glbs
+                self._mglobals = glbs
+            else:
+                glbs = self._mglobals
+            if self.ipython_kernel is None and '__ipythonkernel__' in glbs:
+                self.ipython_kernel = glbs['__ipythonkernel__']
+                argv = ['--existing'] +\
+                       ['--%s=%d' % (name, port) for name, port
+                        in self.ipython_kernel.ports.items()]
+                opts = ' '.join(argv)
+                communicate(self.n_request,
+                            dict(command="ipython_kernel", data=opts))
+            if self.ipython_shell is None and '__ipythonshell__' in glbs:
+                # IPython >=v0.11
+                self.ipython_shell = glbs['__ipythonshell__']
+                if not hasattr(self.ipython_shell, 'user_ns'):
+                    # IPython v0.10
+                    self.ipython_shell = self.ipython_shell.IP
+                self.ipython_shell.modcompletion = moduleCompletion
+                glbs = self.ipython_shell.user_ns
+            self._mglobals = glbs
+            return glbs
+    
+    def get_current_namespace(self):
+        """Return current namespace, i.e. globals() if not debugging,
+        or a dictionary containing both locals() and globals() 
+        for current frame when debugging"""
+        glbs = self.mglobals()
+        if self.pdb_frame is None:
+            return glbs
+        else:
+            ns = {}
+            ns.update(glbs)
+            ns.update(self.pdb_locals)
+            return ns
+    
+    def get_reference_namespace(self, name):
+        """Return namespace where reference name is defined,
+        eventually returns the globals() if reference has not yet been defined"""
+        glbs = self.mglobals()
+        if self.pdb_frame is None:
+            return glbs
+        else:
+            lcls = self.pdb_locals
+            if name in lcls:
+                return lcls
+            else:
+                return glbs
+    
+    def get_globals_keys(self):
+        """Return globals() keys or globals() and locals() keys if debugging"""
+        ns = self.get_current_namespace()
+        return ns.keys()
+    
+    def isdefined(self, obj, force_import=False):
+        """Return True if object is defined in current namespace"""
+        ns = self.get_current_namespace()
+        return isdefined(obj, force_import=force_import, namespace=ns)
+
     def toggle_inputhook_flag(self, state):
         """Toggle the input hook flag
         
@@ -241,55 +307,52 @@ class Monitor(threading.Thread):
                     dict(command="open_file", data=(fname, lineno)))
         
     #------ Code completion / Calltips
-    def _eval(self, text, glbs):
+    def _eval(self, text):
         """
         Evaluate text and return (obj, valid)
         where *obj* is the object represented by *text*
         and *valid* is True if object evaluation did not raise any exception
         """
         assert isinstance(text, (str, unicode))
+        ns = self.get_current_namespace()
         try:
-            return eval(text, glbs), True
+            return eval(text, ns), True
         except:
             return None, False
             
-    def get_dir(self, objtxt, glbs):
+    def get_dir(self, objtxt):
         """Return dir(object)"""
-        obj, valid = self._eval(objtxt, glbs)
+        obj, valid = self._eval(objtxt)
         if valid:
             return getobjdir(obj)
                 
-    def iscallable(self, objtxt, glbs):
+    def iscallable(self, objtxt):
         """Is object callable?"""
-        obj, valid = self._eval(objtxt, glbs)
+        obj, valid = self._eval(objtxt)
         if valid:
             return callable(obj)
     
-    def get_arglist(self, objtxt, glbs):
+    def get_arglist(self, objtxt):
         """Get func/method argument list"""
-        logging.debug("objtxt="+str(objtxt))
-        logging.debug("glbs="+str(glbs))
-        obj, valid = self._eval(objtxt, glbs)
-        logging.debug("obj="+str(obj))
-        logging.debug("valid="+str(valid))
+        obj, valid = self._eval(objtxt)
         if valid:
             return getargtxt(obj)
     
-    def get__doc__(self, objtxt, glbs):
+    def get__doc__(self, objtxt):
         """Get object __doc__"""
-        obj, valid = self._eval(objtxt, glbs)
+        obj, valid = self._eval(objtxt)
         if valid:
             return obj.__doc__
     
-    def get_doc(self, objtxt, glbs):
+    def get_doc(self, objtxt):
         """Get object documentation"""
-        obj, valid = self._eval(objtxt, glbs)
+        obj, valid = self._eval(objtxt)
         if valid:
             return unicode(getdoc(obj))
     
-    def get_source(self, objtxt, glbs):
+    def get_source(self, objtxt):
         """Get object source"""
-        obj, valid = self._eval(objtxt, glbs)
+        obj, valid = self._eval(objtxt)
         if valid:
             return getsource(obj)
     
@@ -313,19 +376,21 @@ class Monitor(threading.Thread):
             return moduleCompletion(name)
                 
     #------ Other
-    def is_array(self, glbs, name):
+    def is_array(self, name):
         """Return True if object is an instance of class numpy.ndarray"""
+        ns = self.get_current_namespace()
         try:
             import numpy
-            return isinstance(glbs[name], numpy.ndarray)
+            return isinstance(ns[name], numpy.ndarray)
         except ImportError:
             return False
 
-    def is_image(self, glbs, name):
+    def is_image(self, name):
         """Return True if object is an instance of class PIL.Image.Image"""
+        ns = self.get_current_namespace()
         try:
-            from PIL.Image import Image
-            return isinstance(glbs[name], Image)
+            from spyderlib.pil_patch import Image
+            return isinstance(ns[name], Image.Image)
         except ImportError:
             return False
 
@@ -362,7 +427,7 @@ class Monitor(threading.Thread):
         Set local reference value
         Not used right now - could be useful in the future
         """
-        self.locals[name] = value
+        self._mlocals[name] = value
         
     def set_remote_view_settings(self):
         """
@@ -372,29 +437,32 @@ class Monitor(threading.Thread):
         self.remote_view_settings = read_packet(self.i_request)
         self.enable_refresh_after_eval()
         
-    def update_remote_view(self, glbs):
+    def update_remote_view(self):
         """
         Return remote view of globals()
         """
         settings = self.remote_view_settings
         if settings:
             more_excluded_names = ['In', 'Out'] if self.ipython_shell else None
-            remote_view = make_remote_view(glbs, settings, more_excluded_names)
+            ns = self.get_current_namespace()
+            remote_view = make_remote_view(ns, settings, more_excluded_names)
             communicate(self.n_request,
                         dict(command="remote_view", data=remote_view))
         
-    def saveglobals(self, glbs):
+    def saveglobals(self):
         """Save globals() into filename"""
+        ns = self.get_current_namespace()
         from spyderlib.utils.iofuncs import iofunctions
         settings = read_packet(self.i_request)
         filename = read_packet(self.i_request)
         more_excluded_names = ['In', 'Out'] if self.ipython_shell else None
-        data = get_remote_data(glbs, settings, mode='picklable',
+        data = get_remote_data(ns, settings, mode='picklable',
                                more_excluded_names=more_excluded_names).copy()
         return iofunctions.save(data, filename)
         
-    def loadglobals(self, glbs):
+    def loadglobals(self):
         """Load globals() from filename"""
+        glbs = self.mglobals()
         from spyderlib.utils.iofuncs import iofunctions
         filename = read_packet(self.i_request)
         ext = read_packet(self.i_request)
@@ -412,47 +480,49 @@ class Monitor(threading.Thread):
             return str(error)
         self.refresh_after_eval = True
         
-    def getglobal(self, glbs, name):
+    def getglobal(self, name):
         """
         Get global reference value
         """
-        return glbs[name]
+        ns = self.get_current_namespace()
+        return ns[name]
         
-    def setglobal(self, glbs, name):
+    def setglobal(self, name):
         """
         Set global reference value
         """
-        glbs[name] = read_packet(self.i_request)
+        ns = self.get_reference_namespace(name)
+        ns[name] = read_packet(self.i_request)
         self.refresh_after_eval = True
         
-    def delglobal(self, glbs, name):
+    def delglobal(self, name):
         """
         Del global reference
         """
-        glbs.pop(name)
+        ns = self.get_reference_namespace(name)
+        ns.pop(name)
         self.refresh_after_eval = True
         
-    def copyglobal(self, glbs, orig_name, new_name):
+    def copyglobal(self, orig_name, new_name):
         """
         Copy global reference
         """
-        glbs[new_name] = glbs[orig_name]
+        ns = self.get_reference_namespace(orig_name)
+        ns[new_name] = ns[orig_name]
         self.refresh_after_eval = True
         
     def run(self):
         self.ipython_shell = None
-        from __main__ import __dict__ as glbs
         while True:
             output = pickle.dumps(None, pickle.HIGHEST_PROTOCOL)
+            glbs = self.mglobals()
             try:
                 if DEBUG:
                     logging.debug("****** Introspection request /Begin ******")
                 command = PACKET_NOT_RECEIVED
                 try:
                     timeout = self.timeout if self.auto_refresh else None
-                    if DEBUG:
-                        logging.debug("timeout=%r" % timeout)
-                    command = read_packet(self.i_request, timeout=None)
+                    command = read_packet(self.i_request, timeout=timeout)
                     if command is None:
                         continue
                     timed_out = False
@@ -463,56 +533,21 @@ class Monitor(threading.Thread):
                     if DEBUG:
                         logging.debug("struct.error -> quitting monitor")
                     break
-                if self.ipython_kernel is None and '__ipythonkernel__' in glbs:
-                    self.ipython_kernel = glbs['__ipythonkernel__']
-                    argv = ['--existing'] +\
-                           ['--%s=%d' % (name, port) for name, port
-                            in self.ipython_kernel.ports.items()]
-                    opts = ' '.join(argv)
-                    communicate(self.n_request,
-                                dict(command="ipython_kernel", data=opts))
-                if self.ipython_shell is None and '__ipythonshell__' in glbs:
-                    # IPython >=v0.11
-                    self.ipython_shell = glbs['__ipythonshell__']
-                    if not hasattr(self.ipython_shell, 'user_ns'):
-                        # IPython v0.10
-                        self.ipython_shell = self.ipython_shell.IP
-                    self.ipython_shell.modcompletion = moduleCompletion
-                    glbs = self.ipython_shell.user_ns
-                namespace = {}
-                if self.pdb_obj is not None and self.pdb_obj.curframe is None:
-                    self.pdb_obj = None
-                if self.pdb_obj is not None:
-                    namespace.update(self.pdb_obj.curframe.f_globals)
-                    namespace.update(self.pdb_obj.curframe.f_locals)
-                else:
-                    namespace.update(glbs)
                 if timed_out:
                     if DEBUG:
                         logging.debug("connection timed out -> updating remote view")
-                    self.update_remote_view(namespace)
+                    self.update_remote_view()
                     if DEBUG:
                         logging.debug("****** Introspection request /End ******")
                     continue
                 if DEBUG:
                     logging.debug("command: %r" % command)
-                if self.pdb_obj and self.pdb_obj.curframe:
-                    local_ns = {}
-                    local_ns.update(self.pdb_obj.curframe.f_locals)
-                    local_ns.update(self.locals)
-                    try:
-                        result = eval(command,
-                                  self.pdb_obj.curframe.f_globals, local_ns)
-                    except:
-                        result = None
-                else:
-                    try:
-                        result = eval(command, glbs, self.locals)
-                    except:
-                        result = None
+                lcls = self.mlocals()
+                result = eval(command, glbs, lcls)
                 if DEBUG:
                     logging.debug(" result: %r" % result)
-                self.locals["_"] = result
+                if self.pdb_obj is None:
+                    lcls["_"] = result
                 # old com implementation: (see solution (1) in Issue 434)
                 output = pickle.dumps(result, pickle.HIGHEST_PROTOCOL)
 #                # new com implementation: (see solution (2) in Issue 434)
@@ -529,7 +564,7 @@ class Monitor(threading.Thread):
                     if DEBUG:
                         logging.debug("updating remote view")
                     if self.refresh_after_eval:
-                        self.update_remote_view(namespace)
+                        self.update_remote_view()
                         self.refresh_after_eval = False
                     if DEBUG:
                         logging.debug("sending result")

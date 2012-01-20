@@ -13,22 +13,31 @@ exclusively with non-GUI features configuration only
 sip API incompatibility issue in spyderlib's non-gui modules)
 """
 
-import os.path as osp, os, sys
+import os.path as osp
+import os
+import sys
 
 # Local imports
-from spyderlib.userconfig import get_home_dir
 from spyderlib import __version__
 
 
-SUBFOLDER = '.spyder%s' % __version__.split('.')[0]
+#==============================================================================
+# Debug helpers
+#==============================================================================
+STDOUT = sys.stdout
+STDERR = sys.stderr
+DEBUG = bool(os.environ.get('SPYDER_DEBUG', ''))
 
 
 #==============================================================================
 # Configuration paths
 #==============================================================================
+SUBFOLDER = '.spyder%s' % __version__.split('.')[0]
+
 def get_conf_path(filename=None):
     """Return absolute path for configuration file with specified filename"""
-    conf_dir = osp.join(get_home_dir(), SUBFOLDER)
+    from spyderlib import userconfig
+    conf_dir = osp.join(userconfig.get_home_dir(), SUBFOLDER)
     if not osp.isdir(conf_dir):
         os.mkdir(conf_dir)
     if filename is None:
@@ -117,7 +126,7 @@ def get_translation(modname, dirname=None):
                 x = x.encode("utf-8")
             return unicode(lgettext(x), "utf-8")
         return translate_gettext
-    except IOError, _e:
+    except IOError, _e:  # analysis:ignore
         #print "Not using translations (%s)" % _e
         def translate_dumb(x):
             if not isinstance(x, unicode):
@@ -136,8 +145,7 @@ _ = get_translation("spyderlib")
 def get_supported_types():
     """Return a dictionnary containing types lists supported by the 
     namespace browser:
-    dict(picklable=picklable_types,
-         editableeditables_types)
+    dict(picklable=picklable_types, editable=editables_types)
          
     See:
     get_remote_data function in spyderlib/widgets/externalshell/monitor.py
@@ -151,16 +159,17 @@ def get_supported_types():
         pass
     picklable_types = editable_types[:]
     try:
-        from PIL.Image import Image
-        editable_types.append(Image)
+        from spyderlib.pil_patch import Image
+        editable_types.append(Image.Image)
     except ImportError:
         pass
     return dict(picklable=picklable_types, editable=editable_types)
 
-# Max number of filter iterations for worskpace display:
-# (for workspace saving, itermax == -1, see Workspace.save)
-ITERMAX = -1 #XXX: To be adjusted if it takes too much to compute... 2, 3?
+# Variable explorer display / check all elements data types for sequences:
+# (when saving the variable explorer contents, check_all is True,
+#  see widgets/externalshell/namespacebrowser.py:NamespaceBrowser.save_data)
+CHECK_ALL = False #XXX: If True, this should take too much to compute...
 
-EXCLUDED = ['nan', 'inf', 'infty', 'little_endian', 'colorbar_doc',
-            'typecodes', '__builtins__', '__main__', '__doc__', 'NaN',
-            'Inf', 'Infinity']
+EXCLUDED_NAMES = ['nan', 'inf', 'infty', 'little_endian', 'colorbar_doc',
+                  'typecodes', '__builtins__', '__main__', '__doc__', 'NaN',
+                  'Inf', 'Infinity', 'sctypes']

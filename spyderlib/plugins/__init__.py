@@ -22,11 +22,6 @@ from spyderlib.qt.QtGui import (QDockWidget, QWidget, QShortcut, QCursor,
                                 QKeySequence, QMainWindow, QApplication)
 from spyderlib.qt.QtCore import SIGNAL, Qt, QObject, Signal
 
-import sys
-
-# For debugging purpose:
-STDOUT = sys.stdout
-
 # Local imports
 from spyderlib.utils.qthelpers import toggle_actions
 from spyderlib.config import CONF, get_font, set_font, get_icon
@@ -61,7 +56,6 @@ class SpyderPluginMixin(object):
     """
     CONF_SECTION = None
     CONFIGWIDGET_CLASS = None
-    FLAGS = Qt.Window
     ALLOWED_AREAS = Qt.AllDockWidgetAreas
     LOCATION = Qt.LeftDockWidgetArea
     FEATURES = QDockWidget.DockWidgetClosable | \
@@ -114,7 +108,17 @@ class SpyderPluginMixin(object):
         
     def create_dockwidget(self):
         """Add to parent QMainWindow as a dock widget"""
-        dock = QDockWidget(self.get_plugin_title(), self.main)#, self.FLAGS) -> bug in Qt 4.4
+
+        # This is not clear yet why the following do not work...
+        # (see Issue #880)
+##         # Using Qt.Window window flags solves Issue #880 (detached dockwidgets
+##         # are not painted after restarting Spyder and restoring their hexstate)
+##         # but it does not work with PyQt <=v4.7 (dockwidgets can't be docked)
+##         # or non-Windows platforms (lot of warnings are printed out)
+##         # (so in those cases, we use the default window flags: Qt.Widget):
+##         flags = Qt.Widget if is_old_pyqt or os.name != 'nt' else Qt.Window
+        dock = QDockWidget(self.get_plugin_title(), self.main)#, flags)
+
         dock.setObjectName(self.__class__.__name__+"_dw")
         dock.setAllowedAreas(self.ALLOWED_AREAS)
         dock.setFeatures(self.FEATURES)

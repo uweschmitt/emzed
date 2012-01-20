@@ -32,9 +32,10 @@ from spyderlib.config import get_icon, get_font
 from spyderlib.utils.misc import fix_reference_name
 from spyderlib.utils.qthelpers import add_actions, create_action, qapplication
 from spyderlib.widgets.dicteditorutils import (sort_against, get_size,
-                   get_type, value_to_display, get_color_name, is_known_type,
-                   FakeObject, Image, ndarray, array, unsorted_unique,
-                   try_to_eval, datestr_to_datetime, get_numpy_dtype)
+               get_human_readable_type, value_to_display, get_color_name,
+               is_known_type, FakeObject, Image, ndarray, array, MaskedArray,
+               unsorted_unique, try_to_eval, datestr_to_datetime,
+               get_numpy_dtype, is_editable_type)
 if ndarray is not FakeObject:
     from spyderlib.widgets.arrayeditor import ArrayEditor
 from spyderlib.widgets.texteditor import TextEditor
@@ -87,6 +88,21 @@ def display_to_value(value, default_value, ignore_errors=True):
     return value
 
 
+class ProxyObject(object):
+    """Dictionary proxy to an unknown object"""
+    def __init__(self, obj):
+        self.__obj__ = obj
+    
+    def __len__(self):
+        return len(dir(self.__obj__))
+    
+    def __getitem__(self, key):
+        return getattr(self.__obj__, key)
+    
+    def __setitem__(self, key, value):
+        setattr(self.__obj__, key, value)
+        
+
 class ReadOnlyDictModel(QAbstractTableModel):
     """DictEditor Read-Only Table Model"""
     def __init__(self, parent, data, title="", names=False,
@@ -117,7 +133,8 @@ class ReadOnlyDictModel(QAbstractTableModel):
     def set_data(self, data, dictfilter=None):
         """Set model data"""
         self._data = data
-        if dictfilter is not None and not self.remote:
+        if dictfilter is not None and not self.remote and\
+           isinstance(data, (tuple, list, dict)):
             data = dictfilter(data)
         self.showndata = data
         self.header0 = _("Index")
@@ -135,7 +152,11 @@ class ReadOnlyDictModel(QAbstractTableModel):
             if not self.names:
                 self.header0 = _("Key")
         else:
-            raise TypeError("Invalid data type")
+            self.keys = dir(data)
+            self._data = data = self.showndata = ProxyObject(data)
+            self.title += _("Object")
+            if not self.names:
+                self.header0 = _("Attribute")
         self.title += ' ('+str(len(self.keys))+' '+ _("elements")+')'
         if self.remote:
             self.sizes = [ data[self.keys[index]]['size']
@@ -145,7 +166,7 @@ class ReadOnlyDictModel(QAbstractTableModel):
         else:
             self.sizes = [ get_size(data[self.keys[index]])
                            for index in range(len(self.keys)) ]
-            self.types = [ get_type(data[self.keys[index]])
+            self.types = [ get_human_readable_type(data[self.keys[index]])
                            for index in range(len(self.keys)) ]
         self.reset()
 
@@ -280,7 +301,7 @@ class DictModel(ReadOnlyDictModel):
         self._data[ self.keys[index.row()] ] = value
         self.showndata[ self.keys[index.row()] ] = value
         self.sizes[index.row()] = get_size(value)
-        self.types[index.row()] = get_type(value)
+        self.types[index.row()] = get_human_readable_type(value)
 
     def get_bgcolor(self, index):
         """Background color depending on value"""
@@ -349,8 +370,8 @@ class DictDelegate(QItemDelegate):
                                             key=key, readonly=readonly))
             return None
         #---editor = ArrayEditor
-        elif isinstance(value, ndarray) and ndarray is not FakeObject \
-                                        and not self.inplace:
+        elif isinstance(value, (ndarray, MaskedArray))\
+             and ndarray is not FakeObject and not self.inplace:
             if value.size == 0:
                 return None
             editor = ArrayEditor(parent)
@@ -396,13 +417,21 @@ class DictDelegate(QItemDelegate):
                                             key=key, readonly=readonly))
             return None
         #---editor = QLineEdit
-        else:
+        elif self.inplace or is_editable_type(value):
             editor = QLineEdit(parent)
             editor.setFont(get_font('dicteditor'))
             editor.setAlignment(Qt.AlignLeft)
             self.connect(editor, SIGNAL("returnPressed()"),
                          self.commitAndCloseEditor)
             return editor
+        #---editor = DictEditor for an arbitrary object
+        else:
+            editor = DictEditor()
+            editor.setup(value, key, icon=self.parent().windowIcon(),
+                         readonly=readonly)
+            self.create_dialog(editor, dict(model=index.model(), editor=editor,
+                                            key=key, readonly=readonly))
+            return None
             
     def create_dialog(self, editor, data):
         self._editors[id(editor)] = data
@@ -491,6 +520,7 @@ class BaseTableView(QTableView):
         self.copy_action = None
         self.edit_action = None
         self.plot_action = None
+        self.hist_action = None
         self.imshow_action = None
         self.save_array_action = None
         self.insert_action = None
@@ -532,9 +562,13 @@ class BaseTableView(QTableView):
                                          icon=get_icon('edit.png'),
                                          triggered=self.edit_item)
         self.plot_action = create_action(self, _("Plot"),
-                                         icon=get_icon('plot.png'),
-                                         triggered=self.plot_item)
+                                    icon=get_icon('plot.png'),
+                                    triggered=lambda: self.plot_item('plot'))
         self.plot_action.setVisible(False)
+        self.hist_action = create_action(self, _("Histogram"),
+                                    icon=get_icon('hist.png'),
+                                    triggered=lambda: self.plot_item('hist'))
+        self.hist_action.setVisible(False)
         self.imshow_action = create_action(self, _("Show image"),
                                            icon=get_icon('imshow.png'),
                                            triggered=self.imshow_item)
@@ -576,9 +610,10 @@ class BaseTableView(QTableView):
                                               icon=get_icon('edit_add.png'),
                                               triggered=self.duplicate_item)
         menu = QMenu(self)
-        menu_actions = [self.edit_action, self.plot_action, self.imshow_action,
-                        self.save_array_action, self.insert_action,
-                        self.remove_action, self.copy_action, self.paste_action,
+        menu_actions = [self.edit_action, self.plot_action, self.hist_action,
+                        self.imshow_action, self.save_array_action,
+                        self.insert_action, self.remove_action,
+                        self.copy_action, self.paste_action,
                         None, self.rename_action,self.duplicate_action,
                         None, resize_action, None, self.truncate_action,
                         self.inplace_action, self.collvalue_action]
@@ -636,7 +671,7 @@ class BaseTableView(QTableView):
         """Edit item"""
         raise NotImplementedError
     
-    def plot(self, key):
+    def plot(self, key, funcname):
         """Plot item"""
         raise NotImplementedError
     
@@ -663,11 +698,13 @@ class BaseTableView(QTableView):
             is_list = self.is_list(key)
             is_array = self.is_array(key) and self.get_len(key) != 0
             condition_plot = (is_array and len(self.get_array_shape(key)) <= 2)
+            condition_hist = (is_array and self.get_array_ndim(key) == 1)
             condition_imshow = condition_plot and self.get_array_ndim(key) == 2
             condition_imshow = condition_imshow or self.is_image(key)
         else:
             is_array = condition_plot = condition_imshow = is_list = False
         self.plot_action.setVisible(condition_plot or is_list)
+        self.hist_action.setVisible(condition_hist or is_list)
         self.imshow_action.setVisible(condition_imshow)
         self.save_array_action.setVisible(is_array)
         
@@ -828,28 +865,27 @@ class BaseTableView(QTableView):
             
     def __prepare_plot(self):
         try:
-            import guiqwt.pyplot #@UnusedImport
+            import guiqwt.pyplot #analysis:ignore
             return True
         except ImportError:
             try:
                 if 'matplotlib' not in sys.modules:
-                    from spyderlib import mpl_patch
-                    mpl_patch.set_backend("Qt4Agg")
-                    mpl_patch.apply()
+                    import matplotlib
+                    matplotlib.use("Qt4Agg")
                 return True
             except ImportError:
                 QMessageBox.warning(self, _("Import error"),
                                     _("Please install <b>matplotlib</b>"
                                       " or <b>guiqwt</b>."))
 
-    def plot_item(self):
+    def plot_item(self, funcname):
         """Plot item"""
         index = self.currentIndex()
         if self.__prepare_plot():
             key = self.model.get_key(index)
             try:
-                self.plot(key)
-            except ValueError, error:
+                self.plot(key, funcname)
+            except (ValueError, TypeError), error:
                 QMessageBox.critical(self, _( "Plot"),
                                      _("<b>Unable to plot data.</b>"
                                        "<br><br>Error message:<br>%s"
@@ -865,7 +901,7 @@ class BaseTableView(QTableView):
                     self.show_image(key)
                 else:
                     self.imshow(key)
-            except ValueError, error:
+            except (ValueError, TypeError), error:
                 QMessageBox.critical(self, _( "Plot"),
                                      _("<b>Unable to show image.</b>"
                                        "<br><br>Error message:<br>%s"
@@ -978,7 +1014,7 @@ class DictEditorTableView(BaseTableView):
     def is_array(self, key):
         """Return True if variable is a numpy array"""
         data = self.model.get_data()
-        return isinstance(data[key], ndarray)
+        return isinstance(data[key], (ndarray, MaskedArray))
         
     def is_image(self, key):
         """Return True if variable is a PIL.Image image"""
@@ -1006,12 +1042,12 @@ class DictEditorTableView(BaseTableView):
         from spyderlib.widgets.objecteditor import oedit
         oedit(data[key])
     
-    def plot(self, key):
+    def plot(self, key, funcname):
         """Plot item"""
         data = self.model.get_data()
         import spyderlib.pyplot as plt
         plt.figure()
-        plt.plot(data[key])
+        getattr(plt, funcname)(data[key])
         plt.show()
     
     def imshow(self, key):
@@ -1084,9 +1120,16 @@ class DictEditor(QDialog):
         if isinstance(data, dict):
             # dictionnary
             self.data_copy = data.copy()
-        else:
+            datalen = len(data)
+        elif isinstance(data, (tuple, list)):
             # list, tuple
             self.data_copy = data[:]
+            datalen = len(data)
+        else:
+            # unknown object
+            import copy
+            self.data_copy = copy.deepcopy(data)
+            datalen = len(dir(data))
         self.widget = DictEditorWidget(self, self.data_copy, title=title,
                                        readonly=readonly, remote=remote)
         
@@ -1107,7 +1150,7 @@ class DictEditor(QDialog):
         constant = 121
         row_height = 30
         error_margin = 20
-        height = constant + row_height*min([20, len(data)]) + error_margin
+        height = constant + row_height*min([20, datalen]) + error_margin
         self.resize(width, height)
         
         self.setWindowTitle(self.widget.get_title())
@@ -1215,11 +1258,6 @@ class RemoteDictEditorTableView(BaseTableView):
         self.sig_option_changed.emit('remote_editing', state)
         self.remote_editing_enabled = state
             
-    def oedit_possible(self, key):
-        if (self.is_list(key) or self.is_dict(key)
-            or self.is_array(key) or self.is_image(key)):
-            return True
- 
     def edit_item(self):
         """
         Reimplement BaseTableView's method to edit item
@@ -1233,7 +1271,10 @@ class RemoteDictEditorTableView(BaseTableView):
             if not index.isValid():
                 return
             key = self.model.get_key(index)
-            if self.oedit_possible(key):
+            if (self.is_list(key) or self.is_dict(key) 
+                or self.is_array(key) or self.is_image(key)):
+                # If this is a remote dict editor, the following avoid 
+                # transfering large amount of data through the socket
                 self.oedit(key)
             else:
                 BaseTableView.edit_item(self)
@@ -1244,12 +1285,18 @@ class RemoteDictEditorTableView(BaseTableView):
 def get_test_data():
     """Create test data"""
     import numpy as np
-    import PIL
-    image = PIL.Image.fromarray(
-                        np.random.random_integers(255, size=(100, 100)))
+    from spyderlib.pil_patch import Image
+    image = Image.fromarray(np.random.random_integers(255, size=(100, 100)))
     testdict = {'d': 1, 'a': np.random.rand(10, 10), 'b': [1, 2]}
     testdate = datetime.date(1945, 5, 8)
-    return {'str': 'kjkj kj k j j kj k jkj',
+    class Foobar(object):
+        def __init__(self):
+            self.text = "toto"
+            self.testdict = testdict
+            self.testdate = testdate
+    foobar = Foobar()
+    return {'object': foobar,
+            'str': 'kjkj kj k j j kj k jkj',
             'unicode': u'éù',
             'list': [1, 3, [sorted, 5, 6], 'kjkj', None],
             'tuple': ([1, testdate, testdict], 'kjkj', None),
@@ -1258,6 +1305,8 @@ def get_test_data():
             'int': 223,
             'bool': True,
             'array': np.random.rand(10, 10),
+            'masked_array': np.ma.array([[1, 0], [1, 0]],
+                                        mask=[[True, False], [False, False]]),
             '1D-array': np.linspace(-10, 10),
             'empty_array': np.array([]),
             'image': image,
@@ -1276,11 +1325,12 @@ def get_test_data():
 
 def test():
     """Dictionary editor test"""
-    _app = qapplication() #analysis:ignore
+    app = qapplication() #analysis:ignore
     dialog = DictEditor()
     dialog.setup(get_test_data())
-    if dialog.exec_():
-        print "out:", dialog.get_value()
+    dialog.show()
+    app.exec_()
+    print "out:", dialog.get_value()
     
 def remote_editor_test():
     """Remote dictionary editor test"""

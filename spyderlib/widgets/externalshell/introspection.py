@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+#
+# Copyright © 2011 Pierre Raybaut
+# Licensed under the terms of the MIT License
+# (see spyderlib/__init__.py for details)
+
 """External shell's introspection and notification servers"""
 
 from spyderlib.qt.QtCore import QThread, SIGNAL, Signal
@@ -7,15 +12,13 @@ import threading
 import socket
 
 # Local imports
-from spyderlib.baseconfig import get_conf_path
+from spyderlib.baseconfig import get_conf_path, DEBUG
 from spyderlib.utils.misc import select_port
 from spyderlib.utils.debug import log_last_error
 from spyderlib.utils.bsdsocket import read_packet, write_packet
 
 
 LOG_FILENAME = get_conf_path('introspection.log')
-
-DEBUG = False
 
 if DEBUG:
     import logging

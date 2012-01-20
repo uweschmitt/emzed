@@ -6,11 +6,10 @@
 
 """External Python Shell widget: execute Python script in a separate process"""
 
-import sys, os, os.path as osp, socket
-
-# Debug
-STDOUT = sys.stdout
-STDERR = sys.stderr
+import sys
+import os
+import os.path as osp
+import socket
 
 from spyderlib.qt.QtGui import QApplication, QMessageBox, QSplitter, QMenu
 from spyderlib.qt.QtCore import QProcess, SIGNAL, Qt, QTextCodec
@@ -22,14 +21,13 @@ from spyderlib.utils.qthelpers import (create_toolbutton, create_action,
                                        get_std_icon, DialogManager,
                                        add_actions)
 from spyderlib.utils.environ import RemoteEnvDialog
-from spyderlib.utils.programs import split_clo, get_python_args
+from spyderlib.utils.programs import get_python_args
 from spyderlib.utils.misc import get_python_executable
 from spyderlib.baseconfig import _, get_module_source_path
 from spyderlib.config import get_icon
 from spyderlib.widgets.shell import PythonShellWidget
 from spyderlib.widgets.externalshell.namespacebrowser import NamespaceBrowser
-from spyderlib.widgets.externalshell.monitor import (communicate, write_packet,
-                                             monitor_set_remote_view_settings)
+from spyderlib.widgets.externalshell.monitor import communicate, write_packet
 from spyderlib.widgets.externalshell.baseshell import (ExternalShellBase,
                                                    add_pathlist_to_PYTHONPATH)
 from spyderlib.widgets.dicteditor import DictEditor
@@ -60,7 +58,15 @@ class ExtPythonShellWidget(PythonShellWidget):
                 continue
             self.write(line+os.linesep, flush=True)
             self.execute_command(line)
-            self.emit(SIGNAL("wait_for_ready_read()"))
+            # Workaround for Issue 502
+            # Emmiting wait_for_ready_read was making the console hang
+            # in Mac OS X
+            # See http://code.google.com/p/spyderlib/issues/detail?id=502
+            if sys.platform.startswith("darwin"):
+                import time
+                time.sleep(0.025)
+            else:
+                self.emit(SIGNAL("wait_for_ready_read()"))
             self.flush()
 
     #------ Code completion / Calltips
@@ -79,11 +85,11 @@ class ExtPythonShellWidget(PythonShellWidget):
             
     def get_dir(self, objtxt):
         """Return dir(object)"""
-        return self.ask_monitor("__get_dir__('%s',globals())" % objtxt)
+        return self.ask_monitor("__get_dir__('%s')" % objtxt)
 
     def get_globals_keys(self):
         """Return shell globals() keys"""
-        return self.ask_monitor("globals().keys()")
+        return self.ask_monitor("get_globals_keys()")
     
     def get_cdlistdir(self):
         """Return shell current directory list dir"""
@@ -91,29 +97,28 @@ class ExtPythonShellWidget(PythonShellWidget):
             
     def iscallable(self, objtxt):
         """Is object callable?"""
-        return self.ask_monitor("__iscallable__('%s',globals())" % objtxt)
+        return self.ask_monitor("__iscallable__('%s')" % objtxt)
     
     def get_arglist(self, objtxt):
         """Get func/method argument list"""
-        return self.ask_monitor("__get_arglist__('%s',globals())" % objtxt)
+        return self.ask_monitor("__get_arglist__('%s')" % objtxt)
             
     def get__doc__(self, objtxt):
         """Get object __doc__"""
-        return self.ask_monitor("__get__doc____('%s',globals())" % objtxt)
+        return self.ask_monitor("__get__doc____('%s')" % objtxt)
     
     def get_doc(self, objtxt):
         """Get object documentation"""
-        return self.ask_monitor("__get_doc__('%s',globals())" % objtxt)
+        return self.ask_monitor("__get_doc__('%s')" % objtxt)
     
     def get_source(self, objtxt):
         """Get object source"""
-        return self.ask_monitor("__get_source__('%s',globals())" % objtxt)
+        return self.ask_monitor("__get_source__('%s')" % objtxt)
     
     def is_defined(self, objtxt, force_import=False):
         """Return True if object is defined"""
-        return self.ask_monitor(
-                        "isdefined('%s', force_import=%s, namespace=globals())"
-                        % (objtxt, force_import))
+        return self.ask_monitor("isdefined('%s', force_import=%s)"
+                                % (objtxt, force_import))
 
     def get_completion(self, objtxt):
         """Return completion list associated to object name"""
@@ -147,37 +152,39 @@ class ExtPythonShellWidget(PythonShellWidget):
 class ExternalPythonShell(ExternalShellBase):
     """External Shell widget: execute Python script in a separate process"""
     SHELL_CLASS = ExtPythonShellWidget
-    def __init__(self, parent=None, fname=None, wdir=None, commands=[],
+    def __init__(self, parent=None, fname=None, wdir=None,
                  interact=False, debug=False, path=[], python_args='',
                  ipython_shell=False, ipython_kernel=False,
                  arguments='', stand_alone=None,
                  umd_enabled=True, umd_namelist=[], umd_verbose=True,
                  pythonstartup=None, pythonexecutable=None,
                  monitor_enabled=True, mpl_patch_enabled=True,
-                 mpl_backend='Qt4Agg', ets_backend='qt4', pyqt_api=0,
-                 replace_pyqt_inputhook=True, ignore_sip_setapi_errors=True,
+                 mpl_backend=None, ets_backend='qt4', qt_api=None, pyqt_api=0,
+                 install_qt_inputhook=True, ignore_sip_setapi_errors=False,
+                 merge_output_channels=False, colorize_sys_stderr=False,
                  autorefresh_timeout=3000, autorefresh_state=True,
                  light_background=True, menu_actions=None,
                  show_buttons_inside=True, show_elapsed_time=True):
+
+        assert qt_api in (None, 'pyqt', 'pyside')
+
         self.namespacebrowser = None # namespace browser widget!
         
         self.dialog_manager = DialogManager()
         
-        startup_fn = get_module_source_path('spyderlib.widgets.externalshell',
-                                            'startup.py')
-        self.fname = startup_fn if fname is None else fname
-        
         self.stand_alone = stand_alone # stand alone settings (None: plugin)
-        
         self.pythonstartup = pythonstartup
         self.pythonexecutable = pythonexecutable
         self.monitor_enabled = monitor_enabled
         self.mpl_patch_enabled = mpl_patch_enabled
         self.mpl_backend = mpl_backend
         self.ets_backend = ets_backend
+        self.qt_api = qt_api
         self.pyqt_api = pyqt_api
-        self.replace_pyqt_inputhook = replace_pyqt_inputhook
+        self.install_qt_inputhook = install_qt_inputhook
         self.ignore_sip_setapi_errors = ignore_sip_setapi_errors
+        self.merge_output_channels = merge_output_channels
+        self.colorize_sys_stderr = colorize_sys_stderr
         self.umd_enabled = umd_enabled
         self.umd_namelist = umd_namelist
         self.umd_verbose = umd_verbose
@@ -211,6 +218,12 @@ class ExternalPythonShell(ExternalShellBase):
         self.is_ipython_kernel = ipython_kernel
         if self.is_ipython_shell or self.is_ipython_kernel:
             interact = False
+            # Running our custom startup script for IPython sessions:
+            # (see spyderlib/widgets/externalshell/startup.py)
+            self.fname = get_module_source_path(
+                            'spyderlib.widgets.externalshell', 'startup.py')
+        else:
+            self.fname = fname
         
         self.shell.set_externalshell(self)
 
@@ -224,20 +237,23 @@ class ExternalPythonShell(ExternalShellBase):
         if self.is_interpreter:
             self.terminate_button.hide()
         
-        self.commands = ["import sys", "sys.path.insert(0, '')"] + commands
-        
         # Additional python path list
         self.path = path
         
     def set_introspection_socket(self, introspection_socket):
         self.introspection_socket = introspection_socket
         if self.namespacebrowser is not None:
-            monitor_set_remote_view_settings(introspection_socket,
-                                             self.namespacebrowser)
+            settings = self.namespacebrowser.get_view_settings()
+            communicate(introspection_socket,
+                        'set_remote_view_settings()', settings=[settings])
         
     def set_autorefresh_timeout(self, interval):
-        communicate(self.introspection_socket,
-                    "set_monitor_timeout(%d)" % interval)
+        if self.introspection_socket is not None:
+            try:
+                communicate(self.introspection_socket,
+                            "set_monitor_timeout(%d)" % interval)
+            except socket.error:
+                pass
         
     def closeEvent(self, event):
         self.quit_monitor()
@@ -366,7 +382,7 @@ The process may not exit as a result of clicking this button
         self.shell.clear()
             
         self.process = QProcess(self)
-        if self.is_ipython_shell:
+        if self.merge_output_channels or self.is_ipython_shell:
             self.process.setProcessChannelMode(QProcess.MergedChannels)
         else:
             self.process.setProcessChannelMode(QProcess.SeparateChannels)
@@ -416,18 +432,17 @@ The process may not exit as a result of clicking this button
             env.append('SPYDER_I_PORT=%d' % introspection_server.port)
             env.append('SPYDER_N_PORT=%d' % notification_server.port)
         
-        # Python init commands (interpreter only)
-        if self.commands and self.is_interpreter:
-            env.append('PYTHONINITCOMMANDS=%s' % ';'.join(self.commands))
-            self.process.setEnvironment(env)
-        
         # External modules options
         env.append('ETS_TOOLKIT=%s' % self.ets_backend)
         env.append('MATPLOTLIB_PATCH=%r' % self.mpl_patch_enabled)
-        env.append('MATPLOTLIB_BACKEND=%s' % self.mpl_backend)
-        env.append('REPLACE_PYQT_INPUTHOOK=%s' % self.replace_pyqt_inputhook)
+        if self.mpl_backend:
+            env.append('MATPLOTLIB_BACKEND=%s' % self.mpl_backend)
+        if self.qt_api:
+            env.append('QT_API=%s' % self.qt_api)
+        env.append('INSTALL_QT_INPUTHOOK=%s' % self.install_qt_inputhook)
+        env.append('COLORIZE_SYS_STDERR=%s' % self.colorize_sys_stderr)
 #        # Socket-based alternative (see input hook in sitecustomize.py):
-#        if self.replace_pyqt_inputhook:
+#        if self.install_qt_inputhook:
 #            from PyQt4.QtNetwork import QLocalServer
 #            self.local_server = QLocalServer()
 #            self.local_server.listen(str(id(self)))
@@ -513,7 +528,7 @@ The process may not exit as a result of clicking this button
     def send_to_process(self, text):
         if not isinstance(text, basestring):
             text = unicode(text)
-        if self.replace_pyqt_inputhook and not self.is_ipython_shell:
+        if self.install_qt_inputhook and not self.is_ipython_shell:
             # For now, the Spyder's input hook does not work with IPython:
             # with IPython v0.10 or non-Windows platforms, this is not a
             # problem. However, with IPython v0.11 on Windows, this will be

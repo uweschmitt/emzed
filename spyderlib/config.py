@@ -22,7 +22,7 @@ from spyderlib.qt.QtGui import QLabel, QIcon, QPixmap, QFont, QFontDatabase
 
 # Local import
 from spyderlib.userconfig import UserConfig, get_home_dir, NoDefault
-from spyderlib.baseconfig import (SUBFOLDER, ITERMAX, EXCLUDED,
+from spyderlib.baseconfig import (SUBFOLDER, CHECK_ALL, EXCLUDED_NAMES,
                                   get_module_data_path, _)
 from spyderlib.utils import iofuncs, codeanalysis
 
@@ -52,7 +52,7 @@ EDIT_FILETYPES = (
     (_("Python files"), ('.py', '.pyw', '.ipy')),
     (_("Cython/Pyrex files"), ('.pyx', '.pxd', '.pxi')),
     (_("C files"), ('.c', '.h')),
-    (_("C++ files"), ('.cc', '.cpp', '.h', '.cxx', '.hpp', '.hh')),
+    (_("C++ files"), ('.cc', '.cpp', '.cxx', '.h', '.hh', '.hpp', '.hxx')),
     (_("OpenCL files"), ('.cl', )),
     (_("Fortran files"), ('.f', '.for', '.f90', '.f95', '.f2k')),
     (_("Patch and diff files"), ('.patch', '.diff', '.rej')),
@@ -100,7 +100,7 @@ EXCLUDE_PATTERNS = [r'\.pyc$|\.pyo$|\.orig$|\.hg|\.svn|build',
 
 # Name filters for file/project explorers (excluding files without extension)
 NAME_FILTERS = ['*' + _ext for _ext in VALID_EXT + SHOW_EXT if _ext]+\
-               ['README', 'INSTALL', 'LICENSE']
+               ['README', 'INSTALL', 'LICENSE', 'CHANGELOG']
 
 DEFAULTS = [
             ('main',
@@ -187,24 +187,29 @@ DEFAULTS = [
               'show_elapsed_time': True,
               'show_icontext': False,
               'monitor/enabled': True,
-              'mpl_patch/enabled': True,
-              'mpl_patch/backend': 'Qt4Agg',
+              'qt/install_inputhook': os.name == 'nt' \
+                                      or os.environ.get('QT_API') == 'pyside',
+              'qt/api': 'default',
+              'pyqt/api_version': 0,
+              'pyqt/ignore_sip_setapi_errors': False,
+              'matplotlib/patch': True,
+              'matplotlib/backend/enabled': True,
+              'matplotlib/backend/value': 'Qt4Agg',
               'umd/enabled': True,
               'umd/verbose': True,
               'umd/namelist': ['guidata', 'guiqwt'],
               'light_background': True,
               'ipython_set_color': True,
-              'pyqt_api': 0,
-              'replace_pyqt_inputhook': os.name == 'nt',
-              'ignore_sip_setapi_errors': True,
+              'merge_output_channels': os.name != 'nt',
+              'colorize_sys_stderr': os.name != 'nt',
               }),
             ('variable_explorer',
              {
               'shortcut': "Ctrl+Shift+V",
               'autorefresh': True,
               'autorefresh/timeout': 2000,
-              'itermax': ITERMAX,
-              'excluded_names': EXCLUDED,
+              'check_all': CHECK_ALL,
+              'excluded_names': EXCLUDED_NAMES,
               'exclude_private': True,
               'exclude_uppercase': True,
               'exclude_capitalized': False,
@@ -213,7 +218,7 @@ DEFAULTS = [
               'truncate': True,
               'minmax': False,
               'collvalue': False,
-              'remote_editing': True,
+              'remote_editing': False,
               }),
             ('editor',
              {
@@ -241,6 +246,7 @@ DEFAULTS = [
               'calltips': True,
               'go_to_definition': True,
               'close_parentheses': True,
+              'add_colons': True,
               'auto_unindent': True,
               'indent_chars': '*    *',
               'tab_stop_width': 40,
@@ -356,7 +362,7 @@ DEFAULTS = [
 
 DEV = not __file__.startswith(sys.prefix)
 DEV = False
-CONF = UserConfig('spyder', defaults=DEFAULTS, load=(not DEV), version='2.1.0',
+CONF = UserConfig('spyder', defaults=DEFAULTS, load=(not DEV), version='2.4.0',
                   subfolder=SUBFOLDER, backup=True, raw_mode=True)
 # Removing old .spyder.ini location:
 old_location = osp.join(get_home_dir(), '.spyder.ini')

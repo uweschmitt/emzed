@@ -6,11 +6,9 @@
 
 """Namespace browser widget"""
 
-import sys, os, os.path as osp, socket
-
-# Debug
-STDOUT = sys.stdout
-STDERR = sys.stderr
+import os
+import os.path as osp
+import socket
 
 from spyderlib.qt.QtGui import (QWidget, QVBoxLayout, QHBoxLayout, QMenu,
                                 QToolButton, QMessageBox, QApplication,
@@ -20,10 +18,9 @@ from spyderlib.qt.compat import getopenfilenames, getsavefilename
 
 # Local imports
 from spyderlib.widgets.externalshell.monitor import (
-                monitor_set_global, monitor_get_global, monitor_del_global,
-                monitor_copy_global, monitor_save_globals, monitor_load_globals,
-                monitor_is_array, monitor_is_image, monitor_is_none,
-                communicate, monitor_set_remote_view_settings)
+            monitor_set_global, monitor_get_global, monitor_del_global,
+            monitor_copy_global, monitor_save_globals, monitor_load_globals,
+            communicate, REMOTE_SETTINGS)
 from spyderlib.widgets.dicteditor import (RemoteDictEditorTableView,
                                           DictEditorTableView)
 from spyderlib.widgets.dicteditorutils import globalsfilter
@@ -54,7 +51,7 @@ class NamespaceBrowser(QWidget):
         self.setup_in_progress = None
         
         # Remote dict editor settings
-        self.itermax = None
+        self.check_all = None
         self.exclude_private = None
         self.exclude_uppercase = None
         self.exclude_capitalized = None
@@ -75,14 +72,15 @@ class NamespaceBrowser(QWidget):
         
         self.filename = None
             
-    def setup(self, itermax=None, exclude_private=None, exclude_uppercase=None,
-              exclude_capitalized=None, exclude_unsupported=None,
-              excluded_names=None, truncate=None, minmax=None, collvalue=None,
+    def setup(self, check_all=None, exclude_private=None,
+              exclude_uppercase=None, exclude_capitalized=None,
+              exclude_unsupported=None, excluded_names=None,
+              truncate=None, minmax=None, collvalue=None,
               remote_editing=None, inplace=None, autorefresh=None):
         """Setup the namespace browser"""
         assert self.shellwidget is not None
         
-        self.itermax = itermax
+        self.check_all = check_all
         self.exclude_private = exclude_private
         self.exclude_uppercase = exclude_uppercase
         self.exclude_capitalized = exclude_capitalized
@@ -179,8 +177,8 @@ class NamespaceBrowser(QWidget):
                                         icon=get_icon('fileimport.png'),
                                         triggered=self.import_data)
         self.save_button = create_toolbutton(self, text=_("Save data"),
-                                icon=get_icon('filesave.png'),
-                                triggered=lambda: self.save_data(self.filename))
+                            icon=get_icon('filesave.png'),
+                            triggered=lambda: self.save_data(self.filename))
         self.save_button.setEnabled(False)
         save_as_button = create_toolbutton(self,
                                            text=_("Save data as..."),
@@ -246,7 +244,9 @@ class NamespaceBrowser(QWidget):
         """Option has changed"""
         setattr(self, unicode(option), value)
         if not self.is_internal_shell:
-            monitor_set_remote_view_settings(self._get_sock(), self)
+            settings = self.get_view_settings()
+            communicate(self._get_sock(),
+                        'set_remote_view_settings()', settings=[settings])
         
     def visibility_changed(self, enable):
         """Notify the widget whether its container (the namespace browser 
@@ -266,27 +266,34 @@ class NamespaceBrowser(QWidget):
         """Return socket connection"""
         return self.shellwidget.introspection_socket
     
-    def get_internal_shell_filter(self, mode, itermax=None):
+    def get_internal_shell_filter(self, mode, check_all=None):
         """
         Return internal shell data types filter:
-            * itermax: maximum iterations when walking in sequences
+            * check_all: check all elements data types for sequences
               (dict, list, tuple)
             * mode (string): 'editable' or 'picklable'
         """
         assert mode in SUPPORTED_TYPES.keys()
-        if itermax is None:
-            itermax = self.itermax
-        def wsfilter(input_dict, itermax=itermax,
+        if check_all is None:
+            check_all = self.check_all
+        def wsfilter(input_dict, check_all=check_all,
                      filters=tuple(SUPPORTED_TYPES[mode])):
             """Keep only objects that can be pickled"""
             return globalsfilter(
-                         input_dict, itermax=itermax, filters=filters,
+                         input_dict, check_all=check_all, filters=filters,
                          exclude_private=self.exclude_private,
                          exclude_uppercase=self.exclude_uppercase,
                          exclude_capitalized=self.exclude_capitalized,
                          exclude_unsupported=self.exclude_unsupported,
                          excluded_names=self.excluded_names)
         return wsfilter
+
+    def get_view_settings(self):
+        """Return dict editor view settings"""
+        settings = {}
+        for name in REMOTE_SETTINGS:
+            settings[name] = getattr(self, name)
+        return settings
         
     def refresh_table(self):
         """Refresh variable table"""
@@ -315,13 +322,14 @@ class NamespaceBrowser(QWidget):
         if remote_view is not None:
             self.set_data(remote_view)
         
-    #------ Remote Python process commands -------------------------------------
+    #------ Remote Python process commands ------------------------------------
     def get_value(self, name):
         value = monitor_get_global(self._get_sock(), name)
-        if value is None and not monitor_is_none(self._get_sock(), name):
-            import pickle
-            msg = unicode(_("Object <b>%s</b> is not picklable") % name)
-            raise pickle.PicklingError(msg)
+        if value is None:
+            if communicate(self._get_sock(), '%s is not None' % name):
+                import pickle
+                msg = unicode(_("Object <b>%s</b> is not picklable") % name)
+                raise pickle.PicklingError(msg)
         return value
         
     def set_value(self, name, value):
@@ -340,38 +348,38 @@ class NamespaceBrowser(QWidget):
     def is_list(self, name):
         """Return True if variable is a list or a tuple"""
         return communicate(self._get_sock(),
-                           "isinstance(globals()['%s'], (tuple, list))" % name)
+                           'isinstance(%s, (tuple, list))' % name)
         
     def is_dict(self, name):
         """Return True if variable is a dictionary"""
-        return communicate(self._get_sock(),
-                           "isinstance(globals()['%s'], dict)" % name)
+        return communicate(self._get_sock(), 'isinstance(%s, dict)' % name)
         
     def get_len(self, name):
         """Return sequence length"""
-        return communicate(self._get_sock(), "len(globals()['%s'])" % name)
+        return communicate(self._get_sock(), "len(%s)" % name)
         
     def is_array(self, name):
         """Return True if variable is a NumPy array"""
-        return monitor_is_array(self._get_sock(), name)
+        return communicate(self._get_sock(), 'is_array("%s")' % name)
         
     def is_image(self, name):
         """Return True if variable is a PIL.Image image"""
-        return monitor_is_image(self._get_sock(), name)
+        return communicate(self._get_sock(), 'is_image("%s")' % name)
         
     def get_array_shape(self, name):
         """Return array's shape"""
-        return communicate(self._get_sock(), "globals()['%s'].shape" % name)
+        return communicate(self._get_sock(), "%s.shape" % name)
         
     def get_array_ndim(self, name):
         """Return array's ndim"""
-        return communicate(self._get_sock(), "globals()['%s'].ndim" % name)
+        return communicate(self._get_sock(), "%s.ndim" % name)
         
-    def plot(self, name):
-        command = "import spyderlib.pyplot; " \
-                  "__fig__ = spyderlib.pyplot.figure(); " \
-                  "__items__ = spyderlib.pyplot.plot(%s); " \
-                  "spyderlib.pyplot.show(); del __fig__, __items__;" % name
+    def plot(self, name, funcname):
+        command = "import spyderlib.pyplot; "\
+                  "__fig__ = spyderlib.pyplot.figure(); "\
+                  "__items__ = getattr(spyderlib.pyplot, '%s')(%s); "\
+                  "spyderlib.pyplot.show(); "\
+                  "del __fig__, __items__;" % (funcname, name)
         self.shellwidget.send_to_process(command)
         
     def imshow(self, name):
@@ -390,7 +398,7 @@ class NamespaceBrowser(QWidget):
                   "oedit('%s', modal=False, namespace=locals());" % name
         self.shellwidget.send_to_process(command)
         
-    #------ Set, load and save data --------------------------------------------
+    #------ Set, load and save data -------------------------------------------
     def set_data(self, data):
         """Set data"""
         if data != self.editor.model.get_data():
@@ -453,7 +461,7 @@ class NamespaceBrowser(QWidget):
                     else:
                         base_name = osp.basename(self.filename)
                         editor = ImportWizard(self, text, title=base_name,
-                                          varname=fix_reference_name(base_name))
+                                      varname=fix_reference_name(base_name))
                         if editor.exec_():
                             var_name, clip_data = editor.get_data()
                             monitor_set_global(self._get_sock(),
@@ -468,7 +476,7 @@ class NamespaceBrowser(QWidget):
                     interpreter = self.shellwidget.interpreter
                     for key in namespace.keys():
                         new_key = fix_reference_name(key,
-                                         blacklist=interpreter.namespace.keys())
+                                     blacklist=interpreter.namespace.keys())
                         if new_key != key:
                             namespace[new_key] = namespace.pop(key)
                     if error_message is None:
@@ -503,7 +511,8 @@ class NamespaceBrowser(QWidget):
         QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
         QApplication.processEvents()
         if self.is_internal_shell:
-            wsfilter = self.get_internal_shell_filter('picklable', itermax=-1)
+            wsfilter = self.get_internal_shell_filter('picklable',
+                                                      check_all=True)
             namespace = wsfilter(self.shellwidget.interpreter.namespace).copy()
             error_message = iofunctions.save(namespace, filename)
         else:

@@ -11,7 +11,6 @@
 # pylint: disable=R0911
 # pylint: disable=R0201
 
-import sys
 import re
 import sre_constants
 import string
@@ -27,9 +26,6 @@ from spyderlib.qt.QtCore import QPoint, SIGNAL, Qt, QRegExp, QEventLoop
 # Local imports
 from spyderlib.widgets.sourcecode.terminal import ANSIEscapeCodeHandler
 from spyderlib.utils import sourcecode
-
-# For debugging purpose:
-STDOUT = sys.stdout
 
 
 class CompletionWidget(QListWidget):
@@ -266,7 +262,7 @@ class TextEditBaseWidget(QPlainTextEdit):
 
 
     #------Brace matching
-    def __find_brace_match(self, position, brace, forward):
+    def find_brace_match(self, position, brace, forward):
         start_pos, end_pos = self.BRACE_MATCHING_SCOPE
         if forward:
             bracemap = {'(': ')', '[': ']', '{': '}'}
@@ -338,9 +334,9 @@ class TextEditBaseWidget(QPlainTextEdit):
         text = unicode(cursor.selectedText())
         pos1 = cursor.position()
         if text in (')', ']', '}'):
-            pos2 = self.__find_brace_match(pos1, text, forward=False)
+            pos2 = self.find_brace_match(pos1, text, forward=False)
         elif text in ('(', '[', '{'):
-            pos2 = self.__find_brace_match(pos1, text, forward=True)
+            pos2 = self.find_brace_match(pos1, text, forward=True)
         else:
             return
         if pos2 is not None:
@@ -1170,7 +1166,8 @@ class QtANSIEscapeCodeHandler(ANSIEscapeCodeHandler):
     def set_style(self):
         """
         Set font style with the following attributes:
-        'foreground_color', 'background_color', 'italic', 'bold' and 'underline'
+        'foreground_color', 'background_color', 'italic',
+        'bold' and 'underline'
         """
         if self.current_format is None:
             assert self.base_format is not None
@@ -1349,16 +1346,20 @@ class ConsoleBaseWidget(TextEditBaseWidget):
             text = text[index+1:]
             self.clear()
         if error:
+            is_traceback = False
             for text in text.splitlines(True):
                 if text.startswith('  File') \
                 and not text.startswith('  File "<'):
+                    is_traceback = True
                     # Show error links in blue underlined text
                     cursor.insertText('  ', self.default_style.format)
                     cursor.insertText(text[2:],
                                       self.traceback_link_style.format)
                 else:
-                    # Show error messages in red
+                    # Show error/warning messages in red
                     cursor.insertText(text, self.error_style.format)
+            if is_traceback:
+                self.emit(SIGNAL('traceback_available()'))
         elif prompt:
             # Show prompt in green
             cursor.insertText(text, self.prompt_style.format)

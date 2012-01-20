@@ -39,7 +39,7 @@ from spyderlib.qt.compat import to_qvariant
 # Local import
 #TODO: Try to separate this module from spyderlib to create a self
 #      consistent editor module (Qt source code and shell widgets library)
-from spyderlib.baseconfig import get_conf_path, _
+from spyderlib.baseconfig import get_conf_path, _, DEBUG
 from spyderlib.config import CONF, get_font, get_icon, get_image_path
 from spyderlib.utils.qthelpers import (add_actions, create_action, keybinding,
                                        mimedata2url)
@@ -51,8 +51,6 @@ from spyderlib.widgets.sourcecode.base import TextEditBaseWidget
 from spyderlib.widgets.sourcecode import syntaxhighlighters
 
 # For debugging purpose:
-STDOUT = sys.stdout
-DEBUG = False
 LOG_FILENAME = get_conf_path('rope.log')
 
 
@@ -132,7 +130,7 @@ class RopeProject(object):
             if DEBUG:
                 t0 = time.time()
             proposals = rope.contrib.codeassist.code_assist(self.project,
-                                                source_code, offset, resource)
+                                    source_code, offset, resource, maxfixes=3)
             proposals = rope.contrib.codeassist.sorted_proposals(proposals)
             if DEBUG:
                 log_dt(LOG_FILENAME, "code_assist/sorted_proposals", t0)
@@ -157,15 +155,15 @@ class RopeProject(object):
                 t0 = time.time()
             cts = rope.contrib.codeassist.get_calltip(
                             self.project, source_code, offset, resource,
-                            ignore_unknown=False, remove_self=True)
+                            ignore_unknown=False, remove_self=True, maxfixes=3)
             if DEBUG:
                 log_dt(LOG_FILENAME, "get_calltip", t0)
             if cts is not None:
                 while '..' in cts:
                     cts = cts.replace('..', '.')
                 try:
-                    doc_text = rope.contrib.codeassist.get_doc(
-                            self.project, source_code, offset, resource)
+                    doc_text = rope.contrib.codeassist.get_doc(self.project,
+                                    source_code, offset, resource, maxfixes=3)
                     if DEBUG:
                         log_dt(LOG_FILENAME, "get_doc", t0)
                 except Exception, _error:
@@ -194,7 +192,7 @@ class RopeProject(object):
             if DEBUG:
                 t0 = time.time()
             resource, lineno = rope.contrib.codeassist.get_definition_location(
-                            self.project, source_code, offset, resource)
+                    self.project, source_code, offset, resource, maxfixes=3)
             if DEBUG:
                 log_dt(LOG_FILENAME, "get_definition_location", t0)
             if resource is not None:
@@ -467,8 +465,9 @@ class CodeEditor(TextEditBaseWidget):
                  ('css',): (syntaxhighlighters.CssSH, '', None),
                  ('po', 'pot'): (syntaxhighlighters.GetTextSH, '#', None),
                  ('htm', 'html'): (syntaxhighlighters.HtmlSH, '', None),
-                 ('c', 'cpp', 'h', 'hpp', 'cxx'): (syntaxhighlighters.CppSH,
-                                                   '//', None),
+                 ('c', 'cc', 'cpp', 'cxx',
+                  'h', 'hh', 'hpp', 'hxx',
+                  ): (syntaxhighlighters.CppSH, '//', None),
                  ('cl',): (syntaxhighlighters.OpenCLSH, '//', None),
 #                 ('bat', 'cmd', 'nt'): (QsciLexerBatch, 'rem ', None),
 #                 ('properties', 'session', 'ini', 'inf', 'reg', 'url',
@@ -584,6 +583,7 @@ class CodeEditor(TextEditBaseWidget):
 
         self.go_to_definition_enabled = False
         self.close_parentheses_enabled = True
+        self.add_colons_enabled = True
         self.auto_unindent_enabled = True
 
         # Mouse tracking
@@ -744,6 +744,10 @@ class CodeEditor(TextEditBaseWidget):
     def set_close_parentheses_enabled(self, enable):
         """Enable/disable automatic parentheses insertion feature"""
         self.close_parentheses_enabled = enable
+        
+    def set_add_colons_enabled(self, enable):
+        """Enable/disable automatic colons insertion feature"""
+        self.add_colons_enabled = enable
 
     def set_auto_unindent_enabled(self, enable):
         """Enable/disable automatic unindent after else/elif/finally/except"""
@@ -1982,7 +1986,29 @@ class CodeEditor(TextEditBaseWidget):
         self.readonly_menu = QMenu(self)
         add_actions(self.readonly_menu,
                     (self.copy_action, None, selectall_action))
-
+    
+    def __do_insert_colons(self):
+        """Decide if we need to insert a colon after analizying the previous
+        statement"""
+        reserved_words = ['def', 'for', 'if', 'while', 'try', 'with', \
+                          'class', 'else', 'elif', 'except', 'finally']
+        end_chars = [':', '\\', ']', '}']
+        unmatched_brace = False
+        leading_text = self.get_text('sol', 'cursor').strip()
+        line_pos = unicode(self.toPlainText()).index(leading_text)
+        
+        for pos,char in enumerate(leading_text):
+            if char in ['(', '[', '{']:
+                if self.find_brace_match(pos+line_pos, char, True) is None:
+                    unmatched_brace = True
+        
+        if any([leading_text.startswith(w) for w in reserved_words]) and \
+          not any([leading_text.endswith(c) for c in end_chars]) \
+          and not unmatched_brace:
+            return True
+        else:
+            return False
+    
     def keyPressEvent(self, event):
         """Reimplement Qt method"""
         key = event.key()
@@ -1995,7 +2021,11 @@ class CodeEditor(TextEditBaseWidget):
             self.hide_tooltip_if_necessary(key)
         if key in (Qt.Key_Enter, Qt.Key_Return):
             if not shift and not ctrl:
-                if self.is_completion_widget_visible() \
+                if self.add_colons_enabled and self.is_python() and \
+                  self.__do_insert_colons():
+                    self.insert_text(':' + self.get_line_separator())
+                    self.fix_indent()
+                elif self.is_completion_widget_visible() \
                    and self.codecompletion_enter:
                     self.select_completion_list()
                 else:
@@ -2028,7 +2058,8 @@ class CodeEditor(TextEditBaseWidget):
                 elif trailing_spaces and not trailing_text.strip():
                     self.remove_suffix(leading_text[-trailing_spaces:])
                 elif leading_text and trailing_text and \
-                     leading_text[-1]+trailing_text[0] in ('()', '[]', '{}'):
+                     leading_text[-1]+trailing_text[0] in ('()', '[]', '{}',
+                                                           '\'\'', '""'):
                     cursor = self.textCursor()
                     cursor.movePosition(QTextCursor.PreviousCharacter)
                     cursor.movePosition(QTextCursor.NextCharacter,
@@ -2075,16 +2106,38 @@ class CodeEditor(TextEditBaseWidget):
                 self.setTextCursor(cursor)
             else:
                 QPlainTextEdit.keyPressEvent(self, event)
-        elif key in (Qt.Key_ParenRight, Qt.Key_BraceRight, Qt.Key_BracketRight)\
-             and not self.has_selected_text() and self.close_parentheses_enabled \
-             and not self.textCursor().atBlockEnd():
+        elif key in (Qt.Key_ParenRight, Qt.Key_BraceRight, Qt.Key_BracketRight,
+             Qt.Key_QuoteDbl, Qt.Key_Apostrophe) \
+             and not self.has_selected_text() and \
+             self.close_parentheses_enabled:
+            # Don't write closing braces or quotes if they were inserted
+            # automatically. Just move the cursor one position to the
+            # right
             cursor = self.textCursor()
             cursor.movePosition(QTextCursor.NextCharacter,
                                 QTextCursor.KeepAnchor)
             text = unicode(cursor.selectedText())
             if text == {Qt.Key_ParenRight: ')', Qt.Key_BraceRight: '}',
-                        Qt.Key_BracketRight: ']'}[key]:
+                        Qt.Key_BracketRight: ']', Qt.Key_QuoteDbl: '"',
+                        Qt.Key_Apostrophe: '\''}[key]:
                 cursor.clearSelection()
+                self.setTextCursor(cursor)
+            # Automatic insertion of triple double quotes (e.g. for
+            # docstrings)
+            elif key == Qt.Key_QuoteDbl and \
+              self.get_text('sol', 'cursor')[-2:] == '""':
+                self.insert_text('""""')
+                cursor = self.textCursor()
+                cursor.movePosition(QTextCursor.PreviousCharacter,
+                                    QTextCursor.KeepAnchor, 3)
+                cursor.clearSelection()
+                self.setTextCursor(cursor)
+            # Automatic insertion of quotes and double quotes
+            elif key in (Qt.Key_Apostrophe, Qt.Key_QuoteDbl):
+                self.insert_text({Qt.Key_Apostrophe :'\'\'',
+                                  Qt.Key_QuoteDbl: '""'}[key])
+                cursor = self.textCursor()
+                cursor.movePosition(QTextCursor.PreviousCharacter)
                 self.setTextCursor(cursor)
             else:
                 QPlainTextEdit.keyPressEvent(self, event)

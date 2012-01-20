@@ -9,14 +9,13 @@ Editor widget syntax highlighters based on QtGui.QSyntaxHighlighter
 (Python syntax highlighting rules are inspired from idlelib)
 """
 
-import sys, re, keyword, __builtin__
+import re
+import keyword
+import __builtin__
 
 from spyderlib.qt.QtGui import (QColor, QApplication, QFont,
                                 QSyntaxHighlighter, QCursor, QTextCharFormat)
 from spyderlib.qt.QtCore import Qt
-
-# For debugging purpose:
-STDOUT = sys.stdout
 
 
 #==============================================================================
@@ -303,6 +302,9 @@ class PythonSH(BaseSH):
      INSIDE_SQSTRING, INSIDE_DQSTRING) = range(5)
     DEF_TYPES = {"def": OutlineExplorerData.FUNCTION,
                  "class": OutlineExplorerData.CLASS}
+    # Comments suitable for Outline Explorer
+    OECOMMENT = re.compile('^(# ?--[-]+|##[#]+ )[ -]*[^- ]+')
+    
     def __init__(self, parent, font=None, color_scheme='Spyder'):
         BaseSH.__init__(self, parent, font, color_scheme)
         self.import_statements = {}
@@ -358,8 +360,7 @@ class PythonSH(BaseSH):
                     else:
                         self.setFormat(start, end-start, self.formats[key])
                         if key == "comment":
-                            if re.match(r'^#--[-]+[\ -]*?[^- ]+',
-                                        text.lstrip()):
+                            if self.OECOMMENT.match(text.lstrip()):
                                 oedata = OutlineExplorerData()
                                 oedata.text = unicode(text).strip()
                                 oedata.fold_level = start
@@ -754,3 +755,21 @@ class CssSH(BaseWebSH):
     """CSS Syntax Highlighter"""
     PROG = re.compile(make_css_patterns(), re.S)
 
+
+if __name__ == '__main__':
+    # Test Python Outline Explorer comment regexps
+    valid_comments = [
+      '# --- First variant',
+      '#------ 2nd variant',
+      '### 3rd variant'
+    ]
+    invalid_comments = [
+      '#---', '#--------', '#---   ', '# -------'
+    ]
+    for line in valid_comments:
+        if not PythonSH.OECOMMENT.match(line):
+            print "Error matching '%s' as outline comment" % line
+    for line in invalid_comments:
+        if PythonSH.OECOMMENT.match(line):
+            print "Error: '%s' is matched as outline comment" % line
+        

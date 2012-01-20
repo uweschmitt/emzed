@@ -1,9 +1,16 @@
 # -*- coding: utf-8 -*-
+#
+# Copyright © 2011 Pierre Raybaut
+# Licensed under the terms of the MIT License
+# (see spyderlib/__init__.py for details)
+
 """
 Scientific Python startup script
 
 Requires NumPy, SciPy and Matplotlib
 """
+
+from __future__ import division
 
 # Pollute the namespace but also provide MATLAB-like experience:
 from pylab import *  #analysis:ignore
@@ -31,7 +38,9 @@ if os.environ.get('QT_API') != 'pyside':
         print "+ guidata %s, guiqwt %s" % (guidata.__version__,
                                            guiqwt.__version__)
     except ImportError:
-        pass
+        print
+else:
+    print
 
 def setscientific():
     """Set 'scientific' in __builtin__"""

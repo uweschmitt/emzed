@@ -27,9 +27,6 @@ import re
 import os.path as osp
 import shutil
 
-# For debugging purpose:
-STDOUT = sys.stdout
-
 # Local imports
 from spyderlib.utils.qthelpers import create_action, add_actions, file_uri
 from spyderlib.utils import misc, encoding, programs, scm
@@ -204,6 +201,8 @@ class DirView(QTreeView):
         
     def create_file_new_actions(self, fnames):
         """Return actions for submenu 'New...'"""
+        if not fnames:
+            return []
         new_file_act = create_action(self, _("File..."), icon='filenew.png',
                                      triggered=lambda:
                                      self.new_file(fnames[-1]))
@@ -262,7 +261,7 @@ class DirView(QTreeView):
         
         # SCM support is quite limited for now, so we are enabling the SCM
         # related actions only when a single file/folder is selected:
-        dirname = fnames[0] if osp.isdir(fnames[0]) else fnames[0]
+        dirname = fnames[0] if osp.isdir(fnames[0]) else osp.dirname(fnames[0])
         if len(fnames) == 1 and scm.is_scm_repository(dirname):
             scm_ci = create_action(self, _("Commit"),
                                    icon="scm_commit.png",
@@ -304,24 +303,22 @@ class DirView(QTreeView):
         """Create context menu actions"""
         actions = []
         fnames = self.get_selected_filenames()
-        if fnames:
-            new_actions = self.create_file_new_actions(fnames)
-            if len(new_actions) > 1:
-                # Creating a submenu only if there is more than one entry
-                new_act_menu = QMenu(_('New'), self)
-                add_actions(new_act_menu, new_actions)
-                actions.append(new_act_menu)
-            else:
-                actions += new_actions
-        if fnames:
-            import_actions = self.create_file_import_actions(fnames)
-            if len(import_actions) > 1:
-                # Creating a submenu only if there is more than one entry
-                import_act_menu = QMenu(_('Import'), self)
-                add_actions(import_act_menu, import_actions)
-                actions.append(import_act_menu)
-            else:
-                actions += import_actions
+        new_actions = self.create_file_new_actions(fnames)
+        if len(new_actions) > 1:
+            # Creating a submenu only if there is more than one entry
+            new_act_menu = QMenu(_('New'), self)
+            add_actions(new_act_menu, new_actions)
+            actions.append(new_act_menu)
+        else:
+            actions += new_actions
+        import_actions = self.create_file_import_actions(fnames)
+        if len(import_actions) > 1:
+            # Creating a submenu only if there is more than one entry
+            import_act_menu = QMenu(_('Import'), self)
+            add_actions(import_act_menu, import_actions)
+            actions.append(import_act_menu)
+        else:
+            actions += import_actions
         if actions:
             actions.append(None)
         if fnames:
@@ -352,6 +349,8 @@ class DirView(QTreeView):
             self.clicked()
         elif event.key() == Qt.Key_F2:
             self.rename()
+        elif event.key() == Qt.Key_Delete:
+            self.delete()
         else:
             QTreeView.keyPressEvent(self, event)
 
@@ -400,7 +399,8 @@ class DirView(QTreeView):
         if fnames is None:
             fnames = self.get_selected_filenames()
         for fname in fnames:
-            if osp.splitext(fname)[1] in self.valid_types:
+            ext = osp.splitext(fname)[1]
+            if osp.isfile(fname) and ext in self.valid_types:
                 self.parent_widget.sig_open_file.emit(fname)
             else:
                 self.open_outside_spyder([fname])
@@ -509,7 +509,7 @@ class DirView(QTreeView):
                 misc.rename_file(fname, path)
                 self.parent_widget.emit( \
                      SIGNAL("renamed(QString,QString)"), fname, path)
-                return True
+                return path
             except EnvironmentError, error:
                 QMessageBox.critical(self, _("Rename"),
                             _("<b>Unable to rename file <i>%s</i></b>"

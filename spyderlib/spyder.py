@@ -42,10 +42,6 @@ import re
 # Keeping a reference to the original sys.exit before patching it
 ORIGINAL_SYS_EXIT = sys.exit
 
-# For debugging purpose only
-STDOUT = sys.stdout
-STDERR = sys.stderr
-
 # Windows platforms only: support for hiding the attached console window
 set_attached_console_visible = None
 is_attached_console_visible = None
@@ -118,7 +114,7 @@ from spyderlib.utils.qthelpers import (create_action, add_actions, get_std_icon,
                                        keybinding, qapplication,
                                        create_python_script_action, file_uri)
 from spyderlib.baseconfig import (get_conf_path, _, get_module_data_path,
-                                  get_module_source_path)
+                                  get_module_source_path, STDOUT, STDERR)
 from spyderlib.config import (get_icon, get_image_path, CONF, get_shortcut,
                               EDIT_EXT, IMPORT_EXT)
 from spyderlib.otherplugins import get_spyderplugins_mods
@@ -144,13 +140,13 @@ def get_python_doc_path():
         python_chm = [path for path in os.listdir(doc_path)
                       if re.match(r"(?i)Python[0-9]{3}.chm", path)]
         if python_chm:
-            return osp.join(doc_path, python_chm[0])
+            return file_uri(osp.join(doc_path, python_chm[0]))
     else:
         vinf = sys.version_info
         doc_path = '/usr/share/doc/python%d.%d/html' % (vinf[0], vinf[1])
     python_doc = osp.join(doc_path, "index.html")
     if osp.isfile(python_doc):
-        return python_doc
+        return file_uri(python_doc)
 
 
 #TODO: Improve the stylesheet below for separator handles to be visible
@@ -359,6 +355,7 @@ class MainWindow(QMainWindow):
         self.already_closed = False
         self.is_starting_up = True
         
+        self.floating_dockwidgets = []
         self.window_size = None
         self.window_position = None
         self.state_before_maximizing = None
@@ -572,10 +569,16 @@ class MainWindow(QMainWindow):
                                           'enable this feature')
             # Qt-related tools
             additact = [None]
-            qtdact = create_program_action(self, _("Qt Designer"),
-                                           'qtdesigner.png', "designer")
-            qtlact = create_program_action(self, _("Qt Linguist"),
+            for name in ("designer-qt4", "designer"):
+                qtdact = create_program_action(self, _("Qt Designer"),
+                                               'qtdesigner.png', name)
+                if qtdact:
+                    break
+            for name in ("linguist-qt4", "linguist"):
+                qtlact = create_program_action(self, _("Qt Linguist"),
                                                'qtlinguist.png', "linguist")
+                if qtlact:
+                    break
             args = ['-no-opengl'] if os.name == 'nt' else []
             qteact = create_python_script_action(self,
                                    _("Qt examples"), 'qt.png', "PyQt4",
@@ -589,15 +592,15 @@ class MainWindow(QMainWindow):
                 
             # Sift
             if is_module_installed('guidata') \
-                and is_module_installed('guiqwt'):
-                 from guidata import configtools
-                 from guiqwt import config  # (loading icons) analysis:ignore
-                 sift_icon = configtools.get_icon('sift.svg')
-                 sift_act = create_python_script_action(self, _("Sift"),
-                                sift_icon, "guiqwt", osp.join("tests", "sift"))
-                 if sift_act:
-                     self.external_tools_menu_actions += [None, sift_act]
-
+               and is_module_installed('guiqwt'):
+                from guidata import configtools
+                from guiqwt import config  # (loading icons) analysis:ignore
+                sift_icon = configtools.get_icon('sift.svg')
+                sift_act = create_python_script_action(self, _("Sift"),
+                               sift_icon, "guiqwt", osp.join("tests", "sift"))
+                if sift_act:
+                    self.external_tools_menu_actions += [None, sift_act]
+                
             # ViTables
             vitables_act = create_program_action(self, _("ViTables"),
                                                  'vitables.png', "vitables")
@@ -692,8 +695,6 @@ class MainWindow(QMainWindow):
             self.variableexplorer = VariableExplorer(self)
             self.variableexplorer.register_plugin()
 
-        self.extconsole.open_interpreter_at_startup()
-
         if not self.light:
             nsb = self.variableexplorer.add_shellwidget(self.console.shell)
             self.connect(self.console.shell, SIGNAL('refresh()'),
@@ -756,9 +757,10 @@ class MainWindow(QMainWindow):
                                 icon = get_icon(ext[1:]+".png")
                             else:
                                 icon = get_std_icon("DirIcon")
+                            path = file_uri(path)
                             action = create_action(self, text, icon=icon,
                                                    triggered=lambda path=path:
-                                                             os.startfile(path))
+                                                             start_file(path))
                             self.help_menu_actions.append(action)
                             break
                 self.help_menu_actions.append(None)
@@ -904,6 +906,21 @@ class MainWindow(QMainWindow):
         self.debug_print("*** End of MainWindow setup ***")
         self.is_starting_up = False
         
+    def post_visible_setup(self):
+        """Actions to be performed only after the main window's `show` method 
+        was triggered"""
+        self.emit(SIGNAL('restore_scrollbar_position()'))
+        self.extconsole.open_interpreter_at_startup()
+        self.extconsole.setMinimumHeight(0)
+        if self.projectexplorer is not None:
+            self.projectexplorer.check_for_io_errors()
+        # [Workaround for Issue 880]
+        # QDockWidget objects are not painted if restored as floating 
+        # windows, so we must dock them before showing the mainwindow,
+        # then set them again as floating windows here.
+        for widget in self.floating_dockwidgets:
+            widget.setFloating(True)
+        
     def load_window_settings(self, prefix, default=False, section='main'):
         """Load window layout settings from userconfig-based configuration
         with *prefix*, under *section*
@@ -948,6 +965,13 @@ class MainWindow(QMainWindow):
             # Window layout
             if hexstate:
                 self.restoreState( QByteArray().fromHex(str(hexstate)) )
+                # [Workaround for Issue 880]
+                # QDockWidget objects are not painted if restored as floating 
+                # windows, so we must dock them before showing the mainwindow.
+                for widget in self.children():
+                    if isinstance(widget, QDockWidget) and widget.isFloating():
+                        self.floating_dockwidgets.append(widget)
+                        widget.setFloating(False)
             # Is fullscreen?
             if is_fullscreen:
                 self.setWindowState(Qt.WindowFullScreen)
@@ -997,6 +1021,7 @@ class MainWindow(QMainWindow):
                                          orientation)
             for first, second in ((self.console, self.extconsole),
                                   (self.extconsole, self.historylog),
+
                                   (self.inspector, self.variableexplorer),
                                   (self.variableexplorer, self.onlinehelp),
                                   (self.onlinehelp, self.explorer),
@@ -1241,11 +1266,9 @@ class MainWindow(QMainWindow):
         self.maximize_action.setToolTip(tip)
         
     def maximize_dockwidget(self, restore=False):
-        """
-        Shortcut: Ctrl+Alt+Shift+M
+        """Shortcut: Ctrl+Alt+Shift+M
         First call: maximize current dockwidget
-        Second call (or restore=True): restore original window layout
-        """
+        Second call (or restore=True): restore original window layout"""
         if self.state_before_maximizing is None:
             if restore:
                 return
@@ -1264,6 +1287,11 @@ class MainWindow(QMainWindow):
             #  and the latter won't be refreshed if not visible)
             self.last_plugin.show()
             self.last_plugin.visibility_changed(True)
+            if self.last_plugin is self.editor:
+                # Automatically show the outline if the editor was maximized:
+                self.addDockWidget(Qt.RightDockWidgetArea,
+                                   self.outlineexplorer.dockwidget)
+                self.outlineexplorer.dockwidget.show()
         else:
             # Restore original layout (before maximizing current dockwidget)
             self.last_plugin.dockwidget.setWidget(self.last_plugin)
@@ -1324,11 +1352,12 @@ class MainWindow(QMainWindow):
             _("About %s") % "Spyder",
             """<b>%s %s</b>
             <br>Scientific PYthon Development EnviRonment
-            <p>Copyright &copy; 2009-2010 Pierre Raybaut
+            <p>Copyright &copy; 2009-2011 Pierre Raybaut
             <br>Licensed under the terms of the MIT License
-            <p>Created, developed and maintained by Pierre Raybaut
-            <br>Many thanks to Christopher Brown, Alexandre Radicchi,
-            Ludovic Aubry and all the Spyder beta-testers and regular users.
+            <p>Created by Pierre Raybaut
+            <br>Developed and maintained by the 
+            <a href="%s/people/list">Spyder Development Team</a>
+            <br>Many thanks to all the Spyder beta-testers and regular users.
             <p>Source code editor: Python code real-time analysis is powered by 
             %spyflakes %s%s (&copy; 2005 
             <a href="http://www.divmod.com/">Divmod, Inc.</a>) and other code 
@@ -1345,7 +1374,7 @@ class MainWindow(QMainWindow):
             <p>This project is part of 
             <a href="http://www.pythonxy.com">Python(x,y) distribution</a>
             <p>Python %s, Qt %s, %s %s on %s"""
-            % ("Spyder", __version__,
+            % ("Spyder", __version__, __project_url__,
                  "<span style=\'color: #444444\'><b>",
                  pyflakes_version,
                  "</b></span>",
@@ -1497,6 +1526,7 @@ Please provide any additional information below.
              and ext in ('.spydata', '.mat', '.npy', '.h5'):
             self.variableexplorer.import_data(fname)
         else:
+            fname = file_uri(fname)
             start_file(fname)
             
     def new_ipython_frontend(self, args=None,
@@ -1512,7 +1542,8 @@ Please provide any additional information below.
                 if valid:
                     args = unicode(args)
                     if re.match('^--existing --shell=(\d+) --iopub=(\d+) '\
-                                '--stdin=(\d+) --hb=(\d+)$', args):
+                                '--stdin=(\d+) --hb=(\d+)$', args)\
+                       or re.match('^--existing kernel-(\d+).json', args):
                         kernel_name = args
                         break
                 else:
@@ -1533,6 +1564,7 @@ Please provide any additional information below.
             sys.path.insert(1, path)
 
     def remove_path_from_sys_path(self):
+
         """Remove Spyder path from sys.path"""
         sys_path = sys.path
         while sys_path[1] in self.get_spyder_pythonpath():
@@ -1798,8 +1830,7 @@ def run_spyder(app, options):
                 pass
         raise
     main.show()
-    main.emit(SIGNAL('restore_scrollbar_position()'))
-    main.extconsole.setMinimumHeight(0)
+    main.post_visible_setup()
     app.exec_()
     return main
 

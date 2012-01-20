@@ -15,7 +15,6 @@ from spyderlib.qt.QtCore import Qt, SIGNAL, QFileInfo, Slot, Signal
 from spyderlib.qt.compat import getexistingdirectory
 
 import os
-import sys
 import re
 import shutil
 import cPickle
@@ -25,16 +24,11 @@ import xml.etree.ElementTree as ElementTree
 # Local imports
 from spyderlib.utils import misc
 from spyderlib.utils.qthelpers import get_std_icon, create_action
-from spyderlib.baseconfig import _
+from spyderlib.baseconfig import _, STDERR
 from spyderlib.config import get_icon, get_image_path
 from spyderlib.widgets.explorer import FilteredDirView, listdir, fixpath
 from spyderlib.widgets.formlayout import fedit
 from spyderlib.widgets.pathmanager import PathManager
-
-
-# For debugging purpose:
-STDOUT = sys.stdout
-STDERR = sys.stderr
 
 
 def has_children_files(path, include, exclude, show_all):
@@ -78,6 +72,7 @@ class Project(object):
         self.related_projects = [] # storing project path, not project objects
         self.pythonpath = []
         self.opened = True
+        self.ioerror_flag = False
 
     def set_root_path(self, root_path):
         """Set workspace root path"""
@@ -91,6 +86,15 @@ class Project(object):
             if not osp.isdir(self.root_path):
                 os.mkdir(self.root_path)
             self.save()
+            
+    def rename(self, new_name):
+        """Rename project and rename its root path accordingly"""
+        old_name = self.name
+        self.name = new_name
+        pypath = self.relative_pythonpath
+        self.root_path = self.root_path[:-len(old_name)]+new_name
+        self.relative_pythonpath = pypath
+        self.save()
 
     def _get_relative_pythonpath(self):
         """Return PYTHONPATH list as relative paths"""
@@ -112,7 +116,11 @@ class Project(object):
         
     def load(self):
         """Load project data"""
-        data = cPickle.loads(file(self.__get_project_config_path(), 'U').read())
+        try:
+            data = cPickle.loads(file(self.__get_project_config_path(),
+                                      'U').read())
+        except (IOError, OSError):
+            self.ioerror_flag = True
         # Compatibilty with old project explorer file format:
         if 'relative_pythonpath' not in data:
             print >>STDERR, "Warning: converting old configuration file " \
@@ -128,7 +136,10 @@ class Project(object):
         data = {}
         for attr in self.CONFIG_ATTR:
             data[attr] = getattr(self, attr)
-        cPickle.dump(data, file(self.__get_project_config_path(), 'w'))
+        try:
+            cPickle.dump(data, file(self.__get_project_config_path(), 'w'))
+        except (IOError, OSError):
+            self.ioerror_flag = True
         
     def delete(self):
         """Delete project"""
@@ -215,6 +226,7 @@ class Workspace(object):
         self.name = None
         self.root_path = None
         self.projects = []
+        self.ioerror_flag = False
         
     def _get_project_paths(self):
         """Return workspace projects root path list"""
@@ -260,7 +272,10 @@ class Workspace(object):
     def load(self):
         """Load project data"""
         fdesc = file(self.__get_workspace_config_path(), 'U')
-        data = cPickle.loads(fdesc.read())
+        try:
+            data = cPickle.loads(fdesc.read())
+        except (IOError, OSError):
+            self.ioerror_flag = True
         for attr in self.CONFIG_ATTR:
             setattr(self, attr, data[attr])
         self.save()
@@ -270,13 +285,31 @@ class Workspace(object):
         data = {}
         for attr in self.CONFIG_ATTR:
             data[attr] = getattr(self, attr)
-        cPickle.dump(data, file(self.__get_workspace_config_path(), 'w'))
+        try:
+            cPickle.dump(data, file(self.__get_workspace_config_path(), 'w'))
+        except (IOError, OSError):
+            self.ioerror_flag = True
         
     def delete(self):
         """Delete workspace"""
         os.remove(self.__get_workspace_config_path())
         
     #------Misc.
+    def get_ioerror_warning_message(self):
+        """Return a warning message if IOError exception was raised when 
+        loading/saving the workspace or one of its projects"""
+        txt = ""
+        projlist = [_p.name for _p in self.projects if _p.ioerror_flag]
+        if self.ioerror_flag:
+            txt += _("its own configuration file")
+            if projlist:
+                txt += _(" and ")
+            else:
+                txt += "."
+        if projlist:
+            txt += _("the following projects:<br>%s") % ", ".join(projlist)
+        return txt
+        
     def is_file_in_workspace(self, fname):
         """Return True if file *fname* is in one of the projects"""
         return any([proj.is_file_in_project(fname) for proj in self.projects])
@@ -365,7 +398,7 @@ class Workspace(object):
             if old_name in relproj:
                 relproj[relproj.index(old_name)] = new_name
                 proj.set_related_projects(relproj)
-        project.set_name(new_name)
+        project.rename(new_name)
         self.save()
         
     def get_other_projects(self, project):
@@ -456,14 +489,6 @@ class ExplorerTreeWidget(FilteredDirView):
         # Enable drag & drop events
         self.setDragEnabled(True)
         self.setDragDropMode(FilteredDirView.DragDrop)
-                
-    #------QWidget API----------------------------------------------------------
-    def keyPressEvent(self, event):
-        """Reimplement Qt method"""
-        if event.key() == Qt.Key_F2:
-            self.rename(self.currentItem())
-        else:
-            FilteredDirView.keyPressEvent(self, event)
 
     #------DirView API----------------------------------------------------------
     def create_file_new_actions(self, fnames):
@@ -585,6 +610,16 @@ class ExplorerTreeWidget(FilteredDirView):
         """Reset file system model icon provider
         The purpose of this is to refresh files/directories icons"""
         self.fsmodel.setIconProvider(IconProvider(self))
+
+    def check_for_io_errors(self):
+        """Eventually show a warning message box if IOError exception was
+        raised when loading/saving the workspace or one of its projects"""
+        txt = self.workspace.get_ioerror_warning_message()
+        if txt:
+            QMessageBox.critical(self, _('Workspace'),
+                    _("The workspace was unable to load or save %s<br><br>"
+                      "Please check if you have the permission to write the "
+                      "associated configuration files.") % txt)
         
     def set_workspace(self, root_path):
         """Set project explorer's workspace directory"""
@@ -758,8 +793,13 @@ class ExplorerTreeWidget(FilteredDirView):
                 folder = self.get_project_path_from_name(name)
                 self.add_project(folder)
         else:
-            QMessageBox.critical(self, title, _("The current workspace has "
-                                                "not been configured yet"))
+            answer = QMessageBox.critical(self, title,
+                                          _("The current workspace has "
+                                            "not been configured yet.\n"
+                                            "Do you want to do this now?"),
+                                          QMessageBox.Yes|QMessageBox.Cancel)
+            if answer == QMessageBox.Yes:
+                self.emit(SIGNAL('select_workspace()'))
         
     def _select_existing_directory(self):
         """Select existing source code directory,
@@ -858,14 +898,14 @@ class ExplorerTreeWidget(FilteredDirView):
 
     def rename_file(self, fname):
         """Rename file"""
-        project = self.get_source_project(fname)
-        if project.is_root_path(fname):
-            name, valid = QInputDialog.getText(self, _('Rename'),
-                          _('New name:'), QLineEdit.Normal, project.name)
-            if valid:
-                self.workspace.rename_project(project, unicode(name))
-        elif FilteredDirView.rename_file(self, fname):
-            self.remove_path_from_project_pythonpath(project, fname)
+        path = FilteredDirView.rename_file(self, fname)
+        if path:
+            project = self.get_source_project(fname)
+            if project.is_root_path(fname):
+                self.workspace.rename_project(project, osp.basename(path))
+                self.set_folder_names(self.workspace.get_folder_names())
+            else:
+                self.remove_path_from_project_pythonpath(project, fname)
     
     def remove_tree(self, dirname):
         """Remove whole directory tree"""
@@ -1059,14 +1099,17 @@ class ExplorerTreeWidget(FilteredDirView):
 class WorkspaceSelector(QWidget):
     """Workspace selector widget"""
     TITLE = _('Select an existing workspace directory, or create a new one')
-    WHAT = _("What is the workspace?")
-    TIP = _("A Spyder project is a folder with source code files (and any "
-            "other kind of related files) and a configuration file (named "
-            "<b>.spyderproject</b>) which stores the project settings "
-            "(PYTHONPATH, related projects, ...).<br><br>"
-            "The workspace is a directory, which contains Spyder projects "
-            "(<u>top level</u> subdirectories) and a configuration file "
-            "(named <b>.spyderworkspace</b>). ")
+    TIP = _("<u><b>What is the workspace?</b></u>"
+            "<br><br>"
+            "A <b>Spyder workspace</b> is a directory on your filesystem that "
+            "contains Spyder projects and <b>.spyderworkspace</b> configuration "
+            "file."
+            "<br><br>"
+            "A <b>Spyder project</b> is a directory with source code (and other "
+            "related files) and a configuration file (named "
+            "<b>.spyderproject</b>) with project settings (PYTHONPATH, linked "
+            "projects, ...).<br>"
+            )
 
     def __init__(self, parent):
         super(WorkspaceSelector, self).__init__(parent)
@@ -1084,7 +1127,6 @@ class WorkspaceSelector(QWidget):
         self.line_edit = QLineEdit()
         self.line_edit.setAlignment(Qt.AlignRight)
         self.line_edit.setToolTip(_("This is the current workspace directory")\
-                                  +'<br><br>'+'<u><b>'+self.WHAT+'</b></u>'\
                                   +'<br><br>'+self.TIP)
         self.line_edit.setReadOnly(True)
         self.line_edit.setDisabled(True)
@@ -1101,7 +1143,7 @@ class WorkspaceSelector(QWidget):
     def select_directory(self):
         """Select directory"""
         if self.first_time:
-            QMessageBox.information(self, self.WHAT, self.TIP)
+            QMessageBox.information(self, self.TITLE, self.TIP)
             self.first_time = False
         basedir = unicode(self.line_edit.text())
         if not osp.isdir(basedir):
@@ -1158,6 +1200,8 @@ class ProjectExplorerWidget(QWidget):
         self.treewidget = ExplorerTreeWidget(self)
         self.treewidget.setup(name_filters=name_filters,
                               show_all=show_all, valid_types=valid_types)
+        self.connect(self.treewidget, SIGNAL('select_workspace()'),
+                     self.selector.select_directory)
         
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -1171,6 +1215,11 @@ class ProjectExplorerWidget(QWidget):
         if path is not None and osp.isdir(path):
             self.treewidget.set_workspace(path)
             self.selector.set_workspace(path)
+    
+    def check_for_io_errors(self):
+        """Check for I/O errors that may occured when loading/saving 
+        projects or the workspace itself and warn the user"""
+        self.treewidget.check_for_io_errors()
             
     def get_workspace(self):
         """Return current workspace path"""

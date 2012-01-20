@@ -13,16 +13,14 @@
 
 from spyderlib.qt.QtGui import (QVBoxLayout, QMessageBox, QInputDialog,
                                 QLineEdit, QPushButton, QGroupBox, QLabel,
-                                QTabWidget, QFontComboBox)
+                                QTabWidget, QFontComboBox, QHBoxLayout)
 from spyderlib.qt.QtCore import SIGNAL, Qt
 from spyderlib.qt.compat import getopenfilename
 
 import sys
 import os
 import os.path as osp
-
-# For debugging purpose:
-STDOUT = sys.stdout
+import imp
 
 # Local imports
 from spyderlib.baseconfig import _, SCIENTIFIC_STARTUP
@@ -66,10 +64,31 @@ class ExternalConsoleConfigPage(PluginConfigPage):
                             'max_line_count', min_=0, max_=1000000, step=100,
                             tip=_("Set maximum line count"))
         wrap_mode_box = newcb(_("Wrap lines"), 'wrap')
+        merge_channels_box = newcb(
+               _("Merge process standard output/error channels"),
+               'merge_output_channels',
+               tip=_("Merging the output channels of the process means that\n"
+                     "the standard error won't be written in red anymore,\n"
+                     "but this has the effect of speeding up display.\n\n"
+                     "This option has no effect on IPython."))
+        colorize_sys_stderr_box = newcb(
+               _("Colorize standard error channel using ANSI escape codes"),
+               'colorize_sys_stderr',
+               tip=_("This method is the only way to have colorized standard\n"
+                     "error channel when the output channels have been "
+                     "merged.\n\nThis option has no effect on IPython."))
+        self.connect(merge_channels_box, SIGNAL("toggled(bool)"),
+                     colorize_sys_stderr_box.setEnabled)
+        self.connect(merge_channels_box, SIGNAL("toggled(bool)"),
+                     colorize_sys_stderr_box.setChecked)
+        colorize_sys_stderr_box.setEnabled(
+                                    self.get_option('merge_output_channels'))
         
         display_layout = QVBoxLayout()
         display_layout.addWidget(buffer_spin)
         display_layout.addWidget(wrap_mode_box)
+        display_layout.addWidget(merge_channels_box)
+        display_layout.addWidget(colorize_sys_stderr_box)
         display_group.setLayout(display_layout)
         
         # Background Color Group
@@ -119,10 +138,9 @@ class ExternalConsoleConfigPage(PluginConfigPage):
 
         # UMD Group
         umd_group = QGroupBox(_("User Module Deleter (UMD)"))
-        umd_label = QLabel(_("UMD forces Python to reload modules "
-                             "imported when executing a script in the "
-                             "external console with the 'runfile' function"))
-        umd_label.setWordWrap(True)
+        umd_label = QLabel(_("UMD forces Python to reload modules which were "
+                             "imported when executing a \nscript in the "
+                             "external console with the 'runfile' function."))
         umd_enabled_box = newcb(_("Enable UMD"), 'umd/enabled',
                                 msg_if_enabled=True, msg_warning=_(
                         "This option will enable the User Module Deleter (UMD) "
@@ -180,7 +198,13 @@ class ExternalConsoleConfigPage(PluginConfigPage):
                               'open_python_at_startup')
         ipystartup_box = newcb(_("Open an IPython interpreter at startup"),
                                'open_ipython_at_startup')
-        ipystartup_box.setEnabled(ipython_is_installed)
+        is_ipython_010 = programs.is_module_installed('IPython', '0.10')
+        ipystartup_box.setEnabled(is_ipython_010)
+        if not is_ipython_010:
+            ipystartup_box.setToolTip(
+                        _("This option is not available for IPython\n"
+                          "versions which are not fully supported\n"
+                          "through Spyder's console (i.e. IPython v0.11+)."))
         
         startup_layout = QVBoxLayout()
         startup_layout.addWidget(pystartup_box)
@@ -190,8 +214,9 @@ class ExternalConsoleConfigPage(PluginConfigPage):
         # PYTHONSTARTUP replacement
         pystartup_group = QGroupBox(_("PYTHONSTARTUP replacement"))
         pystartup_label = QLabel(_("This option will override the "
-                                   "PYTHONSTARTUP environment variable."))
-        pystartup_label.setWordWrap(True)
+                                   "PYTHONSTARTUP environment variable which\n"
+                                   "defines the script to be executed during "
+                                   "the Python interpreter startup."))
         default_radio = self.create_radiobutton(
                                         _("Default PYTHONSTARTUP script"),
                                         'pythonstartup/default', True)
@@ -233,29 +258,62 @@ class ExternalConsoleConfigPage(PluginConfigPage):
         monitor_layout.addWidget(monitor_box)
         monitor_group.setLayout(monitor_layout)
         
+        # Qt Group
+        # Do not test if PyQt4 or PySide is installed with the function 
+        # spyderlib.utils.programs.is_module_installed because it will 
+        # fail (both libraries can't be imported at the same time):
+        try:
+            imp.find_module('PyQt4')
+            has_pyqt4 = True
+        except ImportError:
+            has_pyqt4 = False
+        try:
+            imp.find_module('PySide')
+            has_pyside = True
+        except ImportError:
+            has_pyside = False
+        opts = []
+        if has_pyqt4:
+            opts.append( ('PyQt4', 'pyqt') )
+        if has_pyside:
+            opts.append( ('PySide', 'pyside') )
+        qt_group = QGroupBox(_("Qt (PyQt/PySide)"))
+        qt_setapi_box = self.create_combobox(
+                         _("Qt-Python bindings library selection:"),
+                         [(_("Default library"), 'default')]+opts,
+                         'qt/api', default='default', tip=_(
+"""This option will act on libraries such as Matplotlib, guidata or ETS"""))
+        qt_hook_box = newcb(_("Install Spyder's input hook for Qt"),
+                              'qt/install_inputhook',
+                              tip=_(
+"""PyQt installs an input hook that allows creating and interacting
+with Qt widgets in an interactive interpreter without blocking it. 
+On Windows platforms, it is strongly recommended to replace it by Spyder's. 
+Regarding PySide, note that it does not install an input hook, so it is 
+required to enable this feature in order to be able to manipulate PySide/Qt 
+objects interactively. Note that this feature requires the monitor to be 
+enabled and that it has no effect in IPython."""))
+        
+        qt_layout = QVBoxLayout()
+        qt_layout.addWidget(qt_setapi_box)
+        qt_layout.addWidget(qt_hook_box)
+        qt_group.setLayout(qt_layout)
+        qt_group.setEnabled(has_pyqt4 or has_pyside)
+        
         # PyQt Group
         pyqt_group = QGroupBox(_("PyQt"))
         pyqt_setapi_box = self.create_combobox(
                 _("API selection for QString and QVariant objects:"),
                 ((_("Default API"), 0), (_("API #1"), 1), (_("API #2"), 2)),
-                'pyqt_api', default=0, tip=_(
+                'pyqt/api_version', default=0, tip=_(
 """PyQt API #1 is the default API for Python 2. PyQt API #2 is the default 
 API for Python 3 and is compatible with PySide.
 Note that switching to API #2 may require to enable the Matplotlib patch."""))
-        pyqt_hook_box = newcb(_("Replace PyQt input hook by Spyder's"),
-                              'replace_pyqt_inputhook',
-                              tip=_(
-"""PyQt installs an input hook that allows creating and interacting
-with Qt widgets in an interactive interpreter without blocking it. 
-On Windows platforms, it is strongly recommended to replace it by Spyder's
-(note that this feature requires the monitor to be enabled and 
-that it has no effect in IPython)."""))
         pyqt_ignore_api_box = newcb(_("Ignore API change errors (sip.setapi)"),
-                                    'ignore_sip_setapi_errors', tip=_(
+                                    'pyqt/ignore_sip_setapi_errors', tip=_(
 """Enabling this option will ignore errors when changing PyQt API.
 As PyQt does not support dynamic API changes, it is strongly recommended
-to use this feature wisely, e.g. for debugging purpose.
-"""))
+to use this feature wisely, e.g. for debugging purpose."""))
         try:
             from sip import setapi #analysis:ignore
         except ImportError:
@@ -265,10 +323,9 @@ to use this feature wisely, e.g. for debugging purpose.
         pyqt_layout = QVBoxLayout()
         pyqt_layout.addWidget(pyqt_setapi_box)
         pyqt_layout.addWidget(pyqt_ignore_api_box)
-        if os.name == 'nt':
-            pyqt_layout.addWidget(pyqt_hook_box)
         pyqt_group.setLayout(pyqt_layout)
-        pyqt_group.setEnabled(programs.is_module_installed('PyQt4'))
+        if has_pyqt4:
+            qt_layout.addWidget(pyqt_group)
         
         # IPython Group
         ipython_group = QGroupBox(
@@ -294,29 +351,41 @@ to use this feature wisely, e.g. for debugging purpose.
         
         # Matplotlib Group
         mpl_group = QGroupBox(_("Matplotlib"))
-        mpl_label = QLabel(_("Patching Matplotlib library will add a button "
-                             "to customize figure options (Qt4Agg only) and "
-                             "allows to change the GUI backend."))
-        mpl_label.setWordWrap(True)
-        mpl_patch_box = newcb(_("Patch Matplotlib figures"),
-                              'mpl_patch/enabled')
-        mpl_backend_edit = self.create_lineedit(_("Matplotlib backend "
-                                                  "(default: Qt4Agg):"),
-                                                'mpl_patch/backend', "Qt4Agg",
-                                                _("Set the GUI toolkit "
-                                                  "used by Matplotlib to "
-                                                  "show figures"),
-                                                alignment=Qt.Vertical)
-        self.connect(mpl_patch_box, SIGNAL("toggled(bool)"),
+        mpl_backend_box = newcb('', 'matplotlib/backend/enabled', True)
+        mpl_backend_edit = self.create_lineedit(_("GUI backend:"),
+                                'matplotlib/backend/value', "Qt4Agg",
+                                _("Set the GUI toolkit used by Matplotlib to "
+                                  "show figures (default: Qt4Agg)"),
+                                alignment=Qt.Horizontal)
+        self.connect(mpl_backend_box, SIGNAL("toggled(bool)"),
                      mpl_backend_edit.setEnabled)
-        mpl_backend_edit.setEnabled(self.get_option('mpl_patch/enabled'))
+        mpl_backend_layout = QHBoxLayout()
+        mpl_backend_layout.addWidget(mpl_backend_box)
+        mpl_backend_layout.addWidget(mpl_backend_edit)
+        mpl_backend_edit.setEnabled(
+                                self.get_option('matplotlib/backend/enabled'))
+        mpl_patch_box = newcb(_("Patch Matplotlib figures"),
+                              'matplotlib/patch', False)
+        mpl_patch_label = QLabel(_("Patching Matplotlib library will add a "
+                                   "button to customize figure options "
+                                   "(Qt4Agg only) and fix some issues."))
+        mpl_patch_label.setWordWrap(True)
+        self.connect(mpl_patch_box, SIGNAL("toggled(bool)"),
+                     mpl_patch_label.setEnabled)
+        
+        mpl_installed = programs.is_module_installed('matplotlib')
+        if mpl_installed:
+            from spyderlib import mpl_patch
+            if not mpl_patch.is_available():
+                mpl_patch_box.hide()
+                mpl_patch_label.hide()
         
         mpl_layout = QVBoxLayout()
-        mpl_layout.addWidget(mpl_label)
+        mpl_layout.addLayout(mpl_backend_layout)
         mpl_layout.addWidget(mpl_patch_box)
-        mpl_layout.addWidget(mpl_backend_edit)
+        mpl_layout.addWidget(mpl_patch_label)
         mpl_group.setLayout(mpl_layout)
-        mpl_group.setEnabled(programs.is_module_installed('matplotlib'))
+        mpl_group.setEnabled(mpl_installed)
         
         # ETS Group
         ets_group = QGroupBox(_("Enthought Tool Suite"))
@@ -324,9 +393,8 @@ to use this feature wisely, e.g. for debugging purpose.
                              "PyQt4 (qt4) and wxPython (wx) graphical "
                              "user interfaces."))
         ets_label.setWordWrap(True)
-        ets_edit = self.create_lineedit(_("ETS_TOOLKIT (default value: qt4):"),
-                                        'ets_backend', default='qt4',
-                                        alignment=Qt.Vertical)
+        ets_edit = self.create_lineedit(_("ETS_TOOLKIT:"), 'ets_backend',
+                                        default='qt4', alignment=Qt.Horizontal)
         
         ets_layout = QVBoxLayout()
         ets_layout.addWidget(ets_label)
@@ -344,8 +412,8 @@ to use this feature wisely, e.g. for debugging purpose.
         tabs.addTab(self.create_tab(pyexec_group, startup_group,
                                     pystartup_group, umd_group),
                     _("Advanced settings"))
-        tabs.addTab(self.create_tab(pyqt_group, ipython_group, mpl_group,
-                                    ets_group),
+        tabs.addTab(self.create_tab(qt_group, ipython_group,
+                                    mpl_group, ets_group),
                     _("External modules"))
         
         vlayout = QVBoxLayout()
@@ -362,7 +430,6 @@ class ExternalConsole(SpyderPluginWidget):
     def __init__(self, parent, light_mode):
         SpyderPluginWidget.__init__(self, parent)
         self.light_mode = light_mode
-        self.commands = []
         self.tabwidget = None
         self.menu_actions = None
         
@@ -378,7 +445,7 @@ class ExternalConsole(SpyderPluginWidget):
         try:
             from sip import setapi #analysis:ignore
         except ImportError:
-            self.set_option('ignore_sip_setapi_errors', False)
+            self.set_option('pyqt/ignore_sip_setapi_errors', False)
 
         scientific = programs.is_module_installed('numpy') and\
                      programs.is_module_installed('scipy') and\
@@ -598,14 +665,21 @@ class ExternalConsole(SpyderPluginWidget):
             else:
                 pythonstartup = self.get_option('pythonstartup', None)
             monitor_enabled = self.get_option('monitor/enabled')
-            mpl_patch_enabled = self.get_option('mpl_patch/enabled')
-            mpl_backend = self.get_option('mpl_patch/backend')
+            mpl_patch_enabled = self.get_option('matplotlib/patch')
+            if self.get_option('matplotlib/backend/enabled'):
+                mpl_backend = self.get_option('matplotlib/backend/value')
+            else:
+                mpl_backend = None
             ets_backend = self.get_option('ets_backend', 'qt4')
-            pyqt_api = self.get_option('pyqt_api', 0)
-            replace_pyqt_inputhook = self.get_option('replace_pyqt_inputhook',
-                                                     os.name == 'nt')
+            qt_api = self.get_option('qt/api')
+            if qt_api not in ('pyqt', 'pyside'):
+                qt_api = None
+            install_qt_inputhook = self.get_option('qt/install_inputhook')
+            pyqt_api = self.get_option('pyqt/api_version', 0)
             ignore_sip_setapi_errors = self.get_option(
-                                           'ignore_sip_setapi_errors', True)
+                                            'pyqt/ignore_sip_setapi_errors')
+            merge_output_channels = self.get_option('merge_output_channels')
+            colorize_sys_stderr = self.get_option('colorize_sys_stderr')
             umd_enabled = self.get_option('umd/enabled')
             umd_namelist = self.get_option('umd/namelist')
             umd_verbose = self.get_option('umd/verbose')
@@ -616,7 +690,7 @@ class ExternalConsole(SpyderPluginWidget):
                 sa_settings = VariableExplorer.get_settings()
             else:
                 sa_settings = None
-            shellwidget = ExternalPythonShell(self, fname, wdir, self.commands,
+            shellwidget = ExternalPythonShell(self, fname, wdir,
                            interact, debug, path=pythonpath,
                            python_args=python_args,
                            ipython_shell=ipython_shell,
@@ -628,9 +702,12 @@ class ExternalConsole(SpyderPluginWidget):
                            umd_verbose=umd_verbose, ets_backend=ets_backend,
                            monitor_enabled=monitor_enabled,
                            mpl_patch_enabled=mpl_patch_enabled,
-                           mpl_backend=mpl_backend, pyqt_api=pyqt_api,
-                           replace_pyqt_inputhook=replace_pyqt_inputhook,
+                           mpl_backend=mpl_backend,
+                           qt_api=qt_api, pyqt_api=pyqt_api,
+                           install_qt_inputhook=install_qt_inputhook,
                            ignore_sip_setapi_errors=ignore_sip_setapi_errors,
+                           merge_output_channels=merge_output_channels,
+                           colorize_sys_stderr=colorize_sys_stderr,
                            autorefresh_timeout=ar_timeout,
                            autorefresh_state=ar_state,
                            light_background=light_background,
@@ -931,7 +1008,12 @@ class ExternalConsole(SpyderPluginWidget):
                 else:
                     # Black background
                     self.set_option(ipython_n, args.replace(" "+lbgo, ""
-                                    ).replace(lbgo+" ", ""))
+                                    ).replace(lbgo+" ", "").replace(lbgo, ""))
+            else:
+                lbgo = "-colors LightBG"
+                if self.get_option(whitebg_n):
+                    self.set_option(ipython_n, lbgo)
+        
         font = self.get_plugin_font()
         showtime = self.get_option('show_elapsed_time')
         icontext = self.get_option('show_icontext')

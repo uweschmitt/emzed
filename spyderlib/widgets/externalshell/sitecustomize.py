@@ -4,6 +4,42 @@
 import sys
 import os
 import os.path as osp
+import pdb
+import bdb
+import __builtin__
+
+
+# Colorization of sys.stderr (standard Python interpreter)
+if os.environ.get("COLORIZE_SYS_STDERR", "").lower() == "true"\
+   and not os.environ.get('IPYTHON', False):
+    class StderrProxy(object):
+        """Proxy to sys.stderr file object overriding only the `write` method 
+        to provide red colorization for the whole stream, and blue-underlined 
+        for traceback file links""" 
+        def __init__(self):
+            self.old_stderr = sys.stderr
+            self.__buffer = ''
+            sys.stderr = self
+        
+        def __getattr__(self, name):
+            return getattr(self.old_stderr, name)
+            
+        def write(self, text):
+            if os.name == 'nt' and '\n' not in text:
+                self.__buffer += text
+                return
+            for text in (self.__buffer+text).splitlines(True):
+                if text.startswith('  File') \
+                and not text.startswith('  File "<'):
+                    # Show error links in blue underlined text
+                    colored_text = '  '+'\x1b[4;34m'+text[2:]+'\x1b[0m'
+                else:
+                    # Show error messages in red
+                    colored_text = '\x1b[31m'+text+'\x1b[0m'
+                self.old_stderr.write(colored_text)
+            self.__buffer = ''
+    
+    stderrproxy = StderrProxy()
 
 
 # Prepending this spyderlib package's path to sys.path to be sure 
@@ -36,10 +72,18 @@ if pyqt_api:
         pass
 
 
+mpl_backend = os.environ.get("MATPLOTLIB_BACKEND")
+if mpl_backend:
+    try:
+        import matplotlib
+        matplotlib.use(mpl_backend)
+    except ImportError:
+        pass
+
+
 if os.environ.get("MATPLOTLIB_PATCH", "").lower() == "true":
     try:
         from spyderlib import mpl_patch
-        mpl_patch.set_backend(os.environ.get("MATPLOTLIB_BACKEND", "Qt4Agg"))
         mpl_patch.apply()
     except ImportError:
         pass
@@ -94,7 +138,7 @@ sys.setdefaultencoding(encoding)
 os.environ['SPYDER_ENCODING'] = encoding
     
 try:
-    import sitecustomize #@UnusedImport
+    import sitecustomize  #analysis:ignore
 except ImportError:
     pass
 
@@ -112,28 +156,46 @@ else:
                       os.environ["SPYDER_AR_STATE"].lower() == "true")
     monitor.start()
     
-    import __builtin__
     def open_in_spyder(source, lineno=1):
         """Open in Spyder's editor the source file
 (may be a filename or a Python module/package)"""
         if not isinstance(source, basestring):
-            source = source.__file__
-            if source.endswith('.pyc'):
-                source = source[:-1]
-            monitor.notify_open_file(source, lineno=lineno)
+            try:
+                source = source.__file__
+            except AttributeError:
+                raise ValueError("source argument must be either "
+                                 "a string or a module object")
+        if source.endswith('.pyc'):
+            source = source[:-1]
+        monitor.notify_open_file(source, lineno=lineno)
     __builtin__.open_in_spyder = open_in_spyder
     
-    # * Removing PyQt4 input hook which is not working well on Windows since 
-    #   opening a subprocess do not attach a real console to it
-    #   (with keyboard events...)
-    # * Replacing it with our own input hook
-    # XXX: test it with PySide?
-    if os.environ.get("REPLACE_PYQT_INPUTHOOK", "").lower() == "true"\
+    # * PyQt4:
+    #   * Removing PyQt4 input hook which is not working well on Windows since 
+    #     opening a subprocess do not attach a real console to it
+    #     (with keyboard events...)
+    #   * Replacing it with our own input hook
+    # * PySide:
+    #   * Installing an input hook: this feature is not yet supported 
+    #     natively by PySide
+    if os.environ.get("INSTALL_QT_INPUTHOOK", "").lower() == "true"\
        and not os.environ.get('IPYTHON', False):
         # For now, the Spyder's input hook does not work with IPython:
         # with IPython v0.10 or non-Windows platforms, this is not a
         # problem. However, with IPython v0.11 on Windows, this will be
         # fixed by patching IPython to force it to use our inputhook.
+
+        if os.environ["QT_API"] == 'pyqt':
+            from PyQt4 import QtCore
+            # Removing PyQt's PyOS_InputHook implementation:
+            QtCore.pyqtRemoveInputHook()
+        elif os.environ["QT_API"] == 'pyside':
+            from PySide import QtCore
+            # XXX: when PySide will implement an input hook, we will have to 
+            # remove it here
+        else:
+            assert False
+
         def qt_inputhook():
             """Qt input hook for Spyder's console
             
@@ -143,16 +205,17 @@ else:
             # Refreshing variable explorer, except on first input hook call:
             # (otherwise, on slow machines, this may freeze Spyder)
             monitor.refresh_from_inputhook()
-            try:
-                # This call fails for Python without readline support
-                # (or on Windows platforms) when PyOS_InputHook is called
-                # for the second consecutive time, because the 100-bytes
-                # stdin buffer is full.
-                # For more details, see the `PyOS_StdioReadline` function
-                # in Python source code (Parser/myreadline.c)
-                sys.stdin.tell()
-            except IOError:
-                return 0
+            if os.name == 'nt':
+                try:
+                    # This call fails for Python without readline support
+                    # (or on Windows platforms) when PyOS_InputHook is called
+                    # for the second consecutive time, because the 100-bytes
+                    # stdin buffer is full.
+                    # For more details, see the `PyOS_StdioReadline` function
+                    # in Python source code (Parser/myreadline.c)
+                    sys.stdin.tell()
+                except IOError:
+                    return 0
             app = QtCore.QCoreApplication.instance()
             if app and app.thread() is QtCore.QThread.currentThread():
                 timer = QtCore.QTimer()
@@ -174,9 +237,7 @@ else:
 #                socket.read(3)
 #                socket.disconnectFromServer()
             return 0
-        # Removing PyQt's PyOS_InputHook implementation:
-        from PyQt4 import QtCore
-        QtCore.pyqtRemoveInputHook()
+
         # Installing Spyder's PyOS_InputHook implementation:
         import ctypes
         cb_pyfunctype = ctypes.PYFUNCTYPE(ctypes.c_int)(qt_inputhook)
@@ -195,8 +256,6 @@ else:
 #===============================================================================
 # Monkey-patching pdb
 #===============================================================================
-import pdb, bdb
-
 class SpyderPdb(pdb.Pdb):
     def set_spyder_breakpoints(self):
         self.clear_all_breaks()
@@ -332,6 +391,171 @@ if monitor and not os.environ.get('IPYTHON', False):
     except ImportError:
         pass
     del sys.modules['IPython']
+
+
+
+# The following classes and functions are mainly intended to be used from 
+# an interactive Python/IPython session
+class UserModuleDeleter(object):
+    """
+    User Module Deleter (UMD) aims at deleting user modules 
+    to force Python to deeply reload them during import
+    
+    pathlist [list]: blacklist in terms of module path
+    namelist [list]: blacklist in terms of module name
+    """
+    def __init__(self, namelist=None, pathlist=None):
+        if namelist is None:
+            namelist = []
+        self.namelist = namelist+['sitecustomize', 'spyderlib', 'spyderplugins']
+        if pathlist is None:
+            pathlist = []
+        self.pathlist = pathlist
+        self.previous_modules = sys.modules.keys()
+
+    def is_module_blacklisted(self, modname, modpath):
+        for path in [sys.prefix]+self.pathlist:
+            if modpath.startswith(path):
+                return True
+        else:
+            return set(modname.split('.')) & set(self.namelist)
+        
+    def run(self, verbose=False):
+        """
+        Del user modules to force Python to deeply reload them
+        
+        Do not del modules which are considered as system modules, i.e. 
+        modules installed in subdirectories of Python interpreter's binary
+        Do not del C modules
+        """
+        log = []
+        for modname, module in sys.modules.items():
+            if modname not in self.previous_modules:
+                modpath = getattr(module, '__file__', None)
+                if modpath is None:
+                    # *module* is a C module that is statically linked into the 
+                    # interpreter. There is no way to know its path, so we 
+                    # choose to ignore it.
+                    continue
+                if not self.is_module_blacklisted(modname, modpath):
+                    log.append(modname)
+                    del sys.modules[modname]
+        if verbose and log:
+            print "\x1b[4;33m%s\x1b[24m%s\x1b[0m" % ("UMD has deleted",
+                                                     ": "+", ".join(log))
+
+__umd__ = None
+
+
+def _get_globals():
+    """Return current Python/IPython interpreter globals namespace"""
+    from __main__ import __dict__ as namespace
+    if hasattr(__builtin__, '__IPYTHON__'):
+        # IPython 0.10
+        shell = __builtin__.__IPYTHON__
+    else:
+        # IPython 0.11+
+        shell = namespace.get('__ipythonshell__')
+    if shell is not None and hasattr(shell, 'user_ns'):
+        # IPython
+        return shell.user_ns
+    else:
+        return namespace
+
+
+def runfile(filename, args=None, wdir=None, namespace=None):
+    """
+    Run filename
+    args: command line arguments (string)
+    wdir: working directory
+    """
+    global __umd__
+    if os.environ.get("UMD_ENABLED", "").lower() == "true":
+        if __umd__ is None:
+            namelist = os.environ.get("UMD_NAMELIST", None)
+            if namelist is not None:
+                namelist = namelist.split(',')
+            __umd__ = UserModuleDeleter(namelist=namelist)
+        else:
+            verbose = os.environ.get("UMD_VERBOSE", "").lower() == "true"
+            __umd__.run(verbose=verbose)
+    if args is not None and not isinstance(args, basestring):
+        raise TypeError("expected a character buffer object")
+    if namespace is None:
+        namespace = _get_globals()
+    namespace['__file__'] = filename
+    sys.argv = [filename]
+    if args is not None:
+        for arg in args.split():
+            sys.argv.append(arg)
+    if wdir is not None:
+        os.chdir(wdir)
+    execfile(filename, namespace)
+    sys.argv = ['']
+    namespace.pop('__file__')
+    
+__builtin__.runfile = runfile
+
+
+def debugfile(filename, args=None, wdir=None):
+    """
+    Debug filename
+    args: command line arguments (string)
+    wdir: working directory
+    """
+    debugger = pdb.Pdb()
+    filename = debugger.canonic(filename)
+    debugger._wait_for_mainpyfile = 1
+    debugger.mainpyfile = filename
+    debugger._user_requested_quit = 0
+    debugger.run("runfile(%r, args=%r, wdir=%r)" % (filename, args, wdir))
+
+__builtin__.debugfile = debugfile
+
+
+def evalsc(command):
+    """Evaluate special commands
+    (analog to IPython's magic commands but far less powerful/complete)"""
+    assert command.startswith(('%', '!'))
+    system_command = command.startswith('!')
+    command = command[1:].strip()
+    if system_command:
+        # System command
+        if command.startswith('cd '):
+            evalsc('%'+command)
+        else:
+            from subprocess import Popen, PIPE
+            Popen(command, shell=True, stdin=PIPE)
+            print '\n'
+    else:
+        # General command
+        namespace = _get_globals()
+        import re
+        clear_match = re.match(r"^clear ([a-zA-Z0-9_, ]+)", command)
+        cd_match = re.match(r"^cd \"?\'?([a-zA-Z0-9_\ \:\\\/\.]+)", command)
+        if cd_match:
+            os.chdir(eval('r"%s"' % cd_match.groups()[0].strip()))
+        elif clear_match:
+            varnames = clear_match.groups()[0].replace(' ', '').split(',')
+            for varname in varnames:
+                try:
+                    namespace.pop(varname)
+                except KeyError:
+                    pass
+        elif command in ('cd', 'pwd'):
+            print os.getcwdu()
+        elif command == 'ls':
+            if os.name == 'nt':
+                evalsc('!dir')
+            else:
+                evalsc('!ls')
+        elif command == 'scientific':
+            from spyderlib import baseconfig
+            execfile(baseconfig.SCIENTIFIC_STARTUP, namespace)
+        else:
+            raise NotImplementedError, "Unsupported command: '%s'" % command
+
+__builtin__.evalsc = evalsc
 
 
 ## Restoring original PYTHONPATH

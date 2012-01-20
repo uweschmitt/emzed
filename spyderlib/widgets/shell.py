@@ -11,20 +11,19 @@
 # pylint: disable=R0911
 # pylint: disable=R0201
 
-import sys, os, time, os.path as osp, re
+import os
+import time
+import os.path as osp
+import re
 
 from spyderlib.qt.QtGui import (QMenu, QApplication, QCursor, QToolTip,
                                 QKeySequence, QMessageBox, QMouseEvent,
                                 QTextCursor, QTextCharFormat, QShortcut)
-from spyderlib.qt.QtCore import Qt, QCoreApplication, SIGNAL, Property
+from spyderlib.qt.QtCore import Qt, QCoreApplication, QTimer, SIGNAL, Property
 from spyderlib.qt.compat import getsavefilename
 
-# For debugging purpose:
-STDOUT = sys.stdout
-STDERR = sys.stderr
-
 # Local import
-from spyderlib.baseconfig import get_conf_path, _
+from spyderlib.baseconfig import get_conf_path, _, STDERR
 from spyderlib.config import CONF, get_icon, get_font
 from spyderlib.utils import encoding
 from spyderlib.utils.misc import get_error_match
@@ -75,9 +74,12 @@ class ShellBaseWidget(ConsoleBaseWidget):
         # Simple profiling test
         self.profile = profile
         
-        # write/flush
+        # Buffer to increase performance of write/flush operations
         self.__buffer = []
         self.__timestamp = 0.0
+        self.__flushtimer = QTimer(self)
+        self.__flushtimer.setSingleShot(True)
+        self.connect(self.__flushtimer, SIGNAL('timeout()'), self.flush)
 
         # Give focus to widget
         self.setFocus()
@@ -402,6 +404,12 @@ class ShellBaseWidget(ConsoleBaseWidget):
             # the event queue - i.e. if the busy buffer is ever implemented)
             ConsoleBaseWidget.keyPressEvent(self, event)
 
+        elif key == Qt.Key_Escape and ctrl and shift:
+            self._key_ctrl_shift_escape()    
+
+        elif key == Qt.Key_Escape and shift:
+            self._key_shift_escape()
+
         elif key == Qt.Key_Escape:
             self._key_escape()
                 
@@ -462,6 +470,10 @@ class ShellBaseWidget(ConsoleBaseWidget):
     def _key_pagedown(self):
         raise NotImplementedError
     def _key_escape(self):
+        raise NotImplementedError
+    def _key_shift_escape(self):
+        raise NotImplementedError
+    def _key_ctrl_shift_escape(self):
         raise NotImplementedError
     def _key_question(self, text):
         raise NotImplementedError
@@ -578,9 +590,13 @@ class ShellBaseWidget(ConsoleBaseWidget):
             text = unicode(text)
         self.__buffer.append(text)
         ts = time.time()
-        if flush or ts-self.__timestamp > 0.05 or prompt:
+        if flush or prompt:
             self.flush(error=error, prompt=prompt)
+        elif ts - self.__timestamp > 0.05:
+            self.flush(error=error)
             self.__timestamp = ts
+            # Timer to flush strings cached by last write() operation in series
+            self.__flushtimer.start(50)
 
     def flush(self, error=False, prompt=False):
         """Flush buffer, write text to console"""
@@ -718,6 +734,7 @@ class PythonShellWidget(ShellBaseWidget):
                                      tip=_("Clear line"),
                                      triggered=self.clear_line)
         clear_action = create_action(self, _("Clear shell"),
+                                     QKeySequence("Ctrl+Shift+Escape"),
                                      icon=get_icon('clear.png'),
                                      tip=_("Clear shell contents "
                                            "('cls' command)"),
@@ -836,9 +853,13 @@ class PythonShellWidget(ShellBaseWidget):
         """Action for ESCAPE key"""
         if self.is_completion_widget_visible():
             self.hide_completion_widget()
-        else:
-            self.clear_line()
-                
+    
+    def _key_shift_escape(self):
+        self.clear_line()
+
+    def _key_ctrl_shift_escape(self):
+        self.clear_terminal()
+
     def _key_question(self, text):
         """Action for '?'"""
         if self.get_current_line_to_cursor():
@@ -983,7 +1004,7 @@ class PythonShellWidget(ShellBaseWidget):
             return
         
         # Builtins and globals
-        import re, __builtin__, keyword
+        import __builtin__, keyword
         if not text.endswith('.') and last_obj \
            and re.match(r'[a-zA-Z_0-9]*$', last_obj):
             b_k_g = dir(__builtin__)+self.get_globals_keys()+keyword.kwlist
