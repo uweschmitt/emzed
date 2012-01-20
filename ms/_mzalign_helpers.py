@@ -126,6 +126,8 @@ def _calculateParameters(real, tobe, p=1.01):
     imax = _np.argmax(resid)
     valmax = resid[imax]
     fitted = fittedShift + real
+    a = float(a)
+    b = float(b)
     transform = lambda x: a*x + b +x
     return transform, r, imax, fitted, resid
 
@@ -161,7 +163,7 @@ class _MatchSelector(QDialog):
     inactiveColor = "b"
 
     def __init__(self, tobe, real):
-        QDialog.__init__(self, None)
+        QDialog.__init__(self)
         self.setWindowFlags(Qt.Window)
         self.setWindowTitle("Matched Feature Selector")
         self.real = _np.array(real)
@@ -324,7 +326,7 @@ def _findParametersManually(tobe, real):
     import guidata
     app = guidata.qapplication()
     m = _MatchSelector(tobe, real)
-    m.show()
+    m.raise_()
     m.exec_()
     if m.exitCode != 0:
         return None, None

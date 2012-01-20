@@ -207,7 +207,6 @@ class IntegrateAction(TableAction):
         self.notifyGUI()
 
     def notifyGUI(self):
-        print "notify", self.idx
         tl = self.model.createIndex(self.idx, 0)
         tr = self.model.createIndex(self.idx, self.model.columnCount()-1)
         # this one updates plots

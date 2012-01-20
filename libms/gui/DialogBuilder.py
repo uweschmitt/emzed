@@ -171,8 +171,6 @@ class DialogBuilder(object):
         clz = type("Dialog", (dt.DataSet,), attributes)
         # as said: the docstring is rendered as the dialogues title:
         clz.__doc__ = self.title+"\n"+"\n".join(self.instructions)
-        print clz.__doc__
-
         # open dialog now !!!
         instance = clz()
         if instance.edit() == 0:

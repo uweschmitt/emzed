@@ -117,7 +117,6 @@ def _formatter(f):
             try:
                 return "-" if s is None else f % s
             except:
-                print repr(s), repr(f)
                 return ""
         return interpolationformat
     else:
@@ -196,7 +195,7 @@ class Table(object):
         print "table info:   title=", self.title
         print
         print "   meta=",
-        pprint.pprint(self.meta, indent=4)
+        pprint.pprint(self.meta)
         print "   len=", len(self)
         print
         for i, p in enumerate(zip(self.colNames, self.colTypes,\
@@ -267,6 +266,9 @@ class Table(object):
             col = Column(self, name, ix)
             setattr(self, name, col)
 
+    def numRows(self):
+	return len(self.rows)
+
     def __getstate__(self):
         """ for pickling. """
         dd = self.__dict__.copy()
@@ -279,10 +281,6 @@ class Table(object):
     def __setstate__(self, dd):
         self.__dict__ = dd
         self.resetInternals()
-
-    def __x__iter__(self):
-        """ returns iterator over rows """
-        return iter(self.rows)
 
     def hasColumn(self, name):
         """ checks if column with given name *name* exists """
@@ -1014,7 +1012,7 @@ class Table(object):
         table.rows = rows
         return table
 
-    def leftJoin(self, t, expr, debug = False, progress=True):
+    def leftJoin(self, t, expr, debug = False, progress=False):
         """performs an *left join* also known as *outer join* of two tables.
            It works similar to *Table.join* but keeps nonmatching rows of
            the first table. So if we take the example from *Table.join*
@@ -1061,7 +1059,8 @@ class Table(object):
                 rows.extend([r1 + t.rows[n] for (n,i) in enumerate(flags) if i])
             else:
                 rows.extend([r1 + filler])
-            cmdlineProgress.progress(ii)
+	    if progress:
+                cmdlineProgress.progress(ii)
 
         table.rows = rows
         return table

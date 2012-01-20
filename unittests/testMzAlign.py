@@ -14,3 +14,8 @@ def testMzAlign():
     assert abs(after[0]-272.199238673) < 1e-5, float(after[0])
 
     assert len(glob.glob("temp_output/2011-10-06_054_PKTB*"))==4
+
+    # former errror: transformation resulted in numpy.float64 values
+    assert tab_aligned.get(tab_aligned.colTypes, "mz") == float
+    assert tab_aligned.get(tab_aligned.colTypes, "mzmin") == float
+    assert tab_aligned.get(tab_aligned.colTypes, "mzmax") == float
