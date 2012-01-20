@@ -421,9 +421,18 @@ class Table(object):
            So if you want to rename "mz_1" to "mz" and "rt_1"
            to "rt", ``table.renameColumns(mz_1=mz, rt_1=rt)``
         """
+
+        newNames = set(kw.values())
+        if len(newNames)<len(kw):
+            raise Exception("you try to rename two columns to the same name")
+        for name in newNames:
+            if name in self.colNames:
+                raise Exception("column %s allready exists" % name)
+
         for k in kw.keys():
             if k not in self.colNames:
                 raise Exception("colum %r does not exist" % k)
+
         for name in self.colNames:
             delattr(self, name)
         self.colNames = [ kw.get(n,n) for n in self.colNames]
