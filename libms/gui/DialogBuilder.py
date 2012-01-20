@@ -49,7 +49,6 @@ class DialogBuilder(object):
 
     __doc__ = "\n".join(_docStrings)
 
-
     def __init__(self, title="Dialog"):
 
         self.attrnum = 0
@@ -58,7 +57,6 @@ class DialogBuilder(object):
         self.instructions = []
         self.fieldNames = []
         self.buttonCounter = 0
-
 
     def __getattr__(self, name):
         """ dynamically provides methods which start with "add...", eg
@@ -180,5 +178,3 @@ class DialogBuilder(object):
         if len(result) == 1:
             result = result[0]
         return result
-
-
