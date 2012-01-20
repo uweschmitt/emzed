@@ -10,7 +10,6 @@ from guidata.qt.QtGui import QMessageBox
 
 import string
 
-
 # monkey patch following Items, else dt.DataSet.check() raises
 # exceptions. They are assumed to be valid in any case:
 di.BoolItem.check_value = lambda *a, **kw: True
@@ -34,7 +33,7 @@ def showWarning(message):
 
 def showInformation(message):
     guidata.qapplication().beep()
-    QMessageBox.information(None, "Warning", message)
+    QMessageBox.information(None, "Information", message)
 
 class DialogBuilder(object):
 

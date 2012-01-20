@@ -11,7 +11,9 @@ from mzalign import mzalign
 from metlin import matchMetlin
 
 from libms.Explorers       import inspectPeakMap, inspect
-from libms.gui.DialogBuilder import DialogBuilder, showWarning, showInformation
+from libms.gui.DialogBuilder import (DialogBuilder,
+                                     showWarning,
+                                     showInformation)
 
 __all__ = [ "inspectMap", "inspectFeatures", "alignFeatureTables" ]
 
