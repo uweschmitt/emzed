@@ -9,6 +9,7 @@
 import StringIO
 import traceback
 import time
+import pprint
 
 
 def log_time(fd):
@@ -28,7 +29,7 @@ def log_last_error(fname, context=None):
         print >>fd, "Context"
         print >>fd, "-------"
         print >>fd, ""
-        print >>fd, context
+        pprint.pprint(context, stream=fd)
         print >>fd, ""
         print >>fd, "Traceback"
         print >>fd, "---------"

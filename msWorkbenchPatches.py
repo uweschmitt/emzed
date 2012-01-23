@@ -46,8 +46,6 @@ def patch_oedit():
         import libms.Explorers
         from libms.DataStructures import PeakMap, Table
 
-        print "oedit ", obj
-
         if isinstance(obj, PeakMap):
             dlg = libms.Explorers.MzExplorer()
             dlg.setup(obj)
@@ -155,8 +153,8 @@ def patch_spyder():
         """Return True if variable is a PeakMap"""
         return communicate(self._get_sock(),
             "isinstance(globals()['%s'], list) "\
-            "and all(isinstance(li, libms.DataStructures.Table "\
-            "        for li in globals()['%s'])")
+            "and all(isinstance(li, libms.DataStructures.Table)"\
+            "        for li in globals()['%s'])" %(name, name))
 
     @replace(NamespaceBrowser.setup, verbose=True)
     def setup(self, *a, **kw):

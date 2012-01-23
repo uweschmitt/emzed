@@ -555,10 +555,15 @@ class Monitor(threading.Thread):
 #                                      pickle.HIGHEST_PROTOCOL)
             except SystemExit:
                 break
-            except:
+            except BaseException, e:
                 if DEBUG:
                     logging.debug("error!")
-                log_last_error(LOG_FILENAME, command)
+                context = dict(glbs=glbs, lcls=lcls, command=command)
+                log_last_error(LOG_FILENAME, context)
+                logging.error("Exception: %s" % e)
+                logging.error("command: %s" % command)
+                logging.error("glbs: %s" % glbs)
+                logging.error("lcls: %s" % lcls)
             finally:
                 try:
                     if DEBUG:
