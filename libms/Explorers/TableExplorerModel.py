@@ -386,7 +386,7 @@ class TableModel(QAbstractTableModel):
         return dict((nn, get(nn)) for nn in self.eicColNames())
 
     def hasFeatures(self):
-        return self.checkFor(*self.eicColNames())
+        return self.checkForAny(*self.eicColNames())
 
     def integrationColNames(self):
         return ["area", "rmse", "method", "params"]
@@ -397,9 +397,9 @@ class TableModel(QAbstractTableModel):
 
     def isIntegrated(self):
         return self.hasFeatures()\
-               and self.checkFor(*self.integrationColNames())
+               and self.checkForAny(*self.integrationColNames())
 
-    def checkFor(self, *names):
+    def checkForAny(self, *names):
         """ checks if names or derived names are present in table at once
             derived names are colum names postfixed with _1, _2, ....
             which happens during join if column names appear twice.
@@ -428,11 +428,13 @@ class TableModel(QAbstractTableModel):
         return title
 
     def postfixesSupportedBy(self, colNames):
+        postfixes = []
         for p in self.postfixes:
             names = [ n+p for n in colNames ]
             if not self.table.hasColumns(*names):
                 continue
-            yield p
+            postfixes.append(p)
+        return postfixes
 
     def getSmoothedEics(self, rowIdx, rts):
         allsmoothed = []

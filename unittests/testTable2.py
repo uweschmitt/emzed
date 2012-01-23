@@ -1,20 +1,30 @@
 import ms
 
-from libms.DataStructures.Table import nextPostfix, Table, toOpenMSFeatureMap
+from libms.DataStructures.Table import Table, toOpenMSFeatureMap
 
-def testNextPostfix():
 
-    assert nextPostfix([""]) == "_1"
-    assert nextPostfix(["_1"]) == "_2"
-    assert nextPostfix(["_1", ""]) == "_2"
-    assert nextPostfix(["_1", "", "_2"]) == "_3"
-    assert nextPostfix(["_1", "", "_1_1"]) == "_1_2"
-    assert nextPostfix(["_1", "", "_1_1", "_1_11"]) == "_1_12"
+def testFullJoin():
+    t = ms.toTable("a", [None, 2, 3])
+    t1 = t.copy()
 
-    t=Table(["a", "a_1", "b_2"], [int]*3, ["%d"]*3, [])
-    pf = nextPostfix(t.findPostfixes())
-    assert pf == "_3"
-    assert t.updatedColnames(pf) == ["a_3", "a_3", "b_3"]
+    t2 = t.join(t1, True)
+    assert len(t2) == 9
+    assert t2.a.values == [ None, None, None, 2, 2, 2, 3, 3, 3]
+    assert t2.a__0.values == t.a.values * 3
+
+
+
+def testSupportedPostfixes():
+
+    names = "mz mzmin mzmax mz0 mzmin0 mzmax0 mz1 mzmax1 mzmin__0 mzmax__0 mz__0 "\
+            "mzmax3 mz4 mzmin4".split()
+
+
+    t = Table(names, [float]*len(names), [None]*len(names), circumventNameCheck=True)
+    assert len(t.supportedPostfixes(["mz"])) == len(names)
+    assert t.supportedPostfixes(["mz", "mzmin"]) == [ "", "0", "4", "__0"]
+    assert t.supportedPostfixes(["mz", "mzmin", "mzmax"]) == ["", "0", "__0"]
+
 
 
 def testNumericSTuff():

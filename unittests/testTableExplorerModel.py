@@ -33,27 +33,31 @@ def buildTable():
     return t
 
 def buildTable2():
-    t = ms.toTable("mz_1",[1.0, 2.0, None])
-    t.addColumn("mzmin_1", t.mz_1-0.025)
-    t.addColumn("mzmax_1", t.mz_1+0.025)
+    t = ms.toTable("mz",[1.0, 2.0, None])
+    t.addColumn("mzmin", t.mz-0.025)
+    t.addColumn("mzmax", t.mz+0.025)
 
-    t.addColumn("rt_1", [ 10.0, 20.0, None])
-    t.addColumn("rtmin_1", t.rt_1-1.0)
-    t.addColumn("rtmax_1", t.rt_1+5.0)
+    t.addColumn("rt", [ 10.0, 20.0, None])
+    t.addColumn("rtmin", t.rt-1.0)
+    t.addColumn("rtmax", t.rt+5.0)
 
-    t.addColumn("peakmap_1", [ None, (1,2), None])
+    t.addColumn("peakmap", [ None, (1,2), None])
+    t.renameColumns(mz="mz__1",mzmin="mzmin__1", mzmax="mzmax__1",
+                   rt="rt__1", rtmin="rtmin__1", rtmax="rtmax__1",
+                   peakmap="peakmap__1")
+
     return t
 
 def testTable2():
     t = buildTable2()
     recorder = RecordingObject()
     model = TableModel(t, recorder)
-    assert model.postfixes == ["_1"]
-    assert model.checkFor("mz", "rt", "rtmin", "rtmax", "mzmin", "mzmax",
-                          "peakmap")
-    assert not model.checkFor("mz_1")
+    model.table.info()
+    assert model.postfixes == ["__1"], model.postfixes
+    assert model.checkForAny("mz", "rt", "rtmin", "rtmax", "mzmin", "mzmax", "peakmap")
+    assert not model.checkForAny("mz__1")
 
-    assert list(model.postfixesSupportedBy(["mz","rt"])) == ["_1"]
+    assert list(model.postfixesSupportedBy(["mz","rt"])) == ["__1"]
     assert list(model.postfixesSupportedBy(["mz","rtx"])) == []
 
 
@@ -68,8 +72,8 @@ def testSimpleTable():
     model.addNonEditable("rtmax")
 
 
-    assert model.checkFor("mzmin")
-    assert not model.checkFor("xxx")
+    assert model.checkForAny("mzmin")
+    assert not model.checkForAny("xxx")
 
     def idx(r,c):
         return model.createIndex(r,c)
@@ -181,21 +185,24 @@ def testSimpleTable():
 
 
 def testMixedRows():
-    names = """rt rtmin rtmax rt_1 rtmin_1 rtmax_1
-               mz mzmin mzmax mz_1 mzmin_1 mzmax_1
-               rt_1_1 rtmin_1_1 rtmax_1_1
-               mz_1_1 mzmin_1_1 mzmax_1_1
-               rt_1_2 rtmin_1_2""".split()
+    names = """rt rtmin rtmax rt__1 rtmin__1 rtmax__1
+               mz mzmin mzmax mz__1 mzmin__1 mzmax__1
+               rt__0 rtmin__0 rtmax__0
+               mz__0 mzmin__0 mzmax__0
+               rt__2 rtmin__2""".split()
 
     names = [n.strip() for n in names]
 
-    tab = Table(names, [float]*len(names), "%f" * len(names))
+    tab = Table(names, [float]*len(names), "%f" * len(names), circumventNameCheck=True)
 
     recorder = RecordingObject()
     model = TableModel(tab, recorder)
 
-    assert model.postfixes == [ "", "_1", "_1_1", "_1_2"]
+    assert model.postfixes == [ "", "__0", "__1", "__2"], model.postfixes
 
+    assert model.postfixesSupportedBy(["rtmin","rt"]) == ["","__0", "__1", "__2"]
+    assert model.postfixesSupportedBy(["mz","rt", "mzmin"]) == ["","__0", "__1"]
+    assert model.postfixesSupportedBy(["mz","rt", "x"]) == []
 
 
 

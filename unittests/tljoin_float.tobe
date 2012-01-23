@@ -1,5 +1,5 @@
 # t1.leftJoin(t2, (t1.float > t2.float))
-33 66 100 id       int      float    str      id_1     int_1    float_1  str_1   
+id       int      float    str      id__0    int__0   float__0 str__0  
 int      int      float    str      int      int      float    str     
 ------   ------   ------   ------   ------   ------   ------   ------  
 0          1      1.000    hi       -        -        -        -       
@@ -8,7 +8,7 @@ int      int      float    str      int      int      float    str
 2          3      3.000    hi3      1          2      2.000    hi2     
 
 # t1.leftJoin(t2, (t1.float == t2.float))
-33 66 100 id       int      float    str      id_1     int_1    float_1  str_1   
+id       int      float    str      id__0    int__0   float__0 str__0  
 int      int      float    str      int      int      float    str     
 ------   ------   ------   ------   ------   ------   ------   ------  
 0          1      1.000    hi       0          1      1.000    hi      
@@ -16,7 +16,7 @@ int      int      float    str      int      int      float    str
 2          3      3.000    hi3      2          3      3.000    hi3     
 
 # t1.leftJoin(t2, (t1.float != t2.float))
-33 66 100 id       int      float    str      id_1     int_1    float_1  str_1   
+id       int      float    str      id__0    int__0   float__0 str__0  
 int      int      float    str      int      int      float    str     
 ------   ------   ------   ------   ------   ------   ------   ------  
 0          1      1.000    hi       1          2      2.000    hi2     
@@ -27,7 +27,7 @@ int      int      float    str      int      int      float    str
 2          3      3.000    hi3      1          2      2.000    hi2     
 
 # t1.leftJoin(t2, (t1.float >= t2.float))
-33 66 100 id       int      float    str      id_1     int_1    float_1  str_1   
+id       int      float    str      id__0    int__0   float__0 str__0  
 int      int      float    str      int      int      float    str     
 ------   ------   ------   ------   ------   ------   ------   ------  
 0          1      1.000    hi       0          1      1.000    hi      
@@ -38,7 +38,7 @@ int      int      float    str      int      int      float    str
 2          3      3.000    hi3      2          3      3.000    hi3     
 
 # t1.leftJoin(t2, (t1.float <= t2.float))
-33 66 100 id       int      float    str      id_1     int_1    float_1  str_1   
+id       int      float    str      id__0    int__0   float__0 str__0  
 int      int      float    str      int      int      float    str     
 ------   ------   ------   ------   ------   ------   ------   ------  
 0          1      1.000    hi       0          1      1.000    hi      
@@ -49,7 +49,7 @@ int      int      float    str      int      int      float    str
 2          3      3.000    hi3      2          3      3.000    hi3     
 
 # t1.leftJoin(t2, (t1.float < t2.float))
-33 66 100 id       int      float    str      id_1     int_1    float_1  str_1   
+id       int      float    str      id__0    int__0   float__0 str__0  
 int      int      float    str      int      int      float    str     
 ------   ------   ------   ------   ------   ------   ------   ------  
 0          1      1.000    hi       1          2      2.000    hi2     
@@ -58,7 +58,7 @@ int      int      float    str      int      int      float    str
 2          3      3.000    hi3      -        -        -        -       
 
 # t1.leftJoin(t2, (t1.float == t1.float))
-33 66 100 id       int      float    str      id_1     int_1    float_1  str_1   
+id       int      float    str      id__0    int__0   float__0 str__0  
 int      int      float    str      int      int      float    str     
 ------   ------   ------   ------   ------   ------   ------   ------  
 0          1      1.000    hi       0          1      1.000    hi      

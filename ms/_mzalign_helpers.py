@@ -57,10 +57,10 @@ def _findMzMatches(hypot, table, tol):
     mzfit = table.mz.approxEqual(hypot.mz, tol)
     matched = table.join(hypot, rtfit & mzfit)
     print len(matched), "MATCHED UNIV METABOLITES"
-    matched = matched.extractColumns("mz", "mz_1", "rt", "rtmin_1", "rtmax_1",
-                                    "name_1", "mode_1", "url_1")
-    matched.renameColumns(mz_1="mz_exact", rtmin_1="rtmin",
-                   rtmax_1="rtmax", name_1="name", mode_1="mode", url_1="url")
+    matched = matched.extractColumns("mz", "mz__0", "rt", "rtmin__0", "rtmax__0",
+                                    "name__0", "mode__0", "url__0")
+    matched.renameColumns(mz__0="mz_exact", rtmin__0="rtmin",
+                   rtmax__0="rtmax", name__0="name", mode__0="mode", url__0="url")
     matched.sortBy("mz")
     real = _np.array(matched.mz.values)
     tobe = _np.array(matched.mz_exact.values)
@@ -81,7 +81,6 @@ def _fitLp(A, b, p, N=10):
         param, _, _,_ = _np.linalg.lstsq(WA, Wb)
         resid = _np.abs(_np.dot(A, param) - b)
         W = _np.diag((1e-8+resid)** (p-2.0)/2.0)
-        resnrm = _np.linalg.norm(resid)
         if lastParam is None:
             lastParam = param
         else:

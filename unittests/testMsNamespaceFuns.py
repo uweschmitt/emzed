@@ -3,23 +3,6 @@ import os.path as osp
 import numpy as np
 import copy
 
-def testIntegration():
-
-    # test with and without unicode:
-    ft = ms.loadTable("data/features.table")
-    ft = ms.loadTable(u"data/features.table")
-    # an invalid row should not stop integration, but result
-    # in None values for ms.integrate generated columns
-    ft.set(ft.rows[0], "mzmin", None)
-    ftr = ms.integrate(ft, "trapez")
-    assert len(ftr) == len(ft)
-    assert "area" in ftr.colNames
-    assert "rmse" in ftr.colNames
-    assert ftr.area.values[0] == None
-    assert ftr.rmse.values[0] == None
-    assert ftr.params.values[0] == None
-    assert ftr.method.values[0] == None
-
 
 def testLoadMap():
     from_ = u"data/SHORT_MS2_FILE.mzXML"

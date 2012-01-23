@@ -574,7 +574,7 @@ class LogicNode(Node):
         elif type(l) == bool and type(r) == list:
             return np.array([bitop(l, ri) for ri in r])
         elif type(l) == list and type(r) == bool:
-            return np.array([bitop(l, ri) for ri in r])
+            return np.array([bitop(li, r) for li in l])
         elif type(l) == type(r) == np.ndarray:
             return bitop(l,r)
         elif type(l) in _iterables and type(r) in _iterables:

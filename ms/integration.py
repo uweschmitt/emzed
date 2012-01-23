@@ -11,55 +11,59 @@ def integrate(ftable, integratorid="std", showProgress = True):
 
     assert isinstance(ftable, Table)
 
-    neededColumns = ["mz", "mzmin", "mzmax", "rt", "rtmin", "rtmax", "peakmap"]
-    foundColumns = [ftable.hasColumn(n) for n in neededColumns]
-    if not all(foundColumns):
-        missing = [n for n in neededColumns if not ftable.hasColumn(n)]
-        raise Exception("is no ftab. cols missing: "+", ".join(missing))
+    neededColumns = ["mzmin", "mzmax", "rtmin", "rtmax", "peakmap"]
+    supportedPostfixes = ftable.supportedPostfixes(neededColumns)
+    if not supportedPostfixes:
+        raise Exception("is no feature table")
 
     started = time.time()
     integrator = dict(peakIntegrators).get(integratorid)
     if integrator is None:
         raise Exception("unknown integrator '%s'" % integratorid)
 
-    resultTable = ftable.buildEmptyClone()
-
-    newCols = [ "method", "area", "rmse", "params",]
-    # drop columns which are integration related
-    for col in newCols:
-        if resultTable.hasColumn(col):
-            resultTable.dropColumn(col)
-
-    resultTable.colNames += newCols
-    resultTable.colTypes += [ str, float, float, object, ]
-    resultTable.colFormats += [ "%s", "%.2e", "%.2e", None, ]
+    resultTable = ftable.copy()
 
     lastcent = -1
-    for i, row in enumerate(ftable.rows):
-        if showProgress:
-            cent = ((i+1)*20)/len(ftable) # integer div here !
-            if cent != lastcent:
-                print cent*5,
-                sys.stdout.flush()
-                lastcent = cent
-        rtmin = ftable.get(row, "rtmin")
-        rtmax = ftable.get(row, "rtmax")
-        mzmin = ftable.get(row, "mzmin")
-        mzmax = ftable.get(row, "mzmax")
-        peakmap = ftable.get(row, "peakmap")
-        newrow = [ftable.get(row, n) for n in resultTable.colNames\
-                                      if n not in newCols]
-        if rtmin is None or rtmax is None or mzmin is None or mzmax is None\
-                 or peakmap is None:
-            newrow.extend([None] * len(newCols))
-        else:
-            integrator.setPeakMap(peakmap)
-            result = integrator.integrate(mzmin, mzmax, rtmin, rtmax)
-            # take existing values which are not integration realated:
-            newrow.extend([integratorid, result["area"], result["rmse"],\
-                           result["params"], ])
+    for postfix in supportedPostfixes:
+        areas = []
+        rmses = []
+        paramss =[]
+        for i, row in enumerate(ftable.rows):
+            if showProgress:
+                # integer div here !
+                cent = ((i+1)*20)/len(ftable)/len(supportedPostfixes)
+                if cent != lastcent:
+                    print cent*5,
+                    sys.stdout.flush()
+                    lastcent = cent
+            rtmin = ftable.get(row, "rtmin"+postfix)
+            rtmax = ftable.get(row, "rtmax"+postfix)
+            mzmin = ftable.get(row, "mzmin"+postfix)
+            mzmax = ftable.get(row, "mzmax"+postfix)
+            peakmap = ftable.get(row, "peakmap"+postfix)
+            if rtmin is None or rtmax is None or mzmin is None or mzmax is None\
+                     or peakmap is None:
+                area, rmse, params = (None, )* 3
+            else:
+                integrator.setPeakMap(peakmap)
+                result = integrator.integrate(mzmin, mzmax, rtmin, rtmax)
+                # take existing values which are not integration realated:
+                area, rmse, params = result["area"], result["rmse"],\
+                                     result["params"]
 
-        resultTable.addRow(newrow)
+            areas.append(area)
+            rmses.append(rmse)
+            paramss.append(params)
+
+        resultTable.updateColumn("method"+postfix, integratorid, str, "%s",\
+                                  insertBefore="peakmap"+postfix)
+        resultTable.updateColumn("area"+postfix, areas, float, "%.2e",\
+                                  insertBefore="peakmap"+postfix)
+        resultTable.updateColumn("rmse"+postfix, rmses, float, "%.2e",\
+                                  insertBefore="peakmap"+postfix)
+        resultTable.updateColumn("params"+postfix, paramss, object, None,\
+                                  insertBefore="peakmap"+postfix)
+
 
     resultTable.meta["integrated"]=True
     resultTable.title = "integrated: "+resultTable.title

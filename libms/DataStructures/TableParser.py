@@ -48,10 +48,10 @@ class XCMSFeatureParser(TableParser):
                       maxo= float, sn= float,
                       sample= int )
 
-    fms = Table.fms
+    formatSeconds = Table.fms
     formatDefaults = dict( mz= "%10.5f", mzmin= "%10.5f", mzmax= "%10.5f",
-                           rt=  fms, rtmin=fms, rtmax=fms,
-                           into= "", intb= "", intf="",
+                           rt=  formatSeconds, rtmin=formatSeconds,
+                           rtmax=formatSeconds, into= "", intb= "", intf="",
                            maxo= "", sn= "%.1e",
                            sample= "")
 

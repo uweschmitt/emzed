@@ -53,7 +53,7 @@ def loadTable(path=None):
 def loadCSV(path=None, sep=";", **specialFormats):
     # local import in order to keep namespaces clean
     import ms
-    import csv, os.path, sys
+    import csv, os.path, sys, re
     from   libms.DataStructures.Table import (Table, commonTypeOfColumn,\
                                               bestConvert, guessFormatFor)
     if isinstance(path, unicode):
@@ -66,7 +66,8 @@ def loadCSV(path=None, sep=";", **specialFormats):
     with open(path,"r") as fp:
         # remove clutter at right margin
         reader = csv.reader(fp, delimiter=sep)
-        colNames = [n.strip().replace(" ","_") for n in reader.next()]
+        colNames = [ re.sub(" +", "_", n.strip()) for n in reader.next()]
+        colNames = [ re.sub("_+", "_", n) for n in colNames]
         rows = [ [bestConvert(c.strip()) for c in row] for row in reader]
 
 

@@ -1,8 +1,8 @@
 import pyOpenMS as P
 import copy, os, itertools, re, numpy, cPickle, sys, inspect
-from   ExpressionTree import Node, Column
+from   ExpressionTree import Node, Column, Value
 import numpy as np
-from   collections import Counter, OrderedDict
+from   collections import Counter, OrderedDict, defaultdict
 
 standardFormats = { int: "%d", long: "%d", float : "%.2f", str: "%s" }
 fms = "'%.2fm' % (o/60.0)"  # format seconds to floating point minutes
@@ -25,15 +25,19 @@ def computekey(o):
     return id(o)
 
 
-def nextPostfix(postfixes):
-    maxlen = max( len(pf) for  pf in postfixes)
-    if maxlen == 0:
-        return "_1"
-    postfixes = [ pf for pf in postfixes if len(pf) == maxlen]
-    maxnum = max(int(pf.split("_")[-1]) for pf in postfixes)
-    fields = postfixes[0].split("_")
-    fields[-1]=str(maxnum+1)
-    return "_".join(fields)
+def getPostfix(colName):
+    if colName.startswith("__"): # internal colnames may start with __
+        colName = colName[2:]
+    fields = colName.split("__")
+    if len(fields)>2:
+        raise Exception("invalid colName %s" % colName)
+    if len(fields) == 1:
+        return ""
+    try:
+        return "__"+fields[1]
+    except:
+        raise Exception("invalid postfix '%s'" % fields[1])
+
 
 class Bunch(dict):
     __getattr__ = dict.__getitem__
@@ -142,7 +146,7 @@ class Table(object):
     """
 
     def __init__(self, colNames, colTypes, colFormats, rows=None, title=None,
-                       meta=None):
+                       meta=None, circumventNameCheck=False):
 
         if len(colNames) != len(set(colNames)):
             counts = Counter(colNames)
@@ -150,6 +154,9 @@ class Table(object):
             message = "multiple columns: " + ", ".join(multiples)
             raise Exception(message)
 
+        if not circumventNameCheck:
+            assert all("__" not in name  for name in colNames), \
+                       "illegal column name(s), double underscores not allowed"
 
         assert len(colNames) == len(colTypes)
         if rows is not None:
@@ -410,11 +417,13 @@ class Table(object):
         """extracts the given columnames and returns a new
            table with these colums, eg ``t.extractColumns("id", "name"))``
            """
+        assert len(set(names)) == len(names), "duplicate column name"
         indices = [self.getIndex(name)  for name in names]
         types = [ self.colTypes[i] for i in indices ]
         formats = [self.colFormats[i] for i in indices]
         rows = [[row[i] for i in indices] for row in self.rows]
-        return Table(names, types, formats, rows, self.title, self.meta.copy())
+        return Table(names, types, formats, rows, self.title,
+                     self.meta.copy(), circumventNameCheck=True)
 
     def renameColumns(self, **kw):
         """renames colums **inplace**.
@@ -496,7 +505,7 @@ class Table(object):
         """ returns empty table with same names, types, formatters,
             title and meta data """
         return Table(self.colNames, self.colTypes, self.colFormats, [],
-                     self.title, self.meta.copy())
+                     self.title, self.meta.copy(), circumventNameCheck=True)
 
     def dropColumn(self, name):
         """ removes a column with given *name* from the table.
@@ -651,6 +660,13 @@ class Table(object):
         self.dropColumn(name)
         self.renameColumns(**{name+"__tmp": name})
         return rv
+
+    def updateColumn(self, name, what, type_=None, format="",
+                         insertBefore=None):
+        if self.hasColumn(name):
+            self.dropColumn(name)
+
+        return self.addColumn(name, what, type_, format, insertBefore)
 
     def addColumn(self, name, what, type_=None, format="", insertBefore=None):
         """
@@ -940,7 +956,9 @@ class Table(object):
 
         \\
         """
-        assert isinstance(expr, Node)
+        if not isinstance(expr, Node):
+            expr = Value(expr)
+
         if debug:
             print "#", expr
 
@@ -956,6 +974,24 @@ class Table(object):
             filteredTable.rows =\
                           [self.rows[n] for n, i in enumerate(flags) if i]
         return filteredTable
+
+    def supportedPostfixes(self, colNamesToSupport):
+
+        collected = defaultdict(list)
+        for name in self.colNames:
+            for prefix in colNamesToSupport:
+                if name.startswith(prefix):
+                    collected[prefix].append(name[len(prefix):])
+
+        counter = defaultdict(int)
+        for postfixes in collected.values():
+            for postfix in postfixes:
+                counter[postfix] += 1
+
+        supported = [ pf for pf, count in counter.items()
+                                       if count == len(colNamesToSupport)]
+
+        return sorted(set(supported))
 
     def join(self, t, expr, debug = False):
         """joins two tables.
@@ -997,7 +1033,9 @@ class Table(object):
             t._getColumnCtx
         except:
             raise Exception("first arg is of wrong type")
-        assert isinstance(expr, Node)
+
+        if not isinstance(expr, Node):
+            expr = Value(expr)
 
         table = self._buildJoinTable(t)
 
@@ -1044,7 +1082,9 @@ class Table(object):
             t._getColumnCtx
         except:
             raise Exception("first arg is of wrong type")
-        assert isinstance(expr, Node)
+
+        if not isinstance(expr, Node):
+            expr = Value(expr)
 
         table = self._buildJoinTable(t)
 
@@ -1074,30 +1114,38 @@ class Table(object):
         table.rows = rows
         return table
 
-    def findPostfixes(self):
-        """ finds postfixes as _1, _1_1, _2, ... in columNames,
-            an empty postfix "" is recognized too """
-        postfixes = set()
-        for c in self.colNames:
-            postfix ="".join(re.findall("(_\d+)+?", c))
-            postfixes.add(postfix)
-        return sorted(postfixes)
+    def maxPostfix(self):
+        """ finds postfixes 1, 2, .. in  __1, __2, ... in self.colNames
+            an empty postfix "" is recognized as __0 """
+        postfixes = set( getPostfix(c) for c in self.colNames )
+        values = [ -1 if p=="" else int(p[2:]) for p in postfixes ]
+        return  max(values)
 
-    def updatedColnames(self, newPostfix):
-        # relies on simple postfixes _x and not mixed onles like _1_2
-        return [ c.rsplit("_",1)[0]+newPostfix for c in self.colNames]
+    def findPostfixes(self):
+        return sorted(set( getPostfix(c) for c in self.colNames) )
+
+    def incrementedPostfixes(self, by):
+        newColNames = []
+        for c in self.colNames:
+            pf = getPostfix(c)
+            val = 0 if pf =="" else int(pf[2:])
+            prefix = c if pf == "" else c[:-2]
+            newName = prefix+"__"+str(by+val)
+            newColNames.append(newName)
+        return newColNames
 
     def _buildJoinTable(self, t):
 
-        postfixes = self.findPostfixes()
-        newPostfix = nextPostfix(postfixes)
-        colNames = self.colNames + list(t.updatedColnames(newPostfix))
+        incrementBy = self.maxPostfix()+1
+
+        colNames = self.colNames + list(t.incrementedPostfixes(incrementBy))
 
         colFormats = self.colFormats + t.colFormats
         colTypes = self.colTypes + t.colTypes
         title = "%s vs %s" % (self.title, t.title)
         meta = {self: self.meta.copy(), t: t.meta.copy()}
-        return Table(colNames, colTypes, colFormats, [], title, meta)
+        return Table(colNames, colTypes, colFormats, [], title, meta,
+                     circumventNameCheck=True)
 
     def _print(self, w=12, out=None):
         if out is None:

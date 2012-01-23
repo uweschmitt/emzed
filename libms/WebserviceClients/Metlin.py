@@ -57,7 +57,8 @@ class MetlinMatcher(object):
         if header is None:
             return None
 
-        colNames = header
+        colNames = [re.sub(" +", "_", h) for h in  header]
+        colNames = [re.sub("_+", "_", h) for h in  colNames]
         colTypes = [ _defaultTypes.get(n, str) for n in colNames ]
         colFormats = [ _defaultFormats.get(n, "%s") for n in colNames ]
         transformedRows = []
