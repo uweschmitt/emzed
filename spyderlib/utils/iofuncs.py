@@ -150,8 +150,8 @@ def save_dictionary(data, filename):
             if saved_arrays:
                 data['__saved_arrays__'] = saved_arrays
         pickle_filename = osp.splitext(filename)[0]+'.pickle'
-        cPickle.dump(data, file(pickle_filename, 'w'))
-        tar = tarfile.open(filename, "w+b")
+        cPickle.dump(data, file(pickle_filename, 'w+b'))
+        tar = tarfile.open(filename, "w")
         for fname in [pickle_filename]+[fn for fn in saved_arrays.itervalues()]:
             tar.add(osp.basename(fname))
             os.remove(fname)
@@ -171,10 +171,10 @@ def load_dictionary(filename):
     data = None
     error_message = None
     try:
-        tar = tarfile.open(filename, "rb")
+        tar = tarfile.open(filename, "r")
         tar.extractall()
         pickle_filename = osp.splitext(filename)[0]+'.pickle'
-        data = cPickle.loads(file(pickle_filename, 'U').read())
+        data = cPickle.loads(file(pickle_filename, 'rb').read())
         saved_arrays = {}
         if load_array is not None:
             # Loading numpy arrays saved with np.save
@@ -227,7 +227,7 @@ def save_session(filename):
     os.chdir(get_conf_path())
     error_message = None
     try:
-        tar = tarfile.open(local_fname, "w+b")
+        tar = tarfile.open(local_fname, "w")
         for fname in SAVED_CONFIG_FILES:
             if osp.isfile(fname):
                 tar.add(fname)
@@ -246,7 +246,7 @@ def load_session(filename):
     error_message = None
     renamed = False
     try:
-        tar = tarfile.open(filename, "rb")
+        tar = tarfile.open(filename, "r")
         extracted_files = tar.getnames()
         
         # Rename original config files
