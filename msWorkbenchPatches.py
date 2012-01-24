@@ -61,6 +61,22 @@ def patch_oedit():
 
         return objecteditor._orig_dialog_for(obj, obj_name)
 
+
+def patch_pythonshell():
+    from spyderlib.widgets.externalshell.pythonshell import ExtPythonShellWidget
+    """
+    @replace(spyderlib.widgets.externalshell.pythonshell.getcomplist)
+    def getcomplist(obj):
+        return sorted(spyderlib.widgets.externalshell.pythonshell._orig_getcomplist)
+    @replace(spyderlib.widgets.externalshell.pythonshell.getmodcomplist)
+    def getmodcomplist(obj):
+        return sorted(spyderlib.widgets.externalshell.pythonshell._orig_getmodcomplist)
+    """
+    @replace(ExtPythonShellWidget.get_dir)
+    def get_dir(self, obj):
+        return sorted(ExtPythonShellWidget._orig_get_dir(self, obj))
+
+
 def patch_baseshell():
     # modifies assembly of PYTHONPATH before starting the external
     # shell in spyderlib\widgets\externalshell\pythonshell.py
@@ -123,6 +139,7 @@ def patch_spyder():
     # patching baseshell will not work, as it is registered in sys.modules in
     # unpatched version !
     patch_baseshell()
+    patch_pythonshell()
 
     from  spyderlib.widgets.dicteditor import RemoteDictEditorTableView
     @replace(RemoteDictEditorTableView.oedit_possible, verbose=True)
@@ -252,6 +269,7 @@ def patch_external_shell():
                     return "exception: "+e.message
             return trunc(res)
         return dicteditorutils._orig_value_to_display(value, *a, **kw)
+
 
     patch_oedit()
     __builtins__["__msworkbench_patched_applied"] = True

@@ -274,7 +274,7 @@ class Table(object):
             setattr(self, name, col)
 
     def numRows(self):
-	return len(self.rows)
+        return len(self.rows)
 
     def __getstate__(self):
         """ for pickling. """
@@ -1108,8 +1108,8 @@ class Table(object):
                 rows.extend([r1 + t.rows[n] for (n,i) in enumerate(flags) if i])
             else:
                 rows.extend([r1 + filler])
-	    if progress:
-                cmdlineProgress.progress(ii)
+        if progress:
+            cmdlineProgress.progress(ii)
 
         table.rows = rows
         return table

@@ -115,6 +115,7 @@ def oedit(obj, modal=True, namespace=None):
         return conv_func(dialog.get_value())
 
     if modal:
+        print "modal"
         if dialog.exec_():
             return end_func(dialog)
     else:

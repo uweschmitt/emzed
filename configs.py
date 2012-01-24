@@ -45,9 +45,9 @@ repositoryPathes = [ userConfig.getExchangeFolder(), userConfig.getDataHome() ]
 
 
 for p in repositoryPathes:
-    pp = os.path.join(Template(p).substitute(os.environ), "configs.py")
+    pp = os.path.join(Template(p).substitute(os.environ), "local_configs.py")
     if os.path.exists(pp):
         print "RUN FILE", pp
-        dd = locals()
+        dd = globals()
         dd["is_exec"]=True
-        execfile(pp, globals(), dd)
+        execfile(pp, locals(), dd)

@@ -5,7 +5,6 @@ from PyQt4.QtCore import *
 
 import guidata
 
-import configs
 import os
 import re
 
@@ -167,22 +166,32 @@ class IntegrateAction(TableAction):
 
     def do(self):
         #pyqtRemoveInputHook()
+        import configs
         integrator = dict(configs.peakIntegrators)[self.method]
         table = self.model.table
         # returns Bunch which sublcasses dict
         args = table.get(table.rows[self.idx], None)
         postfix = self.postfix
 
-        integrator.setPeakMap(args["peakmap"+postfix])
+        if all(args[f+postfix]
+               is not None
+               for f in ["mzmin", "mzmax", "rtmin", "rtmax", "peakmap"]):
 
-        # integrate
-        mzmin = args["mzmin"+postfix]
-        mzmax = args["mzmax"+postfix]
-        res = integrator.integrate(mzmin, mzmax, self.rtmin, self.rtmax)
+            integrator.setPeakMap(args["peakmap"+postfix])
 
-        area = res["area"]
-        rmse = res["rmse"]
-        params = res["params"]
+            # integrate
+            mzmin = args["mzmin"+postfix]
+            mzmax = args["mzmax"+postfix]
+            res = integrator.integrate(mzmin, mzmax, self.rtmin, self.rtmax)
+
+            area = res["area"]
+            rmse = res["rmse"]
+            params = res["params"]
+
+        else:
+            area = None
+            rmse = None
+            params = None
 
         # var 'row' is a Bunch, so we have to get the row from direct access
         # to table.rows:
@@ -235,7 +244,6 @@ class TableModel(QAbstractTableModel):
         self.emptyActionStack()
 
         self.nonEditables=set()
-        self.postfixes = table.findPostfixes()
 
     def addNonEditable(self, name):
         dataColIdx = self.table.getIndex(name)
@@ -383,7 +391,7 @@ class TableModel(QAbstractTableModel):
 
     def getEicValues(self, rowIdx, p):
         get = lambda nn: self.table.get(self.table.rows[rowIdx], nn+p)
-        return dict((nn, get(nn)) for nn in self.eicColNames())
+        return dict((nn+p, get(nn)) for nn in self.eicColNames())
 
     def hasFeatures(self):
         return self.checkForAny(*self.eicColNames())
@@ -393,28 +401,22 @@ class TableModel(QAbstractTableModel):
 
     def getIntegrationValues(self, rowIdx, p):
         get = lambda nn: self.table.get(self.table.rows[rowIdx], nn+p)
-        return dict((nn, get(nn)) for nn in self.integrationColNames())
+        return dict((nn+p, get(nn)) for nn in self.integrationColNames())
 
     def isIntegrated(self):
         return self.hasFeatures()\
                and self.checkForAny(*self.integrationColNames())
 
     def checkForAny(self, *names):
-        """ checks if names or derived names are present in table at once
-            derived names are colum names postfixed with _1, _2, ....
-            which happens during join if column names appear twice.
         """
-        for postfix in self.postfixes:
-            colNames = [ n + postfix for n in names]
-            if self.table.hasColumns(*colNames):
-                return True
-        return False
+        checks if all names appear as prefixes in current colNames
+        """
+        return len(self.table.supportedPostfixes(names))>0
 
-    def setNonEditable(self, colBaseName):
-        for postfix in self.postfixes:
-            name = colBaseName+postfix
-            if self.table.hasColumns(name):
-                self.addNonEditable(name)
+    def setNonEditable(self, colBaseName, group):
+        for postfix in self.table.supportedPostfixes(group):
+            if self.table.hasColumns(colBaseName+postfix):
+                self.addNonEditable(colBaseName+postfix)
 
     def getTitle(self):
         table = self.table
@@ -427,29 +429,22 @@ class TableModel(QAbstractTableModel):
             title += " mz_aligned=%s" % table.meta.get("mz_aligned", "False")
         return title
 
-    def postfixesSupportedBy(self, colNames):
-        postfixes = []
-        for p in self.postfixes:
-            names = [ n+p for n in colNames ]
-            if not self.table.hasColumns(*names):
-                continue
-            postfixes.append(p)
-        return postfixes
-
     def getSmoothedEics(self, rowIdx, rts):
         allsmoothed = []
-        for p in self.postfixesSupportedBy(self.integrationColNames()):
+        for p in self.table.supportedPostfixes(self.integrationColNames()):
             values = self.getIntegrationValues(rowIdx, p)
-            method = values["method"]
-            params = values["params"]
+            method = values["method"+p]
+            params = values["params"+p]
             integrator = dict(configs.peakIntegrators)[method]
-            intrts, smoothed = integrator.getSmoothed(rts, params)
-            allsmoothed.append((intrts, smoothed))
+            data = integrator.getSmoothed(rts, params)
+            if data is None:
+                data = ([], [])
+            allsmoothed.append(data)
         return allsmoothed
 
     def getPeakmaps(self, rowIdx):
         peakMaps = []
-        for p in self.postfixesSupportedBy(["peakmap"]):
+        for p in self.table.supportedPostfixes(["peakmap"]):
             pm = self.table.get(self.table.rows[rowIdx], "peakmap"+p)
             peakMaps.append(pm)
         return peakMaps
@@ -457,11 +452,12 @@ class TableModel(QAbstractTableModel):
     def getLevelNSpectra(self, rowIdx, minLevel=2, maxLevel=999):
         spectra=[]
         postfixes = []
-        for p in self.postfixesSupportedBy(self.eicColNames()):
-            values = self.getEicValues(rowIdx, p)
-            pm = values["peakmap"]
-            rtmin = values["rtmin"]
-            rtmax = values["rtmax"]
+        for p in self.table.supportedPostfixes(self.eicColNames()):
+            #values = self.getEicValues(rowIdx, p)
+            values = self.table.get(self.table.rows[rowIdx], None)
+            pm = values["peakmap"+p]
+            rtmin = values["rtmin"+p]
+            rtmax = values["rtmax"+p]
             for spec in pm.levelNSpecs(minLevel, maxLevel):
                 if rtmin <= spec.rt <= rtmax:
                     spectra.append(spec)
@@ -475,19 +471,25 @@ class TableModel(QAbstractTableModel):
         rtmins = []
         rtmaxs = []
         allrts = []
-        for p in self.postfixesSupportedBy(self.eicColNames()):
-            values = self.getEicValues(rowIdx, p)
-            pm = values["peakmap"]
-            mzmin = values["mzmin"]
-            mzmax = values["mzmax"]
-            rtmin = values["rtmin"]
-            rtmax = values["rtmax"]
+        for p in self.table.supportedPostfixes(self.eicColNames()):
+            #values = self.getEicValues(rowIdx, p)
+            values = self.table.get(self.table.rows[rowIdx], None)
+            pm = values["peakmap"+p]
+            mzmin = values["mzmin"+p]
+            mzmax = values["mzmax"+p]
+            rtmin = values["rtmin"+p]
+            rtmax = values["rtmax"+p]
             rtmins.append(rtmin)
             rtmaxs.append(rtmax)
-            chromo = pm.chromatogram(mzmin, mzmax)
+            if mzmin is None or mzmax is None:
+                chromo = [],[]
+            else:
+                chromo = pm.chromatogram(mzmin, mzmax)
+                mzmins.append(mzmin)
+                mzmaxs.append(mzmax)
             eics.append(chromo)
             allrts.extend(chromo[0])
-            mzmins.append(mzmin)
-            mzmaxs.append(mzmax)
+        if not mzmins:
+            return eics, 0, 0, 0, 0, sorted(allrts)
         return eics, min(mzmins), max(mzmaxs), min(rtmins), max(rtmaxs),\
                sorted(allrts)

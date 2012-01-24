@@ -17,6 +17,12 @@ class MzExplorer(QDialog):
     def __init__(self):
         QDialog.__init__(self)
         self.setWindowFlags(Qt.Window)
+        # Destroying the C++ object right after closing the dialog box,
+        # otherwise it may be garbage-collected in another QThread
+        # (e.g. the editor's analysis thread in Spyder), thus leading to
+        # a segmentation fault on UNIX or an application crash on Windows
+        self.setAttribute(Qt.WA_DeleteOnClose)
+        self.setWindowFlags(Qt.Window)
 
     def setup(self, peakmap):
         self.processPeakmap(peakmap)
@@ -176,7 +182,6 @@ class MzExplorer(QDialog):
         self.mzPlotter.replot()
 
 
-__avoidcleanup = []
 def inspectPeakMap(peakmap):
     """Testing this simple Qt/guiqwt example"""
 
@@ -186,7 +191,6 @@ def inspectPeakMap(peakmap):
     app = guidata.qapplication()
 
     win = MzExplorer()
-    __avoidcleanup.append(win)
     win.setup(peakmap)
     win.activateWindow()
     win.raise_()

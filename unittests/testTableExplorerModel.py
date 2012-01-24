@@ -53,13 +53,9 @@ def testTable2():
     recorder = RecordingObject()
     model = TableModel(t, recorder)
     model.table.info()
-    assert model.postfixes == ["__1"], model.postfixes
     assert model.checkForAny("mz", "rt", "rtmin", "rtmax", "mzmin", "mzmax", "peakmap")
-    assert not model.checkForAny("mz__1")
-
-    assert list(model.postfixesSupportedBy(["mz","rt"])) == ["__1"]
-    assert list(model.postfixesSupportedBy(["mz","rtx"])) == []
-
+    assert model.checkForAny("mz__1")
+    assert not model.checkForAny("mz__1", "rt__x")
 
 
 
@@ -177,7 +173,7 @@ def testSimpleTable():
     model.undoLastAction()
     assert model.table.mz.values == [ None, 2.5, 3.5]
 
-    assert model.postfixes == [""]
+    #assert model.postfixes == [""]
 
     assert model.hasFeatures()
     assert not model.isIntegrated()
@@ -198,11 +194,11 @@ def testMixedRows():
     recorder = RecordingObject()
     model = TableModel(tab, recorder)
 
-    assert model.postfixes == [ "", "__0", "__1", "__2"], model.postfixes
+    #assert model.postfixes == [ "", "__0", "__1", "__2"], model.postfixes
 
-    assert model.postfixesSupportedBy(["rtmin","rt"]) == ["","__0", "__1", "__2"]
-    assert model.postfixesSupportedBy(["mz","rt", "mzmin"]) == ["","__0", "__1"]
-    assert model.postfixesSupportedBy(["mz","rt", "x"]) == []
+    assert model.table.supportedPostfixes(["rtmin","rt"]) == ["","__0", "__1", "__2"]
+    assert model.table.supportedPostfixes(["mz","rt", "mzmin"]) == ["","__0", "__1"]
+    assert model.table.supportedPostfixes(["mz","rt", "x"]) == []
 
 
 

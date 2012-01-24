@@ -79,9 +79,9 @@ class PubChemDB(object):
             synonyms = ";".join(t.text for t in summary.findall("SynonymList")[0])
             d = dict(cid=cid, mw=mw, mf=mf, iupac=iupac, synonyms=synonyms)
             if keggIds is not None:
-                d["isInKEGG"]=cid in keggIds
+                d["is_in_kegg"]=cid in keggIds
             if humanMBdbIds is not None:
-                d["isInHMDB"]=cid in humanMBdbIds
+                d["is_in_kegg"]=cid in humanMBdbIds
             items.append((mw, d))
         return items
 
@@ -169,7 +169,7 @@ class PubChemDB(object):
         url = "http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?cid="
         self.table.addColumn("url", url+self.table.cid, type_=str)
         self.table.addColumn("m0", self.massCalculator, type_=float, format="%.7f", insertBefore="mw")
-        self.table = self.table.filter(self.table.m0 != None)
+        #self.table = self.table.filter(self.table.m0 != None)
         self.table.sortBy("m0")# build index
 
     def store(self, path=None):

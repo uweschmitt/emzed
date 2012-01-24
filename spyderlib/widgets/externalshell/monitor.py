@@ -403,6 +403,7 @@ class Monitor(threading.Thread):
     
     def setcwd(self, dirname):
         """Set current working directory"""
+        print "CWD", dirname
         if self.ipython_shell:
             self.ipython_shell.magic_cd("-q "+dirname)
         else:

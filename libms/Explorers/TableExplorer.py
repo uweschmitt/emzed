@@ -7,8 +7,6 @@ import guidata
 
 from PlottingWidgets import RtPlotter, MzPlotter
 
-import configs
-
 from ..DataStructures.Table import Table
 
 from TableExplorerModel import *
@@ -40,6 +38,13 @@ class TableExplorer(QDialog):
     def __init__(self, tables, offerAbortOption):
         QDialog.__init__(self)
 
+        # Destroying the C++ object right after closing the dialog box,
+        # otherwise it may be garbage-collected in another QThread
+        # (e.g. the editor's analysis thread in Spyder), thus leading to
+        # a segmentation fault on UNIX or an application crash on Windows
+        self.setAttribute(Qt.WA_DeleteOnClose)
+        self.setWindowFlags(Qt.Window)
+
         self.offerAbortOption = offerAbortOption
 
         self.models = [TableModel(table, self) for table in tables]
@@ -54,7 +59,6 @@ class TableExplorer(QDialog):
         self.setupLayout()
         self.connectSignals()
 
-        self.setWindowFlags(Qt.Window)
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.setSizePolicy(sizePolicy)
         self.setSizeGripEnabled(True)
@@ -138,6 +142,7 @@ class TableExplorer(QDialog):
     def setupIntegrationWidgets(self):
         self.intLabel = QLabel("Integration")
         self.chooseIntMethod = QComboBox()
+        import configs
         for name, _ in configs.peakIntegrators:
             self.chooseIntMethod.addItem(name)
 
@@ -312,11 +317,12 @@ class TableExplorer(QDialog):
         self.tableView = self.tableViews[i]
         self.setupModelDependendLook()
         if self.isIntegrated:
-            self.model.setNonEditable("method")
-
+            self.model.setNonEditable("method", ["area", "rmse", "method",\
+                                                 "params"])
         self.choosePostfix.clear()
-        for postfix in self.model.postfixes:
-            self.choosePostfix.addItem(repr(postfix))
+        mod = self.model
+        for p in mod.table.supportedPostfixes(mod.integrationColNames()):
+            self.choosePostfix.addItem(repr(p))
 
         if len(self.choosePostfix) == 1:
             self.choosePostfix.setVisible(False)
@@ -423,7 +429,6 @@ class TableExplorer(QDialog):
         configs = configsForEics(eics)
         if self.isIntegrated:
             smootheds = self.model.getSmoothedEics(rowIdx, allrts)
-            rts, chromo = smootheds[0]
             curves += smootheds
             configs += configsForSmootheds(smootheds)
 
@@ -445,7 +450,10 @@ class TableExplorer(QDialog):
             self.rtPlotter.setXAxisLimits(xmin, xmax)
             self.rtPlotter.setYAxisLimits(ymin, ymax)
             self.rtPlotter.updateAxes()
-        self.plotMz(resetLimits=(mzmin, mzmax) if reset else None)
+
+        reset = reset and mzmin is not None and mzmax is not None
+        limits = (mzmin, mzmax) if reset else None
+        self.plotMz(resetLimits=limits)
 
     def spectrumChosen(self, idx):
         if idx==0:
@@ -473,7 +481,8 @@ class TableExplorer(QDialog):
 
         # plot spectra
         configs = configsForSpectra(spectra)
-        titles = map(repr, self.model.postfixes)
+        postfixes = self.model.table.supportedPostfixes(self.model.eicColNames())
+        titles = map(repr, postfixes)
         self.mzPlotter.plot(spectra, configs, titles if len(titles)>1 else None)
 
         if resetLimits:
@@ -495,13 +504,11 @@ class TableExplorer(QDialog):
         # plot() needs replot() afterwards !
         self.mzPlotter.replot()
 
-__avoidcleanup=[]
 def inspect(what, offerAbortOption=False):
     if isinstance(what, Table):
         what = [what]
     app = guidata.qapplication()
     explorer = TableExplorer(what, offerAbortOption)
-    __avoidcleanup.append(explorer)
     explorer.raise_()
     explorer.exec_()
     # partial cleanup

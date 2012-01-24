@@ -11,7 +11,7 @@ class GlobalConfig(object):
 
         appRoot,_ = _winreg.QueryValueEx(key, "AppData")
         appRoot = _winreg.ExpandEnvironmentStrings(appRoot)
-        appFolder = os.path.join(appRoot, "mzExplore")
+        appFolder = os.path.join(appRoot, "emzed")
         if not os.path.exists(appFolder):
             os.makedirs(appFolder)
         self.configFilePath=os.path.join(appFolder, "global.ini")
@@ -60,7 +60,7 @@ def getDocumentFolder():
     return _winreg.ExpandEnvironmentStrings(personalRoot)
 
 def getDataHome():
-    dataHome = os.path.join(getDocumentFolder(), "mzExplore")
+    dataHome = os.path.join(getDocumentFolder(), "emzed")
     if not os.path.exists(dataHome):
         os.makedirs(dataHome)
     return dataHome

@@ -1,6 +1,20 @@
 print "LOAD LOCAL DATA TABLES"
 
-from configs import repositoryPathes
+import sys, os
+
+import configs
+
+try:
+    from configs import repositoryPathes
+except ImportError, e:
+    path = os.path.abspath(configs.__file__)
+    message = "configs.py is loaded from "+path + "\n"
+    message += "maybe this caused this exception !"
+    if len(e.args)>0:
+        e0 = e.args[0] + "\n" + message
+        e.args = (e0,) + e.args[1:]
+    raise e
+    
 import os, ms, glob
 from  libms.Chemistry.Elements import Elements
 
@@ -43,8 +57,17 @@ elements = Elements()
 if not os.environ.get("WITHOUT_PUBCHEM"):
     import db
     pc_full = db.pubChemDB.table
-    pc_kegg = pc_full.filter(pc_full.isInKEGG == 1)
-    pc_hmdb = pc_full.filter(pc_full.isInHMDB == 1)
+    pc_full = pc_full.filter(pc_full.m0 != None)
+
+    # older versions have camel case colulmnname
+    if pc_full.hasColumn("isInKEGG"):
+        pc_kegg = pc_full.filter(pc_full.isInKEGG == 1)
+    else:
+        pc_kegg = pc_full.filter(pc_full.is_in_kegg == 1)
+    if pc_full.hasColumn("isInHMDB"):
+        pc_hmdb = pc_full.filter(pc_full.isInHMDB == 1)
+    else:
+        pc_hmdb = pc_full.filter(pc_full.is_in_hmdb == 1)
     del db
 
 del repositoryPathes
