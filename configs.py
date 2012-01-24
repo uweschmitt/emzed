@@ -48,6 +48,6 @@ for p in repositoryPathes:
     pp = os.path.join(Template(p).substitute(os.environ), "local_configs.py")
     if os.path.exists(pp):
         print "RUN FILE", pp
-        dd = globals()
+        dd = locals()
         dd["is_exec"]=True
-        execfile(pp, locals(), dd)
+        execfile(pp, globals(), dd)
