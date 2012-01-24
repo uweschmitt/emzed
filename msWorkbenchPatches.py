@@ -62,19 +62,6 @@ def patch_oedit():
         return objecteditor._orig_dialog_for(obj, obj_name)
 
 
-def patch_pythonshell():
-    from spyderlib.widgets.externalshell.pythonshell import ExtPythonShellWidget
-    """
-    @replace(spyderlib.widgets.externalshell.pythonshell.getcomplist)
-    def getcomplist(obj):
-        return sorted(spyderlib.widgets.externalshell.pythonshell._orig_getcomplist)
-    @replace(spyderlib.widgets.externalshell.pythonshell.getmodcomplist)
-    def getmodcomplist(obj):
-        return sorted(spyderlib.widgets.externalshell.pythonshell._orig_getmodcomplist)
-    """
-    @replace(ExtPythonShellWidget.get_dir)
-    def get_dir(self, obj):
-        return sorted(ExtPythonShellWidget._orig_get_dir(self, obj))
 
 
 def patch_baseshell():
