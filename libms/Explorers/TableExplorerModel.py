@@ -8,6 +8,8 @@ import guidata
 import os
 import re
 
+import configs
+
 def isUrl(what):
     return what.startswith("http://")
 
@@ -166,7 +168,6 @@ class IntegrateAction(TableAction):
 
     def do(self):
         #pyqtRemoveInputHook()
-        import configs
         integrator = dict(configs.peakIntegrators)[self.method]
         table = self.model.table
         # returns Bunch which sublcasses dict
