@@ -591,7 +591,7 @@ class Table(object):
             key = computekey([self.get(row, n) for n in colNames])
             if key not in subTables:
                 subTables[key] = self.buildEmptyClone()
-            subTables[key].rows.append(row)
+            subTables[key].rows.append(row[:])
         splitedTables = subTables.values()
         for table in splitedTables:
             table.resetInternals()
@@ -816,7 +816,7 @@ class Table(object):
         for row in self.rows:
             key = computekey(row)
             if key not in keysSeen:
-                result.rows.append(row)
+                result.rows.append(row[:])
                 keysSeen.add(key)
         return result
 
@@ -935,13 +935,16 @@ class Table(object):
             values, _ = expr._eval({self: ctx})
             # works for numbers and objects to, but not if values is
             # iteraable:
-            if type(values) in [list, np.ndarray]:
+            if type(values) in (list, np.ndarray):
                 assert len(values)==1, "you did not use an aggregating "\
                                        "expression, or you aggregate over "\
                                        "a column which has lists or numpy "\
                                        "arrays as entries"
                 values = np.array(values).tolist()
                 values = values[0]
+            else:
+                if hasattr(values, "__array_interface__"):
+                    values = values.tolist()
             collectedValues.extend([values]*len(t))
 
         result = self.copy()
@@ -965,14 +968,14 @@ class Table(object):
         flags, _ = expr._eval(None)
         filteredTable = self.buildEmptyClone()
         if flags is True:
-            filteredTable.rows = self.rows[:]
+            filteredTable.rows = [r[:] for r in  self.rows]
         elif flags is False:
             filteredTable.rows = []
         else:
             assert len(flags) == len(self),\
                    "result of filter expression does not match table size"
             filteredTable.rows =\
-                          [self.rows[n] for n, i in enumerate(flags) if i]
+                    [self.rows[n][:] for n, i in enumerate(flags) if i]
         return filteredTable
 
     def supportedPostfixes(self, colNamesToSupport):
@@ -1051,9 +1054,9 @@ class Table(object):
             flags,_ = expr._eval(ctx)
             if type(flags) == bool:
                 if flags:
-                    rows.extend([ r1 + row for row in t.rows])
+                    rows.extend([ r1[:] + row[:] for row in t.rows])
             else:
-                rows.extend([ r1 + t.rows[n] for (n,i) in enumerate(flags) if i])
+                rows.extend([ r1[:] + t.rows[n][:] for (n,i) in enumerate(flags) if i])
             cmdlineProgress.progress(ii)
         print
         table.rows = rows
@@ -1101,13 +1104,13 @@ class Table(object):
             ctx = {self:r1ctx, t:tctx}
             flags,_ = expr._eval(ctx)
             if flags is True:
-                    rows.extend([ r1 + row for row in t.rows])
+                rows.extend([ r1[:] + row[:] for row in t.rows])
             elif flags is False:
-                    rows.extend([ r1 + filler])
+                rows.extend([ r1[:] + filler[:]])
             elif numpy.any(flags):
-                rows.extend([r1 + t.rows[n] for (n,i) in enumerate(flags) if i])
+                rows.extend([r1[:] + t.rows[n][:] for (n,i) in enumerate(flags) if i])
             else:
-                rows.extend([r1 + filler])
+                rows.extend([r1[:] + filler[:]])
         if progress:
             cmdlineProgress.progress(ii)
 
@@ -1147,7 +1150,7 @@ class Table(object):
         return Table(colNames, colTypes, colFormats, [], title, meta,
                      circumventNameCheck=True)
 
-    def _print(self, w=12, out=None):
+    def _print(self, w=12, out=None, title=None):
         if out is None:
             out = sys.stdout
         #inner method is private, else the object can not be pickled !
@@ -1155,6 +1158,14 @@ class Table(object):
             expr = "%%-%ds" % w
             for v in vals:
                 print >> out, (expr % v),
+
+        if title is not None:
+            _p(["==============="])
+            print >> out
+            _p([title])
+            print >> out
+            _p(["==============="])
+            print >> out
 
         _p(self.colNames)
         print >> out
@@ -1166,6 +1177,8 @@ class Table(object):
         for row in self.rows:
             _p( fmt(value) for (fmt, value) in zip(self.colFormatters, row) )
             print >> out
+
+    print_ = _print
 
     @staticmethod
     def toTable(colName, iterable,  format=None, type_=None, title="", meta=None):

@@ -5,14 +5,56 @@ from libms.DataStructures.Table import Table, toOpenMSFeatureMap
 
 def testFullJoin():
     t = ms.toTable("a", [None, 2, 3])
-    t1 = t.copy()
-
-    t2 = t.join(t1, True)
+    t2 = t.join(t, True)
     assert len(t2) == 9
     assert t2.a.values == [ None, None, None, 2, 2, 2, 3, 3, 3]
     assert t2.a__0.values == t.a.values * 3
 
 
+def testForDanglingReferences():
+    t = ms.toTable("a", [None, 2, 2])
+    t2 = t.join(t, True)
+
+    # test if result is a real copy, no references to original
+    # tables are left
+    t2.rows[0][0]=3
+    assert t.rows[0][0] == None
+    t2.rows[0][1]=3
+    assert t.rows[0][0] == None
+
+
+    t2 = t.leftJoin(t, True)
+    t2.rows[0][0]=3
+    assert t.rows[0][0] == None
+    t2.rows[0][1]=3
+    assert t.rows[0][0] == None
+
+    t2 = t.filter(True)
+    t2.rows[0][0]=3
+    assert t.rows[0][0] == None
+
+
+    tis = t.splitBy("a")
+    tis[0].rows[0][0] = 7
+    assert t.a.values == [ None, 2, 2]
+
+    tis[1].rows[0][0] = 7
+    assert t.a.values == [ None, 2, 2]
+
+    tn = t.uniqueRows()
+    tn.rows[0][0] = 7
+    tn.rows[-1][0]=7
+    assert t.a.values == [ None, 2, 2]
+
+    tn = t.aggregate(t.a.max, "b") # , groupBy = "a")
+    tn.rows[0][0]=7
+    tn.rows[-1][0]=7
+    assert t.a.values == [ None, 2, 2]
+
+    tn = t.aggregate(t.a.max, "b", groupBy = "a")
+    tn.rows[0][0]=7
+    tn.rows[-1][0]=7
+    assert t.a.values == [ None, 2, 2]
 
 def testSupportedPostfixes():
 
@@ -129,7 +171,7 @@ def testInplaceColumnmodification():
 
 
 
-def testAggWIthIterable():
+def testAggWithIterable():
     t = ms.toTable("a", [ (1,2), None ])
     t = t.aggregate(t.a.uniqueNotNone, "an")
     assert t.an.values == [ (1,2), (1,2)]
@@ -145,17 +187,16 @@ def testSpecialFormats():
         assert t.colFormatters[0](120) == "2.00m"
 
 
-class testXYZ(object):
 
-    def testToOpenMSFeatureMap(self):
-        t = Table("mz rt".split(), [float, float], 2 * ["%.6f"])
-        fm = toOpenMSFeatureMap(t)
-        assert fm.size() == 0
+def testToOpenMSFeatureMap():
+    t = Table("mz rt".split(), [float, float], 2 * ["%.6f"])
+    fm = toOpenMSFeatureMap(t)
+    assert fm.size() == 0
 
-        t.addRow([1.0, 2.0])
-        fm = toOpenMSFeatureMap(t)
-        assert fm.size() == 1
+    t.addRow([1.0, 2.0])
+    fm = toOpenMSFeatureMap(t)
+    assert fm.size() == 1
 
-        f = fm[0]
-        assert f.getMZ() == 1.0 # == ok, as no digits after decimal point
-        assert f.getRT() == 2.0 # dito
+    f = fm[0]
+    assert f.getMZ() == 1.0 # == ok, as no digits after decimal point
+    assert f.getRT() == 2.0 # dito
