@@ -1157,6 +1157,7 @@ class Table(object):
         def _p(vals, w=w, out=out):
             expr = "%%-%ds" % w
             for v in vals:
+                v = "-" if v is None else v
                 print >> out, (expr % v),
 
         if title is not None:
@@ -1167,15 +1168,21 @@ class Table(object):
             _p(["==============="])
             print >> out
 
-        _p(self.colNames)
+        ix = [ i for i, f in enumerate(self.colFormats) if f is not None ]
+
+        _p([self.colNames[i] for i in ix])
         print >> out
-        _p(re.match("<type '((\w|[.])+)'>|(\w+)", str(n)).groups()[0]  or str(n)
-                                                   for n in self.colTypes)
+        ct = [ self.colTypes[i] for i in ix]
+
+        _p(re.match("<(type|class) '((\w|[.])+)'>|(\w+)", str(n)).groups()[1]  or str(n)
+                                                   for n in ct)
         print >> out
-        _p(["------"] * len(self.colNames))
+        _p(["------"] * len(ix))
         print >> out
+        fms = [ self.colFormatters[i] for i in ix]
         for row in self.rows:
-            _p( fmt(value) for (fmt, value) in zip(self.colFormatters, row) )
+            ri = [ row[i] for i in ix]
+            _p( fmt(value) for (fmt, value) in zip(fms, ri))
             print >> out
 
     print_ = _print
