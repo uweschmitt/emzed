@@ -19,6 +19,11 @@ def testIfNotNoneElse():
     assert t.b.values == [ 3,2,3]
     assert t.c.values == [ 4,2,3]
 
+def testPow():
+    t = ms.toTable("a", [None, 2, 3])
+    t.addColumn("square", t.a.pow(2))
+    assert t.square.values == [None, 4, 9 ]
+
 
 def testForDanglingReferences():
     t = ms.toTable("a", [None, 2, 2])

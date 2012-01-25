@@ -145,6 +145,9 @@ class BaseExpression(object):
     def ifNotNoneElse(self, other):
         return (self==None).thenElse(other, self)
 
+    def pow(self, exp):
+        return FunctionExpression(lambda v: v**exp, "pow", self, False)
+
     @property
     def min(self):
         return AggregateExpression(self, lambda v: min(v), "min(%s)")
