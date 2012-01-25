@@ -1,7 +1,7 @@
 import sys, StringIO, difflib
 import numpy as np
 from libms.DataStructures.Table import Table
-from libms.DataStructures.ExpressionTree import Value
+from libms.DataStructures.Expressions import Value
 
 def record(fun, args, p=None):
     try:

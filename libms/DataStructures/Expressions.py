@@ -30,12 +30,12 @@ def saveeval(expr, ctx):
     except Exception, e:
         raise Exception("eval of %s failed: %s" % (expr, e))
 
-class Node(object):
+class BaseExpression(object):
 
     def __init__(self, left, right):
-        if not isinstance(left, Node):
+        if not isinstance(left, BaseExpression):
             left = Value(left)
-        if not isinstance(right, Node):
+        if not isinstance(right, BaseExpression):
             right = Value(right)
         self.left = left
         self.right = right
@@ -56,22 +56,22 @@ class Node(object):
         return "(%s %s %s)" % (self.left, self.symbol, self.right)
 
     def __ge__(self, other):
-        return GeNode(self, other)
+        return GeExpression(self, other)
 
     def __gt__(self, other):
-        return GtNode(self, other)
+        return GtExpression(self, other)
 
     def __le__(self, other):
-        return LeNode(self, other)
+        return LeExpression(self, other)
 
     def __lt__(self, other):
-        return LtNode(self, other)
+        return LtExpression(self, other)
 
     def __eq__(self, other):
-        return EqNode(self, other)
+        return EqExpression(self, other)
 
     def __ne__(self, other):
-        return NeNode(self, other)
+        return NeExpression(self, other)
 
     def __add__(self, other):
         return BinaryExpression(self, other, lambda a,b: a+b, "+")
@@ -98,16 +98,16 @@ class Node(object):
         return BinaryExpression(self, other, lambda a,b: a/b, "/")
 
     def __and__(self, other):
-        return AndNode(self, other)
+        return AndExpression(self, other)
 
     # no rand / ror / rxor: makes sometimes trouble with precedence of
     # terms.....
 
     def __or__(self, other):
-        return OrNode(self, other)
+        return OrExpression(self, other)
 
     def __xor__(self, other):
-        return XorNode(self, other)
+        return XorExpression(self, other)
 
     def __invert__(self):
         return UnaryExpression(self, lambda a: not a, "not %s")
@@ -141,6 +141,9 @@ class Node(object):
 
     def thenElse(self, then, else_):
         return IfThenElse(self, then, else_)
+
+    def ifNotNoneElse(self, other):
+        return (self==None).thenElse(other, self)
 
     @property
     def min(self):
@@ -204,7 +207,7 @@ class Node(object):
 
 
 
-class CompNode(Node):
+class CompExpression(BaseExpression):
 
     # comparing to None is allowed by default, but is overidden in some
     #  sublassess,
@@ -277,7 +280,7 @@ def Range(start, end, len):
     rv[start:end] = True
     return rv
 
-class LtNode(CompNode):
+class LtExpression(CompExpression):
 
     symbol = "<"
     comparator = lambda self, a, b: a < b
@@ -292,7 +295,7 @@ class LtNode(CompNode):
         i0 = gt(vec, refval)
         return Range(i0, len(vec), len(vec))
 
-class GtNode(CompNode):
+class GtExpression(CompExpression):
 
     symbol = ">"
     comparator = lambda self, a, b: a > b
@@ -308,7 +311,7 @@ class GtNode(CompNode):
         i0 = lt(vec, refval)
         return Range(0, i0+1, len(vec))
 
-class LeNode(CompNode):
+class LeExpression(CompExpression):
 
     symbol = "<="
     comparator = lambda self, a, b: a <= b
@@ -324,7 +327,7 @@ class LeNode(CompNode):
         i0 = ge(vec, refval)
         return Range(i0, len(vec), len(vec))
 
-class GeNode(CompNode):
+class GeExpression(CompExpression):
 
     symbol = ">="
     comparator = lambda self, a, b: a >= b
@@ -339,7 +342,7 @@ class GeNode(CompNode):
         i0 = le(vec, refval)
         return Range(0, i0+1, len(vec))
 
-class NeNode(CompNode):
+class NeExpression(CompExpression):
 
     symbol = "!="
     comparator = lambda self, a, b: a != b
@@ -354,7 +357,7 @@ class NeNode(CompNode):
         i1 = ge(vec, refval)
         return ~Range(i1, i0+1, len(vec))
 
-class EqNode(CompNode):
+class EqExpression(CompExpression):
 
     symbol = "=="
     comparator = lambda self, a, b: a == b
@@ -371,7 +374,7 @@ class EqNode(CompNode):
         return Range(i1, i0+1, len(vec))
 
 
-class BinaryExpression(Node):
+class BinaryExpression(BaseExpression):
 
     # TODO: refactor dependcies based on symbol, -> extra flags in
     # constructor.
@@ -500,28 +503,11 @@ class BinaryExpression(Node):
         return self.efun(lval, rval), None
 
 
-class InvertNode(Node):
-
-    def __init__(self, child):
-        self.child = child
-
-    def _eval(self, ctx):
-        val, _ = saveeval(self.child, ctx)
-        if type(val) in _basic_types:
-            return not val, None
-        elif type(val) in _iterables:
-            return np.array([ not v for v in val ]), None
-        raise Exception("invert _eval with%s not possible" % val)
-
-    def __str__(self):
-        return "~%s" % str(self.child)
-
-    def _neededColumns(self):
-        return self.child._neededColumns()
-
-class UnaryExpression(Node):
+class UnaryExpression(BaseExpression):
 
     def __init__(self, left, efun, funname):
+        if not isinstance(left, BaseExpression):
+            left = Value(left)
         self.left = left
         self.efun = efun
         self.funname = funname
@@ -535,9 +521,11 @@ class UnaryExpression(Node):
     def __str__(self):
         return self.funname % self.left
 
-class AggregateExpression(Node):
+class AggregateExpression(BaseExpression):
 
     def __init__(self, left, efun, funname, ignoreNone=True):
+        if not isinstance(left, BaseExpression):
+            left = Value(left)
         self.left = left
         self.efun = efun
         self.funname = funname
@@ -557,10 +545,10 @@ class AggregateExpression(Node):
         return self.funname % self.left
 
 
-class LogicNode(Node):
+class LogicExpression(BaseExpression):
 
     def __init__(self, left, right):
-        super(LogicNode, self).__init__(left, right)
+        super(LogicExpression, self).__init__(left, right)
         if right.__class__ == Value and type(right.value) != bool:
             print "warning: parentesis for logic op set ?"
 
@@ -582,7 +570,7 @@ class LogicNode(Node):
         raise Exception("bool op for %r and %r not defined" % (l, r))
 
 
-class AndNode(LogicNode):
+class AndExpression(LogicExpression):
 
     symbol = "&"
     def _eval(self, ctx):
@@ -592,7 +580,7 @@ class AndNode(LogicNode):
         rhs, _ = saveeval(self.right, ctx)
         return self.richeval(lhs, rhs, lambda a,b: a & b), None
 
-class OrNode(LogicNode):
+class OrExpression(LogicExpression):
 
     symbol = "|"
     def _eval(self, ctx):
@@ -602,7 +590,7 @@ class OrNode(LogicNode):
         rhs, _ = saveeval(self.right, ctx)
         return self.richeval(lhs, rhs, lambda a,b: a | b), None
 
-class XorNode(LogicNode):
+class XorExpression(LogicExpression):
 
     symbol = "^"
     def _eval(self, ctx):
@@ -611,7 +599,7 @@ class XorNode(LogicNode):
         return self.richeval(lhs, rhs, lambda a,b: (a & ~b) | (~a & b)), None
 
 
-class Value(Node):
+class Value(BaseExpression):
 
     def __init__(self, value):
         self.value = value
@@ -629,9 +617,11 @@ class Value(Node):
 
 
 
-class FunctionExpression(Node):
+class FunctionExpression(BaseExpression):
 
     def __init__(self, efun, efunname, child, agg):
+        if not isinstance(child, BaseExpression):
+            child = Value(child)
         self.child = child
         self.efun = efun
         self.efunname = efunname
@@ -654,9 +644,16 @@ class FunctionExpression(Node):
 
 
 
-class IfThenElse(Node):
+class IfThenElse(BaseExpression):
 
         def __init__(self, e1, e2, e3):
+            if not isinstance(e1, BaseExpression):
+                e1 = Value(e1)
+            if not isinstance(e2, BaseExpression):
+                e2 = Value(e2)
+            if not isinstance(e3, BaseExpression):
+                e3 = Value(e3)
+
             self.e1 = e1
             self.e2 = e2
             self.e3 = e3
@@ -712,7 +709,7 @@ class IfThenElse(Node):
 def _wrapFun(name, agg=False):
     def wrapper(x):
         origfun = getattr(np, name)
-        if isinstance(x,Node):
+        if isinstance(x,BaseExpression):
             return FunctionExpression(origfun, name,  x, agg)
         return origfun(x)
     return wrapper
@@ -732,7 +729,7 @@ count = _wrapFun("len", agg=True)
 
 
 
-class Column(Node):
+class Column(BaseExpression):
 
     """
     represents a column in a *Table*.

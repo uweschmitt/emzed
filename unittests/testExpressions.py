@@ -1,4 +1,4 @@
-from libms.DataStructures.ExpressionTree import *
+from libms.DataStructures.Expressions import Value
 import numpy as np
 
 def test_if_all_operators_are_defined():

@@ -1,6 +1,6 @@
 import pyOpenMS as P
 import copy, os, itertools, re, numpy, cPickle, sys, inspect
-from   ExpressionTree import Node, Column, Value
+from   Expressions import BaseExpression, Column, Value
 import numpy as np
 from   collections import Counter, OrderedDict, defaultdict
 
@@ -704,7 +704,7 @@ class Table(object):
         if name in self.colNames:
             raise Exception("column with name %r already exists" % name)
 
-        if isinstance(what, Node):
+        if isinstance(what, BaseExpression):
             return self._addColumnByExpression(name, what, type_, format,
                                                insertBefore)
         if callable(what):
@@ -959,7 +959,7 @@ class Table(object):
 
         \\
         """
-        if not isinstance(expr, Node):
+        if not isinstance(expr, BaseExpression):
             expr = Value(expr)
 
         if debug:
@@ -1037,7 +1037,7 @@ class Table(object):
         except:
             raise Exception("first arg is of wrong type")
 
-        if not isinstance(expr, Node):
+        if not isinstance(expr, BaseExpression):
             expr = Value(expr)
 
         table = self._buildJoinTable(t)
@@ -1086,7 +1086,7 @@ class Table(object):
         except:
             raise Exception("first arg is of wrong type")
 
-        if not isinstance(expr, Node):
+        if not isinstance(expr, BaseExpression):
             expr = Value(expr)
 
         table = self._buildJoinTable(t)

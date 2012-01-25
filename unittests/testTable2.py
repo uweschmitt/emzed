@@ -11,6 +11,15 @@ def testFullJoin():
     assert t2.a__0.values == t.a.values * 3
 
 
+def testIfNotNoneElse():
+    t = ms.toTable("a", [None, 2, 3])
+    t.addColumn("b", t.a.ifNotNoneElse(3))
+    t.addColumn("c", t.a.ifNotNoneElse(t.b+1))
+
+    assert t.b.values == [ 3,2,3]
+    assert t.c.values == [ 4,2,3]
+
+
 def testForDanglingReferences():
     t = ms.toTable("a", [None, 2, 2])
     t2 = t.join(t, True)
