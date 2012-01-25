@@ -126,7 +126,6 @@ def patch_spyder():
     # patching baseshell will not work, as it is registered in sys.modules in
     # unpatched version !
     patch_baseshell()
-    patch_pythonshell()
 
     from  spyderlib.widgets.dicteditor import RemoteDictEditorTableView
     @replace(RemoteDictEditorTableView.oedit_possible, verbose=True)
