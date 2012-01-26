@@ -3,7 +3,12 @@ import re
 
 __doc__ = """
 
-Expressions are **fucking** awesome
+Working with tables relies on so called ``Expressions`` 
+
+
+.. pycon::
+
+    print 3
 
 
 """

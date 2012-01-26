@@ -52,7 +52,10 @@ Table of Contents
    license
    tour
    working_with_explorers
+<<<<<<< HEAD
    tables_and_expressions
+=======
+>>>>>>> website
    api
    contact
 

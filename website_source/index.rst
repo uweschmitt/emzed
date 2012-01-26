@@ -52,7 +52,6 @@ Table of Contents
    license
    tour
    working_with_explorers
-   tables_and_expressions
    api
    contact
 
