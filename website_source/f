@@ -1,0 +1,1 @@
+python C:\Dokumente und Einstellungen\Administrator\Anwendungsdaten\Python\Python27\site-packages\autorun-0.1dev_20120125-py2.7.egg\sphinxcontrib\pycon.py

@@ -1,0 +1,424 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>A Guided Tour &mdash; eMZed 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="eMZed 1.0 documentation" href="index.html" />
+    <link rel="next" title="Exploring Data" href="working_with_explorers.html" />
+    <link rel="prev" title="Licencse" href="license.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="working_with_explorers.html" title="Exploring Data"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="license.html" title="Licencse"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">eMZed 1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="a-guided-tour">
+<h1>A Guided Tour<a class="headerlink" href="#a-guided-tour" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="working-with-peakmaps">
+<h2>Working with PeakMaps<a class="headerlink" href="#working-with-peakmaps" title="Permalink to this headline">¶</a></h2>
+<p>TODO -&gt; I/O, inspecting, retrieve spectrum</p>
+</div>
+<div class="section" id="exctracting-features">
+<h2>Exctracting Features<a class="headerlink" href="#exctracting-features" title="Permalink to this headline">¶</a></h2>
+<p>TODO -&gt; Centwave, table explorer</p>
+</div>
+<div class="section" id="integrating-features">
+<h2>Integrating Features<a class="headerlink" href="#integrating-features" title="Permalink to this headline">¶</a></h2>
+<p>Integrator anwenden + Tabelle öffnen + manipulieren</p>
+</div>
+<div class="section" id="aligning-features">
+<h2>Aligning Features<a class="headerlink" href="#aligning-features" title="Permalink to this headline">¶</a></h2>
+<p>rt - alignemnt vorführen, joinen, anzeigen</p>
+</div>
+<div class="section" id="working-with-tables">
+<h2>Working with Tables<a class="headerlink" href="#working-with-tables" title="Permalink to this headline">¶</a></h2>
+<p>Tables are a central data structure in mzExplore. We give a short demonstration of its capabilities</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">ms</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">tab</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mass</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">substances</span><span class="o">=</span><span class="n">ms</span><span class="o">.</span><span class="n">loadCSV</span><span class="p">(</span><span class="s">&quot;example.csv&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">substances</span><span class="o">.</span><span class="n">info</span><span class="p">()</span>
+
+<span class="go">table info:   title= example.csv</span>
+
+<span class="go">   meta={&#39;loaded_from&#39;: &#39;c:\\Dokumente und Einstellungen\\Administrator\\Eigene Dateien\\msWorkbench\\website_source\\example.csv&#39;}</span>
+<span class="go">    len= 4</span>
+
+<span class="go">   #0  [4 diff vals, 0 Nones]    name=&#39;name&#39;   &lt;type &#39;str&#39;&gt;    fmt=&#39;%s&#39;</span>
+<span class="go">   #1  [4 diff vals, 0 Nones]    name=&#39;mf&#39;     &lt;type &#39;str&#39;&gt;    fmt=&#39;%s&#39;</span>
+</pre></div>
+</div>
+<p>That is the table has two columns named <em>name</em> and <em>mf</em> and both
+contain data of type <tt class="docutils literal"><span class="pre">str</span></tt>.</p>
+<p>This is a small table which we print the table on the console</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">substances</span><span class="o">.</span><span class="n">_print</span><span class="p">()</span>
+<span class="go">name         mf          </span>
+<span class="go">str          str         </span>
+<span class="go">------       ------      </span>
+<span class="go">water        H2O         </span>
+<span class="go">sodium       NaCl        </span>
+<span class="go">fullerene    C18         </span>
+<span class="go">cryptonite   Kr          </span>
+</pre></div>
+</div>
+<p>If the table is to complex or large for printing, we have a graphical interface for inspecting the table.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">ms</span><span class="o">.</span><span class="n">inspect</span><span class="p">(</span><span class="n">substances</span><span class="p">)</span>  
+</pre></div>
+</div>
+<p>Adding a new, computed column is easy. Here we introduce a new column <em>m0</em> which contains the monoisotopic masses corresponding to the contents of the <em>mf</em> column</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">mass</span><span class="o">.</span><span class="n">of</span><span class="p">(</span><span class="s">&quot;H2O&quot;</span><span class="p">)</span> <span class="c"># calculates monoisotopic weights</span>
+<span class="go">18.0105650638</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">substances</span><span class="o">.</span><span class="n">addColumn</span><span class="p">(</span><span class="s">&quot;m0&quot;</span><span class="p">,</span> <span class="n">substances</span><span class="o">.</span><span class="n">mf</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">mass</span><span class="o">.</span><span class="n">of</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">substances</span><span class="o">.</span><span class="n">_print</span><span class="p">()</span>
+<span class="go">name         mf           m0          </span>
+<span class="go">str          str          float       </span>
+<span class="go">------       ------       ------      </span>
+<span class="go">water        H2O          18.01057    </span>
+<span class="go">sodium       NaCl         57.95862    </span>
+<span class="go">fullerene    C18          216.00000   </span>
+<span class="go">cryptonite   Kr           -           </span>
+</pre></div>
+</div>
+<p>We load another table</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">info</span><span class="o">=</span><span class="n">ms</span><span class="o">.</span><span class="n">loadCSV</span><span class="p">(</span><span class="s">&quot;information.csv&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">info</span><span class="o">.</span><span class="n">_print</span><span class="p">()</span>
+<span class="go">mf           onEarth     </span>
+<span class="go">str          int         </span>
+<span class="go">------       ------      </span>
+<span class="go">H2O          1           </span>
+<span class="go">NaCl         1           </span>
+<span class="go">HCl          1           </span>
+<span class="go">Kr           0           </span>
+</pre></div>
+</div>
+<p>And use an SQL-like <em>LEFTJOIN</em> to match rows with the same molecular formula</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">joined</span><span class="o">=</span><span class="n">substances</span><span class="o">.</span><span class="n">leftJoin</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">substances</span><span class="o">.</span><span class="n">mf</span><span class="o">==</span><span class="n">info</span><span class="o">.</span><span class="n">mf</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">joined</span><span class="o">.</span><span class="n">_print</span><span class="p">()</span>
+<span class="go">name         mf           m0           mf__0        onEarth__0  </span>
+<span class="go">str          str          float        str          int         </span>
+<span class="go">------       ------       ------       ------       ------      </span>
+<span class="go">water        H2O          18.01057     H2O          1           </span>
+<span class="go">sodium       NaCl         57.95862     NaCl         1           </span>
+<span class="go">fullerene    C18          216.00000    -            -           </span>
+<span class="go">cryptonite   Kr           -            Kr           0           </span>
+</pre></div>
+</div>
+<p>We want to get rid of non terrestial substances by filtering the rows</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">common</span> <span class="o">=</span> <span class="n">joined</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">joined</span><span class="o">.</span><span class="n">onEarth__0</span><span class="o">==</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">common</span><span class="o">.</span><span class="n">_print</span><span class="p">()</span>
+<span class="go">name         mf           m0           mf__0        onEarth__0  </span>
+<span class="go">str          str          float        str          int         </span>
+<span class="go">------       ------       ------       ------       ------      </span>
+<span class="go">water        H2O          18.01057     H2O          1           </span>
+<span class="go">sodium       NaCl         57.95862     NaCl         1           </span>
+</pre></div>
+</div>
+<p>The <tt class="docutils literal"><span class="pre">tab</span></tt> module contains some databases, eg the substances from pubchem
+categorized as <em>metabolomic compounds</em></p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">tab</span> <span class="c"># some standard tables</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pc</span> <span class="o">=</span> <span class="n">tab</span><span class="o">.</span><span class="n">pc_full</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ms</span><span class="o">.</span><span class="n">inspect</span><span class="p">(</span><span class="n">pc</span><span class="p">)</span>  
+</pre></div>
+</div>
+<p>Before matching our data against the large pubchem table, we build an index on tthis table in order to speed up the following <tt class="docutils literal"><span class="pre">leftJoin</span></tt> call. Building an index is done by sorting the corresponding column</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">pc</span><span class="o">.</span><span class="n">sortBy</span><span class="p">(</span><span class="s">&quot;m0&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">matched</span><span class="o">=</span><span class="n">joined</span><span class="o">.</span><span class="n">leftJoin</span><span class="p">(</span><span class="n">pc</span><span class="p">,</span> <span class="p">(</span><span class="n">joined</span><span class="o">.</span><span class="n">onEarth__0</span><span class="o">==</span><span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">joined</span><span class="o">.</span><span class="n">m0</span><span class="o">.</span><span class="n">approxEqual</span><span class="p">(</span><span class="n">pc</span><span class="o">.</span><span class="n">m0</span><span class="p">,</span> <span class="mi">15</span><span class="o">*</span><span class="n">MMU</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">matched</span><span class="o">.</span><span class="n">numRows</span><span class="p">()</span>
+<span class="go">7</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ms</span><span class="o">.</span><span class="n">inspect</span><span class="p">(</span><span class="n">matched</span><span class="p">)</span>  
+</pre></div>
+</div>
+<p>Another way to identify compounds is to use the Metlin webpage which provides a formular for running queries against the database. This access is automated</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">common</span><span class="o">.</span><span class="n">addColumn</span><span class="p">(</span><span class="s">&quot;polarity&quot;</span><span class="p">,</span> <span class="s">&quot;-&quot;</span><span class="p">)</span> <span class="c"># metlin need this</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">matched2</span><span class="o">=</span><span class="n">ms</span><span class="o">.</span><span class="n">matchMetlin</span><span class="p">(</span><span class="n">common</span><span class="p">,</span> <span class="s">&quot;m0&quot;</span><span class="p">,</span> <span class="n">ppm</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ms</span><span class="o">.</span><span class="n">inspect</span><span class="p">(</span><span class="n">matched2</span><span class="p">)</span> 
+</pre></div>
+</div>
+</div>
+<div class="section" id="accessing-chemical-data">
+<h2>Accessing Chemical Data<a class="headerlink" href="#accessing-chemical-data" title="Permalink to this headline">¶</a></h2>
+<p>The <tt class="docutils literal"><span class="pre">mass</span></tt> module provides the masses of an electron, a
+proton or a neutron and all all important elements</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">mass</span><span class="o">.</span><span class="n">e</span> <span class="c"># electron</span>
+<span class="go">0.00054857990946</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">mass</span><span class="o">.</span><span class="n">C</span><span class="p">,</span> <span class="n">mass</span><span class="o">.</span><span class="n">C12</span><span class="p">,</span> <span class="n">mass</span><span class="o">.</span><span class="n">C13</span>
+<span class="go">12.0 12.0 13.003355</span>
+</pre></div>
+</div>
+<p>Further it helps to calculate masses of molecules from their sum
+formula</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">mass</span><span class="o">.</span><span class="n">of</span><span class="p">(</span><span class="s">&quot;C6H2O6&quot;</span><span class="p">)</span>
+<span class="go">169.985140064</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">elements</span>
+<span class="go">LOAD ELEMENTS</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">mass</span><span class="o">.</span><span class="n">of</span><span class="p">(</span><span class="s">&quot;C6H2O6&quot;</span><span class="p">,</span> <span class="n">C</span><span class="o">=</span><span class="n">elements</span><span class="o">.</span><span class="n">C13</span><span class="p">)</span>
+<span class="go">176.005270064</span>
+</pre></div>
+</div>
+<p>The <tt class="docutils literal"><span class="pre">elements</span></tt> module provides information
+of important elements</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">elements</span><span class="o">.</span><span class="n">C</span>
+<span class="go">{&#39;massnumber&#39;: 12, &#39;m0&#39;: 12.0, &#39;number&#39;: 6, &#39;name&#39;: &#39;Carbon&#39;}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">elements</span><span class="o">.</span><span class="n">C13</span>
+<span class="go">{&#39;abundance&#39;: 0.010700000000000001, &#39;name&#39;: &#39;Carbon&#39;, &#39;number&#39;: 6, &#39;mass&#39;: 13.003355}</span>
+</pre></div>
+</div>
+<p><tt class="docutils literal"><span class="pre">abundance</span></tt> is a module which provides the natural abundances of
+common elements</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">abundance</span>     
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">abundance</span><span class="o">.</span><span class="n">C</span>
+<span class="go">{12: 0.9893000000000001, 13: 0.010700000000000001}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="analysing-isotope-patterns">
+<h2>Analysing isotope patterns<a class="headerlink" href="#analysing-isotope-patterns" title="Permalink to this headline">¶</a></h2>
+<p>As the <tt class="docutils literal"><span class="pre">Table</span></tt> objects provide powerfull matchings, all we need to
+analyse isotope patterns occuring in feature tables is a way to generate
+tables containing theese data. <tt class="docutils literal"><span class="pre">ms.isotopeDistributionTable</span></tt>
+does this</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">tab</span> <span class="o">=</span> <span class="n">ms</span><span class="o">.</span><span class="n">isotopeDistributionTable</span><span class="p">(</span><span class="s">&quot;C4S4&quot;</span><span class="p">,</span> <span class="n">minp</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">tab</span><span class="o">.</span><span class="n">_print</span><span class="p">()</span>
+<span class="go">mf           mass         abundance   </span>
+<span class="go">str          float        float       </span>
+<span class="go">------       ------       ------      </span>
+<span class="go">C4S4         175.888283   1.000       </span>
+<span class="go">C4S4         176.887670   0.032       </span>
+<span class="go">C4S4         176.891638   0.043       </span>
+<span class="go">C4S4         177.884079   0.181       </span>
+</pre></div>
+</div>
+<p>Non natural distributions as in marker experiments can be
+simmulated too</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">iso</span><span class="o">=</span><span class="n">ms</span><span class="o">.</span><span class="n">isotopeDistributionTable</span><span class="p">(</span><span class="s">&quot;C4S4&quot;</span><span class="p">,</span> <span class="n">C</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">C12</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">C13</span><span class="o">=</span><span class="mf">0.5</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">iso</span><span class="o">.</span><span class="n">replaceColumn</span><span class="p">(</span><span class="s">&quot;abundance&quot;</span><span class="p">,</span> <span class="n">iso</span><span class="o">.</span><span class="n">abundance</span> <span class="o">/</span> <span class="n">iso</span><span class="o">.</span><span class="n">abundance</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">*</span> <span class="mf">100.0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">iso</span><span class="o">.</span><span class="n">_print</span><span class="p">()</span>
+<span class="go">mf           mass         abundance   </span>
+<span class="go">str          float        float       </span>
+<span class="go">------       ------       ------      </span>
+<span class="go">C4S4         175.888283   5.40        </span>
+<span class="go">C4S4         176.891638   21.59       </span>
+<span class="go">C4S4         177.894993   32.38       </span>
+<span class="go">C4S4         178.887434   3.90        </span>
+<span class="go">C4S4         178.898348   21.59       </span>
+<span class="go">C4S4         179.890789   5.85        </span>
+<span class="go">C4S4         179.901703   5.40        </span>
+<span class="go">C4S4         180.894144   3.90        </span>
+</pre></div>
+</div>
+<p>The method can simulate the resolution of the used mass analyzer</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">tab</span> <span class="o">=</span> <span class="n">ms</span><span class="o">.</span><span class="n">isotopeDistributionTable</span><span class="p">(</span><span class="s">&quot;C4S4&quot;</span><span class="p">,</span> <span class="n">R</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span> <span class="n">minp</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">tab</span><span class="o">.</span><span class="n">_print</span><span class="p">()</span>
+<span class="go">mf           mass         abundance   </span>
+<span class="go">str          float        float       </span>
+<span class="go">------       ------       ------      </span>
+<span class="go">C4S4         175.888283   1.000       </span>
+<span class="go">C4S4         176.889972   0.073       </span>
+<span class="go">C4S4         177.884079   0.181       </span>
+</pre></div>
+</div>
+<p>Matching isotope patterns now works like this</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">iso</span><span class="o">=</span><span class="n">ms</span><span class="o">.</span><span class="n">isotopeDistributionTable</span><span class="p">(</span><span class="s">&quot;H2O&quot;</span><span class="p">,</span> <span class="n">minp</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">iso</span><span class="o">.</span><span class="n">addEnumeration</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">iso</span><span class="o">.</span><span class="n">_print</span><span class="p">()</span>
+<span class="go">id           mf           mass         abundance   </span>
+<span class="go">int          str          float        float       </span>
+<span class="go">------       ------       ------       ------      </span>
+<span class="go">0            H2O          18.010565    1.000       </span>
+<span class="go">1            H2O          20.014819    0.002       </span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">common</span><span class="o">.</span><span class="n">dropColumns</span><span class="p">(</span><span class="s">&quot;mf__0&quot;</span><span class="p">,</span> <span class="s">&quot;onEarth__0&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">matched</span><span class="o">=</span><span class="n">iso</span><span class="o">.</span><span class="n">leftJoin</span><span class="p">(</span><span class="n">common</span><span class="p">,</span> <span class="n">iso</span><span class="o">.</span><span class="n">mass</span><span class="o">.</span><span class="n">approxEqual</span><span class="p">(</span><span class="n">common</span><span class="o">.</span><span class="n">m0</span><span class="p">,</span> <span class="mi">1</span><span class="o">*</span><span class="n">MMU</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">matched</span><span class="o">.</span><span class="n">_print</span><span class="p">()</span>
+<span class="go">id           mf           mass         abundance    name__0      mf__0        m0__0        polarity__0 </span>
+<span class="go">int          str          float        float        str          str          float        str         </span>
+<span class="go">------       ------       ------       ------       ------       ------       ------       ------      </span>
+<span class="go">0            H2O          18.010565    1.000        water        H2O          18.01057     -           </span>
+<span class="go">1            H2O          20.014819    0.002        -            -            -            -           </span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="statistical-analysis">
+<h2>Statistical Analysis<a class="headerlink" href="#statistical-analysis" title="Permalink to this headline">¶</a></h2>
+<p>The framework provides two methods for comparing two datasets by analysis of variance: classical <em>one way ANOVA</em> and
+non parametric <em>Kruskal Wallis</em> analysis.</p>
+<p>These methods work on tables (is anybody surprised ?) like
+this</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">group1</span> <span class="o">=</span> <span class="p">[</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">,</span> <span class="mf">1.2</span><span class="p">,</span> <span class="mf">1.4</span><span class="p">,</span> <span class="mf">2.1</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">group2</span> <span class="o">=</span> <span class="p">[</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.2</span><span class="p">,</span> <span class="mf">2.3</span><span class="p">,</span> <span class="mf">1.9</span><span class="p">,</span> <span class="mf">2.8</span><span class="p">,</span> <span class="mf">2.3</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">ms</span><span class="o">.</span><span class="n">toTable</span><span class="p">(</span><span class="s">&quot;measurement&quot;</span><span class="p">,</span> <span class="n">group1</span> <span class="o">+</span> <span class="n">group2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">indices</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">group1</span><span class="p">)</span> <span class="o">+</span> <span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">group2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">indices</span>
+<span class="go">[1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2]</span>
+<span class="gp">&gt;&gt;&gt; </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span><span class="o">.</span><span class="n">addColumn</span><span class="p">(</span><span class="s">&quot;group&quot;</span><span class="p">,</span> <span class="n">indices</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span><span class="o">.</span><span class="n">_print</span><span class="p">()</span>
+<span class="go">measurement  group       </span>
+<span class="go">float        int         </span>
+<span class="go">------       ------      </span>
+<span class="go">1.00000      1           </span>
+<span class="go">0.90000      1           </span>
+<span class="go">1.20000      1           </span>
+<span class="go">1.40000      1           </span>
+<span class="go">2.10000      1           </span>
+<span class="go">1.00000      2           </span>
+<span class="go">2.20000      2           </span>
+<span class="go">2.30000      2           </span>
+<span class="go">1.90000      2           </span>
+<span class="go">2.80000      2           </span>
+<span class="go">2.30000      2           </span>
+</pre></div>
+</div>
+<p><tt class="docutils literal"><span class="pre">ms.oneWayAnova</span></tt> returns the correspoding <em>F</em> and <em>p</em> value, <tt class="docutils literal"><span class="pre">ms.kruskalWallis</span></tt> the <em>H</em> and <em>p</em> value</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">F</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span> <span class="n">ms</span><span class="o">.</span><span class="n">oneWayAnova</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">group</span><span class="p">,</span> <span class="n">t</span><span class="o">.</span><span class="n">measurement</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">p</span>
+<span class="go">0.0480721067923</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">H</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span> <span class="n">ms</span><span class="o">.</span><span class="n">kruskalWallis</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">group</span><span class="p">,</span> <span class="n">t</span><span class="o">.</span><span class="n">measurement</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">p</span>
+<span class="go">0.0541290285797</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="building-graphical-interfaces">
+<h2>Building graphical interfaces<a class="headerlink" href="#building-graphical-interfaces" title="Permalink to this headline">¶</a></h2>
+<p>Beyond the <tt class="docutils literal"><span class="pre">Table</span></tt>-Explorer <tt class="docutils literal"><span class="pre">ms.inspect</span></tt> and the
+Peakmap-Explorer <tt class="docutils literal"><span class="pre">ms.inspectPeakMap</span></tt> assisted workflows
+request certain parameters and decisions at certain processing steps. To support this mzExplore has an builder for
+graphical input forms</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">b</span><span class="o">=</span><span class="n">ms</span><span class="o">.</span><span class="n">DialogBuilder</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s">&quot;Please provide data&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">b</span><span class="o">.</span><span class="n">addInstruction</span><span class="p">(</span><span class="s">&quot;For Algorithm A please provide&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">b</span><span class="o">.</span><span class="n">addInt</span><span class="p">(</span><span class="s">&quot;Level&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">b</span><span class="o">.</span><span class="n">addFloat</span><span class="p">(</span><span class="s">&quot;Threshold&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">b</span><span class="o">.</span><span class="n">addFileOpen</span><span class="p">(</span><span class="s">&quot;Input File&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">b</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>                            
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">A Guided Tour</a><ul>
+<li><a class="reference internal" href="#working-with-peakmaps">Working with PeakMaps</a></li>
+<li><a class="reference internal" href="#exctracting-features">Exctracting Features</a></li>
+<li><a class="reference internal" href="#integrating-features">Integrating Features</a></li>
+<li><a class="reference internal" href="#aligning-features">Aligning Features</a></li>
+<li><a class="reference internal" href="#working-with-tables">Working with Tables</a></li>
+<li><a class="reference internal" href="#accessing-chemical-data">Accessing Chemical Data</a></li>
+<li><a class="reference internal" href="#analysing-isotope-patterns">Analysing isotope patterns</a></li>
+<li><a class="reference internal" href="#statistical-analysis">Statistical Analysis</a></li>
+<li><a class="reference internal" href="#building-graphical-interfaces">Building graphical interfaces</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="license.html"
+                        title="previous chapter">Licencse</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="working_with_explorers.html"
+                        title="next chapter">Exploring Data</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/tour.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="working_with_explorers.html" title="Exploring Data"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="license.html" title="Licencse"
+             >previous</a> |</li>
+        <li><a href="index.html">eMZed 1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Uwe Schmitt.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

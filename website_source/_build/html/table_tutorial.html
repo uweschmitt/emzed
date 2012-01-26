@@ -1,0 +1,277 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Introduction to working with Tables &mdash; eMZed 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="eMZed 1.0 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">eMZed 1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="introduction-to-working-with-tables">
+<h1>Introduction to working with Tables<a class="headerlink" href="#introduction-to-working-with-tables" title="Permalink to this headline">¶</a></h1>
+<p>Tables are a central data structure in mzExplore. We give a short demonstration of its capabilities:</p>
+<div class="highlight-python"><pre>.. pycon::</pre>
+</div>
+<blockquote>
+<div>substances=ms.loadCSV(&#8220;example.csv&#8221;)
+substances.info()</div></blockquote>
+<p>That is the table has two columns named <em>name</em> and <em>mf</em> and both
+contain data of type <tt class="docutils literal"><span class="pre">str</span></tt>.</p>
+<p>This is a small table which we print the table on the console:</p>
+<div class="highlight-python"><pre>"""</pre>
+</div>
+<p>run(&#8220;&#8221;&#8220;substances._print()&#8221;&#8220;&#8221;)</p>
+<p>print &#8220;&#8221;&#8220;</p>
+<p>If the table is to complex or large for printing, we have a graphical interface for inspecting the table:</p>
+<p>&#8220;&#8221;&#8221;
+run(&#8220;&#8221;&#8220;ms.inspect(substances)&#8221;&#8220;&#8221;)
+print &#8220;&#8221;&#8220;</p>
+<p>Adding a new, computed column is easy. Here we introduce a new column <em>m0</em> which contains the monoisotopic masses corresponding to the contents of the <em>mf</em> column:</p>
+<div class="highlight-python"><pre>"""</pre>
+</div>
+<p>run(&#8220;&#8221;&#8220;print mass.of(&#8220;H2O&#8221;) # calculates monoisotopic weights&#8221;&#8220;&#8221;)
+run(&#8220;&#8221;&#8220;substances.addColumn(&#8220;m0&#8221;, substances.mf.apply(mass.of))
+substances._print()&#8221;&#8220;&#8221;)
+print &#8220;&#8221;&#8220;</p>
+<p>We load another table:</p>
+<div class="highlight-python"><pre>"""</pre>
+</div>
+<p>run(&#8220;&#8221;&#8220;info=ms.loadCSV() # without path -&gt; opens dialog
+info._print()&#8221;&#8220;&#8221;)
+print &#8220;&#8221;&#8220;</p>
+<p>And use an SQL-like <em>LEFTJOIN</em> to match rows with the same molecular formula:</p>
+<div class="highlight-python"><pre>"""</pre>
+</div>
+<p>run(&#8220;&#8221;&#8220;joined=substances.leftJoin(info, substances.mf==info.mf)
+joined._print()&#8221;&#8220;&#8221;)</p>
+<p>print &#8220;&#8221;&#8220;We want to get rid of non terrestial substances by filtering the rows</p>
+<div class="highlight-python"><pre>"""</pre>
+</div>
+<p>run(&#8220;&#8221;&#8220;common = joined.filter(joined.onEarth_1==1)
+common._print()&#8221;&#8220;&#8221;)</p>
+<p>MMU=0.001</p>
+<p>print &#8220;&#8221;&#8220;</p>
+<p>The <tt class="docutils literal"><span class="pre">tab</span></tt> module contains some databases, eg the substances from pubchem
+categorized as <em>metabolomic compounds</em>:</p>
+<div class="highlight-python"><pre>"""</pre>
+</div>
+<p>run(&#8220;&#8221;&#8220;import tab # some standard tables
+pc = tab.pc_full
+ms.inspect(pc)&#8221;&#8220;&#8221;)</p>
+<p>print &#8220;&#8221;&#8220;</p>
+<p>Before matching our data against the large pubchem table, we build an index on tthis table in order to speed up the following <tt class="docutils literal"><span class="pre">leftJoin</span></tt> call. Building an index is done by sorting the corresponding column:</p>
+<div class="highlight-python"><pre>"""</pre>
+</div>
+<p>run(&#8220;&#8221;&#8220;pc.sortBy(&#8220;m0&#8221;)
+matched=joined.leftJoin(pc, (joined.onEarth_1==1)</p>
+<blockquote>
+<div>&amp; joined.m0.approxEqual(pc.m0, 15*MMU))&#8221;&#8220;&#8221;)</div></blockquote>
+<p>matched.meta=dict()
+run(&#8220;&#8221;&#8220;print matched.numRows()&#8221;&#8220;&#8221;)
+run(&#8220;&#8221;&#8220;ms.inspect(matched)&#8221;&#8220;&#8221;)</p>
+<p>print &#8220;&#8221;&#8221;
+Another way to identify compounds is to use the Metlin webpage which provides a formular for running queries against the database. This access is automated:</p>
+<div class="highlight-python"><pre>"""</pre>
+</div>
+<p>run(&#8220;&#8221;&#8220;common.addColumn(&#8220;polarity&#8221;, &#8220;-&#8221;) # metlin need this
+matched2=ms.matchMetlin(common, &#8220;m0&#8221;, ppm=15)
+ms.inspect(matched2)&#8221;&#8220;&#8221;)</p>
+<p>print&#8221;&#8220;&#8221;</p>
+</div>
+<div class="section" id="modules-providing-chemical-data">
+<h1>Modules providing chemical data<a class="headerlink" href="#modules-providing-chemical-data" title="Permalink to this headline">¶</a></h1>
+<p>The <tt class="docutils literal"><span class="pre">mass</span></tt> module provides the masses of an electron, a
+proton or a neutron and all all important elements:</p>
+<div class="highlight-python"><pre>"""</pre>
+</div>
+<p>run(&#8220;&#8221;&#8220;print mass.e # electron&#8221;&#8220;&#8221;)
+run(&#8220;&#8221;&#8220;print mass.C, mass.C12, mass.C13&#8221;&#8220;&#8221;)
+print &#8220;&#8221;&#8220;</p>
+<p>Further it helps to calculate masses of molecules from their sum
+formula:</p>
+<div class="highlight-python"><pre>"""</pre>
+</div>
+<p>run(&#8220;&#8221;&#8220;print mass.of(&#8220;C6H2O6&#8221;)&#8221;&#8220;&#8221;)</p>
+<p>run(&#8220;&#8221;&#8220;print mass.of(&#8220;C6H2O6&#8221;, C=elements.C13)&#8221;&#8220;&#8221;)</p>
+<p>print &#8220;&#8221;&#8220;</p>
+<p>The <tt class="docutils literal"><span class="pre">elements</span></tt> module provides information
+of important elements:</p>
+<div class="highlight-python"><pre>"""</pre>
+</div>
+<p>run(&#8220;print elements.C&#8221;)
+run(&#8220;print elements.C13&#8221;)</p>
+<p>print &#8220;&#8221;&#8221;
+<tt class="docutils literal"><span class="pre">abundance</span></tt> is a module which provides the natural abundances of
+common elements:</p>
+<div class="highlight-python"><pre>"""</pre>
+</div>
+<p>run(&#8220;print abundance.C&#8221;)</p>
+<p>print&#8221;&#8220;&#8221;</p>
+</div>
+<div class="section" id="analysing-isotope-patterns">
+<h1>Analysing isotope patterns<a class="headerlink" href="#analysing-isotope-patterns" title="Permalink to this headline">¶</a></h1>
+<p>As the <tt class="docutils literal"><span class="pre">Table</span></tt> objects provide powerfull matchings, all we need to
+analyse isotope patterns occuring in feature tables is a way to generate
+tables containing theese data. <tt class="docutils literal"><span class="pre">ms.isotopeDistributionTable</span></tt>
+does this:</p>
+<div class="highlight-python"><pre>"""</pre>
+</div>
+<p>run(&#8220;&#8221;&#8220;tab = ms.isotopeDistributionTable(&#8220;C4S4&#8221;, minp=0.01)
+tab._print()&#8221;&#8220;&#8221;)
+print &#8220;&#8221;&#8220;</p>
+<p>Non natural distributions as in marker experiments can be
+simmulated too:</p>
+<div class="highlight-python"><pre>"""</pre>
+</div>
+<p>run(&#8220;&#8221;&#8220;iso=ms.isotopeDistributionTable(&#8220;C4S4&#8221;, C=dict(C12=0.5, C13=0.5))
+iso.replaceColumn(&#8220;abundance&#8221;, iso.abundance / iso.abundance.sum() * 100.0)
+iso._print()&#8221;&#8220;&#8221;)</p>
+<p>print &#8220;&#8221;&#8220;</p>
+<p>The method can simulate the resolution of the used mass analyzer:</p>
+<div class="highlight-python"><pre>"""</pre>
+</div>
+<p>run(&#8220;&#8221;&#8220;tab = ms.isotopeDistributionTable(&#8220;C4S4&#8221;, R=10000, minp=0.01)
+tab._print()&#8221;&#8220;&#8221;)</p>
+<p>print &#8220;&#8221;&#8220;</p>
+<p>Matching isotope patterns now works like this:</p>
+<div class="highlight-python"><pre>"""</pre>
+</div>
+<p>run(&#8220;&#8221;&#8220;iso=ms.isotopeDistributionTable(&#8220;H2O&#8221;, minp=1e-3)
+iso.addEnumeration()
+iso._print()&#8221;&#8220;&#8221;)
+run(&#8220;&#8221;&#8220;common.dropColumns(&#8220;mf_1&#8221;, &#8220;onEarth_1&#8221;)
+matched=iso.leftJoin(common, iso.mass.approxEqual(common.m0, 1*MMU))
+matched._print()&#8221;&#8220;&#8221;)</p>
+<p>print &#8220;&#8221;&#8220;&#8221;</p>
+</div>
+<div class="section" id="statistical-analysis">
+<h1>Statistical Analysis<a class="headerlink" href="#statistical-analysis" title="Permalink to this headline">¶</a></h1>
+<p>The framework provides two methods for comparing two datasets by analysis of variance: classical <em>one way ANOVA</em> and
+non parametric <em>Kruskal Wallis</em> analysis.</p>
+<p>These methods work on tables (is anybody surprised ?) like
+this:</p>
+<div class="highlight-python"><pre>"""</pre>
+</div>
+<p>t = ms.toTable(&#8220;group&#8221;, [ 1,1,1,1,1,2,2,2,2,2,2])
+t.addColumn(&#8220;measurement&#8221;, [ 1.0, 0.9, 1.2, 1.4, 2.1, 1.0, 2.2, 2.3, 1.9, 2.8, 2.3])
+t.sortBy(&#8220;measurement&#8221;)</p>
+<p>run(&#8220;&#8221;&#8220;t._print()&#8221;&#8220;&#8221;)
+print &#8220;&#8221;&#8220;</p>
+<p><tt class="docutils literal"><span class="pre">ms.oneWayAnova</span></tt> returns the correspoding <em>F</em> and <em>p</em> value, <tt class="docutils literal"><span class="pre">ms.kruskalWallis</span></tt> the <em>H</em> and <em>p</em> value:</p>
+<div class="highlight-python"><pre>"""</pre>
+</div>
+<p>run(&#8220;&#8221;&#8220;F, p = ms.oneWayAnova(t.group, t.measurement)
+print p&#8221;&#8220;&#8221;)
+run(&#8220;&#8221;&#8220;H, p = ms.kruskalWallis(t.group, t.measurement)
+print p&#8221;&#8220;&#8221;)</p>
+<p>print &#8220;&#8221;&#8220;</p>
+</div>
+<div class="section" id="building-graphical-interfaces">
+<h1>Building graphical interfaces<a class="headerlink" href="#building-graphical-interfaces" title="Permalink to this headline">¶</a></h1>
+<p>Beyond the <tt class="docutils literal"><span class="pre">Table</span></tt>-Explorer <tt class="docutils literal"><span class="pre">ms.inspect</span></tt> and the
+Peakmap-Explorer <tt class="docutils literal"><span class="pre">ms.inspectPeakMap</span></tt> assisted workflows
+request certain parameters and decisions at certain processing steps. To support this mzExplore has an builder for
+graphical input forms:</p>
+<div class="highlight-python"><pre>"""</pre>
+</div>
+<p>run(&#8220;&#8221;&#8220;b=ms.DialogBuilder(title=&#8221;Please provide data&#8221;)
+b.addInstruction(&#8220;For Algorithm A please provide&#8221;)
+b.addInt(&#8220;Level&#8221;)
+b.addFloat(&#8220;Threshold&#8221;)
+b.addFileOpen(&#8220;Input File&#8221;)
+print b.show()&#8221;&#8220;&#8221;)</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Introduction to working with Tables</a></li>
+<li><a class="reference internal" href="#modules-providing-chemical-data">Modules providing chemical data</a></li>
+<li><a class="reference internal" href="#analysing-isotope-patterns">Analysing isotope patterns</a></li>
+<li><a class="reference internal" href="#statistical-analysis">Statistical Analysis</a></li>
+<li><a class="reference internal" href="#building-graphical-interfaces">Building graphical interfaces</a></li>
+</ul>
+
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/table_tutorial.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">eMZed 1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Uwe Schmitt.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>
