@@ -1,6 +1,13 @@
 import numpy as np
 import re
 
+__doc__ = """
+
+Expressions are **fucking** awesome
+
+
+"""
+
 def le(a, x):
     return np.searchsorted(a, x, 'right')-1
 
@@ -146,7 +153,10 @@ class BaseExpression(object):
         return (self==None).thenElse(other, self)
 
     def pow(self, exp):
-        return FunctionExpression(lambda v: v**exp, "pow", self, False)
+        return self.apply(lambda v: v**exp)
+
+    def apply(self, fun):
+        return FunctionExpression(fun, str(fun), self, False)
 
     @property
     def min(self):
@@ -777,8 +787,6 @@ class Column(BaseExpression):
                             "did you use wrong table in expression ?")
         return cx[self.colname]
 
-    def apply(self, fun):
-        return FunctionExpression(fun, str(fun), self, False)
 
     def __str__(self):
         if not hasattr(self, "colname"):
