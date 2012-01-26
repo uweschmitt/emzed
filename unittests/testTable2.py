@@ -24,6 +24,11 @@ def testPow():
     t.addColumn("square", t.a.pow(2))
     assert t.square.values == [None, 4, 9 ]
 
+def testApply():
+    t = ms.toTable("a", [None, 2, 3])
+    t.addColumn("id", (t.a*t.a).apply(lambda v: int(v**0.5)))
+    assert t.id.values == [None, 2, 3 ]
+
 
 def testForDanglingReferences():
     t = ms.toTable("a", [None, 2, 2])
