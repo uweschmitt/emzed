@@ -642,15 +642,10 @@ class FunctionExpression(BaseExpression):
 
     def _eval(self, ctx):
         vals, index = saveeval(self.child, ctx)
-        res = [ self.efun(v) if v is not None else None for v in vals]
         if str(self.efun).startswith("<ufunc"):
-            hasint = any( int in x.__class__.__mro__ for x in res)
-            hasfloat = any( float in x.__class__.__mro__ for x in res)
-            if hasfloat:
-                return [ None if x is None else float(x) for x in res ], None
-            if hasint:
-                return [ None if x is None else int(x) for x in res ], None
-            raise Exception("how handle this ?")    
+            if None not in vals:
+                return self.efun(vals), None # returns array 
+        res = [ self.efun(v) if v is not None else None for v in vals]
         return res, None
 
 

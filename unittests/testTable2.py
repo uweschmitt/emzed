@@ -34,6 +34,7 @@ def testApplyUfun():
     import numpy
     t = ms.toTable("a", [None, 2.0, 3])
 
+    print numpy.log
     t.addColumn("log", t.a.apply(numpy.log))
     assert t.colTypes == [ float, float]
 

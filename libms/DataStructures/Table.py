@@ -47,6 +47,16 @@ def getPostfix(colName):
         raise Exception("invalid postfix '%s'" % fields[1])
 
 
+def coerce_numpy_values(li):
+    hasint = any( int in x.__class__.__mro__ for x in li)
+    hasfloat = any( float in x.__class__.__mro__ for x in li)
+    if hasfloat:
+        return [ None if x is None else float(x) for x in li ]
+    if hasint:
+        return [ None if x is None else int(x) for x in li ]
+    return li
+
+
 class Bunch(dict):
     __getattr__ = dict.__getitem__
 
@@ -727,6 +737,7 @@ class Table(object):
 
     def _addColumnByExpression(self, name, expr, type_, format, insertBefore):
         values, _ = expr._eval(None)
+        values = coerce_numpy_values(values)
         return self._addColumn(name, values, type_, format, insertBefore)
 
     def _addColumnByCallback(self, name, callback, type_, format, insertBefore):
