@@ -8,7 +8,7 @@ from ..DataStructures.Table import Table
 
 rootUrl = "http://metlin.scripps.edu/"
 batchUrl = "http://metlin.scripps.edu/metabo_batch_list.php"
-batchSize = 100
+batchSize = 200
 
 # inputmass is str ! so we can match later without floating
 # points accuracy issues.
@@ -20,7 +20,6 @@ class MetlinMatcher(object):
 
     @staticmethod
     def _query(masses, ppm, polarity):
-        print len(masses)
         for m in masses:
             assert isinstance(m, str), "masses must be passed as strings"
         dd = dict()

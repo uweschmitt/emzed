@@ -30,6 +30,16 @@ def testApply():
     assert t.id.values == [None, 2, 3 ]
 
 
+def testApplyUfun():
+    import numpy
+    t = ms.toTable("a", [None, 2.0, 3])
+
+    t.addColumn("log", t.a.apply(numpy.log))
+    assert t.colTypes == [ float, float]
+
+
+
+
 def testForDanglingReferences():
     t = ms.toTable("a", [None, 2, 2])
     t2 = t.join(t, True)
