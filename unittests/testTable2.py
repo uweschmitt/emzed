@@ -39,6 +39,15 @@ def testApplyUfun():
     assert t.colTypes == [ float, float]
 
 
+def testNonBoolean():
+    t = ms.toTable("a", [])
+    try:
+        not t.a
+    except:
+        pass
+    else:
+        raise Exception()
+
 
 
 def testForDanglingReferences():

@@ -94,7 +94,7 @@ class BaseExpression(object):
         raise Exception("sizes %d and %d do not fit" % (sl, sr))
 
     def __nonzero__(self):
-        assert False, "%r has no boolean value" % self
+        raise Exception("can not convert %s to boolean value" % self)
 
     def __str__(self):
         return "(%s %s %s)" % (self.left, self.symbol, self.right)
