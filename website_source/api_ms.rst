@@ -17,23 +17,6 @@ For an example see :ref:`rtalign_example`
 .. autofunction:: ms.rtalign
    
 
-Simple Dialogs
-~~~~~~~~~~~~~~
-
-.. autofunction:: ms.askForDirectory
-.. autofunction:: ms.askForSave
-.. autofunction:: ms.askForSingleFile
-.. autofunction:: ms.askForMultipleFiles
-.. autofunction:: ms.showWarning
-.. autofunction:: ms.showInformation
-
-
-DialogBuilder
-~~~~~~~~~~~~~
-
-For an example see  :ref:`dialogbuilder_example`
-
-.. autoclass:: ms.DialogBuilder
 
 Inspecting Tables and Peakmaps
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -101,6 +84,24 @@ Helpers
 .. autofunction:: ms.toTable
 .. autofunction:: ms.openInBrowser
 .. autofunction:: ms.unpack
+
+Simple Dialogs
+~~~~~~~~~~~~~~
+
+.. autofunction:: ms.askForDirectory
+.. autofunction:: ms.askForSave
+.. autofunction:: ms.askForSingleFile
+.. autofunction:: ms.askForMultipleFiles
+.. autofunction:: ms.showWarning
+.. autofunction:: ms.showInformation
+
+
+DialogBuilder
+~~~~~~~~~~~~~
+
+For an example see  :ref:`dialogbuilder_example`
+
+.. autoclass:: ms.DialogBuilder
 
 I/O
 ~~~
