@@ -53,7 +53,9 @@ Table of Contents
    tour
    working_with_explorers
    api_ms
+   api_batches
    api_tables_expressions
+   api_other
    contact
 
 

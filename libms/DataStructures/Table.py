@@ -1,8 +1,13 @@
 import pyOpenMS as P
 import copy, os, itertools, re, numpy, cPickle, sys, inspect
-from   Expressions import BaseExpression, Column, Value
+from   Expressions import BaseExpression, ColumnExpression, Value
 import numpy as np
 from   collections import Counter, OrderedDict, defaultdict
+
+
+__doc__ = """
+
+"""
 
 
 standardFormats = { int: "%d", long: "%d", float : "%.2f", str: "%s" }
@@ -150,10 +155,12 @@ class Table(object):
     columntypes can be any python type.
 
     format can be:
+
          - a string interpolation string, eg "%.2f"
-         - None, which supresses rendering of this column
-         - python code which renders an object of name 'o', eg
-           'str(o)+"x"'
+         - ``None``, which supresses rendering of this column
+         - python code which renders an object of name ``o``, eg
+           ``str(o)+"x"``
+
     """
 
     def __init__(self, colNames, colTypes, colFormats, rows=None, title=None,
@@ -214,7 +221,7 @@ class Table(object):
         print
         print "   meta=",
         pprint.pprint(self.meta)
-        print "   len=", len(self)
+        print "   rows=", len(self)
         print
         for i, p in enumerate(zip(self.colNames, self.colTypes,\
                               self.colFormats)):
@@ -229,7 +236,11 @@ class Table(object):
 
     def addRow(self, row, doResetInternals=True):
         """ adds a new row to the table, checks if values in row are of
-            expected type or can be converted to this type """
+            expected type or can be converted to this type.
+
+            Raises an ``AssertException`` if the len of ``row`` does not
+            match to the numbers of columns of the table.
+            """
 
         assert len(row) == len(self.colNames)
         # check for conversion !
@@ -256,35 +267,40 @@ class Table(object):
                               if f is not None ]
 
     def getFormat(self, colName):
-        """ returns for format for the given column *colName* """
+        """ returns for format for the given column ``colName`` """
         return self.colFormats[self.getIndex(colName)]
 
     def setFormat(self, colName, format):
-        """ sets format of column *colName* to format *format* """
+        """ sets format of column *colName* to format ``format`` """
         self.colFormats[self.getIndex(colName)] = format
         self._setupFormatters()
 
     def setType(self, colName, type_):
-        """ sets type of column *colName* to type *type_* """
+        """ sets type of column ``colName`` to type ``type_`` """
         self.colTypes[self.getIndex(colName)] = type
 
     def _setupFormatters(self):
         self.colFormatters = [_formatter(f) for f in self.colFormats ]
 
     def getColumn(self, name):
-        """ returns Column object for column *name*.
+        """ returns ColumnExpression object for column ``name``.
             to get the values of the colum you can use
-            ``table.getColumn("index").values``
+            ``table.getColumn("index").values``.
+
+            See: :py:meth:`~libms.DataStructures.Expressions.ColumnExpression`
         """
         return getattr(self, name)
 
     def _setupColumnAttributes(self):
         for name in self.colNames:
             ix = self.getIndex(name)
-            col = Column(self, name, ix)
+            col = ColumnExpression(self, name, ix)
             setattr(self, name, col)
 
     def numRows(self):
+        """
+        returns the number of rows
+        """
         return len(self.rows)
 
     def __getstate__(self):
@@ -301,23 +317,26 @@ class Table(object):
         self.resetInternals()
 
     def hasColumn(self, name):
-        """ checks if column with given name *name* exists """
+        """ checks if column with given name ``name`` exists """
         return name in self.colNames
 
     def hasColumns(self, *names):
-        """ checks if columns with given names exist """
+        """ checks if columns with given names exist.
+        
+            Example: ``tab.hasColumn("rt", "rtmin", "rtmax")``
+        """
         return all(self.hasColumn(n) for n in names)
 
     def requireColumn(self, name):
-        """ throws exception if column with name *name* does not exist"""
+        """ throws exception if column with name ``name`` does not exist"""
         if not name in self.colNames:
             raise Exception("column %r required" % name)
         return self
 
     def getIndex(self, colName):
-        """ gets the integer index of the column colName,
-            eg you can use it as
-            ``table.rows[0][table.getIndex("mz")]``
+        """ gets the integer index of the column ``colName``.
+
+            Example: ``table.rows[0][table.getIndex("mz")]``
             """
         idx = self.colIndizes.get(colName, None)
         if idx is None:
@@ -325,9 +344,9 @@ class Table(object):
         return idx
 
     def set(self, row, colName, value):
-        """ sets *value* of column *colName* in a given *row*.
+        """ sets ``value`` of column ``colName`` in a given ``row``.
 
-            usage: ``table.set(table.rows[0], "mz", 252.83332)``
+            Example: ``table.set(table.rows[0], "mz", 252.83332)``
         """
         ix = self.getIndex(colName)
         if type(value) in [np.float32, np.float64]:
@@ -336,19 +355,31 @@ class Table(object):
         self.resetInternals()
 
     def get(self, row, colName=None):
-        """ returns value of column *colName* in a given *row*
+        """ returns value of column ``colName`` in a given ``row``
 
-            usage: ``table.get(table.rows[0], "mz")``
+            Example: ``table.get(table.rows[0], "mz")``
 
-            if *colName* is not provided, one gets the content of
-            the row as a dict mapping colnames to values.
+            if ``colName`` is not provided, one gets the content of
+            the ``row`` as a dict mapping colnames to values.
+
+            Example::
+
+                row = table.get(table.rows[0])
+                print row["mz"]
 
             **Note**: you can use this for other lists according
             to columndata as
 
             ``table.get(table.colTypes)`` gives you a dict for
-            getting a dict which maps colNames to the corresponding
-            colTypes.
+            which maps colNames to the corresponding colTypes.
+
+            Example::
+
+                types = table.get(table.colTypes)
+                print types["mz"]
+
+                formats = table.get(table.colFormats)
+                print formats["mz"]
 
         """
         if colName is None:
@@ -363,9 +394,9 @@ class Table(object):
     def addEnumeration(self, colName="id"):
         """ adds enumerated column as first column to table **inplace**.
 
-            if *colName* is not given the colName is "id"
+            if ``colName`` is not given the default name is *"id"*
 
-            Enumeration starts with zero
+            Enumeration starts with zero.
         """
 
         if colName in self.colNames:
@@ -408,7 +439,7 @@ class Table(object):
         decorated.sort(reverse=not ascending)
         permutation = [i for (_, i) in decorated]
 
-        self.applyRowPermutation(permutation)
+        self._applyRowPermutation(permutation)
 
         if ascending:
             self.primaryIndex = {colName: True}
@@ -416,7 +447,7 @@ class Table(object):
             self.primaryIndex = {}
         return permutation
 
-    def applyRowPermutation(self, permutation):
+    def _applyRowPermutation(self, permutation):
         self.rows = [ self.rows[permutation[i]] for i in range(len(permutation))]
         self.resetInternals()
 
@@ -425,8 +456,10 @@ class Table(object):
         return copy.deepcopy(self)
 
     def extractColumns(self, *names):
-        """extracts the given columnames and returns a new
-           table with these colums, eg ``t.extractColumns("id", "name"))``
+        """extracts the given columnames ``names`` and returns a new
+           table with these colums
+
+           Example: ``t.extractColumns("id", "name"))``
            """
         assert len(set(names)) == len(names), "duplicate column name"
         indices = [self.getIndex(name)  for name in names]
@@ -438,8 +471,11 @@ class Table(object):
 
     def renameColumns(self, **kw):
         """renames colums **inplace**.
+
            So if you want to rename "mz_1" to "mz" and "rt_1"
            to "rt", ``table.renameColumns(mz_1=mz, rt_1=rt)``
+
+           For memoization read the ``=`` as ``->``.
         """
 
         newNames = set(kw.values())
@@ -462,7 +498,7 @@ class Table(object):
         return len(self.rows)
 
     def storeCSV(self, path, onlyVisibleColumns=True):
-        """writes the table in .csv format. The *path* has to end with
+        """writes the table in .csv format. The ``path`` has to end with
            '.csv'.
 
            If the file allready exists, the routine tries names
@@ -493,8 +529,9 @@ class Table(object):
         """
         writes the table in binary format. All information, as
         coresponding peakMaps are written too.
+        The file name extension must be ".table".
 
-        The extension must be ".table".
+        Latter the file can be loaded with :py:meth:`~libms.DataStructures.Table.load`
         """
         if not os.path.splitext(path)[1].upper()==".TABLE":
             raise Exception("%s has wrong extension, need .table" % path)
@@ -505,7 +542,12 @@ class Table(object):
 
     @staticmethod
     def load(path):
-        """loads a table stored with Table.store"""
+        """loads a table stored with :py:meth:`~libms.DataStructures.Table.store`
+
+           **Note**: as this is a static method, it has to be called as
+           ``tab = Table.load("xzy.table")``
+
+        """
         with open(path, "rb") as fp:
             tab = cPickle.load(fp)
             tab.meta["loaded_from"]=os.path.abspath(path)
@@ -519,14 +561,16 @@ class Table(object):
                      self.title, self.meta.copy(), circumventNameCheck=True)
 
     def dropColumn(self, name):
-        """ removes a column with given *name* from the table.
+        """ removes a column with given ``name`` from the table.
             Works **inplace**
         """
         return self.dropColumns(name)
 
     def dropColumns(self, *names):
-        """ removes columns with given *names* from the table.
+        """ removes columns with given ``names`` from the table.
             Works **inplace**
+
+            Example: ``tab.dropColumns("mz", "rt", "rmse")``
         """
         # check all names before maninuplating the table,
         # so this operation is atomic
@@ -547,7 +591,7 @@ class Table(object):
 
     def splitBy(self, *colNames):
         """
-        generates a list of subtables, where the columns given by *colNames*
+        generates a list of subtables, where the columns given by ``colNames``
         are unique.
 
         If we have a table ``t1`` as
@@ -610,7 +654,7 @@ class Table(object):
 
     def append(self, *tables):
         """
-        appends *tables* to the existing table **inplace**. Can be called as ::
+        appends ``tables`` to the existing table **inplace**. Can be called as ::
 
               t1.append(t2, t3)
               t1.append([t2, t3])
@@ -641,24 +685,24 @@ class Table(object):
 
     def replaceColumn(self, name, what, type_=None, format=""):
         """
-        replaces column *name* **inplace**.
+        replaces column ``name`` **inplace**.
 
-          - *name* is name of the new column, *type_* is one of the
-            valid types described above.
-          - *format* is a format string as "%d" or *None* or an executable
+          - ``name`` is name of the new column
+          - ``*type_`` is one of the valid types described above.
+            If ``type_ == None`` the method tries to guess the type from ``what``.
+          - ``format`` is a format string as "%d" or ``None`` or an executable
             string with python code.
-            If you use *format=""* the method will try to determine a
+            If you use ``format=""`` the method will try to determine a
             default format for the type.
 
-        For the values *what* you can use
+        For the values ``what`` you can use
 
-           - an expression 
+           - an expression (see :py:mod:`~libms.DataStructures.Expressions`)
              as ``table.addColumn("diffrt", table.rtmax-table.rtmin)``
            - a callback with signature ``callback(table, row, name)``
            - a constant value
+           - a list with the correct length.
 
-        If no value *what* is given, the column consists
-        of *None* values.
         """
 
         self.requireColumn(name)
@@ -674,6 +718,11 @@ class Table(object):
 
     def updateColumn(self, name, what, type_=None, format="",
                          insertBefore=None):
+        """
+        Replaces the column ``name`` if it exists. Else the column is added.
+
+        For the parameters see :py:meth:`~libms.DataStructures.Table.addColumn`
+        """
         if self.hasColumn(name):
             self.dropColumn(name)
 
@@ -683,25 +732,12 @@ class Table(object):
         """
         adds a column **inplace**.
 
-          - *name* is name of the new column, *type_* is one of the
-            valid types described above.
-          - *format* is a format string as "%d" or *None* or an executable
-            string with python code.
-            If you use *format=""* the method will try to determine a
-            default format for the type.
-
-        For the values *what* you can use
-
-           - an expression 
-             as ``table.addColumn("diffrt", table.rtmax-table.rtmin)``
-           - a callback with signature ``callback(table, row, name)``
-           - a constant value
+        For the meaning of the  parameters
+        see :py:meth:`~libms.DataStructures.Table.replaceColumn`
 
         If you do not want the column be added at the end, one can use
-        *insertBefore*, which maybe the name of an existing column, or an
+        ``insertBefore``, which maybe the name of an existing column, or an
         integer index (negative values allowed !).
-
-        If no value *what* is given, the column consists of *None* values.
 
         """
         assert isinstance(name, str) or isinstance(name, unicode),\
@@ -790,7 +826,11 @@ class Table(object):
     def addConstantColumn(self, name, value, type_=None, format="",\
                           insertBefore=None):
         """
-        see addColumn
+        see :py:meth:`~libms.DataStructures.Table.addColumn`.
+
+        ``value`` is inserted in the column, despite its class. So the
+        cases in py:meth:`addColumn` are not considered, which is useful,
+        eg. if you want to set all cells in a column to as ``list``.
         """
 
         if type_ is not None:
@@ -804,7 +844,9 @@ class Table(object):
 
 
     def resetInternals(self):
-        """ must be called after manipulation  of
+        """  **internal method**
+
+            must be called after manipulation  of
 
             - self.colNames
             - self.colFormats
@@ -821,7 +863,7 @@ class Table(object):
         """
         extracts table with unique rows.
         Two rows are equal if all fields, including **invisible**
-        columns (those with format=None) are equal.
+        columns (those with ``format==None``) are equal.
         """
         result = self.buildEmptyClone()
         keysSeen = set()
@@ -836,16 +878,18 @@ class Table(object):
 
         """
         adds new aggregated column to table **inplace**.
-        *expr* calculates the aggregation.
-        the table can be split into several subtables by
-        providing an extra *groupBy* parameter,
+
+        ``expr`` calculates the aggregation.
+
+        The table can be split into several subtables by
+        providing an extra ``groupBy`` parameter,
         which can be a colummname or a list of columnames,
         then the aggregation is only performed per group.
 
-        In each group the values corresponding to *groupBy*
+        In each group the values corresponding to ``groupBy``
         are constant.
 
-        *newName* is the columnname for the aggregations.
+        ``newName`` is the columnname for the aggregations.
 
         If we have a table ``t1`` with
 
@@ -859,9 +903,23 @@ class Table(object):
 
         Then the result of
 
-        ``t1.aggregate(t1.value.mean, "mean_per_source", groupBy="source")``
+        ``t1.aggregate(t1.value.mean, "mean")``
 
         is
+
+           ===    ======    =====  ====
+           id     source    value  mean
+           ===    ======    =====  ====
+           0      1         10.0   20.0
+           1      1         20.0   20.0
+           2      2         30.0   20.0
+           ===    ======    =====  ====
+
+        If you group by column ``source``, for example as
+
+        ``t1.aggregate(t1.value.mean, "mean_per_source", groupBy="source")``
+
+        the result is
 
            ===    ======    =====  ===============
            id     source    value  mean_per_source
@@ -888,21 +946,6 @@ class Table(object):
            ===    ======    =====
            2      2         30.0
            ===    ======    =====
-
-        Without grouping
-        the full table is one row group and the statement
-
-        ``t1.aggregate(t1.value.mean, "mean_per_source")``
-
-        results in:
-
-           ===    ======    =====  ===============
-           id     source    value  mean_per_source
-           ===    ======    =====  ===============
-           0      1         10.0   20.0
-           1      1         20.0   20.0
-           2      2         30.0   20.0
-           ===    ======    =====  ===============
 
 
         And if we group by identical (id, source) pairs, each row is in separate
@@ -964,7 +1007,7 @@ class Table(object):
         return result
 
     def filter(self, expr, debug = False):
-        """builds a new table with columns selected according to *expr*. Eg ::
+        """builds a new table with columns selected according to ``expr``. Eg ::
 
                table.filter(table.mz >= 100.0)
                table.filter((table.mz >= 100.0) & (table.rt <= 20))
@@ -991,6 +1034,17 @@ class Table(object):
         return filteredTable
 
     def supportedPostfixes(self, colNamesToSupport):
+        """
+
+        For a table with column names ``["rt", "rtmin", "rtmax", "rt1", "rtmin1"]``
+
+        ``supportedPostfixes(["rt"])`` returns ``["", "1"]``,
+
+        ``supportedPostfixes(["rt", "rtmin"])`` returns ``["", "1"]``,
+
+        ``supportedPostfixes(["rt", "rtmax"])`` returns ``[""]``,
+
+        """
 
         collected = defaultdict(list)
         for name in self.colNames:
@@ -1011,7 +1065,7 @@ class Table(object):
     def join(self, t, expr, debug = False):
         """joins two tables.
 
-           So if you have two table *t1* and *t2* as
+           So if you have two table ``t1`` and ``t2`` as
 
            === ===
            id  mz
@@ -1076,8 +1130,11 @@ class Table(object):
 
     def leftJoin(self, t, expr, debug = False, progress=False):
         """performs an *left join* also known as *outer join* of two tables.
-           It works similar to *Table.join* but keeps nonmatching rows of
-           the first table. So if we take the example from *Table.join*
+
+           It works similar to :py:meth:`~libms.DataStructures.Table.join` 
+           but keeps nonmatching rows of
+           the first table. So if we take the example from 
+           :py:meth:`~libms.DataStructures.Table.join` 
 
            Then the result of ``t1.leftJoin(t2, (t1.mz >= t2.mz -20) & (t1.mz <= t2.mz + 20)``
            is
@@ -1130,8 +1187,10 @@ class Table(object):
         return table
 
     def maxPostfix(self):
-        """ finds postfixes 1, 2, .. in  __1, __2, ... in self.colNames
-            an empty postfix "" is recognized as __0 """
+        "" # no autodoc ?
+
+        """ finds postfixes 0, 1, .. in  __0, __1, ... in self.colNames
+            an empty postfix "" is recognized as -1 """
         postfixes = set( getPostfix(c) for c in self.colNames )
         values = [ -1 if p=="" else int(p[2:]) for p in postfixes ]
         return  max(values)
@@ -1162,7 +1221,14 @@ class Table(object):
         return Table(colNames, colTypes, colFormats, [], title, meta,
                      circumventNameCheck=True)
 
-    def _print(self, w=12, out=None, title=None):
+    def print_(self, w=12, out=None, title=None):
+        """
+        Prints the table to the console. ``w`` is the width of the columns,
+        If you want to print to a file or stream instead, you can use the ``out``
+        parameter, et ``t.print_(out=sys.stderr)``.
+        If you support a ``title`` string this will be printed above the 
+        content of the table.
+        """
         if out is None:
             out = sys.stdout
         #inner method is private, else the object can not be pickled !
@@ -1197,15 +1263,15 @@ class Table(object):
             _p( fmt(value) for (fmt, value) in zip(fms, ri))
             print >> out
 
-    print_ = _print
+    _print = print_   # backwards compatibility
 
     @staticmethod
     def toTable(colName, iterable,  format=None, type_=None, title="", meta=None):
         """ generates a one-column table from an iterable, eg from a list,
             colName is name for the column.
 
-            - if *type_* is not given a common type for all values is determined,
-            - if *format* is not given, a default format for *type_* is used.
+            - if ``type_`` is not given a common type for all values is determined,
+            - if ``format`` is not given, a default format for ``type_`` is used.
 
             further one can provide a title and meta data
         """
@@ -1216,7 +1282,8 @@ class Table(object):
         values = list(iterable)
         if type_ is None:
             type_ = commonTypeOfColumn(values)
-        format = format or guessFormatFor(colName, type_) or "%r"
+        if format == "":
+            format = guessFormatFor(colName, type_) or "%r"
         if meta is None:
             meta = dict()
         else:

@@ -22,7 +22,7 @@ def testIfNotNoneElse():
 def testPow():
     t = ms.toTable("a", [None, 2, 3])
     t.addColumn("square", t.a.pow(2))
-    assert t.square.values == [None, 4, 9 ]
+    assert t.square.values == [None, 4, 9 ], t.square.values
 
 def testApply():
     t = ms.toTable("a", [None, 2, 3])

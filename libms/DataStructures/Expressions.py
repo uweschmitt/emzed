@@ -6,11 +6,6 @@ __doc__ = """
 Working with tables relies on so called ``Expressions`` 
 
 
-.. pycon::
-
-    print 3
-
-
 """
 
 def le(a, x):
@@ -43,6 +38,40 @@ def saveeval(expr, ctx):
         raise Exception("eval of %s failed: %s" % (expr, e))
 
 class BaseExpression(object):
+
+    """
+    BaseClass for Expressions. For two Expressions ``t1`` and ``t2``
+    this class generates new Expressions as follows:
+
+    * Comparison Operators:
+
+     *  ``t1 <= t2``
+     *  ``t1 < t2``
+     *  ``t1 >= t2``
+     *  ``t1 > t2``
+     *  ``t1 == t2``
+     *  ``t1 != t2``
+
+    * Algebraic Operators:
+
+      *  ``t1 + t2``
+      *  ``t1 - t2``
+      *  ``t1 * t2``
+      *  ``t1 > t2``
+
+    * Logic Operators:
+
+      *  ``t1 & t2``
+      *  ``t1 | t2``
+      *  ``t1 ^  t2``
+      *  ``~t1``
+
+      .. note::
+
+          Due to some Python internals, these operators have a low precedence, so
+          you have to use parantheses like ``(t1 <= t2) & (t1 > t3)```
+
+    """
 
     def __init__(self, left, right):
         if not isinstance(left, BaseExpression):
@@ -130,79 +159,190 @@ class BaseExpression(object):
             return lc + self.right._neededColumns()
         return lc
 
-    # some helper functions
     def startswith(self, other):
+        """
+        For two string valued expressions ``a`` and ``b`` the expression
+        ``a.startswith(b)``
+        evaluates if the string ``a`` starts with the string
+        ``b``. The latter might be a fixed string, as ``tab.mf.startswith("H2")``
+
+        """
+
         return BinaryExpression(self, other, lambda a,b: a.startswith(b), "%s.startswith(%s)")
 
     def contains(self, other):
+        """
+        ``a.contains(b)`` tests if ``b in a``.
+        """
         return BinaryExpression(self, other, lambda a,b: b in a, "%s.contains(%s)")
 
+
     def containsElement(self, element):
+        """
+        For a string valued expression ``a`` which represents a molecular formula
+        the expressions ``a.containsElement(element)`` tests if the
+        given ``element`` is contained in ``a``.
+
+        Example:  ``tab.mf.containsElement("Na")``
+        """
         return BinaryExpression(self, element,\
                lambda a,b: b in re.findall("([A-Z][a-z]?)\d*", a),\
                "%s.containsElement(%s)")
 
     def isIn(self, li):
+        """
+        ``a.isIn(li)`` tests if the value of ``a`` is contained in a list ``li``.
+
+        Example: ``tab.id.isIn([1,2,3])``
+
+        """
         return UnaryExpression(self, lambda a, b=li: a in b, "%%s.isIn(%s)"%li)
 
     def inRange(self, minv, maxv):
+        """
+        ``a.inRange(low, up)`` tests if ``low <= a <= up``.
+
+        Example: ``tab.rt.inRange(60, 120)``
+        """
+
         return (self>=minv) & (self<=maxv)
 
     def approxEqual(self, what, tol):
+        """
+
+        ``a.approxEqual(b, tol)`` tests if ``|a-b| <= tol``.
+
+        Example: ``tab.mz.approxEqual(meatbolites.mz, 0.001)``
+        """
         return self.inRange(what-tol, what+tol)
 
     def thenElse(self, then, else_):
+        """
+        ``a.thenElse(b, c)`` avaluates to ``b`` if ``a`` is *True*, if not it
+        evaluates to ``c``.
+        """
+
         return IfThenElse(self, then, else_)
 
     def ifNotNoneElse(self, other):
+        """
+        ``a.ifNotNoneElse(b)`` evaluates to ``a`` if a is not *None*, else
+        it evaluates to ``b``.
+
+        Example: ``tab.rt.replaceColumn("rt", rt.ifNotNoneElse(tab.rt_default))``
+
+        """
         return (self==None).thenElse(other, self)
 
     def pow(self, exp):
-        return self.apply(lambda v: v**exp)
+        """
+        ``a.pow(b)`` evaluates to ``a**b``.
+
+        Example: ``tab.rmse.pow(2)``
+        """
+        return self.apply(lambda v, exp=exp: v**exp)
 
     def apply(self, fun):
+        """
+        This applies a function *fun* to an expression.
+
+        Example::  ``tab.time.apply(sin)``
+        """
         return FunctionExpression(fun, str(fun), self, False)
 
     @property
     def min(self):
+        """
+        This is an **aggretation expression** which evaluates an
+        expression to its minimal value.
+
+        Example: ``tab.rt.min``
+        """
         return AggregateExpression(self, lambda v: min(v), "min(%s)")
 
     @property
     def max(self):
+        """
+        This is an **aggretation expression** which evaluates an
+        expression to its maximal value.
+
+        Example: ``tab.rt.max``
+        """
         return AggregateExpression(self, lambda v: max(v), "max(%s)")
 
     @property
     def sum(self):
+        """
+        This is an **aggretation expression** which evaluates an
+        expression to its sum.
+
+        Example: ``tab.area.sum``
+
+        """
         return AggregateExpression(self, lambda v: sum(v), "sum(%s)")
 
     @property
     def mean(self):
+        """
+        This is an **aggretation expression** which evaluates an
+        expression to its mean.
+
+        Example: ``tab.area.mean``
+        """
         return AggregateExpression(self, lambda v: np.mean(v).tolist(),\
                                    "mean(%s)")
 
     @property
     def std(self):
+        """
+        This is an **aggretation expression** which evaluates an
+        expression to its standard deviation.
+
+        Example: ``tab.area.std``
+        """
         return AggregateExpression(self, lambda v: np.std(v).tolist(),\
                                    "stddev(%s)")
 
     @property
     def len(self):
+        """
+        This is an **aggretation expression** which evaluates an
+        column expression to its length.
+
+        Example:: ``tab.id.len``
+        """
         return AggregateExpression(self, lambda v: len(v), "len(%s)",\
                                    ignoreNone=False)
 
     @property
     def countNone(self):
+        """
+        This is an **aggretation expression** which evaluates an
+        Column expression to the number of values not None in it.
+        """
         return AggregateExpression(self,\
                                    lambda v: sum(1 for vi in v if vi is None),\
                                    "notNone(%s)", ignoreNone=False)
 
     @property
     def hasNone(self):
+        """
+        This is an **aggretation expression** which evaluates an
+        Column expression to *True* if and only if the column contains a *None* value.
+        """
         return AggregateExpression(self, lambda v: int(None in v) , "hasNone(%s)",\
                                    ignoreNone=False)
 
     @property
     def uniqueNotNone(self):
+        """
+        This is an **aggretation expression**. If applied to an expression ``t``
+        ``t.uniqueNotNone`` evaluates to
+        ``v`` if ``t`` only contains two values ``v`` and ``None``.
+        Else it raises an Exception.
+
+        Example: ``tab.peakmap.uniqueNotNone``
+        """
         def select(values):
             diff = set(id(v) for v in values if v is not None)
             if len(diff) == 0:
@@ -220,6 +360,11 @@ class BaseExpression(object):
         return np.array(val).tolist()
 
     def toTable(self, colName, fmt=None, type_=None, title="", meta=None):
+        """
+        Generates a one column :py:class:`~libms.DataStructures.Table` from an expession.
+
+        Example: ``tab = substances.name.toTable()``
+        """
         from Table import Table
         return Table.toTable(colName, self(), fmt, type_, title, meta)
 
@@ -735,6 +880,10 @@ def _wrapFun(name, agg=False):
         if isinstance(x,BaseExpression):
             return FunctionExpression(origfun, name,  x, agg)
         return origfun(x)
+    wrapper.__doc__ = \
+    """
+    Applies %s to an expression. Example:: ``%s(tab.value)``
+    """ %(name, name)
     return wrapper
 
 log = _wrapFun("log")
@@ -752,11 +901,13 @@ count = _wrapFun("len", agg=True)
 
 
 
-class Column(BaseExpression):
+class ColumnExpression(BaseExpression):
 
     """
-    represents a column in a *Table*.
-    Attribute Table.values is the content of the column.
+    A ``ColumnExpression`` is the simplest form of an ``Expression``.
+    It is generated from a ``Table`` ``t`` as ``t.x`` or by calling
+    ``t.getColumn("x")``.
+
     """
 
     def __init__(self, table, colname, idx):
@@ -820,23 +971,50 @@ class Column(BaseExpression):
         return [ (self.table, self.colname), ]
 
     def modify(self, operation):
+        """
+        Allows **inplace** modification of a Table column.
+
+        Example: ``tab.time.modify(sin)`` replaces the content of in column
+        ``time`` by its ``sin`` value.
+        """
+
         self.table.replaceColumn(self.colname, map(operation, self.values))
         if hasattr(self, "_values"):
             del self._values
 
     def __iadd__(self, value):
+        """
+        Allows **inplace** modification of a Table column.
+
+        Example: ``tab.id += 1``
+        """
         self.modify(lambda v, value=value: v+value)
         return self
 
     def __isub__(self, value):
+        """
+        Allows **inplace** modification of a Table column.
+
+        Example: ``tab.id -= 1``
+        """
         self.modify(lambda v, value=value: v-value)
         return self
 
     def __imul__(self, value):
+        """
+        Allows **inplace** modification of a Table column.
+
+        Example: ``tab.area *= 2``
+        """
         self.modify(lambda v, value=value: v*value)
         return self
 
     def __idiv__(self, value):
+        """
+        Allows **inplace** modification of a Table column.
+
+        Example: ``tab.area /= 3.141``
+        """
         self.modify(lambda v, value=value: v/value)
         return self
 

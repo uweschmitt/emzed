@@ -1,6 +1,7 @@
-API: The ms Module
-==================
+API ms Module
+=============
 
+.. automodule:: ms
 
 MZ Alignment
 ~~~~~~~~~~~~
@@ -13,7 +14,7 @@ RT Alignment
 
 For an example see :ref:`rtalign_example`
 
-.. autofunction:: ms.alignFeatureTables
+.. autofunction:: ms.rtalign
    
 
 Simple Dialogs
@@ -53,7 +54,30 @@ Simulating Isotope Distributions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: ms.isotopeDistributionTable
+
+    Examples:
+
+    .. pycon::
+
+       import ms !nooutput
+       # natural abundances:
+       tab = ms.isotopeDistributionTable("C3H7NO2")
+       tab.abundance /= tab.abundance.sum()
+       tab.print_()
+
+       # artifical abundances:
+       tab = ms.isotopeDistributionTable("C3H7NO2", C=dict(C13=0.5, C12=0.5))
+       tab.abundance /= tab.abundance.sum()
+       tab.print_()
+
 .. autofunction:: ms.plotIsotopeDistribution
+
+
+    .. pycon::
+    
+       ms.plotIsotopeDistribution("C3H7NO2", C=dict(C13=0.5, C12=0.5), R=5000) !noexec
+
+    .. image:: isopattern_alanin.png 
 
 
 Statistics

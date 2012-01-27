@@ -168,6 +168,17 @@ class IsotopeDistributionGenerator(object):
         # rescale y axis, looks better:
         ymin, ymax = pl.ylim()
         pl.ylim(ymin, ymax*1.1)
+        title = self.formula
+        if self.R is not None:
+            title += " R=%.f" % self.R
+        if self.abundances:
+            for values in self.abundances.values():
+                for k, v in values.items():
+                    title += " %s: %.2f" % (k, v)
+        pl.title(title)
+        pl.xlabel("m/z")
+        from matplotlib.ticker import FormatStrFormatter
+        pl.gca().xaxis.set_major_formatter(FormatStrFormatter("%.1f"))
 
     def show(self, plotGauss=True):
         import pylab as pl
