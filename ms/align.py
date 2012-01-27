@@ -1,7 +1,6 @@
-def alignFeatureTables(tables, refTable = None, destination = None,
-                       nPeaks=-1, numBreakpoints=5, maxRtDifference = 100,
-                       maxMzDifference = 0.3,
-                       forceAlign=False):
+def rtalign(tables, refTable = None, destination = None, nPeaks=-1,
+            numBreakpoints=5, maxRtDifference = 100, maxMzDifference = 0.3,
+            forceAlign=False):
 
     """ aligns feature tables in respect to retetion times.
         the algorithme produces new tables with aligend data.
@@ -180,3 +179,15 @@ def _transformTable(table, transformation):
     for spec in peakmap.spectra:
         spec.rt = transformation.apply(spec.rt)
     table.replaceColumn("peakmap", peakmap)
+
+
+def alignFeatureTables(*a, **kw):
+
+    """
+    THIS FUNCTION IS DEPRICIATED. PLEASE USE rtalign INSTEAD
+
+    """
+
+    print "\nTHIS FUNCTION IS DEPRECIATED. PLEASE USE rtalign INSTEAD"
+    print
+    return rtalign(*a, **kw)
