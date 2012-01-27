@@ -1266,7 +1266,7 @@ class Table(object):
     _print = print_   # backwards compatibility
 
     @staticmethod
-    def toTable(colName, iterable,  format=None, type_=None, title="", meta=None):
+    def toTable(colName, iterable,  format="", type_=None, title="", meta=None):
         """ generates a one-column table from an iterable, eg from a list,
             colName is name for the column.
 

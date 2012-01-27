@@ -1,6 +1,6 @@
 from libms.DataStructures.Table import Table
 
-def toTable(colName, iterable,  fmt=None, type_=None, title="", meta=None):
+def toTable(colName, iterable,  fmt="", type_=None, title="", meta=None):
     return Table.toTable(colName, iterable, fmt, type_, title, meta)
 
 toTable.__doc__ = Table.toTable.__doc__
