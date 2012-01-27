@@ -505,6 +505,10 @@ class TableExplorer(QDialog):
         self.mzPlotter.replot()
 
 def inspect(what, offerAbortOption=False):
+    """
+    inspectes Tables
+
+    """
     if isinstance(what, Table):
         what = [what]
     app = guidata.qapplication()

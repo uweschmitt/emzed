@@ -28,10 +28,19 @@ def _translateLabelToFieldname(label):
                 .replace(" ", "_")\
 
 def showWarning(message):
+    """
+    shows a warning dialog with given message
+    """
+
+
     guidata.qapplication().beep()
     QMessageBox.warning(None, "Warning", message)
 
 def showInformation(message):
+    """
+    shows a information dialog with given message
+    """
+
     guidata.qapplication().beep()
     QMessageBox.information(None, "Information", message)
 
