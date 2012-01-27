@@ -4,13 +4,6 @@ from   Expressions import BaseExpression, Column, Value
 import numpy as np
 from   collections import Counter, OrderedDict, defaultdict
 
-__doc__ = """
-
-``libms.DataStructures.Table``
-
-Tables are  central in eMZed !!!
-
-"""
 
 standardFormats = { int: "%d", long: "%d", float : "%.2f", str: "%s" }
 fms = "'%.2fm' % (o/60.0)"  # format seconds to floating point minutes

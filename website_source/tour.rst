@@ -2,6 +2,7 @@
 A Guided Tour
 =============
 
+.. _peakmaps_example:
 
 Working with PeakMaps
 ---------------------
@@ -9,11 +10,15 @@ Working with PeakMaps
 TODO -> I/O, inspecting, retrieve spectrum
 
 
+.. _centwave_example:
+
 Exctracting Features
 --------------------
 
 TODO -> Centwave, table explorer
 
+
+.. _integration_example:
 
 Integrating Features
 --------------------
@@ -21,12 +26,16 @@ Integrating Features
 Integrator anwenden + Tabelle öffnen + manipulieren
 
 
+.. _rtalign_example:
+
 Aligning Features
 -----------------
 
 rt - alignemnt vorführen, joinen, anzeigen
 
 
+
+.. _table_example:
 
 Working with Tables
 -------------------
@@ -166,6 +175,7 @@ Another way to identify compounds is to use the Metlin webpage which provides a 
     ms.inspect(matched2) !noexec
 
 
+.. _chemistry_example:
 
 Accessing Chemical Data
 -----------------------
@@ -225,6 +235,7 @@ common elements
     print abundance.C
 
 
+.. _isotope_example:
 
 Analysing isotope patterns
 --------------------------
@@ -291,6 +302,8 @@ Matching isotope patterns now works like this
 
 
 
+.. _statistics_example:
+
 Statistical Analysis
 --------------------
 
@@ -337,6 +350,8 @@ this
     print p
 
 
+
+.. _dialogbuilder_example:
 
 Building graphical interfaces
 -----------------------------
