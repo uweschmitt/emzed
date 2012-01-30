@@ -94,6 +94,14 @@ class BaseExpression(object):
         raise Exception("sizes %d and %d do not fit" % (sl, sr))
 
     def __nonzero__(self):
+        """ this one raises and exception if "and" or "or" are used to
+            build expressions.
+            "and" and "or" can not be used as there are no methods
+            to overload these. Combining expressions this way allways
+            results in a call to this method to determine their
+            equivalent "boolean value".
+
+        """
         raise Exception("can not convert %s to boolean value" % self)
 
     def __str__(self):
@@ -797,7 +805,7 @@ class FunctionExpression(BaseExpression):
         vals, index = saveeval(self.child, ctx)
         if str(self.efun).startswith("<ufunc"):
             if None not in vals:
-                return self.efun(vals), None # returns array 
+                return list(self.efun(vals)), None 
         res = [ self.efun(v) if v is not None else None for v in vals]
         return res, None
 
