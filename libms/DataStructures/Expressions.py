@@ -802,11 +802,16 @@ class FunctionExpression(BaseExpression):
         self.agg = agg
 
     def _eval(self, ctx):
-        vals, index = saveeval(self.child, ctx)
+        val, index = saveeval(self.child, ctx)
+        if type(val) in _basic_types:
+            if val is None:
+                return val, None
+            return self.efun(val), None
+
         if str(self.efun).startswith("<ufunc"):
-            if None not in vals:
-                return list(self.efun(vals)), None 
-        res = [ self.efun(v) if v is not None else None for v in vals]
+            if None not in val:
+                return list(self.efun(val)), None 
+        res = [ self.efun(v) if v is not None else None for v in val]
         return res, None
 
 
