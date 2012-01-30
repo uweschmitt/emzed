@@ -25,6 +25,8 @@ def loadPeakMap(path=None):
     # check ourselves:
     if not os.path.exists(path):
         raise Exception("file %s does not exist" % path)
+    if not os.path.isfile(path):
+        raise Exception("path %s is not a file" % path)
 
     experiment = MSExperiment()
     fh  = FileHandler()
