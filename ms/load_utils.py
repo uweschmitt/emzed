@@ -9,6 +9,7 @@ def loadPeakMap(path=None):
 
     # local import in order to keep namespaces clean
     import ms
+    import os.path
     import sys
     from   pyOpenMS import MSExperiment, FileHandler
     from   libms.DataStructures import PeakMap
@@ -20,6 +21,10 @@ def loadPeakMap(path=None):
         if path is None:
             return None
 
+    # open-ms returns empty peakmap if file not exists, so we
+    # check ourselves:
+    if not os.path.exists(path):
+        raise Exception("file %s does not exist" % path)
 
     experiment = MSExperiment()
     fh  = FileHandler()
