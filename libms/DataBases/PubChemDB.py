@@ -49,7 +49,12 @@ class PubChemDB(object):
         req = urllib2.Request(url, urllib.urlencode(data))
         resp = urllib2.urlopen(req)
         data = resp.read()
+        if len(data)==0:
+            print "FAILED TO CONNECT"
+            return []
         doc = etree.fromstring(data)
+        if not doc.findall("IdList"):
+            raise Exception("Pubchem returned data in unknown format")
         idlist = [id_.text for id_ in  doc.findall("IdList")[0].findall("Id")]
         return idlist
 
