@@ -17,9 +17,12 @@ def __fileDialog(startAt=None, onlyDirectories=False, anyFile=False,
     else:
         di=QFileDialog(directory=startAt)
 
+    di.setAttribute(Qt.WA_DeleteOnClose)
+
     if extensions is not None:
         filter_ = "(%s)" % " ".join( "*."+e for e in extensions)
         di.setNameFilter(filter_)
+
 
     if onlyDirectories:
         di.setFileMode(QFileDialog.DirectoryOnly)
