@@ -810,7 +810,7 @@ class FunctionExpression(BaseExpression):
 
         if str(self.efun).startswith("<ufunc"):
             if None not in val:
-                return list(self.efun(val)), None 
+                return self.efun(val), None 
         res = [ self.efun(v) if v is not None else None for v in val]
         return res, None
 
