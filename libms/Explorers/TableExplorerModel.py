@@ -119,7 +119,7 @@ class SortTableAction(TableAction):
         decorated = [ (self.memory[i], i) for i in range(len(self.memory))]
         decorated.sort()
         invperm = [i for (_, i) in decorated]
-        table.applyRowPermutation(invperm)
+        table._applyRowPermutation(invperm)
         self.model.reset()
 
 class ChangeValueAction(TableAction):

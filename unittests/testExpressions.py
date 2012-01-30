@@ -1,4 +1,4 @@
-from libms.DataStructures.Expressions import Value
+from libms.DataStructures.Expressions import *
 import numpy as np
 
 def test_if_all_operators_are_defined():
@@ -10,8 +10,7 @@ def test_if_all_operators_are_defined():
     v4=v1-v2
     v5=v1*v2
     v6=v1/v2
-
-    v7=log(v1)
+    v7 = log(v1)
 
     t1 = v1 <= v2
     t2 = v1 < v2
@@ -24,7 +23,7 @@ def test_if_all_operators_are_defined():
     t8 = t1 | t2
     t9 = t1 ^ t2
 
-    assert t9 != None
+    assert t9 is not  None
 
 def test_efficient_comparators():
 
