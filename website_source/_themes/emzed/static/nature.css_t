@@ -258,9 +258,22 @@ div.important p a {
 }
 
 
+div.toctree-wrapper ul
+{
+    margin-bottom: 0px;
+    padding-bottom: 0px;
+}
+
+
+div.toctree-wrapper
+{
+    -moz-column-count: 1;
+    -webkit-column-count: 1;
+}
+
 
 li.toctree-l1 a {
-    font-size: 1.2em;
+    font-size: 1.0em;
     font-weight: bold;
     font-style: italic;
     color: #444;

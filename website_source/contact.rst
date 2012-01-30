@@ -30,7 +30,7 @@ Contact
        | CH-8093 Zürich
        | Swisse
 
-   * - Core Programming
+   * - Software Design & Implementation
      - Uwe Schmitt
      - uschmitt (at) mineway (dot) de
      - | mineway GmbH

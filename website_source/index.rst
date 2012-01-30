@@ -3,9 +3,16 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-
 Welcome to eMZed
 ================
+
+
+About
+~~~~~
+
+.. image:: OSI-Approved-License-50x52.png
+   :scale: 50 %
+   :align: right
 
 *eMZed* is an open source framework for anaylising and processing LCMS
 data. The framework was developed by D-BIOL (Patrick Kiefer, lab of
@@ -42,20 +49,22 @@ one of the reasons why we choose Python.
   integrate all needed functionality in one framework
 
 
-Table of Contents
-~~~~~~~~~~~~~~~~~
+Contents
+~~~~~~~~
 
 .. toctree::
    :maxdepth: 1
 
    installation
-   license
    tour
    working_with_explorers
+
    api_ms
    api_batches
    api_tables_expressions
    api_other
+
+   license
    contact
 
 
