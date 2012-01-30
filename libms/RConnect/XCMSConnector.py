@@ -1,18 +1,16 @@
 #encoding: utf-8
 from RExecutor import RExecutor
-from ..DataStructures import *
+from ..DataStructures import PeakMap, XCMSFeatureParser
 
-import os
+import os, sys
 
 from ..intern_utils import TemporaryDirectoryWithBackup
 from pyOpenMS import FileHandler
-
 
 def installXcmsIfNeeded():
 
     R_LIBS = os.environ.get("R_LIBS")
     if R_LIBS == None:
-        LLL.error("R_LIBS not set in environment")
         raise Exception("inconsistent system: R_LIBS not set.")
 
     if os.path.exists(os.path.join(R_LIBS, "xcms")):
@@ -201,7 +199,7 @@ class MatchedFilterFeatureDetector(object):
 
             temp_input = os.path.join(td, "input.mzData")
             temp_output = os.path.join(td, "output.csv")
-            
+
             # needed for network shares:
             if sys.platform == "win32":
                 temp_input = temp_input.replace("/","\\")

@@ -1,12 +1,14 @@
 
 import _winreg, os, glob, subprocess, sys, win32api
-from   os.path import dirname, abspath, join
+
+import userConfig
+root = userConfig.getExchangeFolder()
 
 # all installled libs will get to local folder
-R_LIBS=join(dirname(abspath(__file__)), "libs")
+R_LIBS=os.path.join(root, "r_libs")
 os.environ["R_LIBS"] = R_LIBS
 if not os.path.exists(R_LIBS):
-    os.mkdir(R_LIBS)
+    os.makedirs(R_LIBS)
 
 from ..intern_utils import TemporaryDirectoryWithBackup
 
