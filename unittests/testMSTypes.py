@@ -34,6 +34,29 @@ class TestMSTypes(object):
         pm2 = PeakMap.fromMSExperiment(pm.toMSExperiment())
         self.compare_exp(pm2, exp, basename)
 
+        rtmin, rtmax = pm.rtRange()
+        pm2 = pm.extract(rtmin = rtmin+.000001)
+        assert len(pm2) == len(pm)-1
+        pm2 = pm2.extract(rtmax = rtmax-0.000001)
+        assert len(pm2) == len(pm)-2
+
+        mzmin, mzmax = pm.mzRange()
+
+        assert mzmin < 250
+        assert mzmax > 1049
+
+        pm2 = pm.extract(rtmin+0.00001, mzmin=300)
+
+        mzmin2, mzmax2 = pm2.mzRange()
+        assert mzmin2 >= 300
+        assert mzmax2 == mzmax
+
+        pm2 = pm.extract(rtmin = rtmin+0.000001, mzmin=300, mzmax=1000)
+        mzmin2, mzmax2 = pm2.mzRange()
+        assert mzmin2 >= 300
+        assert mzmax2 <= 1000
+
+
     def compare_exp(self, pm, exp, basename):
 
         assert len(pm) == exp.size()

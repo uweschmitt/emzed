@@ -1,6 +1,7 @@
 import pyOpenMS
 import numpy as np
 import os.path
+import copy
 
 
 def memoize(function):
@@ -53,9 +54,18 @@ class Spectrum(object):
     def intensityInRange(self, mzmin, mzmax):
         return self.peaksInRange(mzmin, mzmax)[:,1].sum()
 
-    def peaksInRange(self, mzmin, mzmax):
-        imin = self.peaks[:,0].searchsorted(mzmin)
-        imax = self.peaks[:,0].searchsorted(mzmax, side='right')
+    def peaksInRange(self, mzmin=None, mzmax=None):
+        if mzmin is None and mzmax is None:
+            raise Exception("no limits provided. need mzmin or mzmax")
+        if mzmin is not None:
+            imin = self.peaks[:,0].searchsorted(mzmin)
+        else:
+            imin = 0
+        if mzmax is not None:
+            imax = self.peaks[:,0].searchsorted(mzmax, side='right')
+        else:
+            # exclusive:
+            imax = self.peaks.shape[0]
         return self.peaks[imin:imax]
 
     def toMSSpectrum(self):
@@ -96,6 +106,34 @@ class PeakMap(object):
             self.polarity = polarities.pop()
         else:
             self.polarity = None
+
+    def extract(self, rtmin=None, rtmax=None, mzmin=None, mzmax=None):
+        """
+        returns restricted Peakmap with given limits.
+        Parameters with *None* value are not considered.
+
+        Examples::
+
+            pm.extract(rtmax = 12.5 * 60)
+            pm.extract(rtmin = 12*60, rtmax = 12.5 * 60)
+            pm.extract(rtmax = 12.5 * 60, mzmin = 100, mzmax = 200)
+            pm.extract(rtmin = 12.5 * 60, mzmax = 200)
+            pm.extract(mzmax = 200)
+
+        \ 
+        """
+        spectra = copy.deepcopy(self.spectra)
+        if rtmin:
+            spectra = [ s for s in spectra if rtmin <= s.rt ]
+        if rtmax:
+            spectra = [ s for s in spectra if rtmax >= s.rt ]
+
+        if mzmin is not None or mzmax is not None:
+            for s in spectra:
+                s.peaks = s.peaksInRange(mzmin, mzmax)
+
+        return PeakMap(spectra, self.meta.copy())
+
 
     def filter(self, condition):
         return PeakMap([s for s in self.spectra if condition(s)], self.meta)
@@ -145,6 +183,19 @@ class PeakMap(object):
         for spec in self.spectra:
             spec.rt += delta
         return self
+
+    @memoize
+    def mzRange(self):
+        """ returns mz-range *(mzmin, mzmax)* of current peakmap """
+        return min(s.peaks[:, 0].min() for s in self.spectra if len(s.peaks)),\
+               max(s.peaks[:, 0].max() for s in self.spectra if len(s.peaks))
+
+    def rtRange(self):
+        """ returns rt-range *(rtmin, tax)* of current peakmap """
+        rtmin = self.spectra[0].rt if len(self.spectra) else 1e300
+        rtmax = self.spectra[-1].rt if len(self.spectra) else -1e300
+        return rtmin, rtmax
+
 
     @classmethod
     def fromMSExperiment(clz, mse):
