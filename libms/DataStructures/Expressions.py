@@ -313,16 +313,25 @@ class BaseExpression(object):
         """
         return AggregateExpression(self, lambda v: np.std(v).tolist(),\
                                    "stddev(%s)")
-
     @property
     def len(self):
+        """
+        **This expression is depreciated**. Please use
+        :py:method:`~libms.DataStructures.Expressions.Expression.count`
+        instead.
+        """
+        return AggregateExpression(self, lambda v: len(v), "len(%s)",\
+                                   ignoreNone=False)
+
+    @property
+    def count(self):
         """
         This is an **aggretation expression** which evaluates an
         column expression to its length.
 
         Example:: ``tab.id.len``
         """
-        return AggregateExpression(self, lambda v: len(v), "len(%s)",\
+        return AggregateExpression(self, lambda v: len(v), "count(%s)",\
                                    ignoreNone=False)
 
     @property
@@ -333,7 +342,16 @@ class BaseExpression(object):
         """
         return AggregateExpression(self,\
                                    lambda v: sum(1 for vi in v if vi is None),\
-                                   "notNone(%s)", ignoreNone=False)
+                                   "countNone(%s)", ignoreNone=False)
+    @property
+    def countNotNone(self):
+        """
+        This is an **aggretation expression** which evaluates an
+        Column expression to the number of values != None in it.
+        """
+        return AggregateExpression(self,\
+                               lambda v: sum(1 for vi in v if vi is not None),\
+                               "countNotNone(%s)", ignoreNone=False)
 
     @property
     def hasNone(self):
@@ -341,6 +359,7 @@ class BaseExpression(object):
         This is an **aggretation expression** which evaluates an
         Column expression to *True* if and only if the column contains a *None* value.
         """
+        return self.countNone > 0
         return AggregateExpression(self, lambda v: int(None in v) , "hasNone(%s)",\
                                    ignoreNone=False)
 

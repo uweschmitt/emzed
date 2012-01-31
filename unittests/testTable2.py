@@ -174,7 +174,8 @@ def testAggregateOperation():
     t = t.aggregate(t.b.sum, "sum", groupBy="a")
     t = t.aggregate(t.b.hasNone, "hasNone", groupBy="a")
     t = t.aggregate(t.b.countNone, "countNone", groupBy="a")
-    t = t.aggregate(t.b.len, "len", groupBy="a")
+    t = t.aggregate(t.b.count, "count", groupBy="a")
+    t = t.aggregate(t.b.count - t.b.countNotNone, "countNone2", groupBy="a")
     t = t.aggregate(t.b.std*t.b.std, "var", groupBy="a")
     t = t.aggregate(t.b.mean, "mean", groupBy="a")
     t._print(w=8)
@@ -183,7 +184,8 @@ def testAggregateOperation():
     assert t.mean.values == [None, 2, 2, 4, 4, 4, 4]
     assert t.hasNone.values == [1, 1, 1, 0, 0, 0, 0]
     assert t.countNone.values == [1, 1, 1, 0, 0, 0, 0]
-    assert t.len.values == [1, 2, 2, 4, 4, 4, 4]
+    assert t.countNone.values == t.countNone2.values
+    assert t.count.values == [1, 2, 2, 4, 4, 4, 4]
 
 def testUniqeRows():
     t = ms.toTable("a", [1,1,2,2,3,3])
