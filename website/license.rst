@@ -18,9 +18,7 @@ License
     eMZed  -- Copyright (c) 2012:
 
      *  Institute of Microbiology, Department of Biology, ETH Zurich
- 
      *  Patrick Kiefer
-
      *  Uwe Schmitt
 
     This program is free software: you can redistribute it and/or modify
