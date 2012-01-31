@@ -14,13 +14,14 @@ except ImportError, e:
         e0 = e.args[0] + "\n" + message
         e.args = (e0,) + e.args[1:]
     raise e
-    
+
 import os, ms, glob
 from  libms.Chemistry.Elements import Elements
 
 here = os.path.abspath(os.path.dirname(__file__))
 
-for path in [os.path.join(here, "tables")] + repositoryPathes:
+for path in [here] + repositoryPathes:
+    path = os.path.join(path, "tables")
     for p in glob.glob("%s/*.csv" % path):
         try:
             table = ms.loadCSV(p)
