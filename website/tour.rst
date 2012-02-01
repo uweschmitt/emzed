@@ -70,7 +70,7 @@ This is a small table which we print the table on the console
 
 .. pycon::
 
-    substances._print()
+    substances.print_()
 
 
 
@@ -97,7 +97,7 @@ Adding a new, computed column is easy. Here we introduce a new column *m0* which
 .. pycon::
 
     substances.addColumn("m0", substances.mf.apply(mass.of))
-    substances._print()
+    substances.print_()
 
 
 
@@ -109,7 +109,7 @@ We load another table
 .. pycon::
 
     info=ms.loadCSV("information.csv") 
-    info._print()
+    info.print_()
 
 
 
@@ -121,7 +121,7 @@ And use an SQL-like *LEFTJOIN* to match rows with the same molecular formula
 .. pycon::
 
     joined=substances.leftJoin(info, substances.mf==info.mf)
-    joined._print()
+    joined.print_()
 
 We want to get rid of non terrestial substances by filtering the rows
 
@@ -132,7 +132,7 @@ We want to get rid of non terrestial substances by filtering the rows
 .. pycon::
 
     common = joined.filter(joined.onEarth__0==1)
-    common._print()
+    common.print_()
 
 
 
@@ -251,7 +251,7 @@ does this
 .. pycon::
 
     tab = ms.isotopeDistributionTable("C4S4", minp=0.01)
-    tab._print()
+    tab.print_()
 
 
 
@@ -265,7 +265,7 @@ simmulated too
 
     iso=ms.isotopeDistributionTable("C4S4", C=dict(C12=0.5, C13=0.5))
     iso.replaceColumn("abundance", iso.abundance / iso.abundance.sum() * 100.0)
-    iso._print()
+    iso.print_()
 
 
 
@@ -277,7 +277,7 @@ The method can simulate the resolution of the used mass analyzer
 .. pycon::
 
     tab = ms.isotopeDistributionTable("C4S4", R=10000, minp=0.01)
-    tab._print()
+    tab.print_()
 
 
 
@@ -290,7 +290,7 @@ Matching isotope patterns now works like this
 
     iso=ms.isotopeDistributionTable("H2O", minp=1e-3)
     iso.addEnumeration()
-    iso._print()
+    iso.print_()
 
 
 
@@ -298,7 +298,7 @@ Matching isotope patterns now works like this
 
     common.dropColumns("mf__0", "onEarth__0")
     matched=iso.leftJoin(common, iso.mass.approxEqual(common.m0, 1*MMU))
-    matched._print()
+    matched.print_()
 
 
 
@@ -328,7 +328,7 @@ this
     print indices
 
     t.addColumn("group", indices)
-    t._print()
+    t.print_()
 
 
 

@@ -1,11 +1,23 @@
-Licencse and Credits
-====================
+License and Credits
+===================
 
 Credits
 ~~~~~~~
 
-We thank Jacques Laville for his support and for suggesting the
-name of this software.
+We thank for helpful support:
+
+     *  Department of Biology, ETH Zurich
+
+     *  `The OpenMS project <http://open-ms.sourceforge.net/>`_
+
+     *  `Julia A Vorholt <http://www.micro.biol.ethz.ch/research/vorholt/jvorholt>`_
+
+     *  `Jonas Grossmann <http://www.fgcz.ch/people/jgrossmann>`_
+
+     *  `Peter Zoltan Kunszt <http://www.systemsx.ch/projects/systemsxch-projects/sybit/>`_
+
+     *  `Lars Gustav Malström <http://www.imsb.ethz.ch/researchgroup/malars>`_
+
 
 
 License

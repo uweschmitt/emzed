@@ -317,7 +317,7 @@ class BaseExpression(object):
     def len(self):
         """
         **This expression is depreciated**. Please use
-        :py:method:`~libms.DataStructures.Expressions.Expression.count`
+        :py:meth:`~libms.DataStructures.Expressions.BaseExpression.count`
         instead.
         """
         return AggregateExpression(self, lambda v: len(v), "len(%s)",\
@@ -327,7 +327,7 @@ class BaseExpression(object):
     def count(self):
         """
         This is an **aggretation expression** which evaluates an
-        column expression to its length.
+        column expression to the number of values in the column.
 
         Example:: ``tab.id.len``
         """
@@ -338,7 +338,7 @@ class BaseExpression(object):
     def countNone(self):
         """
         This is an **aggretation expression** which evaluates an
-        Column expression to the number of values not None in it.
+        Column expression to the number of None values in it.
         """
         return AggregateExpression(self,\
                                    lambda v: sum(1 for vi in v if vi is None),\
