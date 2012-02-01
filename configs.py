@@ -18,22 +18,16 @@ peakPickerHiResConfig = [ ("std", "orbitrap standard", PeakPickerHiRes.standardC
 
 from libms.PeakIntegration import *
 # key "std" must exist !
-peakIntegrators = [ ( "std",        SGIntegrator(window_size=11, order=2) ) ,
-                    ( "asym_gauss", AsymmetricGaussIntegrator(gtol=0.1) ) ,
-                    ( "asym_gauss_exact", AsymmetricGaussIntegrator(gtol=None) ) ,
+peakIntegrators = [ ( "sgolay",        SGIntegrator(window_size=11, order=2) ) ,
+                    ( "asym_gauss", AsymmetricGaussIntegrator(gtol=None) ) ,
                     ( "trapez", TrapezIntegrator() ) ,
-                    ( "emg", SimplifiedEMGIntegrator(xtol=9e-4) ) ,
                     ( "emg_exact", SimplifiedEMGIntegrator() ) ,
                     ( "no_integration", NoIntegration() ) ,
                    ]
 
 
-mapAlignmentAlgorithmPoseClusteringConfig = [ ( "std", dict(nPeaks=100)) ]
-dd = dict(gapcost=float(1), affinegapcost=float(0.5), scorefunction="s")
-mapAlignmentAlgorithmSpectrumAlignmentConfig = [ ( "std", dd ) ]
 
 import os.path
-import sys
 
 from string import Template
 
