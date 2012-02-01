@@ -83,10 +83,8 @@ class PubChemDB(object):
             iupac = summary.findall("IUPACName")[0].text
             synonyms = ";".join(t.text for t in summary.findall("SynonymList")[0])
             d = dict(cid=cid, mw=mw, mf=mf, iupac=iupac, synonyms=synonyms)
-            if keggIds is not None:
-                d["is_in_kegg"]=cid in keggIds
-            if humanMBdbIds is not None:
-                d["is_in_kegg"]=cid in humanMBdbIds
+            d["is_in_kegg"]=cid in (keggIds or [])
+            d["is_in_hmdb"]=cid in (humanMBdbIds or [])
             items.append((mw, d))
         return items
 

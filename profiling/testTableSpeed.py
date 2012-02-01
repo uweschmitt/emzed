@@ -12,7 +12,7 @@ def timeit(c):
     return time.time()-s
 
 db = PubChemDB("C:/TMP/pubchem.db")
-T  = db.table
+T  = db.table.filter(db.table.m0 != None)
 rows = [[i] for i in range(0, 1000, 10)]
 T0 = Table(["msoll"], [float], "%.2f", rows)
 
