@@ -255,9 +255,10 @@ class BaseExpression(object):
 
     def apply(self, fun):
         """
-        This applies a function *fun* to an expression.
+        t.apply(*fun*) results in an expression which applies *fun* to the
+        values in t if evaluated.
 
-        Example::  ``tab.time.apply(sin)``
+        Example::  ``tab.addColumn("amplitude", tab.time.apply(sin))``
         """
         return FunctionExpression(fun, str(fun), self, False)
 
