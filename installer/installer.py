@@ -1,6 +1,63 @@
 from Tkinter import *
-import tkFileDialog
+import tkFileDialog, tkMessageBox
 import _winreg
+import os
+
+from win32com.client import Dispatch
+
+def createLink(path, name):
+    shell = Dispatch("WScript.Shell")
+    link = shell.CreateShortCut(os.path.join(path, name))
+    link.Targetpath = os.path.join(app.targetDir, "run.bat")
+    link.WorkingDirectory = app.targetDir
+    location =  os.path.abspath(os.path.join(app.targetDir, "emzed.ico"))
+    # have to do that, do not know why, but else the icons are not
+    # associated !!!
+    location = location.replace(os.environ.get("PROGRAMFILES"), "%PROGRAMFILES%")
+    link.IconLocation = location
+    link.save()
+
+
+def getLocalUserShellFolders():
+    return _winreg.OpenKey(_winreg.HKEY_CURRENT_USER,
+                           "Software\\Microsoft\\Windows\\CurrentVersion"
+                           "\\Explorer\\User Shell Folders")
+
+def getLocalMachineShellFolders():
+    return _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE,
+                           "Software\\Microsoft\\Windows\\CurrentVersion"
+                           "\\Explorer\\User Shell Folders")
+    return key
+
+def expandVars(valueEx, **kw):
+    saved = dict ( (k, os.environ.get(k)) for k in kw.keys())
+    os.environ.update(kw)
+    result = os.path.expandvars(valueEx)
+    os.environ.update(saved)
+    return result
+
+def getLocalShellVar(name):
+    return _winreg.QueryValueEx(getLocalUserShellFolders(), name)[0]
+
+def getLocalMachineShellVar(name):
+    return _winreg.QueryValueEx(getLocalMachineShellFolders(), name)[0]
+
+def getPersonalRoot():
+    return expandVars(getLocalShellVar("Personal"))
+
+def getPersonalDesktop():
+    return expandVars(getLocalShellVar("Desktop"))
+
+def getPersonalPrograms():
+    return expandVars(getLocalShellVar("Programs"))
+
+
+def getCommonDesktop():
+    return expandVars(getLocalMachineShellVar("Common Desktop"))
+
+def getCommonPrograms():
+    return expandVars(getLocalMachineShellVar("Common Programs"))
+
 
 class App(object):
 
@@ -36,17 +93,13 @@ class App(object):
         set_grid(l, 2,0, sticky=E)
         self.path = Entry(frame, width=80)
 
-        import os
         programFolder = os.environ.get("PROGRAMFILES")
         # folgendes konfigurierbar machen:
         if os.access(programFolder, os.W_OK):
             defaultDir = os.path.join(programFolder, "emzed", "emzed_1.0")
         else:
-            key =_winreg.OpenKey(_winreg.HKEY_CURRENT_USER,
-                                "Software\\Microsoft\\Windows\\CurrentVersion"
-                                "\\Explorer\\User Shell Folders")
-            personalRoot,_ = _winreg.QueryValueEx(key, "Personal")
-            defaultDir =  os.path.join(_winreg.ExpandEnvironmentStrings(personalRoot), "emzed", "emzed_1.0")
+            personalRoot = getPersonalRoot()
+            defaultDir =  os.path.join(personalRoot, "emzed", "emzed_1.0")
 
         self.path.insert(0, defaultDir)
         set_grid(self.path, 2,1, columnspan = 2)
@@ -68,20 +121,37 @@ class App(object):
 
     def install(self):
         self.targetDir = self.path.get()
-        self.frame.quit()
+        try:
+            testPath = os.path.join(self.targetDir, "TESTPATH")
+            try:
+                # cleanup from leftoverso of other installs
+                os.removedirs(testPath)
+            except:
+                pass
+            os.makedirs(testPath)
+            testFile = os.path.join(self.targetDir, "TEST")
+            try:
+                # cleanup from leftoverso of other installs
+                os.remove(testFile)
+            except:
+                pass
+            open(testFile, "w").write("42")
+            os.remove(testFile)
+        except BaseException, e:
+            tkMessageBox.showwarning("Target", str(e))
+        else:
+            self.frame.quit()
 
     def file_dialog(self):
         dirname=tkFileDialog.askdirectory()
         self.path.delete(0,END)
         self.path.insert(0, dirname)
 
-
     def licenceCheck(self):
         state = NORMAL if self.checked.get() else DISABLED
         self.okbutton.config(state=state)
         self.dirbutton.config(state=state)
         self.path.config(state=state)
-
 
 
 import sys
@@ -93,5 +163,21 @@ root.mainloop()
 
 if app.targetDir is None:
     exit()
+
+import zipfile
+
+f = zipfile.ZipFile("emzed_files.zip")
+f.extractall(app.targetDir)
+
+
+try:
+    createLink(getCommonDesktop(), "emzed_1.0.lnk")
+    createLink(getCommonPrograms(), "emzed_1.0.lnk")
+except:
+    createLink(getPersonalDesktop(), "emzed_1.0.lnk")
+    createLink(getPersonalPrograms(), "emzed_1.0.lnk")
+
+
+
 
 
