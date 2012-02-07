@@ -170,6 +170,7 @@ f = zipfile.ZipFile("emzed_files.zip")
 f.extractall(app.targetDir)
 
 
+
 try:
     createLink(getCommonDesktop(), "emzed_1.0.lnk")
     createLink(getCommonPrograms(), "emzed_1.0.lnk")
