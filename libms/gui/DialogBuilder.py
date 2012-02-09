@@ -90,30 +90,56 @@ class DialogBuilder(object):
 
         """
         if name.startswith("add"):
+            try:
+                item = getattr(di, name[3:]+"Item")
+            except:
+                raise AttributeError("%r has no attribute '%s'"\
+                                     % (self, name))
 
-            def stub(label, *a, **kw):
-                #this function registers corresponding subclass of
-                #    DataItem
-                fieldName = _translateLabelToFieldname(label)
-                # check if fieldName is valid in Python:
-                try:
-                    exec("%s=0" % fieldName) in dict()
-                except:
-                    raise Exception("converted label %r to field name %r "\
-                                    "which is not allowed in python" \
-                                    % (label, fieldName))
-                # get DataItem subclass
-                try:
-                    item = getattr(di, name[3:]+"Item")
-                except:
-                    raise AttributeError("%r has no attribute '%s'"\
-                                         % (self, name))
-                # construct item
-                item = item(label, *a, **kw)
-                # regiter item and fieldname
-                self.items.append(item)
-                self.fieldNames.append(fieldName)
-                return self
+            class Stub(object):
+                def __init__(self, item, outer):
+                    self.item=item
+                    self.outer = outer
+
+                def __call__(self, label, *a, **kw):
+                    #this function registers corresponding subclass of
+                    #    DataItem
+                    fieldName = _translateLabelToFieldname(label)
+                    # check if fieldName is valid in Python:
+                    try:
+                        exec("%s=0" % fieldName) in dict()
+                    except:
+                        raise Exception("converted label %r to field name %r "\
+                                        "which is not allowed in python" \
+                                        % (label, fieldName))
+                    # get DataItem subclass
+                    # construct item
+                    dd = dict ((n,v) for (n,v) in kw.items()
+                                     if n in ["col", "colspan"])
+                    horizontal = kw.get("horizontal")
+                    if horizontal is not None:
+                        del kw["horizontal"]
+                    vertical = kw.get("vertical")
+                    if vertical is not None:
+                        del kw["vertical"]
+                    if "col" in kw:
+                        del kw["col"]
+                    if "colspan" in kw:
+                        del kw["colspan"]
+                    item = self.item(label, *a, **kw)
+                    if dd:
+                        item.set_pos(**dd)
+                    if horizontal:
+                        item.horizontal(horizontal)
+                    if vertical:
+                        item.vertical(vertical)
+
+                    # regiter item and fieldname
+                    self.outer.items.append(item)
+                    self.outer.fieldNames.append(fieldName)
+                    return self.outer
+
+            stub = Stub(item, self)
 
             # add docstring dynamically
             item = getattr(di, name[3:]+"Item")
