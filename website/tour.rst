@@ -57,8 +57,7 @@ Tables are a central data structure in mzExplore. We give a short demonstration 
 
     substances=ms.loadCSV("example.csv")
     substances.info()
-
-
+    
 
 That is the table has two columns named *name* and *mf* and both
 contain data of type ``str``.
