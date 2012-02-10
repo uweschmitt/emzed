@@ -1,5 +1,5 @@
 import _winreg
-import os
+import os, shutil
 import ConfigParser
 
 class _GlobalConfig(object):
@@ -71,9 +71,12 @@ def getDocumentFolder():
     return _winreg.ExpandEnvironmentStrings(personalRoot)
 
 def getDataHome():
-    dataHome = os.path.join(getDocumentFolder(), "emzed")
+    dataHome = os.path.join(getDocumentFolder(), "emzed_files")
     if not os.path.exists(dataHome):
         os.makedirs(dataHome)
+    examples = os.path.join(dataHome, "example_scripts")
+    if not os.path.exists(examples):
+        shutil.copytree("example_scripts", examples)
     return dataHome
 
 def getExchangeFolder():

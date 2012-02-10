@@ -5,18 +5,6 @@ import os
 
 from win32com.client import Dispatch
 
-def createLink(path, name):
-    shell = Dispatch("WScript.Shell")
-    link = shell.CreateShortCut(os.path.join(path, name))
-    link.Targetpath = os.path.join(app.targetDir, "run.bat")
-    link.WorkingDirectory = app.targetDir
-    location =  os.path.abspath(os.path.join(app.targetDir, "emzed.ico"))
-    # have to do that, do not know why, but else the icons are not
-    # associated !!!
-    location = location.replace(os.environ.get("PROGRAMFILES"), "%PROGRAMFILES%")
-    link.IconLocation = location
-    link.save()
-
 
 def getLocalUserShellFolders():
     return _winreg.OpenKey(_winreg.HKEY_CURRENT_USER,
@@ -170,13 +158,25 @@ f = zipfile.ZipFile("emzed_files.zip")
 f.extractall(app.targetDir)
 
 
+def createLink(path, name):
+    shell = Dispatch("WScript.Shell")
+    link = shell.CreateShortCut(os.path.join(path, name))
+    link.Targetpath = os.path.join(app.targetDir, "emzed.pyw")
+    link.WorkingDirectory = app.targetDir
+    location =  os.path.abspath(os.path.join(app.targetDir, "emzed.ico"))
+    # have to do that, do not know why, but else the icons are not
+    # associated !!!
+    location = location.replace(os.environ.get("PROGRAMFILES"), "%PROGRAMFILES%")
+    link.IconLocation = location
+    link.save()
+
 
 try:
-    createLink(getCommonDesktop(), "emzed_1.0.lnk")
-    createLink(getCommonPrograms(), "emzed_1.0.lnk")
+    createLink(getCommonDesktop(), "emzed 1.0.lnk")
+    createLink(getCommonPrograms(), "emzed 1.0.lnk")
 except:
-    createLink(getPersonalDesktop(), "emzed_1.0.lnk")
-    createLink(getPersonalPrograms(), "emzed_1.0.lnk")
+    createLink(getPersonalDesktop(), "emzed 1.0.lnk")
+    createLink(getPersonalPrograms(), "emzed 1.0.lnk")
 
 
 

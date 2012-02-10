@@ -5,7 +5,7 @@ import fnmatch
 
 files="""
     emzed.ico
-    emzed.bat ms libms batches/ startup/ patched_modules/ emzed.py
+    ms libms batches/ startup/ patched_modules/ emzed.pyw
     emzedPatches.py tab.py db.py elements.py abundance.py
     config_logger.py configs.py convert_universals.py example_scripts/
     installConstants.py mass.py splash.png  userConfig.py
