@@ -364,11 +364,13 @@ class MainWindow(QMainWindow):
         self.setWindowIcon(QIcon(icon_name))
         
         # Showing splash screen
-        pixmap = QPixmap("emzed_splash.png", "png")
+        pixmap = QPixmap("splash.png", "png")
         self.splash = QSplashScreen(pixmap)
         font = self.splash.font()
-        font.setPixelSize(10)
+        font.setPixelSize(12)
+        #font.setBold(True)
         self.splash.setFont(font)
+        #self.splash.setMessageRect(QRect(7, 254, 415,14), Qt.AlignCenter)
         if not self.light:
             self.splash.show()
             self.set_splash(_("Initializing..."))
@@ -1181,8 +1183,8 @@ class MainWindow(QMainWindow):
         if message:
             self.debug_print(message)
         self.splash.show()
-        self.splash.showMessage(message, Qt.AlignBottom | Qt.AlignCenter | 
-                                Qt.AlignAbsolute, QColor(Qt.black))
+        self.splash.showMessage(message, Qt.AlignBottom | Qt.AlignCenter, QColor(Qt.black))
+                                #Qt.AlignAbsolute, QColor(Qt.black))
         QApplication.processEvents()
         
     def closeEvent(self, event):
