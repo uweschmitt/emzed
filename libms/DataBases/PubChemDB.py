@@ -19,8 +19,8 @@ class PubChemDB(object):
         data = dict(db="pccompound",
                     rettype="count",
                     term="metabolic[SRCC] AND 0[TFC]",
-                    tool="msworkbench",
-                    email="tools@ms-workbench.de",
+                    tool="emzed",
+                    email="tools@emzed.ethz.ch",
                     )
         req = urllib2.Request(url, urllib.urlencode(data))
         resp = urllib2.urlopen(req)
@@ -41,8 +41,8 @@ class PubChemDB(object):
                     rettype="uilist",
                     term=term,
                     retmax=retmax,
-                    tool="msworkbench",
-                    email="tools@ms-workbench.de",
+                    tool="emzed",
+                    email="tools@emzed.ethz.ch",
                     usehistory="Y"
                     )
         url="http://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
@@ -61,8 +61,8 @@ class PubChemDB(object):
     @staticmethod
     def _get_summary_data(ids):
         data = dict(db="pccompound",
-                    tool="msworkbench",
-                    email="tools@ms-workbench.de",
+                    tool="emzed",
+                    email="tools@emzed.ethz.ch",
                     id=",".join(str(id_) for id_ in ids),
                     version="2.0"
                     )
@@ -163,11 +163,11 @@ class PubChemDB(object):
                 self.table.rows.append(row)
         try:
             self.table.dropColumn("url")
-        except: 
+        except:
             pass
         try:
             self.table.dropColumn("m0")
-        except: 
+        except:
             pass
         url = "http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?cid="
         self.table.addColumn("url", url+self.table.cid, type_=str)

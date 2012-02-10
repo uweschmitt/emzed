@@ -111,7 +111,7 @@ def patch_baseconfig():
         if modname == "spyderlib.widgets.externalshell"\
             and basename=="startup.py":
             import os
-            return os.path.join(os.environ.get("MSWORKBENCH_HOME"),
+            return os.path.join(os.environ.get("EMZED_HOME"),
                                 "patched_modules",
                                 "startup.py")
         return baseconfig._orig_get_module_source_path(modname, basename)
@@ -258,4 +258,4 @@ def patch_external_shell():
 
 
     patch_oedit()
-    __builtins__["__msworkbench_patched_applied"] = True
+    __builtins__["__emzed_patched_applied"] = True

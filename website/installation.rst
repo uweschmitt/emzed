@@ -61,7 +61,7 @@ For installing *eMZed* on Windows please follow **carefully** the stepwise instr
 
 
 
-You can clone a  current developer snaphsot of *eMZed* from http://github.com/uweschmitt/msworkbench.
+You can clone a  current developer snaphsot of *eMZed* from http://github.com/uweschmitt/emzed.
 
 
 In case of trouble, please use the *eMZed group* at http://groups.google.com/group/emzed-users.

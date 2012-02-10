@@ -19,8 +19,8 @@ Licensed under the terms of the MIT License
 import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import msWorkbenchPatches
-msWorkbenchPatches.patch_spyder()
+import emzedPatches
+emzedPatches.patch_spyder()
 
 
 import os
@@ -59,7 +59,7 @@ import config_logger
 config_logger.do_config()
 
 
-os.environ["MSWORKBENCH_HOME"] = os.path.dirname(os.path.abspath(__file__))
+os.environ["EMZED_HOME"] = os.path.dirname(os.path.abspath(__file__))
  
 import logging
 getattr(LLL, logging.getLevelName(LLL.level).lower())("this is internal")
@@ -100,7 +100,7 @@ except ImportError:
 from spyderlib.qt.QtGui import (QApplication, QMainWindow, QSplashScreen,
                                 QPixmap, QMessageBox, QMenu, QColor, QShortcut,
                                 QKeySequence, QDockWidget, QAction, QLineEdit,
-                                QInputDialog, QDesktopServices)
+                                QInputDialog, QDesktopServices, QIcon)
 from spyderlib.qt.QtCore import SIGNAL, QPoint, Qt, QSize, QByteArray, QUrl
 from spyderlib.qt.compat import (from_qvariant, getopenfilename,
                                  getsavefilename)
@@ -354,15 +354,17 @@ class MainWindow(QMainWindow):
         self.run_toolbar_actions = []
         
         # Set Window title and icon
-        title = "MS WORKBENCH"
+        title = "eMZed"
         if self.debug:
             title += " (DEBUG MODE)"
         self.setWindowTitle(title)
         icon_name = 'spyder_light.svg' if self.light else 'spyder.svg'
-        self.setWindowIcon(get_icon(icon_name))
+        icon_name = "emzed.ico"
+        print "ICO", QIcon(icon_name)
+        self.setWindowIcon(QIcon(icon_name))
         
         # Showing splash screen
-        pixmap = QPixmap("splash.png", "png")
+        pixmap = QPixmap("emzed_splash.png", "png")
         self.splash = QSplashScreen(pixmap)
         font = self.splash.font()
         font.setPixelSize(10)
@@ -546,7 +548,7 @@ class MainWindow(QMainWindow):
             # Status bar
             status = self.statusBar()
             status.setObjectName("StatusBar")
-            status.showMessage(_("Welcome to msWorkbench!"), 5000)
+            status.showMessage(_("Welcome to eMZed!"), 5000)
             
             
             # Tools + External Tools
@@ -559,7 +561,7 @@ class MainWindow(QMainWindow):
                                         _("PYTHONPATH manager"),
                                         None, 'pythonpath_mgr.png',
                                         triggered=self.path_manager_callback,
-                                        tip=_("Open msWorkbench path manager"))
+                                        tip=_("Open eMZed path manager"))
             update_modules_action = create_action(self,
                                         _("Update module names list"),
                                         None, 'reload.png',
@@ -698,34 +700,35 @@ class MainWindow(QMainWindow):
             
             # ? menu
             about_action = create_action(self,
-                                    _("About %s...") % "msWorkbench",
+                                    _("About %s...") % "eMZed",
                                     icon=get_std_icon('MessageBoxInformation'),
                                     triggered=self.about)
-            report_action = create_action(self,
-                                    _("Report issue..."),
-                                    icon=get_icon('bug.png'),
-                                    triggered=self.report_issue
-                                    )
+            #report_action = create_action(self,
+                                    #_("Report issue..."),
+                                    #icon=get_icon('bug.png'),
+                                    #triggered=self.report_issue
+                                    #)
             # Spyder documentation
-            doc_path = get_module_data_path('spyderlib', relpath="doc",
-                                            attr_name='DOCPATH')
+            #doc_path = get_module_data_path('spyderlib', relpath="doc",
+                                            #attr_name='DOCPATH')
             # * Trying to find the chm doc
-            spyder_doc = osp.join(doc_path, "Spyderdoc.chm")
-            if not osp.isfile(spyder_doc):
-                spyder_doc = osp.join(doc_path, os.pardir, os.pardir,
-                                      "Spyderdoc.chm")
+            #spyder_doc = osp.join(doc_path, "Spyderdoc.chm")
+            #if not osp.isfile(spyder_doc):
+            #    spyder_doc = osp.join(doc_path, os.pardir, os.pardir,
+                                      #"Spyderdoc.chm")
             # * Trying to find the html doc
-            if not osp.isfile(spyder_doc):
-                spyder_doc = osp.join(doc_path, "index.html")
-                if not osp.isfile(spyder_doc):  # development version
-                    spyder_doc = osp.join(get_module_source_path('spyderlib'),
-                                          os.pardir, 'build', 'lib',
-                                          'spyderlib', 'doc', "index.html")
-            spyder_doc = file_uri(spyder_doc)
-            doc_action = create_bookmark_action(self, spyder_doc,
-                               _("Spyder documentation"), shortcut="F1",
-                               icon=get_std_icon('DialogHelpButton'))
-            self.help_menu_actions = [about_action, report_action, doc_action]
+            #if not osp.isfile(spyder_doc):
+            #    spyder_doc = osp.join(doc_path, "index.html")
+            #    if not osp.isfile(spyder_doc):  # development version
+            #        spyder_doc = osp.join(get_module_source_path('spyderlib'),
+            #                              os.pardir, 'build', 'lib',
+            #                              'spyderlib', 'doc', "index.html")
+            #spyder_doc = file_uri(spyder_doc)
+
+            #doc_action = create_bookmark_action(self, spyder_doc,
+            #                   _("eMZed documentation"), shortcut="F1",
+            #                   icon=get_std_icon('DialogHelpButton'))
+            self.help_menu_actions = [about_action]
 
 
             # Python documentation
@@ -736,10 +739,10 @@ class MainWindow(QMainWindow):
                                           start_file(get_python_doc_path()))
                 self.help_menu_actions += [None, pydoc_act]
             # Qt assistant link
-            qta_act = create_program_action(self, _("Qt Assistant"),
-                                            'qtassistant.png', "assistant")
-            if qta_act:
-                self.help_menu_actions.append(qta_act)
+            #qta_act = create_program_action(self, _("Qt Assistant"),
+                                            #'qtassistant.png', "assistant")
+            #if qta_act:
+                #self.help_menu_actions.append(qta_act)
             # Documentation provided by Python(x,y), if available
             try:
                 from xy.config import DOC_PATH as xy_doc_path
@@ -1179,7 +1182,7 @@ class MainWindow(QMainWindow):
             self.debug_print(message)
         self.splash.show()
         self.splash.showMessage(message, Qt.AlignBottom | Qt.AlignCenter | 
-                                Qt.AlignAbsolute, QColor(Qt.white))
+                                Qt.AlignAbsolute, QColor(Qt.black))
         QApplication.processEvents()
         
     def closeEvent(self, event):
@@ -1310,7 +1313,7 @@ class MainWindow(QMainWindow):
             add_actions(toolbar, actions)
         
     def about(self):
-        """About Spyder"""
+        """About eMZed / Spyder"""
         not_installed = _('(not installed)')
         try:
             from pyflakes import __version__ as pyflakes_version
@@ -1330,11 +1333,22 @@ class MainWindow(QMainWindow):
             except AttributeError:
                 pass
         QMessageBox.about(self,
-            _("About %s") % "Spyder",
-            """<b>%s %s</b>
+            _("About %s") % "eMZed",
+            """<b>eMZed 1.0</b>
+            <br>Workspace for Analysing LCMS Data
+            <p>Copyright &copy; 2012
+     <br>- Institute of Microbiology, Department of Biology, ETH Zurich
+     <br>- Patrick Kiefer
+     <br>- Uwe Schmitt, <a href="http://www.mineway.de">mineway GmbH</a>
+     <p>Lincensed under the terms of the GPL 3 License
+     <br>
+     More info about eMZed at <a href="http://emzed.ethz.ch">the eMZed website</a>
+     <br>
+     <p>eMZed is heavilly based on :<br>
+
+
             <br>Scientific PYthon Development EnviRonment
             <p>Copyright &copy; 2009-2011 Pierre Raybaut
-            <br>Licensed under the terms of the MIT License
             <p>Created by Pierre Raybaut
             <br>Developed and maintained by the 
             <a href="%s/people/list">Spyder Development Team</a>
@@ -1345,17 +1359,8 @@ class MainWindow(QMainWindow):
             introspection features (completion, go-to-definition, ...) are 
             powered by %srope %s%s (&copy; 2006-2009 Ali Gholami Rudi)
             <br>Most of the icons are coming from the %sCrystal Project%s 
-            (&copy; 2006-2007 Everaldo Coelho)
-            <p>Spyder's community:
-            <ul><li>Bug reports and feature requests: 
-            <a href="%s">Google Code</a>
-            </li><li>Discussions around the project: 
-            <a href="%s">Google Group</a>
-            </li></ul>
-            <p>This project is part of 
-            <a href="http://www.pythonxy.com">Python(x,y) distribution</a>
-            <p>Python %s, Qt %s, %s %s on %s"""
-            % ("Spyder", __version__,  __project_url__,
+            (&copy; 2006-2007 Everaldo Coelho)"""
+            % ( __project_url__,
                  "<span style=\'color: #444444\'><b>",
                  pyflakes_version,
                  "</b></span>",
@@ -1363,12 +1368,7 @@ class MainWindow(QMainWindow):
                  rope_version,
                  "</b></span>",
                  "<span style=\'color: #444444\'><b>",
-                 "</b></span>",
-                 __project_url__, __forum_url__,
-                 platform.python_version(),
-                 spyderlib.qt.QtCore.__version__,
-                 qt_lib, spyderlib.qt.__version__,
-                 platform.system()) )
+                 "</b></span>",))
     
     def report_issue(self):
         qt_api = os.environ['QT_API']
@@ -1658,7 +1658,7 @@ Please provide any additional information below.
         if filename is None:
             self.redirect_internalshell_stdio(False)
             filename, _selfilter = getopenfilename(self, _("Open session"),
-                        os.getcwdu(), _("msWorkbench sessions")+" (*.session.tar)")
+                        os.getcwdu(), _("eMZed sessions")+" (*.session.tar)")
             self.redirect_internalshell_stdio(True)
             if not filename:
                 return
@@ -1669,7 +1669,7 @@ Please provide any additional information below.
         """Save session and quit application"""
         self.redirect_internalshell_stdio(False)
         filename, _selfilter = getsavefilename(self, _("Save session"),
-                        os.getcwdu(), _("msWorkbench sessions")+" (*.session.tar)")
+                        os.getcwdu(), _("eMZed sessions")+" (*.session.tar)")
         self.redirect_internalshell_stdio(True)
         if filename:
             if self.close():

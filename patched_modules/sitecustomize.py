@@ -10,12 +10,12 @@ import __builtin__
 
 
 print "run patched sitecustomize"
-sys.path.insert(0, os.environ.get("MSWORKBENCH_HOME",""))
+sys.path.insert(0, os.environ.get("EMZED_HOME",""))
 
 
 try:
-    import msWorkbenchPatches
-    msWorkbenchPatches.patch_external_shell()
+    import emzedPatches
+    emzedPatches.patch_external_shell()
 except Exception, e:
     print e
 

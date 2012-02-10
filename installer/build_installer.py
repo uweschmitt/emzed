@@ -5,10 +5,10 @@ import fnmatch
 
 files="""
     emzed.ico
-    run.bat ms libms batches/ startup/ patched_modules/ msWorkbench.py
-    msWorkbenchPatches.py tab.py db.py elements.py abundance.py
+    emzed.bat ms libms batches/ startup/ patched_modules/ emzed.py
+    emzedPatches.py tab.py db.py elements.py abundance.py
     config_logger.py configs.py convert_universals.py example_scripts/
-    installConstants.py mass.py msWorkbench.bat splash.png  userConfig.py
+    installConstants.py mass.py splash.png  userConfig.py
     spyderlib/ """.split()
 
 

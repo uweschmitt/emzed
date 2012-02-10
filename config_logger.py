@@ -2,7 +2,7 @@ import logging, os
 
 def do_config():
 
-    logger = logging.getLogger('de.mineway.msworkbench')
+    logger = logging.getLogger('de.mineway.emzed')
     logger.setLevel(logging.DEBUG)
 
     # create file handler which logs even debug messages
@@ -12,7 +12,7 @@ def do_config():
     except:
         pass
 
-    fh = logging.FileHandler('logs/msworkbench.log')
+    fh = logging.FileHandler('logs/emzed.log')
     fh.setLevel(logging.DEBUG)
 
     # create console handler with a higher log level
