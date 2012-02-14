@@ -351,6 +351,9 @@ def testIfThenElse():
     t.addColumn("x", (t.a == None).thenElse(t.b, t.c))
     assert t.colNames==["a", "b", "c", "x"]
     t._print()
+    t.addColumn("y", (t.a != None).thenElse("ok", "not ok"))
+    t._print()
+    assert t.y.values == ["ok", "not ok"]
 
 
 def testDynamicColumnAttributes():
