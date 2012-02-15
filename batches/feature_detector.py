@@ -106,7 +106,7 @@ def runMatchedFilter(pattern=None, destination=None, configid=None, **params):
          you can add modifications to the standard pamaeters, eg ppm,
          as named arguments.
 
-         if you have multiple configs for centwave, you can give an
+         if you have multiple configs for matched filter, you can give an
          configid as defined in configs.py, or you are asked to choose
          a config.
 
@@ -124,7 +124,7 @@ def runMatchedFilter(pattern=None, destination=None, configid=None, **params):
 
               runMatchedFilter(ppm=13):
                      asks for source files and target directory
-                     runs centwave with modified ppm=13 parameter.
+                     runs matched filter with modified ppm=13 parameter.
                      
               runMatchedFilter(pattern):
                      looks for map files matching pattern
@@ -133,7 +133,7 @@ def runMatchedFilter(pattern=None, destination=None, configid=None, **params):
               runMatchedFilter(pattern, msDiff=0.003):
                      looks for map files matching pattern
                      resulting csv files are stored next to input map file
-                     runs centwave with modified msDiff parameter
+                     runs matched filter with modified msDiff parameter
 
               runMatchedFilter(pattern, destination):
                      looks for map files matching pattern
@@ -142,7 +142,7 @@ def runMatchedFilter(pattern=None, destination=None, configid=None, **params):
               runMatchedFilter(pattern, destination, ppm=17, peakwidth=(5,100) ):
                      looks for map files matching pattern
                      resulting csv files are stored at destination directory
-                     runs centwave with modified ppm and peakwidth parameters.
+                     runs matched filter with modified ppm and peakwidth parameters.
 
     """
 
