@@ -2,13 +2,99 @@
 A Guided Tour
 =============
 
+
+.. _ipython_example:
+
+Working with iPython command line
+---------------------------------
+
+
 .. _peakmaps_example:
 
 Working with PeakMaps
 ---------------------
+eMZed allows loading, inspecting and basic filtering of LC-MS(/MS) data files. To load your single data files to the workspace use the command:
 
-TODO -> I/O, inspecting, retrieve spectrum
+.. pycon::
+   :invisible:
+ 
+   import ms
+   ds=ms.loadPeakMap("example1.mzXML") 
 
+.. pycon::
+
+   import ms
+   ds = ms.loadPeakMap() !noexec
+   help(ms.loadPeakMap)
+
+
+The peakmap 'ds' will appear in the variable explorer window and you can open the peakmap by simply double clicking the variable ds.
+
+.. image:: peakmap_variable_explorer.png
+   :scale: 60 %
+   
+Alternatively use the command
+
+.. pycon::
+   ms.inspectPeakMap(ds) !noexec
+
+.. image:: inspecting_peakmap.png
+   :scale: 50 %
+   
+
+A. The upper plot shows the TIC and the lower plot the ms spectrum indicated by the bar with the center dot. You can move the bar with the mouse when you click on the bar with the left 
+mouse button keeping the button pressed. B. m/z values of mass peaks in spectrum are depicted. In addition you can measure distance and relative intensity of a mass peak relative to
+a selected one. It is also possible to select mass peaks of a spectrum and extract corresponding ion chromatograms. 
+
+**Table:** Functions and commands for peakmap inspection
+
++-------------------+------------+----------------------------------+
+| description       |            |       command                    |
+|                   |            |                                  |
++===================+============+==================================+
+| zoom              |            |  press right mouse button and    | 
+|                   +------------+----------------------------------+
+|     	            | in         | move right / up	            |
+|                   +------------+----------------------------------+
+|     	            | out        | move left / down                 |
+|                   +------------+----------------------------------+
+|                   |reset       |  backspace                       |
++-------------------+------------+----------------------------------+
+| move plot along   |            |keep middle mouse button          |
+| along x-axis      |            |pressed and move mouse            |
+|		    |            |left / right                      |
++-------------------+------------+----------------------------------+
+|mass traces        |            |                                  |
+| 	    	    |            |                                  |
+|	            | extract    |     enter mz value  and          |
+|            	    |            |     half mass tolerance w/2,     |
+|     		    |            |     press select button          |
+| 	    	    |            +----------------------------------+                   
+|                   |            | or: label mass peak in spectra,  |
+|                   |            |    type 'c' to copy value to     |
+|                   |            |    mz, enter w/2 value, press    |
+|                   |            |    select button 		    |
+|                   +------------+----------------------------------+
+|	  	    |  undo      |press reset button	            |
++-------------------+------------+----------------------------------+
+| rt window         |            |                                  |
+|                   |    select  |press 'ctrl' + left mouse buton   |
+|                   |            |on bar and enlarge / reduce width |
+|                   +------------+----------------------------------+
+|                   |zoom in     | press 'space'                    |        
++-------------------+------------+----------------------------------+
+| mass peaks        |            |                                  |
+|                   |   get mass | move mouse on mass peak          |
+|                   |            |   (labeled with red dot)         |
+|                   +------------+----------------------------------+
+|                   |   compare  | press left mouse button and      |
+|                   |            | select second mouse button       |
++-------------------+------------+----------------------------------+
+
+
+
+
+extracting mz traces
 
 .. _centwave_example:
 
