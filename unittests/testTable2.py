@@ -30,13 +30,42 @@ def testApply():
     assert t.id.values == [None, 2, 3 ]
 
 
+def testNumpyTypeCoercion():
+    import numpy as np
+    t = ms.toTable("a", [np.int32(1)])
+    t.info()
+    assert t.colTypes == [int], t.colTypes
+    t = ms.toTable("a", [None, np.int32(1)])
+    t.info()
+    assert t.colTypes == [int], t.colTypes
+
+    t.addColumn("b", np.int32(1))
+    assert t.colTypes == [int, int], t.colTypes
+    t.replaceColumn("b", [None, np.int32(1)])
+    assert t.colTypes == [int, int], t.colTypes
+
+    t.replaceColumn("b", np.int64(1))
+    assert t.colTypes == [int, long], t.colTypes
+    t.replaceColumn("b", [None, np.int64(1)])
+    assert t.colTypes == [int, long], t.colTypes
+
+    t.replaceColumn("b", np.float32(1.0))
+    assert t.colTypes == [int, float], t.colTypes
+    t.replaceColumn("b", [None, np.float32(1.0)])
+    assert t.colTypes == [int, float], t.colTypes
+
+    t.replaceColumn("b", np.float64(2.0))
+    assert t.colTypes == [int, float], t.colTypes
+    t.replaceColumn("b", [None, np.float64(2.0)])
+    assert t.colTypes == [int, float], t.colTypes
+
 def testApplyUfun():
     import numpy
     t = ms.toTable("a", [None, 2.0, 3])
 
     print numpy.log
     t.addColumn("log", t.a.apply(numpy.log))
-    assert t.colTypes == [ float, float]
+    assert t.colTypes == [ float, float], t.colTypes
 
 
 def testNonBoolean():
