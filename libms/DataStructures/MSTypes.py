@@ -187,8 +187,9 @@ class PeakMap(object):
     @memoize
     def mzRange(self):
         """ returns mz-range *(mzmin, mzmax)* of current peakmap """
-        return min(s.peaks[:, 0].min() for s in self.spectra if len(s.peaks)),\
-               max(s.peaks[:, 0].max() for s in self.spectra if len(s.peaks))
+        mzmin = min(s.peaks[:, 0].min() for s in self.spectra if len(s.peaks))
+        mzmax = max(s.peaks[:, 0].max() for s in self.spectra if len(s.peaks))
+        return float(mzmin), float(mzmax)
 
     def rtRange(self):
         """ returns rt-range *(rtmin, tax)* of current peakmap """
