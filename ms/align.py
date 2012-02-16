@@ -1,4 +1,4 @@
-def rtalign(tables, refTable = None, destination = None, nPeaks=-1,
+def rtAlign(tables, refTable = None, destination = None, nPeaks=-1,
             numBreakpoints=5, maxRtDifference = 100, maxMzDifference = 0.3,
             forceAlign=False):
 
@@ -180,14 +180,3 @@ def _transformTable(table, transformation):
         spec.rt = transformation.apply(spec.rt)
     table.replaceColumn("peakmap", peakmap)
 
-
-def alignFeatureTables(*a, **kw):
-
-    """
-    THIS FUNCTION IS DEPRICIATED. PLEASE USE rtalign INSTEAD
-
-    """
-
-    print "\nTHIS FUNCTION IS DEPRECIATED. PLEASE USE rtalign INSTEAD"
-    print
-    return rtalign(*a, **kw)

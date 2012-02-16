@@ -5,7 +5,7 @@ def testMzAlign():
     tab = ms.loadTable("data/ftab_for_mzalign.table")
     pm = tab.peakmap.values[0]
     s0 = pm.spectra[0].peaks[:,0]
-    tab_aligned = ms.mzalign(tab, interactive=False, minPoints=4, tol=14*MMU,
+    tab_aligned = ms.mzAlign(tab, interactive=False, minPoints=4, tol=14*MMU,
                       destination="temp_output")
     after = tab_aligned.mz.values
     pm = tab_aligned.peakmap.values[0]

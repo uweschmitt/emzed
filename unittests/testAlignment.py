@@ -29,7 +29,7 @@ def testPoseClustering():
     # delete one row, so ft should become reference map !
     del ft2.rows[-1]
 
-    ftneu, ft2neu = ms.alignFeatureTables([ft,ft2], destination="temp_output", nPeaks=9999,
+    ftneu, ft2neu = ms.rtAlign([ft,ft2], destination="temp_output", nPeaks=9999,
                                           numBreakpoints=2)
     def getrt(t, what):
         return  np.array([t.get(row, what) for row in t.rows])
@@ -60,7 +60,7 @@ def testPoseClustering():
 
     ex = None
     try:
-        ftneu, ft2neu = ms.alignFeatureTables([ftneu,ft2neu], destination="temp_output", nPeaks=9999,
+        ftneu, ft2neu = ms.rtAlign([ftneu,ft2neu], destination="temp_output", nPeaks=9999,
                                               numBreakpoints=2)
     except Exception, e:
         ex = e

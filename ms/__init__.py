@@ -7,7 +7,7 @@ from align import *
 from isotope_calculator import *
 from tools import *
 from statistics import *
-from mzalign import mzalign
+from mzalign import mzAlign
 from metlin import matchMetlin
 
 from libms.Explorers       import inspectPeakMap, inspect
