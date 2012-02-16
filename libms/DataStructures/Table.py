@@ -46,12 +46,19 @@ def getPostfix(colName):
 
 
 def coerce_numpy_values(li):
-    hasint = any( int in x.__class__.__mro__ for x in li)
     hasfloat = any( float in x.__class__.__mro__ for x in li)
     if hasfloat:
         return [ None if x is None else float(x) for x in li ]
+    hasint = any( int in x.__class__.__mro__ for x in li)
     if hasint:
         return [ None if x is None else int(x) for x in li ]
+    haslong = any( long in x.__class__.__mro__ for x in li)
+    hasinteger = any( np.integer in x.__class__.__mro__ for x in li)
+    if haslong or hasinteger:
+        return [ None if x is None else long(x) for x in li ]
+    hasfloating = any( np.floating in x.__class__.__mro__ for x in li)
+    if hasfloating:
+        return [ None if x is None else float(x) for x in li ]
     return li
 
 
@@ -766,7 +773,6 @@ class Table(object):
 
     def _addColumnByExpression(self, name, expr, type_, format, insertBefore):
         values, _ = expr._eval(None)
-        values = coerce_numpy_values(values)
         return self._addColumn(name, values, type_, format, insertBefore)
 
     def _addColumnByCallback(self, name, callback, type_, format, insertBefore):
@@ -780,20 +786,14 @@ class Table(object):
     def _addColumn(self, name, values, type_, format, insertBefore):
         # works for lists, nubmers, objects: convers inner numpy dtypes
         # to python types if present, else does nothing !!!!
-        if type(values) == np.ndarray:
-            values = values.tolist()
 
         assert len(values) == len(self), "lenght of new column %d does not "\
                                          "fit number of rows %d in table"\
                                          % (len(values), len(self))
+        values = coerce_numpy_values(values)
         if type_ is None:
             type_ = commonTypeOfColumn(values)
-        def conv(x, type_=type_):
-            if x is None:
-                return x
-            if type_ in [int, float, str, np.int32, np.int64, np.float32, np.float64]:
-                return type_(x)
-            return x
+
         if format == "":
             format = guessFormatFor(name, type_)
 
@@ -814,8 +814,9 @@ class Table(object):
             self.colNames.insert(insertBefore, name)
             self.colTypes.insert(insertBefore, type_)
             self.colFormats.insert(insertBefore, format)
+            values = coerce_numpy_values(values)
             for row, v in zip(self.rows, values):
-                row.insert(insertBefore, conv(v))
+                row.insert(insertBefore, v)
 
         else:
             raise Exception("can not handle insertBefore=%r" % insertBefore)
@@ -987,20 +988,19 @@ class Table(object):
         for t in subTables:
             ctx = dict((n, (t.getColumn(n).values,
                          t.primaryIndex.get(n))) for n in names)
-            values, _ = expr._eval({self: ctx})
+            value, _ = expr._eval({self: ctx})
             # works for numbers and objects to, but not if values is
             # iteraable:
-            if type(values) in (list, np.ndarray):
-                assert len(values)==1, "you did not use an aggregating "\
+            if type(value) in (list, np.ndarray):
+                assert len(value)==1, "you did not use an aggregating "\
                                        "expression, or you aggregate over "\
                                        "a column which has lists or numpy "\
                                        "arrays as entries"
-                values = np.array(values).tolist()
-                values = values[0]
+                value = coerce_numpy_values(value)[0]
             else:
-                if hasattr(values, "__array_interface__"):
-                    values = values.tolist()
-            collectedValues.extend([values]*len(t))
+                if np.number in value.__class__.__mro__:
+                    value = np.array((value,)).tolist()[0]
+            collectedValues.extend([value]*len(t))
 
         result = self.copy()
         result.addColumn(newName, collectedValues)
@@ -1279,7 +1279,7 @@ class Table(object):
             raise Exception("colName is not a string. The arguments of this "\
                             "function changed in the past !")
 
-        values = list(iterable)
+        values = coerce_numpy_values(list(iterable))
         if type_ is None:
             type_ = commonTypeOfColumn(values)
         if format == "":

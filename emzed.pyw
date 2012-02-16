@@ -18,6 +18,7 @@ Licensed under the terms of the MIT License
 # all modules/packages below the dir of this file will be found
 import sys
 import os
+import time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import emzedPatches
 emzedPatches.patch_spyder()
@@ -366,8 +367,9 @@ class MainWindow(QMainWindow):
         # Showing splash screen
         pixmap = QPixmap("splash.png", "png")
         self.splash = QSplashScreen(pixmap)
+        self.splash_started = time.time()
         font = self.splash.font()
-        font.setPixelSize(12)
+        font.setPixelSize(14)
         #font.setBold(True)
         self.splash.setFont(font)
         #self.splash.setMessageRect(QRect(7, 254, 415,14), Qt.AlignCenter)
@@ -872,6 +874,9 @@ class MainWindow(QMainWindow):
         self.debug_print("Setting up window...")
         self.setup_layout(default=False)
             
+        # splash screen occurs at leas for 5 seconds:
+        while (time.time()-self.splash_started) < 5.0:
+            time.sleep(0.1)
         self.splash.hide()
         
         # Enabling tear off for all menus except help menu
@@ -1316,24 +1321,6 @@ class MainWindow(QMainWindow):
         
     def about(self):
         """About eMZed / Spyder"""
-        not_installed = _('(not installed)')
-        try:
-            from pyflakes import __version__ as pyflakes_version
-        except ImportError:
-            pyflakes_version = not_installed
-        try:
-            from rope import VERSION as rope_version
-        except ImportError:
-            rope_version = not_installed
-        import spyderlib.qt.QtCore
-        qt_api = os.environ['QT_API']
-        qt_lib = {'pyqt': 'PyQt4', 'pyside': 'PySide'}[qt_api]
-        if qt_api == 'pyqt':
-            import sip
-            try:
-                qt_lib += (" (API v%d)" % sip.getapi('QString'))
-            except AttributeError:
-                pass
         QMessageBox.about(self,
             _("About %s") % "eMZed",
             """<b>eMZed 1.0</b>
@@ -1346,31 +1333,13 @@ class MainWindow(QMainWindow):
      <br>
      More info about eMZed at <a href="http://emzed.ethz.ch">the eMZed website</a>
      <br>
-     <p>eMZed is heavilly based on :<br>
+     eMZed is heavilly based on :
+     <br> - open-ms <a href="http://www.open-ms.de">http://www.open-ms.de</a> 
+     <br> - xcms <a href="http://metlin.scripps.edu/xcms">http://metlin.scripps.edu/xcms</a>
+     <br> - Spyder 2.1.7 <a href="http://code.google.com/p/spyderlib/">http://code.google.com/p/spyderlib</a>
 
 
-            <br>Scientific PYthon Development EnviRonment
-            <p>Copyright &copy; 2009-2011 Pierre Raybaut
-            <p>Created by Pierre Raybaut
-            <br>Developed and maintained by the 
-            <a href="%s/people/list">Spyder Development Team</a>
-            <br>Many thanks to all the Spyder beta-testers and regular users.
-            <p>Source code editor: Python code real-time analysis is powered by 
-            %spyflakes %s%s (&copy; 2005 
-            <a href="http://www.divmod.com/">Divmod, Inc.</a>) and other code 
-            introspection features (completion, go-to-definition, ...) are 
-            powered by %srope %s%s (&copy; 2006-2009 Ali Gholami Rudi)
-            <br>Most of the icons are coming from the %sCrystal Project%s 
-            (&copy; 2006-2007 Everaldo Coelho)"""
-            % ( __project_url__,
-                 "<span style=\'color: #444444\'><b>",
-                 pyflakes_version,
-                 "</b></span>",
-                 "<span style=\'color: #444444\'><b>",
-                 rope_version,
-                 "</b></span>",
-                 "<span style=\'color: #444444\'><b>",
-                 "</b></span>",))
+        """)
     
     def report_issue(self):
         qt_api = os.environ['QT_API']

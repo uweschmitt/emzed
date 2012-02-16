@@ -869,7 +869,7 @@ class IfThenElse(BaseExpression):
 
             size = self._evalsize(ctx)
             if size == 1:
-                return e2 if e1 else e3, None
+                return [e2] if [e1] else [e3], None
             if not type(e1) in _iterables:
                 e1 = [ e1 ] * size
             elif isinstance(e1, np.ndarray):
