@@ -1,2 +1,6 @@
 *.table -crlf 
 */*.table -crlf 
+*.mz* -crlf
+*/*.mz* -crlf
+*.png -crlf
+*/*.png -crlf

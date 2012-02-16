@@ -29,13 +29,13 @@ eMZed allows loading, inspecting and basic filtering of LC-MS(/MS) data files. T
    :invisible:
  
    import ms
-   ds=ms.loadPeakMap("example1.mzXML") 
+   ds=ms.loadPeakMap() 
 
 .. pycon::
 
-   import ms
+   
    ds = ms.loadPeakMap() !noexec
-   help(ms.loadPeakMap)
+   help(ms.loadPeakMap)  
 
 
 The peakmap 'ds' will appear in the variable explorer window and you can open the peakmap by simply double clicking the variable ds.
@@ -48,11 +48,16 @@ Alternatively use the command
 .. pycon::
    ms.inspectPeakMap(ds) !noexec
 
-.. image:: inspecting_peakmap.png
+.. image:: inspect_peakmap1.png
    :scale: 50 %
    
 
-A. The upper plot shows the TIC and the lower plot the ms spectrum indicated by the bar with the center dot. You can move the bar with the mouse when you click on the bar with the left 
+The upper plot shows the TIC and the lower plot the ms spectrum indicated by the bar with the center dot. 
+
+.. image:: inspect_peakmap2.png
+   :scale: 50 %
+
+A.You can move the bar with the mouse when you click on the bar with the left 
 mouse button keeping the button pressed. B. m/z values of mass peaks in spectrum are depicted. In addition you can measure distance and relative intensity of a mass peak relative to
 a selected one. It is also possible to select mass peaks of a spectrum and extract corresponding ion chromatograms. 
 
@@ -66,11 +71,11 @@ Exctracting chromatographic peaks
 Actually, eMZed includes two peak detection algorithm of the XCMS package: centwave and matched filter. Excepted input file formats are mxML, mzXML, and mzData.
 The output file format is .table. In addition .csv files are saved.
 
-1. Centwave algorithm for high resolution LC-MS data
+We continue with an example of centwave algorithm for high resolution LC-MS data. 
 
 .. pycon::
    import batches
-   table=batches.runCentwave(path/peakmap.mzXML, destinationPath) !noexec
+   tables=batches.runCentwave("V:/pkiefer/eMZed/MZXML/*.mzXML", ppm=10, peakwidth=(15,60), prefilter=(5,10000),snthresh=0.1,mzdiff=0.001) !noexec
 
 Various parameters can be adapted.For details type
 
@@ -78,26 +83,15 @@ Various parameters can be adapted.For details type
    help(batches.centwave) !noexec
 
 
-You can also execute the command without any parameter specification and dialogboxes open to choose the peakmap and the destination path
-
-.. pycon::
-   tab=batches.runCentwave() !noexec
-
-.. image:: centwave_dialog_peakmap.png
-   :scale: 50%
-
+.. image:: tableListVarBrowser.png
+   :scale: 50 %
  
+The resulting output file is a list containing 3 table objects (see working with tables). You can open the table list by double clicking the variable tab in the variable explorer. 
+Click on choose to switch between different tables. In each table parameters of detected peaks are depicted row wise. You can visualize corresponding Extracted Ion Chromatograms 
+**(EIC)** and mass spectra by clicking the left line button. Tables are editable and all modifications are in place. 
+Notice that the original peakmap is linked to table and raw data are accessible.
 
 
-2. Matched filter 
-
-.. pycon::
-   tab=batches.runMatchedFilter(path/peakmap.mzXML, destinationPath) !noexec
-
-
-The resulting output file is a table object (see working with tables). You can open the table by double clicking the variable tab in the variable explorer.
-Parameters of detected peaks are depicted row wise. You can visualize corresponding **E**xtracted **I**on **C**hromatograms (EIC) and mass spectra by clicking the left line 
-button. Tables are editable and all modifications are in place. Notice that the original peakmap is linked to table and raw data are accessible.
 
 .. image:: table_explorer.png
    :scale: 60 %
@@ -108,19 +102,20 @@ button. Tables are editable and all modifications are in place. Notice that the 
 Integrating Features
 --------------------
 
-Peaks can be integrated. To perform peak integration columns rtmin, rtmax, mzmin, and mzmax are mandatory.  
+Detected Peaks can be integrated. To perform peak integration columns rtmin, rtmax, mzmin, and mzmax are mandatory.  To reduce the runtime we will choose 1 table out of the list
+and we will only integrate those peaks with a signal to noise >5e4.
 
 .. pycon::
-   tabInt=ms.integrate(tab, 'emg_exact') !noexec
+   tab=tables[0] !noexec
+   tabFilt=tab.filter(tab.sn>5e4) !noexec
+   tabInt=ms.integrate(tabFilt, 'emg_exact') !noexec
+
 
 .. image:: table_integrate.png
-   :scale: 90 %
+   :scale: 60 %
 
-You can manualy reintegrate individual EIC peaks applying one aout of 6 different integration methods thereby adapting the window width for peak integration changing any other 
-entry. For more details see **LINK**
-
-.. image:: table_integrate_manip.png
-   :scale: 90 %
+For all peaks integrated peaks area and rmse values are automatically added to the table (A). You can manualy reintegrate individual EIC peaks applying one aout of 6 different integration methods thereby adapting the window width for peak integration changing any other 
+entry (B). For more details see **LINK**
 
 
 .. _rtalign_example:
@@ -131,12 +126,34 @@ The retention time alignment is performed with the  `OpenMS <http://open-ms.sour
 map alignment algorithm and aligns a list of  tables to a reference table.
 
 .. pycon::
-   tabListAligned=ms.rtalign(tableList) !noexec
+   tablesAligned=ms.rtAlign(tables) !noexec
 
+To visualize the rt shift on tables we will now overlay two tables before and after rt alignment. We are reducing again the
+number of peaks in the table by filtering for a minimum SN level. To get the overlay before the rt alignemnt
+
+.. pycon::
+   tab1=tables[0] !noexec
+   tab1=tab1.filter(tab1.sn>5e4) !noexec
+   tab2=tables[2] !noexec
+   tab2=tab2.filter(tab2.sn>5e4) !noexec
+   before=tab1.join(tab2, tab1.mz.approxEqual(tab2.mz, 3*MMU) &tab1.rt.approxEqual(tab2.rt,30))   !noexec   
+
+Open the table 'before' and sort the peak in ascending order with column 'sn' and click on column with id=191.
+And now repeat the same procedure for the same tables after rt alignemnt:
+
+.. pycon::
+   tabA1=tablesAligned[0] !noexec
+   tabA1=tabA1.filter(tabA1.sn>5e4) !noexec
+   tabA2=tablesAligned[2] !noexec
+   tabA2=tabA2.filter(tabA2.sn>5e4) !noexec
+   after=tabA1.join(tabA2, tabA1.mz.approxEqual(tabA2.mz, 3*MMU) &tabA1.rt.approxEqual(tabA2.rt,30)) !noexec
+
+Open now the table 'after' and sort the peak in ascending order with column 'sn' and click again on column with id=191.
 
 .. image:: rtalignment.png
    :scale: 60 %
 
+The plot shows the overlay of two EIC peaks of the same compound in two different samples before (A) and after (B) retention time alignment.
 
 
 .. _table_example:

@@ -1,3 +1,7 @@
+
+Exploring peakmaps
+------------------
+
 **Table:** Functions and commands for peakmap inspection
 
 +-------------------+------------+----------------------------------+
