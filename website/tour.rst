@@ -2,11 +2,21 @@
 A Guided Tour
 =============
 
+.. image:: eMZed.png
+   :scale: 50 %
 
 .. _ipython_example:
 
 Working with iPython command line
 ---------------------------------
+
+eMZed is based on open source python language. You can directly execute commands in the console and examples below can be directly executed in the command line. 
+Most functions and operation are found in the module ms. The console provides command completion and automatic dialog boxes showing a list of possible commands. 
+In the same way, possible operations on any type of object (variable type) are indicated automaticaly.
+
+.. image:: console_code_completion.png
+   :scale: 60 %  
+
 
 
 .. _peakmaps_example:
@@ -46,62 +56,51 @@ A. The upper plot shows the TIC and the lower plot the ms spectrum indicated by 
 mouse button keeping the button pressed. B. m/z values of mass peaks in spectrum are depicted. In addition you can measure distance and relative intensity of a mass peak relative to
 a selected one. It is also possible to select mass peaks of a spectrum and extract corresponding ion chromatograms. 
 
-**Table:** Functions and commands for peakmap inspection
-
-+-------------------+------------+----------------------------------+
-| description       |            |       command                    |
-|                   |            |                                  |
-+===================+============+==================================+
-| zoom              |            |  press right mouse button and    | 
-|                   +------------+----------------------------------+
-|     	            | in         | move right / up	            |
-|                   +------------+----------------------------------+
-|     	            | out        | move left / down                 |
-|                   +------------+----------------------------------+
-|                   |reset       |  backspace                       |
-+-------------------+------------+----------------------------------+
-| move plot along   |            |keep middle mouse button          |
-| along x-axis      |            |pressed and move mouse            |
-|		    |            |left / right                      |
-+-------------------+------------+----------------------------------+
-|mass traces        |            |                                  |
-| 	    	    |            |                                  |
-|	            | extract    |     enter mz value  and          |
-|            	    |            |     half mass tolerance w/2,     |
-|     		    |            |     press select button          |
-| 	    	    |            +----------------------------------+                   
-|                   |            | or: label mass peak in spectra,  |
-|                   |            |    type 'c' to copy value to     |
-|                   |            |    mz, enter w/2 value, press    |
-|                   |            |    select button 		    |
-|                   +------------+----------------------------------+
-|	  	    |  undo      |press reset button	            |
-+-------------------+------------+----------------------------------+
-| rt window         |            |                                  |
-|                   |    select  |press 'ctrl' + left mouse buton   |
-|                   |            |on bar and enlarge / reduce width |
-|                   +------------+----------------------------------+
-|                   |zoom in     | press 'space'                    |        
-+-------------------+------------+----------------------------------+
-| mass peaks        |            |                                  |
-|                   |   get mass | move mouse on mass peak          |
-|                   |            |   (labeled with red dot)         |
-|                   +------------+----------------------------------+
-|                   |   compare  | press left mouse button and      |
-|                   |            | select second mouse button       |
-+-------------------+------------+----------------------------------+
-
-
-
-
 extracting mz traces
 
 .. _centwave_example:
 
-Exctracting Features
---------------------
+Exctracting chromatographic peaks
+---------------------------------
 
-TODO -> Centwave, table explorer
+Actually, eMZed includes two peak detection algorithm of the XCMS package: centwave and matched filter. Excepted input file formats are mxML, mzXML, and mzData.
+The output file format is .table. In addition .csv files are saved.
+
+1. Centwave algorithm for high resolution LC-MS data
+
+.. pycon::
+   import batches
+   table=batches.runCentwave(path/peakmap.mzXML, destinationPath) !noexec
+
+Various parameters can be adapted.For details type
+
+.. pycon::
+   help(batches.centwave) !noexec
+
+
+You can also execute the command without any parameter specification and dialogboxes open to choose the peakmap and the destination path
+
+.. pycon::
+   tab=batches.runCentwave() !noexec
+
+.. image:: centwave_dialog_peakmap.png
+   :scale: 50%
+
+ 
+
+
+2. Matched filter 
+
+.. pycon::
+   tab=batches.runMatchedFilter(path/peakmap.mzXML, destinationPath) !noexec
+
+
+The resulting output file is a table object (see working with tables). You can open the table by double clicking the variable tab in the variable explorer.
+Parameters of detected peaks are depicted row wise. You can visualize corresponding **E**xtracted **I**on **C**hromatograms (EIC) and mass spectra by clicking the left line 
+button. Tables are editable and all modifications are in place. Notice that the original peakmap is linked to table and raw data are accessible.
+
+.. image:: table_explorer.png
+   :scale: 60 %
 
 
 .. _integration_example:
@@ -109,15 +108,34 @@ TODO -> Centwave, table explorer
 Integrating Features
 --------------------
 
-Integrator anwenden + Tabelle öffnen + manipulieren
+Peaks can be integrated. To perform peak integration columns rtmin, rtmax, mzmin, and mzmax are mandatory.  
+
+.. pycon::
+   tabInt=ms.integrate(tab, 'emg_exact') !noexec
+
+.. image:: table_integrate.png
+   :scale: 90 %
+
+You can manualy reintegrate individual EIC peaks applying one aout of 6 different integration methods thereby adapting the window width for peak integration changing any other 
+entry. For more details see **LINK**
+
+.. image:: table_integrate_manip.png
+   :scale: 90 %
 
 
 .. _rtalign_example:
 
 Aligning Features
 -----------------
+The retention time alignment is performed with the  `OpenMS <http://open-ms.sourceforge.net/openms/>`_ 
+map alignment algorithm and aligns a list of  tables to a reference table.
 
-rt - alignemnt vorführen, joinen, anzeigen
+.. pycon::
+   tabListAligned=ms.rtalign(tableList) !noexec
+
+
+.. image:: rtalignment.png
+   :scale: 60 %
 
 
 
@@ -235,7 +253,8 @@ categorized as *metabolomic compounds*
 
 
 
-Before matching our data against the large pubchem table, we build an index on tthis table in order to speed up the following ``leftJoin`` call. Building an index is done by sorting the corresponding column
+Before matching our data against the large pubchem table, we build an index on tthis table in order to speed up the following ``leftJoin`` call.
+Building an index is done by sorting the corresponding column
 
 
 
