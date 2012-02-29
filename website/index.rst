@@ -58,6 +58,7 @@ Contents
    installation
    tour
    working_with_explorers
+   cookbook
 
    api_ms
    api_batches
