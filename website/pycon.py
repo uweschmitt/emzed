@@ -68,7 +68,13 @@ class PyCon(Directive):
                 del fields[1]
                 line = "".join(fields)
 
-            print >> captured, ">>>", line
+            fields = line.split("!onlyoutput")
+            onlyoutput = len(fields)>1
+            if onlyoutput:
+                del fields[1]
+                line = "".join(fields)
+            if not onlyoutput:
+                print >> captured, ">>>", line
 
             if not suppress_output and not donotoutput:
                 sys.stdout = captured
