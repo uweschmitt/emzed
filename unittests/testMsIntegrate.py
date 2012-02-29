@@ -75,4 +75,4 @@ def testIntegration():
     assert ftr.areaX.values[1] >= 0
     assert ftr.rmseX.values[1] >= 0
 
-    ftr.store("../doublefeat.table", True)
+    #ftr.store("../doublefeat.table", True)

@@ -375,7 +375,7 @@ class BaseExpression(object):
         Example: ``tab.peakmap.uniqueNotNone``
         """
         def select(values):
-            diff = set(id(v) for v in values if v is not None)
+            diff = set(v for v in values if v is not None)
             if len(diff) == 0:
                 raise Exception("only None values in %s" % self)
             if len(diff) > 1:
