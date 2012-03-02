@@ -6,7 +6,7 @@ API ms Module
 MZ Alignment
 ~~~~~~~~~~~~
 
-.. autofunction:: ms.mzalign
+.. autofunction:: ms.mzAlign
 
 
 RT Alignment
@@ -14,7 +14,7 @@ RT Alignment
 
 For an example see :ref:`rtalign_example`
 
-.. autofunction:: ms.rtalign
+.. autofunction:: ms.rtAlign
    
 
 

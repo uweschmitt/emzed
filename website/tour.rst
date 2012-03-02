@@ -2,8 +2,10 @@
 A Guided Tour
 =============
 
-.. image:: eMZed.png
+.. figure:: eMZed.png
    :scale: 50 %
+
+   (Click on the image to enlarge)
 
 .. _ipython_example:
 
@@ -23,22 +25,25 @@ In the same way, possible operations on any type of object (variable type) are i
 
 Working with PeakMaps
 ---------------------
-eMZed allows loading, inspecting and basic filtering of LC-MS(/MS) data files. To load your single data files to the workspace use the command:
+eMZed allows loading, inspecting and basic filtering of LC-MS(/MS) data files. To load your single data files to the workspace use the command ``loadPeakMap``. If you are unsure how to use a command, you can get some help as follows: 
 
 .. pycon::
    :invisible:
  
    import ms
-   ds=ms.loadPeakMap() 
+   pm=ms.loadPeakMap("..\example_scripts\example1.mzXML") 
 
 .. pycon::
 
-   
-   ds = ms.loadPeakMap() !noexec
-   help(ms.loadPeakMap)  
+    help(ms.loadPeakMap)
+
+So if we call the function as follows, you will be asked to choose a file. Please choose the file ``example1.mzXML`` from your current folder:
+
+.. pycon::
+   pm = ms.loadPeakMap() !noexec
 
 
-The peakmap 'ds' will appear in the variable explorer window and you can open the peakmap by simply double clicking the variable ds.
+The peakmap ``pm`` will appear in the *variable explorer* and you can open the peakmap by simply double clicking the variable ``pm``.
 
 .. image:: peakmap_variable_explorer.png
    :scale: 60 %
@@ -46,7 +51,7 @@ The peakmap 'ds' will appear in the variable explorer window and you can open th
 Alternatively use the command
 
 .. pycon::
-   ms.inspectPeakMap(ds) !noexec
+   ms.inspectPeakMap(pm) !noexec
 
 .. image:: inspect_peakmap1.png
    :scale: 50 %
@@ -75,7 +80,13 @@ We continue with an example of centwave algorithm for high resolution LC-MS data
 
 .. pycon::
    import batches
-   tables=batches.runCentwave("V:/pkiefer/eMZed/MZXML/*.mzXML", ppm=10, peakwidth=(15,60), prefilter=(5,10000),snthresh=0.1,mzdiff=0.001) !noexec
+   tables=batches.runCentwave("*.mzXML", ppm=10, peakwidth=(15,60),\ !noexec
+                              prefilter=(5,10000), snthresh=0.1, \ !noexec
+                              mzdiff=0.001) !noexec 
+.. pycon::
+   :invisible:
+
+   tables=batches.runCentwave("*.mzXML", ppm=10, peakwidth=(15,60), prefilter=(5,10000), snthresh=0.1, mzdiff=0.001) 
 
 Various parameters can be adapted.For details type
 
