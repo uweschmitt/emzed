@@ -126,10 +126,8 @@ class PubChemDB(object):
     def __len__(self):
         return len(self.table)
 
-    def synchronize(self, maxIds = None):
-        print len(self.table), "ITEMS IN LOCAL PUBCHEM DB"
+    def getDiff(self, maxIds = None):
         counts = PubChemDB._get_count()
-        print counts, "ITEMS IN GLOBAL PUBCHEM DB"
         unknown = []
         missing = []
         if counts!=len(self.table):
@@ -139,26 +137,26 @@ class PubChemDB(object):
             missing = list(known_uis-uis)
         return unknown, missing
 
-    def reset(self, fetchmax=99999999):
-        ids = PubChemDB._get_uilist()
+    def reset(self):
+        #ids = PubChemDB._get_uilist()
         self.table = self._emptyTable()
-        self.update(ids[:fetchmax])
+        self.update()
         self.store()
 
     def massCalculator(self, table, row, name):
         return monoisotopicMass(table.get(row, "mf"))
 
-    def update(self, ids):
+    def update(self, maxIds=None):
 
+        newIds, missingIds = self.getDiff()
+        if maxIds is not None:
+            newIds = newIds[:maxIds] # for testing
         keggids = set(PubChemDB._get_uilist(source="KEGG"))
         hmdbids = set(PubChemDB._get_uilist(source="Human Metabolome Database"))
 
-        print "%d ENTRIES FROM KEGG" % len(keggids)
-        print "%d ENTRIES FROM HUMAN METABOLOME DATABASE" % len(hmdbids)
-
-        print "FETCH", len(ids), "ITEMS"
-        if ids:
-            for mw, dd in PubChemDB._download(ids, keggids, hmdbids):
+        print "FETCH", len(newIds), "ITEMS"
+        if newIds:
+            for mw, dd in PubChemDB._download(newIds, keggids, hmdbids):
                 row = [ dd.get(n) for n in self.colNames ]
                 self.table.rows.append(row)
         try:
@@ -169,6 +167,9 @@ class PubChemDB(object):
             self.table.dropColumn("m0")
         except:
             pass
+        if len(missingIds):
+            print "DELETE", len(missingIds), "ENTRIES FROM LOCAL DB"
+            self.table = self.table.filter(~self.table.cid.isIn(missingIds))
         url = "http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?cid="
         self.table.addColumn("url", url+self.table.cid, type_=str)
         self.table.addColumn("m0", self.massCalculator, type_=float, format="%.7f", insertBefore="mw")
@@ -184,4 +185,5 @@ class PubChemDB(object):
 
     def __getattr__(self, colName):
         return getattr(self.table, colName)
+
 
