@@ -63,8 +63,8 @@ def run(t, colnames, rows):
                                         'object', 'array' }
 
     
-
-    tn = t.filter(t.str.contains("hi"))
+    expr = t.str.contains("hi")
+    tn = t.filter(expr)
     assert len(tn) == 3
     tn = t.filter(~ t.str.contains("hi"))
     assert len(tn) == 0
@@ -289,6 +289,8 @@ def testWithEmtpyTablesAndTestColnameGeneration():
     assert t1.colNames == ["z", "x__0"], t1.colNames
     assert t1.rows[0] ==  [1, None]
 
+    t1.print_()
+    f.print_()
     t2 = t1.leftJoin(f, f.y == t1.x__0)
     assert t2.colNames ==["z", "x__0", "y__1"], t2.colNames
     assert len(t2) == 1
@@ -308,14 +310,10 @@ class ExceptionTester(object):
 
 def testWithNoneValues():
     t = ms.toTable("i", [1,2,None])
-    with ExceptionTester(Exception):
-        t.filter(t.i >=1)._print()
-    with ExceptionTester(Exception):
-        t.filter(t.i <=1)._print()
-    with ExceptionTester(Exception):
-        t.filter(t.i >1)._print()
-    with ExceptionTester(Exception):
-        t.filter(t.i <1)._print()
+    t.filter(t.i >=1)._print()
+    t.filter(t.i <=1)._print()
+    t.filter(t.i >1)._print()
+    t.filter(t.i <1)._print()
 
     assert len(t.filter(t.i == None)) == 1
     assert len(t.filter(t.i != None)) == 2

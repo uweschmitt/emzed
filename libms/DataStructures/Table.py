@@ -301,7 +301,7 @@ class Table(object):
     def _setupColumnAttributes(self):
         for name in self.colNames:
             ix = self.getIndex(name)
-            col = ColumnExpression(self, name, ix)
+            col = ColumnExpression(self, name, ix, self.colTypes[ix])
             setattr(self, name, col)
 
     def numRows(self):
@@ -396,7 +396,8 @@ class Table(object):
     def _getColumnCtx(self, needed):
         names = [ n for (t,n) in needed if t==self ]
         return dict((n, (self.getColumn(n).values,
-                         self.primaryIndex.get(n))) for n in names)
+                         self.primaryIndex.get(n),
+                         self.getColumn(n).type_)) for n in names)
 
     def addEnumeration(self, colName="id"):
         """ adds enumerated column as first column to table **inplace**.
@@ -772,8 +773,8 @@ class Table(object):
         return self.addConstantColumn(name, what, type_, format, insertBefore)
 
     def _addColumnByExpression(self, name, expr, type_, format, insertBefore):
-        values, _ = expr._eval(None)
-        return self._addColumn(name, values, type_, format, insertBefore)
+        values, _, type2_ = expr._eval(None)
+        return self._addColumn(name, values, type_ or type2_, format, insertBefore)
 
     def _addColumnByCallback(self, name, callback, type_, format, insertBefore):
         values = [callback(self, r, name) for r in self.rows]
@@ -988,18 +989,14 @@ class Table(object):
         for t in subTables:
             ctx = dict((n, (t.getColumn(n).values,
                          t.primaryIndex.get(n))) for n in names)
-            value, _ = expr._eval({self: ctx})
+            value, _, type_ = expr._eval({self: ctx})
             # works for numbers and objects to, but not if values is
             # iteraable:
-            if type(value) in (list, np.ndarray):
-                assert len(value)==1, "you did not use an aggregating "\
-                                       "expression, or you aggregate over "\
-                                       "a column which has lists or numpy "\
-                                       "arrays as entries"
-                value = coerce_numpy_values(value)[0]
-            else:
-                if np.number in value.__class__.__mro__:
-                    value = np.array((value,)).tolist()[0]
+            assert len(value)==1, "you did not use an aggregating "\
+                                   "expression, or you aggregate over "\
+                                   "a column which has lists or numpy "\
+                                   "arrays as entries"
+            value = type_(value[0])
             collectedValues.extend([value]*len(t))
 
         result = self.copy()
@@ -1020,7 +1017,7 @@ class Table(object):
         if debug:
             print "#", expr
 
-        flags, _ = expr._eval(None)
+        flags, _, _ = expr._eval(None)
         filteredTable = self.buildEmptyClone()
         if flags is True:
             filteredTable.rows = [r[:] for r in  self.rows]
@@ -1115,9 +1112,9 @@ class Table(object):
         cmdlineProgress = _CmdLineProgress(len(self))
         rows = []
         for ii, r1 in enumerate(self.rows):
-            r1ctx = dict((n, (v, None)) for (n,v) in zip(self.colNames, r1))
+            r1ctx = dict((n, (v, None, t)) for (n,v, t) in zip(self.colNames, r1, self.colTypes))
             ctx = {self:r1ctx, t:tctx}
-            flags,_ = expr._eval(ctx)
+            flags,_,_ = expr._eval(ctx)
             if type(flags) == bool:
                 if flags:
                     rows.extend([ r1[:] + row[:] for row in t.rows])
@@ -1169,9 +1166,9 @@ class Table(object):
 
         rows = []
         for ii, r1 in enumerate(self.rows):
-            r1ctx = dict((n, (v, None)) for (n,v) in zip(self.colNames, r1))
+            r1ctx = dict((n, (v, None, t)) for (n,v, t) in zip(self.colNames, r1, self.colTypes))
             ctx = {self:r1ctx, t:tctx}
-            flags,_ = expr._eval(ctx)
+            flags,_,_ = expr._eval(ctx)
             if flags is True:
                 rows.extend([ r1[:] + row[:] for row in t.rows])
             elif flags is False:
