@@ -62,12 +62,12 @@ def testNoIntegration():
 def testPeakIntegration():
 
     integrator = dict(configs.peakIntegrators)["asym_gauss"]
-    _, _, params = run(integrator, 1.3775e5, 7.547e3)
+    _, _, params = run(integrator, 1.195066e5, 7.288137e3)
 
-    assert abs(params[0]- 8953.7) < 1.0, params
-    assert abs(params[1]- 51.72) < 0.01, params
-    assert abs(params[2]- 119.86) < 0.01, params
-    assert abs(params[3]- 320.3) < 0.1, params
+    assert abs(params[0]- 12182.07) < 1.0, params
+    assert abs(params[1]- 136.9405) < 0.01, params
+    assert abs(params[2]- 8.338e-12) < 1e-14, params
+    assert abs(params[3]- 326.49) < 0.1, params
 
     integrator = dict(configs.peakIntegrators)["emg_exact"]
 
@@ -77,7 +77,7 @@ def testPeakIntegration():
 
     run(integrator,  120481.9, 0.0)
 
-    integrator = dict(configs.peakIntegrators)["std"]
+    integrator = dict(configs.peakIntegrators)["sgolay"]
     run(integrator,  119149.7, 6854.8)
 
 
