@@ -991,6 +991,9 @@ class Table(object):
         names = [ n for (t,n) in nc ]
         collectedValues = []
         for t in subTables:
+            print
+            print "subt"
+            t._print()
             ctx = dict((n, (t.getColumn(n).values,
                          t.primaryIndex.get(n),
                          t.getColumn(n).type_
@@ -1003,6 +1006,7 @@ class Table(object):
                                    "a column which has lists or numpy "\
                                    "arrays as entries"
 
+            print repr(value), type_
             if type_ in _basic_num_types:
                 value = value.tolist()
             collectedValues.extend(value*len(t))
@@ -1027,6 +1031,8 @@ class Table(object):
 
         flags, _, _ = expr._eval(None)
         filteredTable = self.buildEmptyClone()
+        filteredTable.primaryIndex = self.primaryIndex.copy()
+
         if len(flags) == 1:
             if flags[0]:
                 filteredTable.rows = [r[:] for r in  self.rows]

@@ -204,7 +204,6 @@ def testAggregateOperation():
     t._print()
     
     t = t.aggregate(t.b.sum, "sum", groupBy="a")
-
     t = t.aggregate(t.b.hasNone, "hasNone", groupBy="a")
     t = t.aggregate(t.b.countNone, "countNone", groupBy="a")
     t = t.aggregate(t.b.count, "count", groupBy="a")

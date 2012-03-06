@@ -149,12 +149,13 @@ def run(t, colnames, rows):
     assert ex != None
 
     # computed by exrpression
+    tn.print_()
     tn.addColumn("computed", tn.long / (tn.iii + 1))
     # computed by callback:
     tn.addColumn("squared", lambda t,r,n: t.get(r, "iii")**2)
 
-
-    assert list(tn.getColumn("computed").values ) == [8080, 7441, 6161]
+    
+    assert list(tn.getColumn("computed").values ) == [8080, 7441, 6161], tn.computed.values
     assert list(tn.getColumn("squared").values ) == [9, 4, 1]
 
 
@@ -234,7 +235,8 @@ def testSomePredicates():
     assert tn.get(tn.rows[0], "int") == 1
 
     tn = t.filter(t.float.approxEqual(1.0, t.int/10))
-    assert len(tn) == 1
+    tn._print()
+    assert len(tn) == 1, len(tn)
     assert tn.get(tn.rows[0], "int") == 1
 
 

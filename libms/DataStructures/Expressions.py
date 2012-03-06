@@ -21,15 +21,31 @@ def gt(a, x):
     return np.searchsorted(a, x, 'right')
 
 
-"""
-spaltentypen: int, long, float, bool, str, dict, tuple, set, list, object
+##############################################################################
+#
+#  some design principles, READ FIRST:
+#
+#  columntypes int, long, float, bool are kept in np.array during _eval
+#  calls with apropripate dtype if no Nones are present, else
+#  dtype=object. So checking against dtype==object is the same as
+#  testing if Nones are present.
+#
+#  as the dtype is not restrictive enough, _eval returs the columntype
+#  as python type as the last value.
+#
+#  Comparisions alllways return bool arrays without missing values ==
+#  Nones !!!! so eg comparing "<= None" is not allowed in contrast to "== None"
+#
+#  Logical operations allways return bool values in contrast to pythons
+#  logical operations.
+#
+##############################################################################
 
-numerisch: int, long, bool, float   -> werden IMMER in np.ma.core.MaskedArray verwaltet
-alle andern: als list verwaltet.
-
-"""
 
 _basic_num_types = [int, long, float, bool]
+
+def hasNone(arr):
+    return arr.dtype.type == np.object_
 
 
 def saveeval(expr, ctx):
@@ -40,9 +56,9 @@ def saveeval(expr, ctx):
 
 def container(type_):
     if type_ in [ int, long, float, bool]:
-        return np.ma.core.MaskedArray
+        return np.array
     if hasattr(type_, "__mro__") and np.number in type_.__mro__:
-        return np.ma.core.MaskedArray
+        return np.array
     return list
 
 def cleanup(type_):
@@ -67,13 +83,15 @@ def common_type(t1, t2):
         return t1
 
     if t1 in _basic_num_types and t2 in _basic_num_types:
-        if float in t1 or float in t2:
+        if t1 == float or t2 == float:
             return float
-        if long in t1 or long in t2:
+        if t1 == long or t2 == long:
             return long
-        if int in t1 or int in t2:
+        if t1 == int or t2 == int:
             return int
         return bool
+
+    return object
 
     raise Exception("can not coerce types %s and %s" % (t1, t2))
 
@@ -468,7 +486,7 @@ class CompExpression(BaseExpression):
             if ixl != None  and len(rhs) == 1:
                 return self.fastcomp(lhs, rhs[0]), None, bool
             if ixr != None  and len(lhs) == 1:
-                return self.rfastcomp(lhs, lhs[0]), None, bool
+                return self.rfastcomp(rhs, lhs[0]), None, bool
             if len(lhs) == 1:
                 lhs = np.tile(lhs, len(rhs))
             elif len(rhs) == 1:
@@ -477,37 +495,21 @@ class CompExpression(BaseExpression):
 
         if len(lhs) == 1:
             l = lhs[0]
-            if l is None and tr in _basic_num_types:
-                if self.symbol == "==":
-                    values = rhs.mask
-                elif self.symbol == "!=":
-                    values = ~rhs.mask
-                else:
-                    values = np.zeros((len(rhs),), dtype=bool)
-            else:
-                values = [ self.comparator(l,r) for r in  rhs]
+            values = [ self.comparator(l,r) for r in  rhs]
 
         elif len(rhs) == 1:
             r = rhs[0]
-            if r is None and tl in _basic_num_types:
-                if self.symbol == "==":
-                    values = lhs.mask
-                elif self.symbol == "!=":
-                    values = ~lhs.mask
-                else:
-                    values = np.zeros((len(lhs),), dtype=bool)
-            else:
-                values = [ self.comparator(l,r) for l in  lhs]
+            values = [ self.comparator(l,r) for l in  lhs]
         else:
             values = [ self.comparator(l,r) for (l,r) in zip(lhs, rhs)]
-        return np.ma.array(values), None, bool
+        return np.array(values, dtype=np.bool), None, bool
 
-    def numericcomp(self, lhs, rhs):
-        assert len(lhs) == len(rhs)
+    def numericcomp(self, lvals, rvals):
+        assert len(lvals) == len(rvals)
         # default impl: comparing to None is not poissble:
-        if np.any(lhs.mask) or np.any(rhs.mask):
-            raise Exception("Comparing None with < is not possible")
-        return self.comparator(lhs, rhs)
+        if hasNone(lvals) or hasNone(rvals):
+            raise Exception("Comparing None with %s is not possible" % self.symbol)
+        return self.comparator(lvals, rvals).astype(bool)
 
 def Range(start, end, len):
     rv = np.zeros((len,), dtype=np.bool)
@@ -592,8 +594,7 @@ class NeExpression(CompExpression):
         return ~Range(i1, i0+1, len(vec))
 
     def numericcomp(self, lhs, rhs):
-        assert len(lhs) == len(rhs)
-        return (lhs != rhs).filled(False) |(lhs.mask != rhs.mask)
+        return lhs != rhs
 
 
 class EqExpression(CompExpression):
@@ -613,14 +614,10 @@ class EqExpression(CompExpression):
         return Range(i1, i0+1, len(vec))
 
     def numericcomp(self, lhs, rhs):
-        assert len(lhs) == len(rhs)
-        return (lhs == rhs).filled(True) & (lhs.mask == rhs.mask)
+        return lhs == rhs
 
 
 class BinaryExpression(BaseExpression):
-
-    # TODO: refactor dependcies based on symbol, -> extra flags in
-    # constructor.
 
     def __init__(self, left, right, efun, symbol, restype):
         super(BinaryExpression, self).__init__(left, right)
@@ -634,17 +631,38 @@ class BinaryExpression(BaseExpression):
 
         ll = len(lvals)
         lr = len(rvals)
-        if ll> 1 and lr>1 and ll != lr:
-            raise Exception("can not cast sizes %d and %d" % (ll, lr))
-        if tl in _basic_num_types and tr in _basic_num_types:
-            res = self.efun(lvals, rvals)
-            if self.restype is not None:
-                res = res.astype(self.restype)
-            return res, None, cleanup(res.dtype)
 
         ct = self.restype or common_type(tl,tr)
 
-        assert ll==1 or lr==1 or ll==lr, "sizes do not fit"
+        if ll==0 and lr==0:
+            return container(ct)([]), None, ct
+
+        assert ll ==1 or lr ==1 or ll == lr, "can not cast sizes %d and %d" % (ll, lr)
+
+        if tl in _basic_num_types and tr in _basic_num_types:
+            idx = None
+            if ll==1:
+                if self.symbol in "+-":
+                    idx = idxr
+                elif self.symbol in "*/" and lvals[0]>0:
+                    idx = idxr
+            if lr==1:
+                if self.symbol in "+-":
+                    idx = idxl
+                elif self.symbol in "*/" and rvals[0]>0:
+                    idx = idxl
+
+            if hasNone(lvals) or hasNone(rvals):
+                nones = (lvals <= None)  | (rvals <= None)
+                res = self.efun(np.where(nones, 1, lvals), np.where(nones, 1, rvals))
+            else:
+                nones = None
+                res = self.efun(lvals, rvals)
+            res = res.astype(ct) # downcast: 2/3 -> 0 for int
+            if nones is not None:
+                res = res.astype(object)  # allows None values
+                res[nones] = None
+            return res, idx, ct
 
         if ll==1:
             values = [ self.efun(lvals[0], r) for r in rvals ]
@@ -652,28 +670,8 @@ class BinaryExpression(BaseExpression):
             values = [ self.efun(l, rvals[0]) for l in lvals ]
         else:
             values = [ self.efun(l, r) for (l, r) in zip(lvals, rvals) ]
-
         return values, None , ct
 
-
-
-class __UnaryExpression(BaseExpression):
-
-    def __init__(self, left, efun, funname):
-        if not isinstance(left, BaseExpression):
-            left = Value(left)
-        self.left = left
-        self.efun = efun
-        self.funname = funname
-
-    def _eval(self, ctx=None):
-        vals, _, type_ = saveeval(self.left, ctx)
-        if type(vals) in _iterables:
-            return np.ma.array([self.efun(v) for v in vals]), None
-        return self.efun(vals), None
-
-    def __str__(self):
-        return self.funname % self.left
 
 class AggregateExpression(BaseExpression):
 
@@ -694,7 +692,7 @@ class AggregateExpression(BaseExpression):
         if type_ in _basic_num_types:
             vals = vals.tolist()
         if self.ignoreNone:
-            vals  = [ v for v in vals if v is not None]
+            vals = [v for v in vals if v is not None]
         if len(vals):
             result = [self.efun(vals)]
             result = container(type(result[0]))(result)
@@ -702,7 +700,7 @@ class AggregateExpression(BaseExpression):
             return result, None, type_
         # only nones !
         if type_ in _basic_num_types:
-            return np.ma.array((0,), mask=(1,)), None, type_
+            return np.array((None,),), None, type_
         return [None], None, type_
 
     def __str__(self):
@@ -721,17 +719,12 @@ class LogicExpression(BaseExpression):
 
     def richeval(self, lvals, rvals, tl, tr,  boolop):
 
-        if len(lvals) == 1:
-            values = [ boolop(lvals[0], r) for r in rvals ]
-        elif len(rvals) == 1:
-            values = [ boolop(l, rvals[0]) for l in lvals ]
-        else:
-            assert len(lvals) == len(rvals)
-            values = [ boolop(l, r) for (l,r) in zip(lvals, rvals) ]
+        assert len(lvals) == len(rvals)
+        values = [ boolop(l, r) for (l,r) in zip(lvals, rvals) ]
 
         ct = common_type(tl, tr)
         if ct in _basic_num_types:
-            values = np.ma.array([ ct(v) for v in values ])
+            values = np.array([ ct(v) for v in values ])
 
         return values, None, ct
 
@@ -750,7 +743,7 @@ class AndExpression(LogicExpression):
             return rhs, _, trhs
         if len(rhs) == 1: # rhs[0] is True
             return lhs, _, tlhs
-        return self.richeval(lhs, rhs, tlhs, trhs, lambda a,b: a and b)
+        return lhs & rhs, None, bool
 
 class OrExpression(LogicExpression):
 
@@ -766,7 +759,7 @@ class OrExpression(LogicExpression):
             return rhs, _, trhs
         if len(rhs) == 1: # rhs[0] is False
             return lhs, _, tlhs
-        return self.richeval(lhs, rhs, tlhs, trhs, lambda a,b: a or b)
+        return lhs | rhs, None, bool
 
 class XorExpression(LogicExpression):
 
@@ -778,7 +771,7 @@ class XorExpression(LogicExpression):
             return rhs, _, trhs
         if len(rhs) ==1 and not rhs[0]:
             return lhs, _, tlhs
-        return self.richeval(lhs, rhs, tlhs, trhs, lambda a,b: (a and not b) | (not a and b))
+        return (lhs & ~rhs) | (~lhs & rhs), None, bool
 
 
 class Value(BaseExpression):
@@ -812,19 +805,16 @@ class FunctionExpression(BaseExpression):
 
     def _eval(self, ctx=None):
         values, index, type_ = saveeval(self.child, ctx)
-        if type(values) == np.ma.core.MaskedArray:
+        # the secenod expressions is true if values contains no Nones,
+        # so we can apply ufucns/vecorized funs
+        if type(values) == np.ndarray and not hasNone(values):
             if type(self.efun) == np.ufunc:
                 return self.efun(values), None, float
             return np.vectorize(self.efun)(values), None, float
         new_values = [self.efun(v) if v is not None else None for v in values]
         if type_ in _basic_num_types:
-            new_values = np.ma.array(new_values)
-            return new_values, None, cleanup(new_values.dtype)
-        types = set(type(v) for v in new_values)
-        common = int
-        for t in types:
-            common = common_type(t, common)
-        return new_values, None, common
+            new_values = np.array(new_values)
+        return new_values, None, type_
 
     def __str__(self):
         return "%s(%s)" % (self.efunname, self.child)
@@ -881,12 +871,11 @@ class IfThenElse(BaseExpression):
         assert len(values1) == len(values2) == len(values3)
 
         ct = common_type(t2, t3)
-        if type(values2) == type(values3) == np.ma.core.MaskedArray:
+        if type(values2) == type(values3) == np.ndarray:
             return np.where(values1, values2, values3), _, ct
 
         return [ val2 if val1 else val3 for (val1, val2, val3) \
                 in zip(values1, values2, values3) ], _, ct
-
 
     def __str__(self):
         return "%s(%s)" % (self.efunname, self.child)
@@ -954,13 +943,13 @@ class ColumnExpression(BaseExpression):
 
     def _eval(self, ctx=None):
         # self.values is allways a list ! for speedinig up things
-        # we convert numerical types to np.ma.array during evaluation
+        # we convert numerical types to np.ndarray during evaluation
         # of expressions
         if ctx is None:
             if self.type_ in _basic_num_types:
-                mask = [ v is None for v in self.values ]
-                values = map(lambda v: v or 0, self.values)
-                return np.ma.array(values, mask = mask, dtype = self.type_), None, self.type_
+                # the dtype of the following array is determined
+                # automatically, even if Nones are in values:
+                return np.array(self.values), None, self.type_
             return self.values, None, self.type_
         cx = ctx.get(self.table)
         if cx is None:
@@ -968,10 +957,7 @@ class ColumnExpression(BaseExpression):
                             "did you use wrong table in expression ?")
         values, idx, type_ = cx.get(self.colname)
         if type_ in _basic_num_types:
-            #values = np.ma.array(values)
-            mask = [ v is None for v in values ]
-            values = map(lambda v: v or 0, values)
-            values = np.ma.array(values, mask = mask, dtype = self.type_)
+            values = np.array(values)
         return values, idx, type_
 
     def __str__(self):
