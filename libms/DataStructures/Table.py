@@ -1004,6 +1004,7 @@ class Table(object):
 
         result = self.copy()
         result.addColumn(newName, collectedValues)
+        result.primaryIndex = self.primaryIndex.copy()
         return result
 
     def filter(self, expr, debug = False):
@@ -1022,6 +1023,7 @@ class Table(object):
 
         flags, _ = expr._eval(None)
         filteredTable = self.buildEmptyClone()
+        filteredTable.primaryIndex = self.primaryIndex.copy()
         if flags is True:
             filteredTable.rows = [r[:] for r in  self.rows]
         elif flags is False:
