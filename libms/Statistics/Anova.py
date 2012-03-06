@@ -6,8 +6,8 @@ from ..DataStructures.Table import Table
 
 
 def _getSamples(factorColumn, dependentColumn, minsize=1):
-    factors, _ = factorColumn._eval(None)
-    dependents, _ = dependentColumn._eval(None)
+    factors, _, _ = factorColumn._eval(None)
+    dependents, _, _ = dependentColumn._eval(None)
     groups = _defaultdict(list)
     for factor, depenent in zip(factors, dependents):
         groups[factor].append(depenent)

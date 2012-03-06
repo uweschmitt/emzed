@@ -63,8 +63,8 @@ def run(t, colnames, rows):
                                         'object', 'array' }
 
     
-
-    tn = t.filter(t.str.contains("hi"))
+    expr = t.str.contains("hi")
+    tn = t.filter(expr)
     assert len(tn) == 3
     tn = t.filter(~ t.str.contains("hi"))
     assert len(tn) == 0
@@ -149,12 +149,13 @@ def run(t, colnames, rows):
     assert ex != None
 
     # computed by exrpression
+    tn.print_()
     tn.addColumn("computed", tn.long / (tn.iii + 1))
     # computed by callback:
     tn.addColumn("squared", lambda t,r,n: t.get(r, "iii")**2)
 
-
-    assert list(tn.getColumn("computed").values ) == [8080, 7441, 6161]
+    
+    assert list(tn.getColumn("computed").values ) == [8080, 7441, 6161], tn.computed.values
     assert list(tn.getColumn("squared").values ) == [9, 4, 1]
 
 
@@ -234,7 +235,8 @@ def testSomePredicates():
     assert tn.get(tn.rows[0], "int") == 1
 
     tn = t.filter(t.float.approxEqual(1.0, t.int/10))
-    assert len(tn) == 1
+    tn._print()
+    assert len(tn) == 1, len(tn)
     assert tn.get(tn.rows[0], "int") == 1
 
 
@@ -289,6 +291,8 @@ def testWithEmtpyTablesAndTestColnameGeneration():
     assert t1.colNames == ["z", "x__0"], t1.colNames
     assert t1.rows[0] ==  [1, None]
 
+    t1.print_()
+    f.print_()
     t2 = t1.leftJoin(f, f.y == t1.x__0)
     assert t2.colNames ==["z", "x__0", "y__1"], t2.colNames
     assert len(t2) == 1
@@ -348,8 +352,9 @@ def testIfThenElse():
     t.rows.append(["0", 1, 2])
     t.rows.append([None, 2, 1])
     t._print()
-    t.addColumn("x", (t.a == None).thenElse(t.b, t.c))
+    t.addColumn("x", (t.a != None).thenElse(t.b, t.c))
     assert t.colNames==["a", "b", "c", "x"]
+    print
     t._print()
     t.addColumn("y", (t.a != None).thenElse("ok", "not ok"))
     t._print()

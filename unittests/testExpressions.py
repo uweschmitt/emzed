@@ -10,7 +10,6 @@ def test_if_all_operators_are_defined():
     v4=v1-v2
     v5=v1*v2
     v6=v1/v2
-    v7 = log(v1)
 
     t1 = v1 <= v2
     t2 = v1 < v2

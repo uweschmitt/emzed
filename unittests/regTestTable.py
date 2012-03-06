@@ -1,4 +1,4 @@
-import sys, StringIO, difflib
+import sys, StringIO, difflib, traceback
 import numpy as np
 from libms.DataStructures.Table import Table
 from libms.DataStructures.Expressions import Value
@@ -7,7 +7,13 @@ def record(fun, args, p=None):
     try:
         r = StringIO.StringIO()
         sys.stdout = r
-        fun(*args)
+        try:
+            fun(*args)
+        except Exception, e:
+            print >> sys.stderr, r.getvalue()
+            traceback.print_exc(file=sys.stderr)
+            raise e
+
         data = r.getvalue()
         if p:
             with open(p, "w") as fp:
@@ -109,7 +115,7 @@ def run_logics(t, col):
     expressions.append( Value(False))
     expressions.append( ~(col >= 2) & ~(col >=3))
     for e in expressions:
-        print
+        print 
         t.filter(e, debug=True)._print()
 
 def run_str(t):

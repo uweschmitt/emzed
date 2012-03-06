@@ -1,6 +1,6 @@
 import pyOpenMS as P
 import copy, os, itertools, re, numpy, cPickle, sys, inspect
-from   Expressions import BaseExpression, ColumnExpression, Value
+from   Expressions import BaseExpression, ColumnExpression, Value, _basic_num_types
 import numpy as np
 from   collections import Counter, OrderedDict, defaultdict
 
@@ -24,10 +24,9 @@ def computekey(o):
     if type(o) in [int, float, str, long]:
         return o
     if type(o) == dict:
-        return computekey(o.items())
+        return computekey(sorted(o.items()))
     if type(o) in [list, tuple]:
         return tuple(computekey(oi) for oi in o)
-    print "HANDLE ", o
     return id(o)
 
 
@@ -44,21 +43,24 @@ def getPostfix(colName):
     except:
         raise Exception("invalid postfix '%s'" % fields[1])
 
+def common_type_for(li):
 
-def coerce_numpy_values(li):
-    hasfloat = any( float in x.__class__.__mro__ for x in li)
-    if hasfloat:
-        return [ None if x is None else float(x) for x in li ]
-    hasint = any( int in x.__class__.__mro__ for x in li)
-    if hasint:
-        return [ None if x is None else int(x) for x in li ]
-    haslong = any( long in x.__class__.__mro__ for x in li)
-    hasinteger = any( np.integer in x.__class__.__mro__ for x in li)
-    if haslong or hasinteger:
-        return [ None if x is None else long(x) for x in li ]
-    hasfloating = any( np.floating in x.__class__.__mro__ for x in li)
-    if hasfloating:
-        return [ None if x is None else float(x) for x in li ]
+    types = set(type(x) for x in li)
+    if any(np.integer in t.__mro__ for t in types):
+        return int
+    if any(np.floating in t.__mro__ for t in types):
+        return float
+
+    ordered_types = [ str, float, long, int ]
+    for type_ in ordered_types:
+        if any(t == type_ for t in types):
+            return type_
+    return object
+
+def convert_list_to_overall_type(li):
+    ct = common_type_for(li)
+    if ct is not object:
+        return  [ None if x is None else ct(x) for x in li]
     return li
 
 
@@ -301,7 +303,7 @@ class Table(object):
     def _setupColumnAttributes(self):
         for name in self.colNames:
             ix = self.getIndex(name)
-            col = ColumnExpression(self, name, ix)
+            col = ColumnExpression(self, name, ix, self.colTypes[ix])
             setattr(self, name, col)
 
     def numRows(self):
@@ -396,7 +398,8 @@ class Table(object):
     def _getColumnCtx(self, needed):
         names = [ n for (t,n) in needed if t==self ]
         return dict((n, (self.getColumn(n).values,
-                         self.primaryIndex.get(n))) for n in names)
+                         self.primaryIndex.get(n),
+                         self.getColumn(n).type_)) for n in names)
 
     def addEnumeration(self, colName="id"):
         """ adds enumerated column as first column to table **inplace**.
@@ -772,8 +775,8 @@ class Table(object):
         return self.addConstantColumn(name, what, type_, format, insertBefore)
 
     def _addColumnByExpression(self, name, expr, type_, format, insertBefore):
-        values, _ = expr._eval(None)
-        return self._addColumn(name, values, type_, format, insertBefore)
+        values, _, type2_ = expr._eval(None)
+        return self._addColumn(name, values, type_ or type2_, format, insertBefore)
 
     def _addColumnByCallback(self, name, callback, type_, format, insertBefore):
         values = [callback(self, r, name) for r in self.rows]
@@ -790,9 +793,12 @@ class Table(object):
         assert len(values) == len(self), "lenght of new column %d does not "\
                                          "fit number of rows %d in table"\
                                          % (len(values), len(self))
-        values = coerce_numpy_values(values)
-        if type_ is None:
-            type_ = commonTypeOfColumn(values)
+
+        if type(values) == np.ma.core.MaskedArray:
+            values = values.tolist() # handles missing values as None !
+
+        # type_ may be None, so guess:
+        type_ = type_ or  common_type_for(values)
 
         if format == "":
             format = guessFormatFor(name, type_)
@@ -814,7 +820,6 @@ class Table(object):
             self.colNames.insert(insertBefore, name)
             self.colTypes.insert(insertBefore, type_)
             self.colFormats.insert(insertBefore, format)
-            values = coerce_numpy_values(values)
             for row, v in zip(self.rows, values):
                 row.insert(insertBefore, v)
 
@@ -986,21 +991,25 @@ class Table(object):
         names = [ n for (t,n) in nc ]
         collectedValues = []
         for t in subTables:
+            print
+            print "subt"
+            t._print()
             ctx = dict((n, (t.getColumn(n).values,
-                         t.primaryIndex.get(n))) for n in names)
-            value, _ = expr._eval({self: ctx})
+                         t.primaryIndex.get(n),
+                         t.getColumn(n).type_
+                         )) for n in names)
+            value, _, type_ = expr._eval({self: ctx})
             # works for numbers and objects to, but not if values is
             # iteraable:
-            if type(value) in (list, np.ndarray):
-                assert len(value)==1, "you did not use an aggregating "\
-                                       "expression, or you aggregate over "\
-                                       "a column which has lists or numpy "\
-                                       "arrays as entries"
-                value = coerce_numpy_values(value)[0]
-            else:
-                if np.number in value.__class__.__mro__:
-                    value = np.array((value,)).tolist()[0]
-            collectedValues.extend([value]*len(t))
+            assert len(value)==1, "you did not use an aggregating "\
+                                   "expression, or you aggregate over "\
+                                   "a column which has lists or numpy "\
+                                   "arrays as entries"
+
+            print repr(value), type_
+            if type_ in _basic_num_types:
+                value = value.tolist()
+            collectedValues.extend(value*len(t))
 
         result = self.copy()
         result.addColumn(newName, collectedValues)
@@ -1021,13 +1030,14 @@ class Table(object):
         if debug:
             print "#", expr
 
-        flags, _ = expr._eval(None)
+        flags, _, _ = expr._eval(None)
         filteredTable = self.buildEmptyClone()
         filteredTable.primaryIndex = self.primaryIndex.copy()
-        if flags is True:
-            filteredTable.rows = [r[:] for r in  self.rows]
-        elif flags is False:
-            filteredTable.rows = []
+        if len(flags) == 1:
+            if flags[0]:
+                filteredTable.rows = [r[:] for r in  self.rows]
+            else:
+                filteredTable.rows = []
         else:
             assert len(flags) == len(self),\
                    "result of filter expression does not match table size"
@@ -1117,11 +1127,11 @@ class Table(object):
         cmdlineProgress = _CmdLineProgress(len(self))
         rows = []
         for ii, r1 in enumerate(self.rows):
-            r1ctx = dict((n, (v, None)) for (n,v) in zip(self.colNames, r1))
+            r1ctx = dict((n, ([v], None, t)) for (n,v, t) in zip(self.colNames, r1, self.colTypes))
             ctx = {self:r1ctx, t:tctx}
-            flags,_ = expr._eval(ctx)
-            if type(flags) == bool:
-                if flags:
+            flags,_,_ = expr._eval(ctx)
+            if len(flags) == 1:
+                if flags[0]:
                     rows.extend([ r1[:] + row[:] for row in t.rows])
             else:
                 rows.extend([ r1[:] + t.rows[n][:] for (n,i) in enumerate(flags) if i])
@@ -1171,13 +1181,14 @@ class Table(object):
 
         rows = []
         for ii, r1 in enumerate(self.rows):
-            r1ctx = dict((n, (v, None)) for (n,v) in zip(self.colNames, r1))
+            r1ctx = dict((n, ([v], None, t)) for (n,v, t) in zip(self.colNames, r1, self.colTypes))
             ctx = {self:r1ctx, t:tctx}
-            flags,_ = expr._eval(ctx)
-            if flags is True:
-                rows.extend([ r1[:] + row[:] for row in t.rows])
-            elif flags is False:
-                rows.extend([ r1[:] + filler[:]])
+            flags,_,_ = expr._eval(ctx)
+            if len(flags) == 1:
+                if flags[0]:
+                    rows.extend([ r1[:] + row[:] for row in t.rows])
+                else:
+                    rows.extend([ r1[:] + filler[:]])
             elif numpy.any(flags):
                 rows.extend([r1[:] + t.rows[n][:] for (n,i) in enumerate(flags) if i])
             else:
@@ -1281,7 +1292,7 @@ class Table(object):
             raise Exception("colName is not a string. The arguments of this "\
                             "function changed in the past !")
 
-        values = coerce_numpy_values(list(iterable))
+        values = convert_list_to_overall_type(list(iterable))
         if type_ is None:
             type_ = commonTypeOfColumn(values)
         if format == "":

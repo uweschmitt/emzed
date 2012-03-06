@@ -19,7 +19,7 @@ peakPickerHiResConfig = [ ("std", "orbitrap standard", PeakPickerHiRes.standardC
 from libms.PeakIntegration import *
 # key "std" must exist !
 peakIntegrators = [ ( "sgolay",        SGIntegrator(window_size=11, order=2) ) ,
-                    ( "asym_gauss", AsymmetricGaussIntegrator(gtol=None) ) ,
+                    ( "asym_gauss", AsymmetricGaussIntegrator() ) ,
                     ( "trapez", TrapezIntegrator() ) ,
                     ( "emg_exact", SimplifiedEMGIntegrator() ) ,
                     ( "no_integration", NoIntegration() ) ,
