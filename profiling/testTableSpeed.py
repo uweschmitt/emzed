@@ -23,7 +23,7 @@ def runJoin():
     res =T0.join(T, (T.m0>=T0.msoll-0.01) & (T.m0 <= T0.msoll+0.01) )
 
 def runFilter():
-    for r in rows:
+    for r in rows[:10]:
         res = T.filter( (T.m0 >= r[0]) & (T.m0 <=r[0]+10) )
 
 print "profile runLJoin"
