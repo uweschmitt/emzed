@@ -310,10 +310,14 @@ class ExceptionTester(object):
 
 def testWithNoneValues():
     t = ms.toTable("i", [1,2,None])
-    t.filter(t.i >=1)._print()
-    t.filter(t.i <=1)._print()
-    t.filter(t.i >1)._print()
-    t.filter(t.i <1)._print()
+    with ExceptionTester(Exception):
+        t.filter(t.i >=1)._print()
+    with ExceptionTester(Exception):
+        t.filter(t.i <=1)._print()
+    with ExceptionTester(Exception):
+        t.filter(t.i >1)._print()
+    with ExceptionTester(Exception):
+        t.filter(t.i <1)._print()
 
     assert len(t.filter(t.i == None)) == 1
     assert len(t.filter(t.i != None)) == 2
@@ -346,8 +350,9 @@ def testIfThenElse():
     t.rows.append(["0", 1, 2])
     t.rows.append([None, 2, 1])
     t._print()
-    t.addColumn("x", (t.a == None).thenElse(t.b, t.c))
+    t.addColumn("x", (t.a != None).thenElse(t.b, t.c))
     assert t.colNames==["a", "b", "c", "x"]
+    print
     t._print()
     t.addColumn("y", (t.a != None).thenElse("ok", "not ok"))
     t._print()

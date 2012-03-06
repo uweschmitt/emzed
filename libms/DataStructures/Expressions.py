@@ -30,15 +30,7 @@ alle andern: als list verwaltet.
 """
 
 _basic_num_types = [int, long, float, bool]
-_basic_types = [int, long, float, bool, str, type(None) ]
-#_iterables = [list, np.ndarray]
 
-def isNumericList(li):
-    if not isinstance(li, list):
-        return False
-    innertypes = set(type(item) for item in li)
-    innertypes.discard(type(None))
-    return all(i in _basic_num_types for i in innertypes)
 
 def saveeval(expr, ctx):
     #try:
@@ -52,11 +44,6 @@ def container(type_):
     if hasattr(type_, "__mro__") and np.number in type_.__mro__:
         return np.ma.core.MaskedArray
     return list
-
-def tolist(collection):
-    if type(collection) == list:
-        return collection
-    return np.array(collection).tolist()
 
 def cleanup(type_):
     # keeps pure python types as they are, converts
@@ -135,7 +122,7 @@ class BaseExpression(object):
         self.left = left
         self.right = right
 
-    def _evalsize(self, ctx):
+    def _evalsize(self, ctx=None):
         # size of result when _eval is called:
         sl = self.left._evalsize(ctx)
         sr = self.right._evalsize(ctx)
@@ -414,7 +401,6 @@ class BaseExpression(object):
         This is an **aggretation expression** which evaluates an
         Column expression to *True* if and only if the column contains a *None* value.
         """
-        return self.countNone > 0
         return AggregateExpression(self, lambda v: int(None in v) , "hasNone(%s)",\
                                    bool, ignoreNone=False)
 
@@ -438,11 +424,13 @@ class BaseExpression(object):
         return AggregateExpression(self, select, "uniqueNotNone(%s)",\
                                    None, ignoreNone=False)
 
-    def __call__(self):
-        val, _ = self._eval(ctx=None)
-        # works for lists, nubmers, objects: convers inner numpy dtypes
-        # to python types if present, else does nothing !!!!
-        return np.array(val).tolist()
+    @property
+    def values(self):
+        values, _, t = self._eval(None)
+        if t in _basic_num_types:
+            return values.tolist()
+        return values
+
 
     def toTable(self, colName, fmt=None, type_=None, title="", meta=None):
         """
@@ -451,7 +439,7 @@ class BaseExpression(object):
         Example: ``tab = substances.name.toTable()``
         """
         from Table import Table
-        return Table.toTable(colName, self(), fmt, type_, title, meta)
+        return Table.toTable(colName, self.values, fmt, type_, title, meta)
 
 
 
@@ -463,14 +451,17 @@ class CompExpression(BaseExpression):
     # very error prone:
     allowNone = True
 
-    def _eval(self, ctx):
+    def _eval(self, ctx=None):
         lhs, ixl, tl = saveeval(self.left, ctx)
         rhs, ixr, tr = saveeval(self.right, ctx)
 
         assert len(lhs) <= 1 or len(rhs)<=1 or len(lhs) == len(rhs),\
             "sizes do not fit"
 
-        if len(lhs) == 0 or len(rhs)==0:
+        if len(lhs) == 0:
+            return np.zeros((0,), dtype=np.bool), None, bool
+
+        if len(rhs) == 0:
             return np.zeros((0,), dtype=np.bool), None, bool
 
         if tl in _basic_num_types and tr in _basic_num_types:
@@ -478,7 +469,11 @@ class CompExpression(BaseExpression):
                 return self.fastcomp(lhs, rhs[0]), None, bool
             if ixr != None  and len(lhs) == 1:
                 return self.rfastcomp(lhs, lhs[0]), None, bool
-            return self.comparator(lhs, rhs), None, bool
+            if len(lhs) == 1:
+                lhs = np.tile(lhs, len(rhs))
+            elif len(rhs) == 1:
+                rhs = np.tile(rhs, len(lhs))
+            return self.numericcomp(lhs, rhs), None, bool
 
         if len(lhs) == 1:
             l = lhs[0]
@@ -491,6 +486,7 @@ class CompExpression(BaseExpression):
                     values = np.zeros((len(rhs),), dtype=bool)
             else:
                 values = [ self.comparator(l,r) for r in  rhs]
+
         elif len(rhs) == 1:
             r = rhs[0]
             if r is None and tl in _basic_num_types:
@@ -506,6 +502,12 @@ class CompExpression(BaseExpression):
             values = [ self.comparator(l,r) for (l,r) in zip(lhs, rhs)]
         return np.ma.array(values), None, bool
 
+    def numericcomp(self, lhs, rhs):
+        assert len(lhs) == len(rhs)
+        # default impl: comparing to None is not poissble:
+        if np.any(lhs.mask) or np.any(rhs.mask):
+            raise Exception("Comparing None with < is not possible")
+        return self.comparator(lhs, rhs)
 
 def Range(start, end, len):
     rv = np.zeros((len,), dtype=np.bool)
@@ -589,6 +591,11 @@ class NeExpression(CompExpression):
         i1 = ge(vec, refval)
         return ~Range(i1, i0+1, len(vec))
 
+    def numericcomp(self, lhs, rhs):
+        assert len(lhs) == len(rhs)
+        return (lhs != rhs).filled(False) |(lhs.mask != rhs.mask)
+
+
 class EqExpression(CompExpression):
 
     symbol = "=="
@@ -605,6 +612,10 @@ class EqExpression(CompExpression):
         i1 = ge(vec, refval)
         return Range(i1, i0+1, len(vec))
 
+    def numericcomp(self, lhs, rhs):
+        assert len(lhs) == len(rhs)
+        return (lhs == rhs).filled(True) & (lhs.mask == rhs.mask)
+
 
 class BinaryExpression(BaseExpression):
 
@@ -617,7 +628,7 @@ class BinaryExpression(BaseExpression):
         self.symbol = symbol
         self.restype = restype
 
-    def _eval(self, ctx):
+    def _eval(self, ctx=None):
         lvals, idxl, tl = saveeval(self.left, ctx)
         rvals, idxr, tr = saveeval(self.right, ctx)
 
@@ -655,7 +666,7 @@ class __UnaryExpression(BaseExpression):
         self.efun = efun
         self.funname = funname
 
-    def _eval(self, ctx):
+    def _eval(self, ctx=None):
         vals, _, type_ = saveeval(self.left, ctx)
         if type(vals) in _iterables:
             return np.ma.array([self.efun(v) for v in vals]), None
@@ -675,8 +686,13 @@ class AggregateExpression(BaseExpression):
         self.restype = restype
         self.ignoreNone = ignoreNone
 
-    def _eval(self, ctx):
-        vals, _, _ = saveeval(self.left, ctx)
+    def _eval(self, ctx=None):
+        vals, _, type_ = saveeval(self.left, ctx)
+        if len(vals) == 0:
+            return [], None, type_
+
+        if type_ in _basic_num_types:
+            vals = vals.tolist()
         if self.ignoreNone:
             vals  = [ v for v in vals if v is not None]
         if len(vals):
@@ -684,10 +700,16 @@ class AggregateExpression(BaseExpression):
             result = container(type(result[0]))(result)
             type_ = cleanup(type(result[0]))
             return result, None, type_
-        return [None], None, self.restype or type_
+        # only nones !
+        if type_ in _basic_num_types:
+            return np.ma.array((0,), mask=(1,)), None, type_
+        return [None], None, type_
 
     def __str__(self):
         return self.funname % self.left
+
+    def __call__(self):
+        return self.values[0]
 
 
 class LogicExpression(BaseExpression):
@@ -708,7 +730,7 @@ class LogicExpression(BaseExpression):
             values = [ boolop(l, r) for (l,r) in zip(lvals, rvals) ]
 
         ct = common_type(tl, tr)
-        if ct in _basic_types:
+        if ct in _basic_num_types:
             values = np.ma.array([ ct(v) for v in values ])
 
         return values, None, ct
@@ -717,7 +739,7 @@ class LogicExpression(BaseExpression):
 class AndExpression(LogicExpression):
 
     symbol = "&"
-    def _eval(self, ctx):
+    def _eval(self, ctx=None):
         lhs, _, tlhs = saveeval(self.left, ctx)
         if len(lhs) == 1 and not lhs[0]:
             return np.zeros((self.right._evalsize(ctx),), dtype=np.bool), None, bool
@@ -733,7 +755,7 @@ class AndExpression(LogicExpression):
 class OrExpression(LogicExpression):
 
     symbol = "|"
-    def _eval(self, ctx):
+    def _eval(self, ctx=None):
         lhs, _, tlhs = saveeval(self.left, ctx)
         if len(lhs) == 1 and lhs[0]:
             return np.ones((self.right._evalsize(ctx),), dtype=np.bool), None, bool
@@ -744,19 +766,19 @@ class OrExpression(LogicExpression):
             return rhs, _, trhs
         if len(rhs) == 1: # rhs[0] is False
             return lhs, _, tlhs
-        return self.richeval(lhs, rhs, tlhs, trhs, lambda a,b: a or b), None, bool
+        return self.richeval(lhs, rhs, tlhs, trhs, lambda a,b: a or b)
 
 class XorExpression(LogicExpression):
 
     symbol = "^"
-    def _eval(self, ctx):
+    def _eval(self, ctx=None):
         lhs, _, tlhs = saveeval(self.left, ctx)
         rhs, _, trhs = saveeval(self.right, ctx)
         if len(lhs) ==1 and not lhs[0]:
             return rhs, _, trhs
         if len(rhs) ==1 and not rhs[0]:
             return lhs, _, tlhs
-        return self.richeval(lhs, rhs, tlhs, trhs, lambda a,b: (a and not b) | (not a and b)), None, bool
+        return self.richeval(lhs, rhs, tlhs, trhs, lambda a,b: (a and not b) | (not a and b))
 
 
 class Value(BaseExpression):
@@ -764,14 +786,14 @@ class Value(BaseExpression):
     def __init__(self, value):
         self.value = value
 
-    def _eval(self, ctx):
+    def _eval(self, ctx=None):
         tt = cleanup(type(self.value))
         return container(tt)([self.value]), None, tt
 
     def __str__(self):
         return repr(self.value)
 
-    def _evalsize(self, ctx):
+    def _evalsize(self, ctx=None):
         return 1
 
     def _neededColumns(self):
@@ -788,14 +810,15 @@ class FunctionExpression(BaseExpression):
         self.efun = efun
         self.efunname = efunname
 
-    def _eval(self, ctx):
+    def _eval(self, ctx=None):
         values, index, type_ = saveeval(self.child, ctx)
-        if type(values) == np.ndarray:
+        if type(values) == np.ma.core.MaskedArray:
             if type(self.efun) == np.ufunc:
                 return self.efun(values), None, float
+            return np.vectorize(self.efun)(values), None, float
         new_values = [self.efun(v) if v is not None else None for v in values]
-        if type_ in _basic_types:
-            new_values = np.array(new_values)
+        if type_ in _basic_num_types:
+            new_values = np.ma.array(new_values)
             return new_values, None, cleanup(new_values.dtype)
         types = set(type(v) for v in new_values)
         common = int
@@ -806,7 +829,7 @@ class FunctionExpression(BaseExpression):
     def __str__(self):
         return "%s(%s)" % (self.efunname, self.child)
 
-    def _evalsize(self, ctx):
+    def _evalsize(self, ctx=None):
         return self.child._evalsize(ctx)
 
     def _neededColumns(self):
@@ -827,7 +850,7 @@ class IfThenElse(BaseExpression):
         self.e2 = e2
         self.e3 = e3
 
-    def _eval(self, ctx):
+    def _eval(self, ctx=None):
         values1, _, t1 = saveeval(self.e1, ctx)
         assert t1 == bool
 
@@ -843,8 +866,22 @@ class IfThenElse(BaseExpression):
         values2, ix2, t2 = eval2
         values3, ix3, t3 = eval3
 
+        # stretch lists
+        if len(values2) == 1:
+            if t2 in _basic_num_types:
+                values2 = np.tile(values2, eval_size)
+            else:
+                values2 = values2 * eval_size
+        if len(values3) == 1:
+            if t3 in _basic_num_types:
+                values3 = np.tile(values3, eval_size)
+            else:
+                values3 = values3 * eval_size
+
+        assert len(values1) == len(values2) == len(values3)
+
         ct = common_type(t2, t3)
-        if type(values2) == type(values3) == np.ndarray:
+        if type(values2) == type(values3) == np.ma.core.MaskedArray:
             return np.where(values1, values2, values3), _, ct
 
         return [ val2 if val1 else val3 for (val1, val2, val3) \
@@ -854,23 +891,27 @@ class IfThenElse(BaseExpression):
     def __str__(self):
         return "%s(%s)" % (self.efunname, self.child)
 
-    def _evalsize(self, ctx):
+    def _evalsize(self, ctx=None):
+        s1 = self.e1._evalsize(ctx)
         s2 = self.e2._evalsize(ctx)
         s3 = self.e3._evalsize(ctx)
-        if s2 == 1 or s3==1:
+        if s1==1:
+            if (s2==1 and s3>1) or (s2>1 and s3==1):
+                raise Exception("sizes %d, %d and %d do not fit!"% (s1, s2, s3))
             return max(s2, s3)
-        if s2 != s3:
-            raise Exception("sizes %d and %d do not fit!"% (s2,s3))
-        return s2
+
+        if s2 == s3 == 1:
+            return s1
+
+        if (s3==1 and s2 != s1) or (s2==1 and s3 != s1):
+            raise Exception("sizes %d, %d and %d do not fit!"% (s1, s2, s3))
+
+        return s1
 
     def _neededColumns(self):
         return self.e1._neededColumns() \
                + self.e2._neededColumns() \
                + self.e3._neededColumns()
-
-
-
-
 
 
 class ColumnExpression(BaseExpression):
@@ -897,7 +938,6 @@ class ColumnExpression(BaseExpression):
     def values(self):
         self._setupValues()
         return self._values
-        #raise AttributeError("%s has no attribute %s" % (self, name))
 
     def __getstate__(self):
         dd = self.__dict__.copy()
@@ -912,7 +952,7 @@ class ColumnExpression(BaseExpression):
         self._setupValues()
         return iter(self.values)
 
-    def _eval(self, ctx):
+    def _eval(self, ctx=None):
         # self.values is allways a list ! for speedinig up things
         # we convert numerical types to np.ma.array during evaluation
         # of expressions
@@ -921,7 +961,6 @@ class ColumnExpression(BaseExpression):
                 mask = [ v is None for v in self.values ]
                 values = map(lambda v: v or 0, self.values)
                 return np.ma.array(values, mask = mask, dtype = self.type_), None, self.type_
-                #return np.array(self.values), None, self.type_
             return self.values, None, self.type_
         cx = ctx.get(self.table)
         if cx is None:
@@ -929,9 +968,9 @@ class ColumnExpression(BaseExpression):
                             "did you use wrong table in expression ?")
         values, idx, type_ = cx.get(self.colname)
         if type_ in _basic_num_types:
-            values = np.array(values)
-            mask = [ v is None for v in self.values ]
-            values = map(lambda v: v or 0, self.values)
+            #values = np.ma.array(values)
+            mask = [ v is None for v in values ]
+            values = map(lambda v: v or 0, values)
             values = np.ma.array(values, mask = mask, dtype = self.type_)
         return values, idx, type_
 
@@ -944,11 +983,11 @@ class ColumnExpression(BaseExpression):
             raise Exception("table._name missing")
         return "%s.%s" % (self.table._name, self.colname)
 
-    def _evalsize(self, ctx):
+    def _evalsize(self, ctx=None):
         if ctx is None:
             return len(self.values)
         cx = ctx[self.table]
-        rv, _ = cx[self.colname]
+        rv, _, _ = cx[self.colname]
         return len(rv)
 
     def _neededColumns(self):

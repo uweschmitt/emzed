@@ -6,6 +6,7 @@ from libms.DataStructures.Table import Table, toOpenMSFeatureMap
 def testFullJoin():
     t = ms.toTable("a", [None, 2, 3])
     t2 = t.join(t, True)
+    t2.print_()
     assert len(t2) == 9
     assert t2.a.values == [ None, None, None, 2, 2, 2, 3, 3, 3]
     assert t2.a__0.values == t.a.values * 3
@@ -45,9 +46,9 @@ def testNumpyTypeCoercion():
     assert t.colTypes == [int, int], t.colTypes
 
     t.replaceColumn("b", np.int64(1))
-    assert t.colTypes == [int, long], t.colTypes
+    assert t.colTypes == [int, int], t.colTypes
     t.replaceColumn("b", [None, np.int64(1)])
-    assert t.colTypes == [int, long], t.colTypes
+    assert t.colTypes == [int, int], t.colTypes
 
     t.replaceColumn("b", np.float32(1.0))
     assert t.colTypes == [int, float], t.colTypes
@@ -155,14 +156,15 @@ def testSomeExpressions():
 
 def testColumnAggFunctions():
     t = ms.toTable("a", [None, 2, 3])
-    assert t.a.max() == 3
+    r = t.a.max()
+    assert r == 3
     assert t.a.min() == 2
     assert t.a.mean() == 2.5
     assert t.a.std() == 0.5
-    assert t.a.hasNone()
-    assert t.a.len() == 3
-    assert t.a.countNone() == 1
-    assert t.a.len() == 3
+
+    assert t.a.hasNone(), t.a.hasNone()
+    assert t.a.len() == 3, t.a.len()
+    assert t.a.countNone() == 1, t.a.countNone()
 
     t.addColumn("b", None)
     assert t.b.max() == None
@@ -177,14 +179,14 @@ def testColumnAggFunctions():
 
     assert t.c.uniqueNotNone() == 1
 
-    assert (t.a+t.c)() == [None, None , 4]
+    assert (t.a+t.c).values == [None, None , 4]
     assert (t.a+t.c).sum() == 4
     apc = (t.a+t.c).toTable("a_plus_c")
     assert apc.colNames == ["a_plus_c"]
     assert apc.colTypes == [int]
-    assert apc.a_plus_c() == [ None, None , 4]
+    assert apc.a_plus_c.values == [ None, None , 4]
 
-    assert (apc.a_plus_c - t.a)() == [None, None, 1]
+    assert (apc.a_plus_c - t.a).values == [None, None, 1]
 
     # column from other table !
     t.addColumn("apc", apc.a_plus_c)
@@ -200,7 +202,9 @@ def testAggregateOperation():
     t = ms.toTable("a", [ 1, 2, 2, 3, 3, 3, 3])
     t.addColumn("b", [None, None, 2, 0, 3, 4, 9])
     t._print()
+    
     t = t.aggregate(t.b.sum, "sum", groupBy="a")
+
     t = t.aggregate(t.b.hasNone, "hasNone", groupBy="a")
     t = t.aggregate(t.b.countNone, "countNone", groupBy="a")
     t = t.aggregate(t.b.count, "count", groupBy="a")
@@ -208,7 +212,8 @@ def testAggregateOperation():
     t = t.aggregate(t.b.std*t.b.std, "var", groupBy="a")
     t = t.aggregate(t.b.mean, "mean", groupBy="a")
     t._print(w=8)
-    assert t.sum.values == [None, 2, 2, 16, 16, 16, 16]
+    print t.sum.values
+    assert t.sum.values == [None, 2, 2, 16, 16, 16, 16], t.sum.values
     assert t.var.values == [None, 0, 0, 10.5, 10.5, 10.5, 10.5]
     assert t.mean.values == [None, 2, 2, 4, 4, 4, 4]
     assert t.hasNone.values == [1, 1, 1, 0, 0, 0, 0]
