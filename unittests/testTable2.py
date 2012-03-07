@@ -199,6 +199,12 @@ def testColumnAggFunctions():
 
 
 def testAggregateOperation():
+    t = ms.toTable("a", [ ], type_=int)
+
+    t2 = t.aggregate(t.a.mean, "an", groupBy="a")
+    assert len(t2) == 0
+    assert t2.colTypes == [int, object]
+
     t = ms.toTable("a", [ 1, 2, 2, 3, 3, 3, 3])
     t.addColumn("b", [None, None, 2, 0, 3, 4, 9])
     t._print()
@@ -246,6 +252,7 @@ def testInplaceColumnmodification():
 
 def testIndex():
     t = ms.toTable("a",[1,2,3,4,5])
+    t.addColumn("b", [2, 0, 1, 5,6 ])
     t.sortBy("a")
     print t.primaryIndex
     a = t.a
@@ -264,6 +271,15 @@ def testIndex():
     for e,v in zip(es, vs):
         print e, v
         assert len(t.filter(e)) == v, len(t.filter(e))
+
+    t2 = t.copy()
+    assert t.join(t2, t.b < t2.a).a__0.values == [3, 4, 5, 1, 2, 3, 4, 5, 2, 3,4, 5]
+    assert t.join(t2, t.b > t2.a).a__0.values == [ 1,1,2,3,4,1,2,3,4,5]
+    assert t.join(t2, t.b <= t2.a).a__0.values == [ 2,3,4,5,1,2,3,4,5,1,2,3,4,5,5]
+    assert t.join(t2, t.b >= t2.a).a__0.values == [ 1,2,1,1,2,3,4,5,1,2,3,4,5]
+
+    assert t.join(t2, t.b == t2.a).a__0.values == [2,1,5]
+    assert t.join(t2, t.b != t2.a).a__0.values == [1,3,4,5,1,2,3,4,5,2,3,4,5,1,2,3,4,1,2,3,4,5]
 
 
 def testBools():
@@ -291,6 +307,8 @@ def testAggWithIterable():
     assert t.an.values == [ (1,2), (1,2)]
     assert t.a.values == [ (1,2), None]
 
+
+
 def testSpecialFormats():
     for name in ["mz", "mzmin", "mzmax", "mw", "m0"]:
         t = ms.toTable(name, [ 1.0,2, None ])
@@ -300,6 +318,31 @@ def testSpecialFormats():
         t = ms.toTable(name, [ 1.0,2, None ])
         assert t.colFormatters[0](120) == "2.00m"
 
+
+def testLogics():
+    t = ms.toTable("a", [True, False])
+    t.addColumn("nota", ~t.a)
+    t.addColumn("true", t.a | True)
+    t.addColumn("false", t.a & False)
+
+    assert len(t.filter(t.a & t.nota)) == 0
+    assert len(t.filter(t.a | t.true)) == 2
+    assert len(t.filter(t.a ^ t.nota)) == 2
+    assert len(t.filter(t.a ^ t.a)) == 0
+
+    bunch = t.get(t.rows[0])
+    assert bunch.a == True
+    assert bunch.nota == False
+    assert bunch.true == True
+    assert bunch.false == False
+
+
+def testAppend():
+    t = ms.toTable("a",[1,2])
+    t2 = t.copy()
+    t.append(t2, [t2, t2], (t2,))
+    assert len(t) == 10
+    assert t.a.values == [1,2]*5
 
 
 def testToOpenMSFeatureMap():

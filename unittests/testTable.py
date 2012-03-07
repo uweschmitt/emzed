@@ -7,6 +7,9 @@ import pickle, os, re
 
 def testRunnerTable():
 
+    with ExceptionTester():
+        Table(["a"],[np.float32],["%f"],[[32.0]])
+
     #build table
     names="int long float str object array".split()
     types = [int, long, float, str, object, np.ndarray,]
@@ -184,6 +187,8 @@ def run(t, colnames, rows):
 
     res = tn.join(t2, tn.iii == tn.long)
     assert len(res) == 0
+    res = tn.join(t2, tn.long == tn.iii)
+    assert len(res) == 0
     res = tn.join(t2, tn.iii == tn.iii)
     assert len(res) == len(t2)**2, len(res)
     res = tn.join(t2, (tn.iii == tn.iii) & (t2.long==32323))
@@ -233,6 +238,9 @@ def testSomePredicates():
     tn = t.filter((t.int+t.float).inRange(-1, 2))
     assert len(tn) == 1
     assert tn.get(tn.rows[0], "int") == 1
+    tn = t.filter((t.float+t.int).inRange(-1, 2))
+    assert len(tn) == 1
+    assert tn.get(tn.rows[0], "int") == 1
 
     tn = t.filter(t.float.approxEqual(1.0, t.int/10))
     tn._print()
@@ -273,10 +281,22 @@ def testWithEmtpyTablesAndTestColnameGeneration():
     t1 = e.join(f, f.y == e.x)
     assert len(t1) == 0
     assert t1.colNames == ["x", "y__0"], t1.colNames
+    t1 = e.join(f, e.x == f.y)
+    assert len(t1) == 0
+    assert t1.colNames == ["x", "y__0"], t1.colNames
+
     t1 = e.join(g, g.z == e.x)
     assert len(t1) == 0
     assert t1.colNames == ["x", "z__0"], t1.colNames
+    t1 = e.join(g, e.x == g.z)
+    assert len(t1) == 0
+    assert t1.colNames == ["x", "z__0"], t1.colNames
+
+
     t1 = g.join(e, e.x == g.z)
+    assert len(t1) == 0
+    assert t1.colNames == ["z", "x__0"], t1.colNames
+    t1 = g.join(e, g.z == e.x)
     assert len(t1) == 0
     assert t1.colNames == ["z", "x__0"], t1.colNames
 
@@ -301,7 +321,7 @@ def testWithEmtpyTablesAndTestColnameGeneration():
 class ExceptionTester(object):
 
     def __init__(self, *expected):
-        self.expected = expected
+        self.expected = expected or [Exception]
 
     def __enter__(self):
         return self
@@ -309,6 +329,7 @@ class ExceptionTester(object):
     def __exit__(self, *a):
         assert a[0] in self.expected
         return True # suppress exceptoin
+
 def testUniqeNotNone():
 
     t = ms.toTable("a", [1,1,None])
@@ -316,8 +337,6 @@ def testUniqeNotNone():
 
     t = ms.toTable("a", [1,1,1])
     assert t.a.uniqueNotNone() == 1
-
-    return
 
     t.addColumn("b", None)
     t._print()
@@ -331,16 +350,25 @@ def testUniqeNotNone():
     with ExceptionTester():
         t.d.uniqueNotNone()
 
+    with ExceptionTester():
+        t.addColumn("d", [2,3,4])
+
+    with ExceptionTester():
+        t.addConstantColumn("d", 3)
+
+    t2 = ms.toTable("x",[])
+    with ExceptionTester():
+        t.aggregate(t2.x.mean, "neu")
 
 def testWithNoneValues():
     t = ms.toTable("i", [1,2,None])
-    with ExceptionTester(Exception):
+    with ExceptionTester():
         t.filter(t.i >=1)._print()
-    with ExceptionTester(Exception):
+    with ExceptionTester():
         t.filter(t.i <=1)._print()
-    with ExceptionTester(Exception):
+    with ExceptionTester():
         t.filter(t.i >1)._print()
-    with ExceptionTester(Exception):
+    with ExceptionTester():
         t.filter(t.i <1)._print()
 
     assert len(t.filter(t.i == None)) == 1
@@ -360,6 +388,12 @@ def testWithNoneValues():
     # check order
     t.replaceColumn("i", t.i)
     assert t.colNames == ["i", "b"]
+
+    s = ms.toTable("b",[])
+    x = t.join(s, t.b == s.b)
+    assert len(x) == 0
+
+    assert s.b.max() == None
 
 def testSomeExpressions():
     t = ms.toTable("mf", ["Ag", "P", "Pb", "P3Pb", "PbP"])

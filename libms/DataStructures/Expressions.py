@@ -433,6 +433,7 @@ class BaseExpression(object):
         Example: ``tab.peakmap.uniqueNotNone``
         """
         def select(values):
+
             diff = set(v for v in values if v is not None)
             if len(diff) == 0:
                 raise Exception("only None values in %s" % self)
@@ -486,7 +487,7 @@ class CompExpression(BaseExpression):
             if ixl != None  and len(rhs) == 1:
                 return self.fastcomp(lhs, rhs[0]), None, bool
             if ixr != None  and len(lhs) == 1:
-                return self.rfastcomp(rhs, lhs[0]), None, bool
+                return self.rfastcomp(lhs[0], rhs), None, bool
             if len(lhs) == 1:
                 lhs = np.tile(lhs, len(rhs))
             elif len(rhs) == 1:
@@ -707,7 +708,10 @@ class AggregateExpression(BaseExpression):
         return self.funname % self.left
 
     def __call__(self):
-        return self.values[0]
+        values = self.values
+        if len(values):
+            return values[0]
+        return None
 
 
 class LogicExpression(BaseExpression):
@@ -716,17 +720,6 @@ class LogicExpression(BaseExpression):
         super(LogicExpression, self).__init__(left, right)
         if right.__class__ == Value and type(right.value) != bool:
             print "warning: parentesis for logic op set ?"
-
-    def richeval(self, lvals, rvals, tl, tr,  boolop):
-
-        assert len(lvals) == len(rvals)
-        values = [ boolop(l, r) for (l,r) in zip(lvals, rvals) ]
-
-        ct = common_type(tl, tr)
-        if ct in _basic_num_types:
-            values = np.array([ ct(v) for v in values ])
-
-        return values, None, ct
 
 
 class AndExpression(LogicExpression):
@@ -738,7 +731,7 @@ class AndExpression(LogicExpression):
             return np.zeros((self.right._evalsize(ctx),), dtype=np.bool), None, bool
         rhs, _, trhs = saveeval(self.right, ctx)
         if len(rhs) == 1 and not rhs[0]:
-            return np.zeros((self.right._evalsize(ctx),), dtype=np.bool), None, bool
+            return np.zeros((len(lhs),), dtype=np.bool), None, bool
         if len(lhs) == 1: # lhs[0] is True
             return rhs, _, trhs
         if len(rhs) == 1: # rhs[0] is True
@@ -754,7 +747,7 @@ class OrExpression(LogicExpression):
             return np.ones((self.right._evalsize(ctx),), dtype=np.bool), None, bool
         rhs, _, trhs = saveeval(self.right, ctx)
         if len(rhs) == 1 and rhs[0]:
-            return np.ones((self.right._evalsize(ctx),), dtype=np.bool), None, bool
+            return np.ones((len(lhs),), dtype=np.bool), None, bool
         if len(lhs) == 1: # lhs[0] is False
             return rhs, _, trhs
         if len(rhs) == 1: # rhs[0] is False

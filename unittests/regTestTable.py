@@ -168,15 +168,31 @@ def testLeftJoin():
 def run_join_int(jf, t1, t2):
     jf(t2, t1.int > t2.int, debug=True)._print(w=8)
     print
+    jf(t2, t2.int < t1.int, debug=True)._print(w=8)
+    print
     jf(t2, t1.int == t2.int, debug=True)._print(w=8)
+    print
+    jf(t2, t2.int == t1.int, debug=True)._print(w=8)
     print
     jf(t2, t1.int != t2.int, debug=True)._print(w=8)
     print
+    jf(t2, t2.int != t1.int, debug=True)._print(w=8)
+    print
     jf(t2, t1.int >= t2.int, debug=True)._print(w=8)
+    print
+    jf(t2, t2.int <= t1.int, debug=True)._print(w=8)
     print
     jf(t2, t1.int <= t2.int, debug=True)._print(w=8)
     print
+    jf(t2, t2.int >= t1.int, debug=True)._print(w=8)
+    print
     jf(t2, t1.int < t2.int, debug=True)._print(w=8)
+    print
+    jf(t2, t2.int > t1.int, debug=True)._print(w=8)
+    print
+    jf(t2, t1.int > t2.int, debug=True)._print(w=8)
+    print
+    jf(t2, t2.int < t1.int, debug=True)._print(w=8)
     print
     jf(t2, t1.int == t1.int, debug=True)._print(w=8)
     print
@@ -184,15 +200,31 @@ def run_join_int(jf, t1, t2):
 def run_join_float(jf, t1, t2):
     jf(t2, t1.float > t2.float, debug=True)._print(w=8)
     print
+    jf(t2, t2.float < t1.float, debug=True)._print(w=8)
+    print
     jf(t2, t1.float == t2.float, debug=True)._print(w=8)
+    print
+    jf(t2, t2.float == t1.float, debug=True)._print(w=8)
     print
     jf(t2, t1.float != t2.float, debug=True)._print(w=8)
     print
+    jf(t2, t2.float != t1.float, debug=True)._print(w=8)
+    print
     jf(t2, t1.float >= t2.float, debug=True)._print(w=8)
+    print
+    jf(t2, t2.float <= t1.float, debug=True)._print(w=8)
     print
     jf(t2, t1.float <= t2.float, debug=True)._print(w=8)
     print
+    jf(t2, t2.float >= t1.float, debug=True)._print(w=8)
+    print
     jf(t2, t1.float < t2.float, debug=True)._print(w=8)
+    print
+    jf(t2, t2.float > t1.float, debug=True)._print(w=8)
+    print
+    jf(t2, t1.float > t2.float, debug=True)._print(w=8)
+    print
+    jf(t2, t2.float < t1.float, debug=True)._print(w=8)
     print
     jf(t2, t1.float == t1.float, debug=True)._print(w=8)
     print
@@ -201,12 +233,35 @@ def run_join_comp(jf, t1, t2):
     e = t1.float <= t2.float
     jf(t2, (t1.str>"hi") & e, debug=True)._print(w=8)
     print
+    jf(t2, e & (t1.str>"hi"), debug=True)._print(w=8)
+    print
+    jf(t2, e & (t1.str>"hi") & e, debug=True)._print(w=8)
+    print
+
     jf(t2, (t1.str>="hi") & e, debug=True)._print(w=8)
     print
+    jf(t2, e & (t1.str>="hi"), debug=True)._print(w=8)
+    print
+    jf(t2, e & (t1.str>="hi") & e, debug=True)._print(w=8)
+    print
+
+
     jf(t2, (t1.str>="hi") & e & False, debug=True)._print(w=8)
+    print
+    jf(t2, e & (t1.str>="hi") & False, debug=True)._print(w=8)
+    print
+    jf(t2, e & (t1.str>="hi") & e & False, debug=True)._print(w=8)
+    print
+
+
+    jf(t2, ((t1.str>="hi")  | True) & e, debug=True)._print(w=8)
     print
     jf(t2, ((t1.str>="hi")  | True) & e, debug=True)._print(w=8)
     print
+    jf(t2, e & ((t1.str>="hi")  | True) & e, debug=True)._print(w=8)
+    print
+
+
     jf(t2, t1.int <= t1.float, debug=True)._print(w=8)
-if __name__ == "__main__":
-    testFilte()
+
+

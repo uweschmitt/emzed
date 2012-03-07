@@ -31,17 +31,12 @@ def computekey(o):
 
 
 def getPostfix(colName):
-    if colName.startswith("__"): # internal colnames may start with __
-        colName = colName[2:]
     fields = colName.split("__")
     if len(fields)>2:
         raise Exception("invalid colName %s" % colName)
     if len(fields) == 1:
         return ""
-    try:
-        return "__"+fields[1]
-    except:
-        raise Exception("invalid postfix '%s'" % fields[1])
+    return "__"+fields[1]
 
 def common_type_for(li):
 
@@ -156,9 +151,11 @@ class Table(object):
 
         self.colTypes = list(colTypes)
 
-        if any(type(t) in (np.float32, np.float64) for t in colTypes):
-            print "WARNING: using numpy floats instead of python floats "\
-                  "is not a good idea.\nTable operations may crash"
+        is_numpy_type = lambda t: np.number in t.__mro__
+
+        if any(is_numpy_type(t) for t in colTypes):
+            raise Exception("using numpy floats instead of python floats "\
+                  "is not a good idea.\nTable operations may crash")
 
         self.colFormats = [None if f=="" else f for f in colFormats]
 
@@ -240,14 +237,9 @@ class Table(object):
         """ returns for format for the given column ``colName`` """
         return self.colFormats[self.getIndex(colName)]
 
-    def setFormat(self, colName, format):
-        """ sets format of column *colName* to format ``format`` """
-        self.colFormats[self.getIndex(colName)] = format
-        self._setupFormatters()
-
-    def setType(self, colName, type_):
-        """ sets type of column ``colName`` to type ``type_`` """
-        self.colTypes[self.getIndex(colName)] = type
+    def getType(self, colName):
+        """ returns for format for the given column ``colName`` """
+        return self.colTypes[self.getIndex(colName)]
 
     def _setupFormatters(self):
         self.colFormatters = [_formatter(f) for f in self.colFormats ]
@@ -636,7 +628,7 @@ class Table(object):
         """
         alltables = []
         for table in tables:
-            if type(table) == list:
+            if type(table) in [list, tuple]:
                 alltables.extend(table)
             elif isinstance(table, Table):
                 alltables.append(table)
@@ -936,8 +928,7 @@ class Table(object):
         elif groupBy is None:
             groupBy = []
 
-        subTables = self.splitBy(*groupBy)
-        if len(subTables) == 0:
+        if len(self) == 0:
             rv = self.buildEmptyClone()
             rv.colNames.append(newName)
             rv.colTypes.append(object)
@@ -945,6 +936,7 @@ class Table(object):
             rv.resetInternals()
             return rv
 
+        subTables = self.splitBy(*groupBy)
         nc = expr._neededColumns()
         for t,_ in nc:
             if t!= self:
