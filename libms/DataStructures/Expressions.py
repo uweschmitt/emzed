@@ -30,6 +30,9 @@ def gt(a, x):
 #  dtype=object. So checking against dtype==object is the same as
 #  testing if Nones are present.
 #
+#  other types are kept in lists.
+#  TODO: eval performance for arrays with strings, dicts, etc...
+#
 #  as the dtype is not restrictive enough, _eval returs the columntype
 #  as python type as the last value.
 #
@@ -76,7 +79,6 @@ def cleanup(type_):
             if np.floating in mro:
                 return float
     return object
-    raise Exception("do not know how to handle %s" % type_)
 
 def common_type(t1, t2):
     if t1==t2:
@@ -92,8 +94,6 @@ def common_type(t1, t2):
         return bool
 
     return object
-
-    raise Exception("can not coerce types %s and %s" % (t1, t2))
 
 
 class BaseExpression(object):
@@ -842,7 +842,8 @@ class IfThenElse(BaseExpression):
 
     def _eval(self, ctx=None):
         values1, _, t1 = saveeval(self.e1, ctx)
-        assert t1 == bool
+
+        assert t1 == bool, t1
 
         eval2 = saveeval(self.e2, ctx)
         eval3 = saveeval(self.e3, ctx)
@@ -872,9 +873,14 @@ class IfThenElse(BaseExpression):
 
         ct = common_type(t2, t3)
         if type(values2) == type(values3) == np.ndarray:
+            if hasNone(values1):
+                nones = values1 <= None
+                res = np.where(values1, values2, values3).astype(object)
+                res[nones] = None
+                return res, _, ct
             return np.where(values1, values2, values3), _, ct
 
-        return [ val2 if val1 else val3 for (val1, val2, val3) \
+        return [ None if val1 is None else (val2 if val1 else val3) for (val1, val2, val3) \
                 in zip(values1, values2, values3) ], _, ct
 
     def __str__(self):
@@ -953,8 +959,11 @@ class ColumnExpression(BaseExpression):
             return self.values, None, self.type_
         cx = ctx.get(self.table)
         if cx is None:
-            raise Exception("context not correct. "\
-                            "did you use wrong table in expression ?")
+            if self.type_ in _basic_num_types:
+                # the dtype of the following array is determined
+                # automatically, even if Nones are in values:
+                return np.array(self.values), None, self.type_
+            return self.values, None, self.type_
         values, idx, type_ = cx.get(self.colname)
         if type_ in _basic_num_types:
             values = np.array(values)

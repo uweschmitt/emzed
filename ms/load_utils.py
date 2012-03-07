@@ -61,7 +61,7 @@ def loadCSV(path=None, sep=";", **specialFormats):
     # local import in order to keep namespaces clean
     import ms
     import csv, os.path, sys, re
-    from   libms.DataStructures.Table import (Table, commonTypeOfColumn,\
+    from   libms.DataStructures.Table import (Table, common_type_for,\
                                               bestConvert, guessFormatFor)
     if isinstance(path, unicode):
         path = path.encode(sys.getfilesystemencoding())
@@ -79,7 +79,7 @@ def loadCSV(path=None, sep=";", **specialFormats):
 
 
     columns = [[row[i] for row in rows] for i in range(len(colNames))]
-    types = [commonTypeOfColumn(col) for col in columns]
+    types = [common_type_for(col) for col in columns]
 
     #defaultFormats = {float: "%.2f", str: "%s", int: "%d"}
     formats = dict([(name, guessFormatFor(name,type_)) for (name, type_)\

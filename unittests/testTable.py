@@ -309,6 +309,28 @@ class ExceptionTester(object):
     def __exit__(self, *a):
         assert a[0] in self.expected
         return True # suppress exceptoin
+def testUniqeNotNone():
+
+    t = ms.toTable("a", [1,1,None])
+    assert t.a.uniqueNotNone() == 1
+
+    t = ms.toTable("a", [1,1,1])
+    assert t.a.uniqueNotNone() == 1
+
+    return
+
+    t.addColumn("b", None)
+    t._print()
+    with ExceptionTester():
+        t.b.uniqueNotNone()
+    t.addColumn("c", [None, 1,2 ])
+    with ExceptionTester():
+        t.c.uniqueNotNone()
+
+    t.addColumn("d", [1,2, 2 ])
+    with ExceptionTester():
+        t.d.uniqueNotNone()
+
 
 def testWithNoneValues():
     t = ms.toTable("i", [1,2,None])

@@ -244,6 +244,46 @@ def testInplaceColumnmodification():
     assert t.a.values == [ 0, 0, 0, 0]
 
 
+def testIndex():
+    t = ms.toTable("a",[1,2,3,4,5])
+    t.sortBy("a")
+    print t.primaryIndex
+    a = t.a
+
+    es = [a<=2, a <= 0, a<=5, a<=6]
+    vs = [2, 0, 5 , 5 ]
+    es += [a<2, a < 0, a<1, a<5,  a<6]
+    vs += [1, 0, 0, 4, 5]
+    es += [a >= 2, a  >=  0, a >= 1, a >= 5,  a >= 6]
+    vs += [4, 5, 5, 1, 0]
+    es += [a > 2, a > 0, a>-2,  a > 1, a > 5,  a > 6]
+    vs += [3, 5, 5, 4, 0, 0]
+
+    assert len(es) == len(vs)
+
+    for e,v in zip(es, vs):
+        print e, v
+        assert len(t.filter(e)) == v, len(t.filter(e))
+
+
+def testBools():
+    t = ms.toTable("bool", [True, False, True, None])
+    assert t.bool.sum() == 2
+    assert t.bool.max() == True, t.bool.max()
+    assert t.bool.min() == False, t.bool.min()
+
+    t.addColumn("int", [1,2,3,4])
+    t.addColumn("float", [1.0,2,3,4])
+    t.addColumn("int_bool", (t.bool).thenElse(t.bool, t.int))
+
+    # test coercion (bool, int) to int:
+    assert t.int_bool.values == [ 1, 2, 1, None ]
+    t.addColumn("int_float", (t.bool).thenElse(t.int, t.float))
+    assert t.int_float.values == [ 1.0, 2.0, 3.0, None ], t.int_float.values
+
+    t.addColumn("bool_float", (t.bool).thenElse(t.bool, t.float))
+    assert t.bool_float.values == [ 1.0, 2.0, 1.0, None ]
+
 
 def testAggWithIterable():
     t = ms.toTable("a", [ (1,2), None ])

@@ -51,7 +51,7 @@ def common_type_for(li):
     if any(np.floating in t.__mro__ for t in types):
         return float
 
-    ordered_types = [ str, float, long, int ]
+    ordered_types = [ str, float, long, int, bool ]
     for type_ in ordered_types:
         if any(t == type_ for t in types):
             return type_
@@ -80,45 +80,6 @@ class _CmdLineProgress(object):
             print percent,
             sys.stdout.flush()
             self.last = percent
-
-def commonTypeOfColumn(col):
-    col = list(col)
-    if isinstance(col, np.ndarray):
-        dtype = col.dtype
-        if dtype in [np.int8, np.int16, np.int32]:
-            return int
-        elif dtype == np.int64:
-            return long
-        else:
-            return float
-
-    differentTypes = set( type(c) for c in col )
-    differentTypes.discard(type(None))
-
-    hasStr = str in differentTypes
-    hasInt = int in differentTypes
-    hasLong = long in differentTypes
-    hasFloat = float in differentTypes
-
-    differentTypes.discard(str)
-    differentTypes.discard(int)
-    differentTypes.discard(long)
-    differentTypes.discard(float)
-
-    if len(differentTypes)==0:
-        if hasStr:
-            return str
-        if hasFloat:
-            return float
-        if hasLong:
-            return long
-        if hasInt:
-            return int
-        return object
-    if len(differentTypes) == 1:
-        return differentTypes.pop()
-    raise Exception("do not know how to find common type for types %r"\
-                     % differentTypes)
 
 
 def bestConvert(val):
@@ -1030,7 +991,8 @@ class Table(object):
         if debug:
             print "#", expr
 
-        flags, _, _ = expr._eval(None)
+        ctx = {self: self._getColumnCtx(expr._neededColumns())}
+        flags, _, _ = expr._eval(ctx)
         filteredTable = self.buildEmptyClone()
         filteredTable.primaryIndex = self.primaryIndex.copy()
         if len(flags) == 1:
@@ -1294,7 +1256,7 @@ class Table(object):
 
         values = convert_list_to_overall_type(list(iterable))
         if type_ is None:
-            type_ = commonTypeOfColumn(values)
+            type_ = common_type_for(values)
         if format == "":
             format = guessFormatFor(colName, type_) or "%r"
         if meta is None:
