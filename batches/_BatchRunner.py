@@ -55,6 +55,8 @@ class BatchRunner(object):
             else:
                 config = self.config[0][2]
 
+            if config is None:
+                return # dialog aborted
             config.update(params)
 
         self.setup(config)

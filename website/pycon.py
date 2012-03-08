@@ -90,6 +90,7 @@ class PyCon(Directive):
         literal['language'] = "python"
         literal['linenos'] = 'linenos' in self.options
         if "invisible" in self.options:
+            print out
             return []
         return [literal]
 

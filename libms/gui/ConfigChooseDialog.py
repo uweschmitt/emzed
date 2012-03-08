@@ -1,7 +1,6 @@
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-import guidata
 from   helpers import *
 
 
@@ -17,10 +16,11 @@ class ConfigChooseDialog(QDialog):
         self.params  = params
 
         self.tw = QTableWidget()
+        sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.tw.setSizePolicy(sizePolicy)
         self.setupLayout()
         self.populate()
 
-        sizePolicy = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
         self.setSizePolicy(sizePolicy)
         self.setSizeGripEnabled(True)
         self.setMinimumWidth(widthOfTableWidget(self.tw))

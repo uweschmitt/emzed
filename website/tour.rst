@@ -2,48 +2,111 @@
 A Guided Tour
 =============
 
+This is a short tour for getting a first impression about working with *eMZed*.
+Please follow the instructions at :ref:`installation` before you 
+continue.
+
+When you start *eMZed* the first time, after some setup as described in
+:ref:`installation`, the application window will look similiar to the following
+screenshot:
+
 .. figure:: eMZed.png
    :scale: 50 %
 
    (Click on the image to enlarge)
 
+
+The window is divided into an editor for *Python* code at the left, and a *variable
+explorer* above a *Python console* with an input prompt at the right. 
+You can resize and reorder
+them using your mouse. This configuration is stored if you close *eMZed* and if
+you start *eMZed* again, it will be restored.
+
+Further you see the current working directory in the upper right corner of the
+window. The first time you start *eMZed* it should end with ``\emzed_files``
+where we provided some example data for this tour.
+
 .. _ipython_example:
 
-Working with iPython command line
+Working with IPython command line
 ---------------------------------
 
-eMZed is based on open source python language. You can directly execute commands in the console and examples below can be directly executed in the command line. 
-Most functions and operation are found in the module ms. The console provides command completion and automatic dialog boxes showing a list of possible commands. 
-In the same way, possible operations on any type of object (variable type) are indicated automaticaly.
+You can directly execute *Python*
+commands in the console. If you follow the examples below, this is the place
+to input and execute the demonstrated commands.
+
+
+.. pycon::
+   :invisible:
+
+   import ms
+   import tab
+   import db
+   import batches
+   import mass
+   import abundance
+   import elements
+
+To check if everything works fine you can try:
+
+.. pycon::
+    print mass.C13
+    
+
+The console provides command completion and automatic dialog boxes showing a list
+of possible commands.  In the same way, available operations on any type of
+object are shown automatically.
+
+Most functions and operation are found in the ``ms`` module, which has numerous
+functions. *eMZed* imports ``mz`` and other important modules automatically at
+startup.  If you enter ``mz.`` (including the final dot !) at the command line
+you get suggestions as shown in the following screenshot:
 
 .. image:: console_code_completion.png
    :scale: 60 %  
-
+   
+You can try completion by typing ``mass.H`` and then pressing the ``TAB`` key to
+get some proposals for selection.
 
 
 .. _peakmaps_example:
 
 Working with PeakMaps
----------------------
-eMZed allows loading, inspecting and basic filtering of LC-MS(/MS) data files. To load your single data files to the workspace use the command ``loadPeakMap``. If you are unsure how to use a command, you can get some help as follows: 
+--------------------- 
+
+*eMZed* allows loading, inspecting and basic filtering of
+LC-MS(/MS) data files in different formats. To load your single data files to
+the workspace use the command ``loadPeakMap``. If you are unsure how to use a
+command, you can get some help as follows: 
 
 .. pycon::
    :invisible:
  
-   import ms
-   pm=ms.loadPeakMap("..\example_scripts\example1.mzXML") 
+   ds = ms.loadPeakMap("../example_scripts/example1.mzXML") 
 
 .. pycon::
+    help(ms.loadPeakMap) 
 
-    help(ms.loadPeakMap)
-
-So if we call the function as follows, you will be asked to choose a file. Please choose the file ``example1.mzXML`` from your current folder:
+So if we call the function without giving a specific path, you will be asked to
+choose a file. Please choose the file ``example1.mzXML`` from your current
+folder:
 
 .. pycon::
-   pm = ms.loadPeakMap() !noexec
+   ds = ms.loadPeakMap() !noexec
 
+You can access the spectra in this peakmap using Python:
 
-The peakmap ``pm`` will appear in the *variable explorer* and you can open the peakmap by simply double clicking the variable ``pm``.
+.. pycon::
+   firstSpec = ds.spectra[0]
+   print firstSpec.rt, firstSpec.msLevel, firstSpec.polarity
+   lastSpec = ds.spectra[-1]
+   print lastSpec.rt
+
+Internally retention times are allways stored as seconds.
+
+The variable ``ds`` will appear in the *variable explorer*. You see that we
+have 464 spectra in this dataset and you can visualize them simply by double
+clicking at ``ds``.
 
 .. image:: peakmap_variable_explorer.png
    :scale: 60 %
@@ -57,38 +120,54 @@ Alternatively use the command
    :scale: 50 %
    
 
-The upper plot shows the TIC and the lower plot the ms spectrum indicated by the bar with the center dot. 
+The upper plot shows the TIC and the lower plot the ms spectrum indicated by
+the bar with the center dot. 
 
 .. image:: inspect_peakmap2.png
    :scale: 50 %
 
-A.You can move the bar with the mouse when you click on the bar with the left 
-mouse button keeping the button pressed. B. m/z values of mass peaks in spectrum are depicted. In addition you can measure distance and relative intensity of a mass peak relative to
-a selected one. It is also possible to select mass peaks of a spectrum and extract corresponding ion chromatograms. 
+A. You can move the bar in the upper chromatogram plot with the mouse by clicking
+   the bar.
+   m/z values and intensities of mass peaks in the chosen
+   spectrum are depicted in the lower plot. 
+   
+B. You can extract an ion chromatogram by entering data
+   into the two input fields  for providing a
+   central ``m/z`` value and a half window with ``w/2`` and then pressing ``Select``.
+   If you 
+   press the right button during moving the mouse the plots will zoom in or out.
+   Pressing the ``backspace`` key will reset the active plot.
+   Further you can measure peak relations by dragging the mouse in the lower
+   plot.
 
-extracting mz traces
 
 .. _centwave_example:
 
 Exctracting chromatographic peaks
 ---------------------------------
 
-Actually, eMZed includes two peak detection algorithm of the XCMS package: centwave and matched filter. Excepted input file formats are mxML, mzXML, and mzData.
-The output file format is .table. In addition .csv files are saved.
+Actually, *eMZed* includes two peak detection algorithm of the *XCMS* package:
+*centwave* and *matched filters*. Accepted input file formats are *mzML*,
+*mzXML*, and *mzData*.  The output file format is *eMZed*-specfic 
+and has the file extension ``.table``. In addition ``.csv`` files are saved.
 
 We continue with an example of centwave algorithm for high resolution LC-MS data. 
+You can start the *centwave* feature detector by typing
 
 .. pycon::
-   import batches
-   tables=batches.runCentwave("*.mzXML", ppm=10, peakwidth=(15,60),\ !noexec
-                              prefilter=(5,10000), snthresh=0.1, \ !noexec
-                              mzdiff=0.001) !noexec 
+   tables = batches.runCentwave("*.mzXML", destination=".", configid="tour")!noexec 
+
 .. pycon::
    :invisible:
 
-   tables=batches.runCentwave("*.mzXML", ppm=10, peakwidth=(15,60), prefilter=(5,10000), snthresh=0.1, mzdiff=0.001) 
+   tables = batches.runCentwave("../example_scripts/*.mzXML", destination=".", configid="tour") !noexec
+   for i, t in enumerate(tables): t.store("feat%d.table" % i) !noexec
+   tables = [ ms.loadTable("feat%d.table" % i) for i in range(3) ]
+       
 
-Various parameters can be adapted.For details type
+We predefined a combination of parameters with the identifier ``tour`` in order
+to simplify the tour. In general various parameters can be provided
+individually. For getting (a lot of) details use the *Python* help system
 
 .. pycon::
    help(batches.centwave) !noexec
@@ -97,69 +176,99 @@ Various parameters can be adapted.For details type
 .. image:: tableListVarBrowser.png
    :scale: 50 %
  
-The resulting output file is a list containing 3 table objects (see working with tables). You can open the table list by double clicking the variable tab in the variable explorer. 
-Click on choose to switch between different tables. In each table parameters of detected peaks are depicted row wise. You can visualize corresponding Extracted Ion Chromatograms 
-**(EIC)** and mass spectra by clicking the left line button. Tables are editable and all modifications are in place. 
-Notice that the original peakmap is linked to table and raw data are accessible.
-
+The return value ``tables`` is a  list containing three tables. Please open
+the table list by double clicking the variable ``tables`` in the *variable
+explorer*.  
 
 
 .. image:: table_explorer.png
    :scale: 60 %
 
+A. Now you can select a specific table using the ``Choose Table`` menu at the
+   top of the window. In each table parameters of detected peaks are depicted
+   row wise. You can visualize corresponding Extracted Ion Chromatograms
+   **(EIC)** and mass spectra by clicking to the left of a row. Table entries
+   are editable (just double click to a certain cell) and all modifications are
+   stored in place.  Notice that the original peakmap is linked to the table
+   and the underlying spectral data is accessible. 
+
+B. If you click with the right mouse button to the left of a row
+   you see a context menu with commands for manipulating whole rows. 
+   All manipulations to the table can be undone using this context menu
+   or the commands below the ``Edit`` menu at the top of the window.
 
 .. _integration_example:
 
 Integrating Features
 --------------------
 
-Detected Peaks can be integrated. To perform peak integration columns rtmin, rtmax, mzmin, and mzmax are mandatory.  To reduce the runtime we will choose 1 table out of the list
-and we will only integrate those peaks with a signal to noise >5e4.
+
+To reduce the runtime in the
+following demonstration we will remove peaks with an signal to
+noise ratio below ``5e4``:
 
 .. pycon::
-   tab=tables[0] !noexec
-   tabFilt=tab.filter(tab.sn>5e4) !noexec
-   tabInt=ms.integrate(tabFilt, 'emg_exact') !noexec
+   tab1, tab2, tab3 = tables
+   print len(tab1)
+   tab1 = tab1.filter(tab1.sn > 5e4) 
+   print len(tab1)
+   tab2 = tab2.filter(tab2.sn > 5e4) 
 
+Detected Peaks can be integrated. To perform peak integration columns *rtmin*,
+*rtmax*, *mzmin*, and *mzmax* are mandatory. We use the *EMG* integrator:
+
+.. pycon::
+   tabInt = ms.integrate(tab1, 'emg_exact') 
+
+If you open the dialog for ``tabInt`` you see
 
 .. image:: table_integrate.png
    :scale: 60 %
 
-For all peaks integrated peaks area and rmse values are automatically added to the table (A). You can manualy reintegrate individual EIC peaks applying one aout of 6 different integration methods thereby adapting the window width for peak integration changing any other 
-entry (B). For more details see **LINK**
+A. For all integrated peaks *area* and *rmse* values are added automatically 
+   to the table. 
+
+B. You can manually reintegrate individual EIC peaks by adapting the *rt* bounds
+   in the chromatogram plot, then choosing one of the provided integration
+   methods and pressing ``Integrate``.
 
 
 .. _rtalign_example:
 
 Aligning Features
 -----------------
-The retention time alignment is performed with the  `OpenMS <http://open-ms.sourceforge.net/openms/>`_ 
-map alignment algorithm and aligns a list of  tables to a reference table.
+The retention time alignment is performed by the  Pose clustering
+alignment algorithm from `OpenMS
+<http://open-ms.sourceforge.net/openms/>`_.
 
 .. pycon::
-   tablesAligned=ms.rtAlign(tables) !noexec
+   tablesAligned = ms.rtAlign(tables, destination=".") !nooutput
 
-To visualize the rt shift on tables we will now overlay two tables before and after rt alignment. We are reducing again the
-number of peaks in the table by filtering for a minimum SN level. To get the overlay before the rt alignemnt
+In this simple use case all tables are aligned to the table with the most peaks.
 
-.. pycon::
-   tab1=tables[0] !noexec
-   tab1=tab1.filter(tab1.sn>5e4) !noexec
-   tab2=tables[2] !noexec
-   tab2=tab2.filter(tab2.sn>5e4) !noexec
-   before=tab1.join(tab2, tab1.mz.approxEqual(tab2.mz, 3*MMU) &tab1.rt.approxEqual(tab2.rt,30))   !noexec   
-
-Open the table 'before' and sort the peak in ascending order with column 'sn' and click on column with id=191.
-And now repeat the same procedure for the same tables after rt alignemnt:
+To visualize the *rt* shift on tables we will now combine two tables before and
+after alignment: 
 
 .. pycon::
-   tabA1=tablesAligned[0] !noexec
-   tabA1=tabA1.filter(tabA1.sn>5e4) !noexec
-   tabA2=tablesAligned[2] !noexec
-   tabA2=tabA2.filter(tabA2.sn>5e4) !noexec
-   after=tabA1.join(tabA2, tabA1.mz.approxEqual(tabA2.mz, 3*MMU) &tabA1.rt.approxEqual(tabA2.rt,30)) !noexec
+   before = tab1.join(tab2, tab1.mz.approxEqual(tab2.mz, 3*MMU) & tab1.rt.approxEqual(tab2.rt,30))   
 
-Open now the table 'after' and sort the peak in ascending order with column 'sn' and click again on column with id=191.
+Users which are familiar to relational databases will recognize the
+``JOIN`` statement from the ``SQL`` language. More information about
+combining and filtering tables will be given below at :ref:`table_example`.
+
+Open the window for table ``before`` and sort the table to ascending  ``sn`` values
+and click on column with ``id`` 191.  
+
+Now repeat the same procedure for the same tables after retention time
+alignment:
+
+.. pycon::
+   tabA1, tabA2, tabA3 = tablesAligned
+   tabA1 = tabA1.filter(tabA1.sn>5e4) 
+   tabA2 = tabA2.filter(tabA2.sn>5e4)
+   after = tabA1.join(tabA2, tabA1.mz.approxEqual(tabA2.mz, 3*MMU) & tabA1.rt.approxEqual(tabA2.rt,30)) 
+
+Open now the table ``after``, sort again and choose the same row as above.
 
 .. image:: rtalignment.png
    :scale: 60 %
@@ -173,21 +282,12 @@ Working with Tables
 -------------------
 
 
-
-Tables are a central data structure in mzExplore. We give a short demonstration of its capabilities
-
-
-.. pycon::
-   :suppress_output:
-
-   import ms
-   import tab
-   import mass
+Tables are a central data structure in *eMZed*. We give a short demonstration of its capabilities
 
 
 .. pycon::
 
-    substances=ms.loadCSV("example.csv")
+    substances = ms.loadCSV("example.csv")
     substances.info()
     
 
@@ -239,7 +339,7 @@ We load another table
 
 .. pycon::
 
-    info=ms.loadCSV("information.csv") 
+    info = ms.loadCSV("information.csv") 
     info.print_()
 
 
@@ -251,7 +351,7 @@ And use an SQL-like *LEFTJOIN* to match rows with the same molecular formula
 
 .. pycon::
 
-    joined=substances.leftJoin(info, substances.mf==info.mf)
+    joined = substances.leftJoin(info, substances.mf==info.mf)
     joined.print_()
 
 We want to get rid of non terrestial substances by filtering the rows
@@ -275,7 +375,6 @@ categorized as *metabolomic compounds*
 
 .. pycon::
 
-    import tab # some standard tables
     pc = tab.pc_full 
     ms.inspect(pc)  !noexec
 
@@ -290,7 +389,7 @@ Building an index is done by sorting the corresponding column
 .. pycon::
 
     pc.sortBy("m0")
-    matched=joined.leftJoin(pc, (joined.onEarth__0==1) & joined.m0.approxEqual(pc.m0, 15*MMU))
+    matched = joined.leftJoin(pc, (joined.onEarth__0==1) & joined.m0.approxEqual(pc.m0, 15*MMU))
     print matched.numRows()
     ms.inspect(matched)  !noexec
 
@@ -303,7 +402,7 @@ Another way to identify compounds is to use the Metlin webpage which provides a 
 .. pycon::
 
     common.addColumn("polarity", "-") # metlin need this
-    matched2=ms.matchMetlin(common, "m0", ppm=15)
+    matched2 = ms.matchMetlin(common, "m0", ppm=15)
     ms.inspect(matched2) !noexec
 
 
@@ -340,7 +439,6 @@ formula
 
 .. pycon::
 
-    import elements
     print mass.of("C6H2O6", C=elements.C13)
 
 
@@ -363,7 +461,6 @@ common elements
 
 .. pycon::
 
-    import abundance     !nooutput
     print abundance.C
 
 
@@ -395,7 +492,7 @@ simmulated too
 
 .. pycon::
 
-    iso=ms.isotopeDistributionTable("C4S4", C=dict(C12=0.5, C13=0.5))
+    iso = ms.isotopeDistributionTable("C4S4", C=dict(C12=0.5, C13=0.5))
     iso.replaceColumn("abundance", iso.abundance / iso.abundance.sum() * 100.0)
     iso.print_()
 
@@ -420,7 +517,7 @@ Matching isotope patterns now works like this
 
 .. pycon::
 
-    iso=ms.isotopeDistributionTable("H2O", minp=1e-3)
+    iso = ms.isotopeDistributionTable("H2O", minp=1e-3)
     iso.addEnumeration()
     iso.print_()
 
@@ -429,7 +526,7 @@ Matching isotope patterns now works like this
 .. pycon::
 
     common.dropColumns("mf__0", "onEarth__0")
-    matched=iso.leftJoin(common, iso.mass.approxEqual(common.m0, 1*MMU))
+    matched = iso.leftJoin(common, iso.mass.approxEqual(common.m0, 1*MMU))
     matched.print_()
 
 
@@ -497,7 +594,7 @@ graphical input forms
 
 .. pycon::
 
-    b=ms.DialogBuilder(title="Please provide data")
+    b = ms.DialogBuilder(title="Please provide data")
     b.addInstruction("For Algorithm A please provide")
     b.addInt("Level")
     b.addFloat("Threshold")

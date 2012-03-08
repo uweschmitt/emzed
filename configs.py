@@ -6,6 +6,16 @@ from libms.RConnect.XCMSConnector import CentwaveFeatureDetector, MatchedFilterF
 cwfstd = CentwaveFeatureDetector.standardConfig
 centwaveConfig = [   ("std", "standard config orbitrap", cwfstd) ]
 
+tourConfig = cwfstd.copy()
+tourConfig.update(dict(ppm=10,\
+                       peakwidth=(15, 60),\
+                       prefilter=(5, 10000),\
+                       snthresh = 0.1,\
+                       mzdiff = 0.001)
+                 )
+
+
+centwaveConfig += [ ("tour", "config for example in tour", tourConfig)]
 
 mfstd = MatchedFilterFeatureDetector.standardConfig
 matchedFilterConfig = [  ( "std", "standard config" , mfstd ) ]
