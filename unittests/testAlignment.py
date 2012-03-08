@@ -29,8 +29,24 @@ def testPoseClustering():
     # delete one row, so ft should become reference map !
     del ft2.rows[-1]
 
+    ftneu, ft2neu = ms.rtAlign([ft,ft2], refTable=ft, destination="temp_output", nPeaks=9999,
+                                          numBreakpoints=2)
+
+    check(ft, ft2, ftneu, ft2neu)
+
+    ft2neu, ftneu = ms.rtAlign([ft2,ft], refTable=ft, destination="temp_output", nPeaks=9999,
+                                          numBreakpoints=2)
+
+    check(ft, ft2, ftneu, ft2neu)
+
     ftneu, ft2neu = ms.rtAlign([ft,ft2], destination="temp_output", nPeaks=9999,
                                           numBreakpoints=2)
+
+    check(ft, ft2, ftneu, ft2neu)
+
+
+
+def check(ft, ft2, ftneu, ft2neu):
     def getrt(t, what):
         return  np.array([t.get(row, what) for row in t.rows])
 
@@ -67,3 +83,6 @@ def testPoseClustering():
     assert ex is not None, "aligning of aligned maps should not be possible"
     # alignmen should produce alignment map:
     assert os.path.exists("temp_output/test_aligned.png")
+
+
+

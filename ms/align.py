@@ -101,7 +101,10 @@ def rtAlign(tables, refTable = None, destination = None, nPeaks=-1,
         print os.path.basename(refTable.meta.get("source","<noname>"))
         print
     else:
-        refMap = toOpenMSFeatureMap(refTable)
+        if refTable in tables:
+            refMap = fms[tables.index(refTable)][0]
+        else:
+            refMap = toOpenMSFeatureMap(refTable)
     results = []
     for fm, table in fms:
         table = copy.deepcopy(table) # so we do not modify existing table !
@@ -130,6 +133,9 @@ def _computeTransformation(ma, refMap, fm, numBreakpoints):
     # transformations.
     import pyOpenMS as P
     ts = []
+    # index is 1-based, so 1 refers to refMap when calling
+    # alignFeatureMaps below:
+    ma.setReference(1, P.String(""))
     ma.alignFeatureMaps([refMap, fm], ts)
     assert len(ts) == 2 # ts is now filled !!!!
 
