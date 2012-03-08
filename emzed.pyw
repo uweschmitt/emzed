@@ -640,6 +640,19 @@ class MainWindow(QMainWindow):
             self.set_splash(_("Loading editor..."))
             self.editor = Editor(self)
             self.editor.register_plugin()
+            # Outline explorer widget
+            if CONF.get('outline_explorer', 'enable'):
+                 self.set_splash(_("Loading outline explorer..."))
+                 fullpath_sorting = CONF.get('editor', 'fullpath_sorting', True)
+                 self.outlineexplorer = OutlineExplorer(self,
+                                             fullpath_sorting=fullpath_sorting)
+                 self.outlineexplorer.register_plugin()
+
+            # Project explorer widget
+            if CONF.get('project_explorer', 'enable'):
+                 self.set_splash(_("Loading project explorer..."))
+                 self.projectexplorer = ProjectExplorer(self)
+                 self.projectexplorer.register_plugin()
             
             # Populating file menu entries
             quit_action = create_action(self, _("&Quit"),
@@ -899,7 +912,7 @@ class MainWindow(QMainWindow):
         was triggered"""
         self.emit(SIGNAL('restore_scrollbar_position()'))
         self.extconsole.open_interpreter_at_startup()
-        self.extconsole.setMinimumHeight(0)
+        self.extconsole.setMinimumHeight(350)
         if self.projectexplorer is not None:
             self.projectexplorer.check_for_io_errors()
         # [Workaround for Issue 880]
@@ -999,16 +1012,25 @@ class MainWindow(QMainWindow):
             # First Spyder execution:
             # trying to set-up the dockwidget/toolbar positions to the best 
             # appearance possible
-            splitting = (
-                         (self.projectexplorer, self.editor, Qt.Horizontal),
-                         (self.editor, self.outlineexplorer, Qt.Horizontal),
-                         (self.outlineexplorer, self.inspector, Qt.Horizontal),
-                         (self.inspector, self.console, Qt.Vertical),
-                         )
-            for first, second, orientation in splitting:
-                if first is not None and second is not None:
-                    self.splitDockWidget(first.dockwidget, second.dockwidget,
-                                         orientation)
+            self.splitDockWidget(self.editor.dockwidget, self.variableexplorer.dockwidget, Qt.Horizontal)
+            self.splitDockWidget(self.variableexplorer.dockwidget, self.extconsole.dockwidget, Qt.Vertical)
+            #splitting = (
+                         #(self.projectexplorer, self.editor, Qt.Horizontal),
+                         #(self.editor, self.outlineexplorer, Qt.Vertical),
+                         #(self.outlineexplorer, self.inspector, Qt.Horizontal),
+                         #(self.inspector, self.console, Qt.Vertical),
+                         #)
+            #for first, second, orientation in splitting:
+                #break
+                #if first is not None and second is not None:
+                    #self.splitDockWidget(first.dockwidget, second.dockwidget,
+                                         #orientation)
+
+            self.tabifyDockWidget(self.extconsole.dockwidget, self.historylog.dockwidget)
+            self.tabifyDockWidget(self.variableexplorer.dockwidget, self.findinfiles.dockwidget)
+            self.tabifyDockWidget(self.findinfiles.dockwidget, self.explorer.dockwidget)
+            self.tabifyDockWidget(self.explorer.dockwidget, self.inspector.dockwidget)
+            #self.tabifyDockWidget(self.console.dockwidget, self.historylog.dockwidget)
             for first, second in ((self.console, self.extconsole),
                                   (self.extconsole, self.historylog),
                                   (self.inspector, self.variableexplorer),
@@ -1016,16 +1038,17 @@ class MainWindow(QMainWindow):
                                   (self.onlinehelp, self.explorer),
                                   (self.explorer, self.findinfiles),
                                   ):
+                break
                 if first is not None and second is not None:
                     self.tabifyDockWidget(first.dockwidget, second.dockwidget)
-            for plugin in [self.findinfiles, self.onlinehelp, self.console,
+            for plugin in [self.onlinehelp, self.console,
                            ]+self.thirdparty_plugins:
                 if plugin is not None:
                     plugin.dockwidget.close()
-            for plugin in (self.inspector, self.extconsole):
+            for plugin in (self.variableexplorer, self.extconsole):
                 if plugin is not None:
                     plugin.dockwidget.raise_()
-            self.extconsole.setMinimumHeight(250)
+            self.extconsole.setMinimumHeight(350)
             for toolbar in (self.run_toolbar, self.edit_toolbar):
                 toolbar.close()
             for plugin in (self.projectexplorer, self.outlineexplorer):
