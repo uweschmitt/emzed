@@ -31,7 +31,11 @@ def computekey(o):
 
 
 def getPostfix(colName):
+    if colName.startswith("__"):
+        return None
+
     fields = colName.split("__")
+
     if len(fields)>2:
         raise Exception("invalid colName %s" % colName)
     if len(fields) == 1:
@@ -1159,19 +1163,23 @@ class Table(object):
         """ finds postfixes 0, 1, .. in  __0, __1, ... in self.colNames
             an empty postfix "" is recognized as -1 """
         postfixes = set( getPostfix(c) for c in self.colNames )
+        postfixes.discard(None) # internal cols starting witn __
         values = [ -1 if p=="" else int(p[2:]) for p in postfixes ]
         return  max(values)
 
     def findPostfixes(self):
-        return sorted(set( getPostfix(c) for c in self.colNames) )
+        postfixes = set( getPostfix(c) for c in self.colNames )
+        postfixes.discard(None) # internal cols starting witn __
+        return postfixes
 
     def incrementedPostfixes(self, by):
         newColNames = []
         for c in self.colNames:
             pf = getPostfix(c)
-            val = 0 if pf =="" else int(pf[2:])
-            prefix = c if pf == "" else c[:-2]
-            newName = prefix+"__"+str(by+val)
+            if pf is not None:
+                val = 0 if pf =="" else int(pf[2:])
+                prefix = c if pf == "" else c[:-2]
+                newName = prefix+"__"+str(by+val)
             newColNames.append(newName)
         return newColNames
 

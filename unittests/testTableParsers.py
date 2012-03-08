@@ -1,4 +1,5 @@
 from libms.RConnect import *
+from libms.DataStructures.TableParser import *
 
 def test_XCMSParser():
     import os

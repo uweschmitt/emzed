@@ -2,6 +2,7 @@
 import configs, ms
 import numpy as np
 from   libms.DataStructures import Spectrum, PeakMap
+from   libms.PeakIntegration import *
 
 def run(integrator, areatobe, rmsetobe):
     assert len(str(integrator))>0
@@ -120,4 +121,20 @@ def testTrapezIntegrationSimple():
 
     assert integrator.integrate(0.4, 3.0, 0, 3)["area"] == 13.5
 
+def ex(f):
+    e0 = None
+    try:
+        f()
+    except Exception, e:
+        e0 = e
+    assert e0 is not None
 
+def testSg():
+    allrts = np.arange(10, 100)
+    rts    = np.arange(1, 10)
+    chromo = np.sin(allrts)
+    chromo[10:]= 0
+
+    ex(lambda: SGIntegrator(order=1, window_size=4).smooth(allrts, rts, chromo))
+    ex(lambda: SGIntegrator(order=1, window_size=-1).smooth(allrts, rts, chromo))
+    ex(lambda: SGIntegrator(order=4, window_size=5).smooth(allrts, rts, chromo))

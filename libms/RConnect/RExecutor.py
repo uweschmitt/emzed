@@ -77,7 +77,7 @@ class RExecutor(object):
             # non windows:
             test = os.path.join(path, "R")
             if os.path.exists(test) and not os.path.isdir(test):
-                return tess
+                return test
         return None
 
     @staticmethod
@@ -105,18 +105,18 @@ class RExecutor(object):
 
     def run_command(self, command, dir_=None):
 
-        if dir_ is not None:
+        def run(dir_, command):
             fp = file(os.path.join(dir_, "script.R"), "w")
             print >> fp, command
             fp.close()
             return self.run_script(fp.name)
 
+        if dir_ is not None:
+            return run(dir_, command)
+
         else:
-            with TemporaryDirectoryWithBackup() as td:
-                fp = file(os.path.join(td, "script.R"), "w")
-                print >> fp, command
-                fp.close()
-                return self.run_script(fp.name)
+            with TemporaryDirectoryWithBackup() as dir_:
+                return run(dir_, command)
 
 if __name__ == "__main__":
    RExecutor().test()

@@ -2,6 +2,14 @@ from libms.DataStructures.MSTypes import *
 from pyOpenMS import *
 import numpy as np
 import os.path
+def exceptionwrapper(fun):
+    e0 = None
+    try:
+        fun()
+    except Exception, e:
+        e0 = e
+    assert e0 is not None
+
 
 class TestMSTypes(object):
 
@@ -30,11 +38,40 @@ class TestMSTypes(object):
         pm = PeakMap.fromMSExperiment(exp)
         assert os.path.basename(pm.meta["source"]) ==  basename
 
+        rtmin, rtmax = pm.rtRange()
+        ms1s = pm.ms1Spectrum(rtmin, rtmax)
+        assert ms1s.shape == (1797, 2), ms1s.shape
+
+        ms1s2 = pm.ms1Spectrum(rtmax=rtmax)
+        assert np.all(ms1s == ms1s2)
+
+        ms1s3 = pm.ms1Spectrum(rtmin=0)
+        assert np.all(ms1s == ms1s3)
+
+        spec = pm.spectra[0]
+        assert len(list(spec)) == len(spec) # calls iter
+
+
+        allrts = pm.allRts()
+        assert (allrts[0], allrts[-1]) == pm.rtRange()
+        assert len(allrts) == 41, len(allrts)
+
+        level1 = pm.levelNSpecs(1, 1)
+        level2 = pm.levelNSpecs(2, 2)
+        level12 = pm.levelNSpecs(1, 2)
+        assert len(level1) > 0
+        assert len(level2) > 0
+        assert len(level1) + len(level2) == len(level12) == len(pm)
+        assert level1[0].msLevel == 1
+        assert level2[0].msLevel == 2
+
+        lone = pm.levelOneRts()
+        assert len(lone) == len(level1)
+
         self.compare_exp(pm, exp, basename)
         pm2 = PeakMap.fromMSExperiment(pm.toMSExperiment())
         self.compare_exp(pm2, exp, basename)
 
-        rtmin, rtmax = pm.rtRange()
         pm2 = pm.extract(rtmin = rtmin+.000001)
         assert len(pm2) == len(pm)-1
         pm2 = pm2.extract(rtmax = rtmax-0.000001)
@@ -55,6 +92,33 @@ class TestMSTypes(object):
         mzmin2, mzmax2 = pm2.mzRange()
         assert mzmin2 >= 300
         assert mzmax2 <= 1000
+
+        exceptionwrapper(lambda: pm.spectra[0].peaksInRange())
+
+        pp1 = pm.spectra[0].peaksInRange(mzmax = 10000)
+        pp2 = pm.spectra[0].peaksInRange(mzmin = 0)
+        assert np.all(pp1 == pp2)
+
+        specs0 = pm.spectra[:]
+        specs1 = pm.specsInRange(0, 99999)
+        specs2 = pm.specsInRange(0, specs0[0].rt)
+        specs3 = pm.specsInRange(specs0[-1].rt, 999999)
+
+
+
+        assert specs0 == specs1
+        assert specs2 == [ specs0[0] ]
+        assert specs3 == [ specs0[-1] ]
+
+
+
+        pm.spectra[0].polarity = "+"
+        pm.spectra[1].polarity = "-"
+
+        PeakMap(pm.spectra) 
+
+
+
 
 
     def compare_exp(self, pm, exp, basename):
@@ -88,3 +152,17 @@ class TestMSTypes(object):
         assert spec.intensityInRange(0.5, 4.5) == 4.0
         assert spec.intensityInRange(2.0, 2.0) == 1.0
         assert spec.intensityInRange(2.1, 2.0) == 0.0
+
+    def testMemoize(self):
+
+        # list for passing reference to mutable data to fun()
+        counter = [0]
+        @memoize
+        def fun(counter=counter):
+            counter[0] += 1
+            return 42
+
+        assert fun() == 42
+        assert fun() == 42
+        assert counter[0] == 1, counter[0]
+

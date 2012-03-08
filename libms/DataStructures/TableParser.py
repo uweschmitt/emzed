@@ -13,7 +13,7 @@ class TableParser(object):
 
         if rows:
             columns     = ( (row[i] for row in rows) for i in range(numCol) )
-            columnTypes = [Table.commonTypeOfColumn(col) for col in columns ]
+            columnTypes = [Table.common_type_for(col) for col in columns ]
             knownTypes = [ (i, clz.typeDefaults.get(columnNames[i] )) for i in range(numCol) ]
 
             for i, type_ in knownTypes:
@@ -32,13 +32,6 @@ class TableParser(object):
 
         return Table.Table(columnNames, columnTypes, formats, rows)
 
-    @classmethod
-    def fromCSV(clz, path):
-        lines = [ l.replace(";", " ") for l in file(path).readlines() ]
-        modlines = [ '"%d" %s' % (i+1, l) for i, l in enumerate(lines[1:]) ]
-        modlines.insert(0, lines[0])
-        return clz.parse(modlines)
-
 class XCMSFeatureParser(TableParser):
 
 
@@ -55,6 +48,4 @@ class XCMSFeatureParser(TableParser):
                            maxo= "", sn= "%.1e",
                            sample= "")
 
-if __name__ == "__main__":
-    table = XCMSFeatureParser.parse(file("output_from_xcms.csv").readlines())
 
