@@ -1182,7 +1182,7 @@ class Table(object):
         return Table(colNames, colTypes, colFormats, [], title, meta,
                      circumventNameCheck=True)
 
-    def print_(self, w=12, out=None, title=None):
+    def print_(self, w=8, out=None, title=None):
         """
         Prints the table to the console. ``w`` is the width of the columns,
         If you want to print to a file or stream instead, you can use the ``out``
@@ -1192,22 +1192,37 @@ class Table(object):
         """
         if out is None:
             out = sys.stdout
+
+        ix = [ i for i, f in enumerate(self.colFormats) if f is not None ]
+
+        colwidths = []
+        for i in ix:
+            c = self.colNames[i]
+            f = self.colFormatters[i]
+            values = set(map(f, self.getColumn(c).values))
+            values.discard(None)
+            if values:
+                mw = max(len(v) for v in values if v is not None)
+            else:
+                mw = 1 # for "-"
+            colwidths.append(max(mw, len(c), w))
+
+
         #inner method is private, else the object can not be pickled !
-        def _p(vals, w=w, out=out):
-            expr = "%%-%ds" % w
-            for v in vals:
+        def _p(vals, colwidths=colwidths, out=out):
+            for v, w in zip(vals, colwidths):
+                expr = "%%-%ds" % w
                 v = "-" if v is None else v
                 print >> out, (expr % v),
 
         if title is not None:
-            _p(["==============="])
+            _p(len(title)*"=")
             print >> out
             _p([title])
             print >> out
-            _p(["==============="])
+            _p(len(title)*"=")
             print >> out
 
-        ix = [ i for i, f in enumerate(self.colFormats) if f is not None ]
 
         _p([self.colNames[i] for i in ix])
         print >> out
