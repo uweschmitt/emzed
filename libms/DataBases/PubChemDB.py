@@ -10,7 +10,7 @@ class PubChemDB(object):
 
     colNames = ["m0", "mw", "cid", "mf", "iupac", "synonyms", "url", "is_in_kegg",
                 "is_in_hmdb"]
-    colTypes = [float, float, str, str, str, str, str, int, int ]
+    colTypes = [float, float, int, str, str, str, str, int, int ]
     colFormats=["%.6f", "%.6f", "%s", "%s", "%s", None, "%s", "%d", "%d" ]
 
     @staticmethod
