@@ -1,6 +1,6 @@
 import pyOpenMS as P
 import copy, os, itertools, re, numpy, cPickle, sys, inspect
-from   Expressions import BaseExpression, ColumnExpression, Value, _basic_num_types
+from   Expressions import BaseExpression, ColumnExpression, Value, _basic_num_types, common_type_for
 import numpy as np
 from   collections import Counter, OrderedDict, defaultdict
 
@@ -41,20 +41,6 @@ def getPostfix(colName):
     if len(fields) == 1:
         return ""
     return "__"+fields[1]
-
-def common_type_for(li):
-
-    types = set(type(x) for x in li)
-    if any(np.integer in t.__mro__ for t in types):
-        return int
-    if any(np.floating in t.__mro__ for t in types):
-        return float
-
-    ordered_types = [ str, float, long, int, bool ]
-    for type_ in ordered_types:
-        if any(t == type_ for t in types):
-            return type_
-    return object
 
 def convert_list_to_overall_type(li):
     ct = common_type_for(li)

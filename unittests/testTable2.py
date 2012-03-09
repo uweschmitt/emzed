@@ -1,4 +1,4 @@
-import ms
+import ms, mass
 
 from libms.DataStructures.Table import Table, toOpenMSFeatureMap
 
@@ -29,6 +29,24 @@ def testApply():
     t = ms.toTable("a", [None, 2, 3])
     t.addColumn("id", (t.a*t.a).apply(lambda v: int(v**0.5)))
     assert t.id.values == [None, 2, 3 ]
+
+
+    sub = ms.toTable("mf", ["Na", "H2O", "Kr", None])
+
+    # apply with Nones in cols
+    expr = sub.mf.apply(mass.of)
+    sub.addColumn("m0", expr)
+
+    sub.addColumn("m0s", sub.m0.apply(str))
+    assert sub.colTypes == [ str, float, str]
+
+    # apply without None values:
+    sub = sub.filter(sub.m0 != None)
+    assert len(sub) == 2
+    sub.addColumn("m02", sub.mf.apply(mass.of))
+    sub.addColumn("m0s2", sub.m0.apply(str))
+    assert sub.colTypes == [ str, float, str, float, str]
+
 
 
 def testNumpyTypeCoercion():
@@ -324,6 +342,8 @@ def testLogics():
     t.addColumn("nota", ~t.a)
     t.addColumn("true", t.a | True)
     t.addColumn("false", t.a & False)
+
+    assert t.colTypes == 4* [bool]
 
     assert len(t.filter(t.a & t.nota)) == 0
     assert len(t.filter(t.a | t.true)) == 2

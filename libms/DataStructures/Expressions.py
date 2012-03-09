@@ -1,6 +1,8 @@
 import numpy as np
 import re
 
+
+
 __doc__ = """
 
 Working with tables relies on so called ``Expressions`` 
@@ -46,6 +48,24 @@ def gt(a, x):
 
 
 _basic_num_types = [int, long, float, bool]
+
+
+def common_type_for(li):
+
+    types = set(type(x) for x in li if x is not None)
+    if any(np.integer in t.__mro__ for t in types):
+        return int
+    if any(np.floating in t.__mro__ for t in types):
+        return float
+    if any(np.bool_ in t.__mro__ for t in types):
+        return bool
+
+    ordered_types = [ str, float, long, int, bool ]
+    for type_ in ordered_types:
+        if any(t == type_ for t in types):
+            return type_
+    return object
+
 
 def hasNone(arr):
     return arr.dtype.type == np.object_
@@ -802,11 +822,19 @@ class FunctionExpression(BaseExpression):
         # so we can apply ufucns/vecorized funs
         if type(values) == np.ndarray and not hasNone(values):
             if type(self.efun) == np.ufunc:
-                return self.efun(values), None, float
-            return np.vectorize(self.efun)(values), None, float
+                values = self.efun(values)
+            else:
+                vtest = self.efun(values[0])
+                if cleanup(type(vtest)) in _basic_num_types:
+                    values = np.vectorize(self.efun)(values)
+                else:
+                    values = [ self.efun(v) for v in values ]
+            return values, None, common_type_for(values)
         new_values = [self.efun(v) if v is not None else None for v in values]
+        type_ = common_type_for(new_values)
         if type_ in _basic_num_types:
             new_values = np.array(new_values)
+
         return new_values, None, type_
 
     def __str__(self):
