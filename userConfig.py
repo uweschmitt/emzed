@@ -72,11 +72,6 @@ def getDocumentFolder():
 
 def getDataHome():
     dataHome = os.path.join(getDocumentFolder(), "emzed_files")
-    if not os.path.exists(dataHome):
-        os.makedirs(dataHome)
-    examples = os.path.join(dataHome, "example_scripts")
-    if not os.path.exists(examples):
-        shutil.copytree("example_scripts", examples)
     return dataHome
 
 def getExchangeFolder():

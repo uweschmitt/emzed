@@ -341,7 +341,6 @@ class MzPlot(ModifiedCurvePlot):
         self.halfWindowWidth = w2
 
     def set_central_mz(self, mz):
-        print "set", mz
         self.centralMz = mz
 
     def register_c_callback(self, cb):

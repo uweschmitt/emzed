@@ -22,10 +22,6 @@ You can resize and reorder
 them using your mouse. This configuration is stored if you close *eMZed* and if
 you start *eMZed* again, it will be restored.
 
-Further you see the current working directory in the upper right corner of the
-window. The first time you start *eMZed* it should end with ``\emzed_files``
-where we provided some example data for this tour.
-
 .. _ipython_example:
 
 Working with IPython command line
@@ -64,13 +60,13 @@ you get suggestions as shown in the following screenshot:
 
 .. image:: console_code_completion.png
    :scale: 60 %  
-   
-You can try completion by typing ``mass.H`` and then pressing the ``TAB`` key to
-get some proposals for selection.
 
+You can select an entry with the cursor keys and accept the selection
+by pressing the ``Enter`` key.
+   
 Further you can  navigate through commands you entered before using
 the ``Cursor-Up`` and ``Cursor-Down`` keys. For more information about
-using *IPython* [ipython]_ see the Introduction at [ipython_introduction]_.
+using *IPython* [ipython]_ see the Introduction at [ipython_introduction]_ .
 
 
 
@@ -154,7 +150,7 @@ Extracting chromatographic peaks
 
 Actually, *eMZed* includes two peak detection algorithm of the *XCMS* [xcms]_ package:
 *centwave* [centwave]_ and *matched filters*. Accepted input file formats are *mzML*,
-*mzXML*, and *mzData*.  The output file format is *eMZed*-specfic 
+*mzxml*, and *mzData*.  The output file format is *eMZed*-specfic 
 and has the file extension ``.table``. In addition ``.csv`` files are saved.
 
 We continue with an example of centwave algorithm for high resolution LC-MS data. 
@@ -170,7 +166,8 @@ You can start the *centwave* feature detector by typing
    for i, t in enumerate(tables): t.store("feat%d.table" % i) !noexec
    tables = [ ms.loadTable("feat%d.table" % i) for i in range(3) ]
        
-
+The feature detectore needs a few minutes depending on the power of your computer, we ommitted the
+verbose output from *XCMS* [xcms]_ .
 We predefined a combination of parameters with the identifier ``tour`` in order
 to simplify the tour. In general various parameters can be provided
 individually. For getting (a lot of) details use the *Python* help system
