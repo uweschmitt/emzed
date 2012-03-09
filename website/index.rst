@@ -40,10 +40,11 @@ one of the reasons why we choose Python.
 * The invention of workspace providing software as Matlab and R really
   leveraged the productivity of mathematicians and other scientists. We
   try to introduce this concept for analyizing LCMS data.
+  *eMZed* is heavilly based on Spyder [spyderlib]_.
 
 * Instead of reinventing the wheel we cherry picked algorithms from
-  other frameworks and libraries. In the current version we use routines
-  from open-ms and xcms
+  other frameworks and libraries. In the current version we use
+  algorithms from Open-MS [openms]_ and XCMS [xcms]_.
 
 * In order to avoid imports and exports to other software, we try to
   integrate all needed functionality in one framework
@@ -59,6 +60,7 @@ Contents
    tour
    working_with_explorers
    cookbook
+   references
 
    api_ms
    api_batches

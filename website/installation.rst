@@ -11,7 +11,7 @@ Before you start
 
 If you plan to use *eMZed* for more than one user we recommend to provide a
 shared folder, which can be accessed by all targetted users. We call this the
-*global exchange folder*.  *eMZed* will store databases, *XCMS*-code there.
+*global exchange folder*.  *eMZed* will store databases, *XCMS* [xcms]_ related code there.
 Further you can use this folder to exchange scripts and configuration settings.
 
 You can use *eMZed* without such a folder. Then data is stored per user and
@@ -56,7 +56,7 @@ For installing *eMZed* on Windows please follow **carefully** the stepwise instr
 
 
 7. *eMZed* will install or update the *XMCS*-code if needed. If you have a global exchange folder
-   an *XCMS* related code will be stored there, so further starts of *eMZed*  by local users
+   an *XCMS* [xcms]_ related code will be stored there, so further starts of *eMZed*  by local users
    will be much faster.
 
    **If you provided a global exchange folder and have no write permissions to it, this step wil be skipped**.

@@ -32,7 +32,7 @@ Working with IPython command line
 ---------------------------------
 
 You can directly execute *Python*
-commands in the console. If you follow the examples below, this is the place
+commands in the provided IPython shell [ipython]_. If you follow the examples below, this is the place
 to input and execute the demonstrated commands.
 
 
@@ -58,8 +58,8 @@ of possible commands.  In the same way, available operations on any type of
 object are shown automatically.
 
 Most functions and operation are found in the ``ms`` module, which has numerous
-functions. *eMZed* imports ``mz`` and other important modules automatically at
-startup.  If you enter ``mz.`` (including the final dot !) at the command line
+functions. *eMZed* imports ``ms`` and other important modules automatically at
+startup.  If you enter ``ms.`` (including the final dot !) at the command line
 you get suggestions as shown in the following screenshot:
 
 .. image:: console_code_completion.png
@@ -68,10 +68,16 @@ you get suggestions as shown in the following screenshot:
 You can try completion by typing ``mass.H`` and then pressing the ``TAB`` key to
 get some proposals for selection.
 
+Further you can  navigate through commands you entered before using
+the ``Cursor-Up`` and ``Cursor-Down`` keys. For more information about
+using *IPython* [ipython]_ see the Introduction at [ipython_introduction]_.
+
+
+
 
 .. _peakmaps_example:
 
-Working with PeakMaps
+Working with Peakmaps
 --------------------- 
 
 *eMZed* allows loading, inspecting and basic filtering of
@@ -133,7 +139,7 @@ A. You can move the bar in the upper chromatogram plot with the mouse by clickin
    
 B. You can extract an ion chromatogram by entering data
    into the two input fields  for providing a
-   central ``m/z`` value and a half window with ``w/2`` and then pressing ``Select``.
+   central ``m/z`` value and a half window width ``w/2`` and then pressing ``Select``.
    If you 
    press the right button during moving the mouse the plots will zoom in or out.
    Pressing the ``backspace`` key will reset the active plot.
@@ -143,11 +149,11 @@ B. You can extract an ion chromatogram by entering data
 
 .. _centwave_example:
 
-Exctracting chromatographic peaks
+Extracting chromatographic peaks
 ---------------------------------
 
-Actually, *eMZed* includes two peak detection algorithm of the *XCMS* package:
-*centwave* and *matched filters*. Accepted input file formats are *mzML*,
+Actually, *eMZed* includes two peak detection algorithm of the *XCMS* [xcms]_ package:
+*centwave* [centwave]_ and *matched filters*. Accepted input file formats are *mzML*,
 *mzXML*, and *mzData*.  The output file format is *eMZed*-specfic 
 and has the file extension ``.table``. In addition ``.csv`` files are saved.
 
@@ -170,13 +176,16 @@ to simplify the tour. In general various parameters can be provided
 individually. For getting (a lot of) details use the *Python* help system
 
 .. pycon::
-   help(batches.centwave) !noexec
+   help(batches.runCentwave) !noexec
+
+The return value ``tables`` is a  list containing three tables, 
+you see them in the *variable explorer*.
 
 
 .. image:: tableListVarBrowser.png
    :scale: 50 %
  
-The return value ``tables`` is a  list containing three tables. Please open
+Please open
 the table list by double clicking the variable ``tables`` in the *variable
 explorer*.  
 
@@ -186,8 +195,8 @@ explorer*.
 
 A. Now you can select a specific table using the ``Choose Table`` menu at the
    top of the window. In each table parameters of detected peaks are depicted
-   row wise. You can visualize corresponding Extracted Ion Chromatograms
-   **(EIC)** and mass spectra by clicking to the left of a row. Table entries
+   row wise. You can visualize corresponding *Extracted Ion Chromatograms*
+   (*EIC*) and mass spectra by clicking to the left of a row. Table entries
    are editable (just double click to a certain cell) and all modifications are
    stored in place.  Notice that the original peakmap is linked to the table
    and the underlying spectral data is accessible. 
@@ -199,13 +208,13 @@ B. If you click with the right mouse button to the left of a row
 
 .. _integration_example:
 
-Integrating Features
---------------------
+Integrating Peaks
+-----------------
 
 
 To reduce the runtime in the
-following demonstration we will remove peaks with an signal to
-noise ratio below ``5e4``:
+following demonstration we will extract peaks with an signal to
+noise ratio above ``5e4``:
 
 .. pycon::
    tab1, tab2, tab3 = tables
@@ -226,20 +235,23 @@ If you open the dialog for ``tabInt`` you see
    :scale: 60 %
 
 A. For all integrated peaks *area* and *rmse* values are added automatically 
-   to the table. 
+   to the table. As *EMG* fits a function to the *EIC*, you see this function
+   in the chromatogram plot.
 
-B. You can manually reintegrate individual EIC peaks by adapting the *rt* bounds
+B. You can manually reintegrate individual *EIC* peaks by adapting the *rt* bounds
    in the chromatogram plot, then choosing one of the provided integration
    methods and pressing ``Integrate``.
+   The result will be plotted in the chromatogram plot and the correspoding
+   row is updated.
 
 
 .. _rtalign_example:
 
 Aligning Features
 -----------------
-The retention time alignment is performed by the  Pose clustering
-alignment algorithm from `OpenMS
-<http://open-ms.sourceforge.net/openms/>`_.
+
+The retention time alignment is performed by the Pose Clustering 
+alignment algorithm [poseclustering]_ implemented in OpenMS [openms]_.
 
 .. pycon::
    tablesAligned = ms.rtAlign(tables, destination=".") !nooutput
@@ -247,14 +259,14 @@ alignment algorithm from `OpenMS
 In this simple use case all tables are aligned to the table with the most peaks.
 
 To visualize the *rt* shift on tables we will now combine two tables before and
-after alignment: 
-
-.. pycon::
-   before = tab1.join(tab2, tab1.mz.approxEqual(tab2.mz, 3*MMU) & tab1.rt.approxEqual(tab2.rt,30))   
-
+after alignment. 
 Users which are familiar to relational databases will recognize the
 ``JOIN`` statement from the ``SQL`` language. More information about
 combining and filtering tables will be given below at :ref:`table_example`.
+
+.. pycon::
+   before = tab1.join(tab2, tab1.mz.approxEqual(tab2.mz, 3*MMU) & tab1.rt.approxEqual(tab2.rt, 30*SECONDS))   
+
 
 Open the window for table ``before`` and sort the table to ascending  ``sn`` values
 and click on column with ``id`` 191.  
@@ -266,14 +278,14 @@ alignment:
    tabA1, tabA2, tabA3 = tablesAligned
    tabA1 = tabA1.filter(tabA1.sn>5e4) 
    tabA2 = tabA2.filter(tabA2.sn>5e4)
-   after = tabA1.join(tabA2, tabA1.mz.approxEqual(tabA2.mz, 3*MMU) & tabA1.rt.approxEqual(tabA2.rt,30)) 
+   after = tabA1.join(tabA2, tabA1.mz.approxEqual(tabA2.mz, 3*MMU) & tabA1.rt.approxEqual(tabA2.rt, 30*SECONDS)) 
 
 Open now the table ``after``, sort again and choose the same row as above.
 
 .. image:: rtalignment.png
    :scale: 60 %
 
-The plot shows the overlay of two EIC peaks of the same compound in two different samples before (A) and after (B) retention time alignment.
+The plot shows the overlay of two *EIC* peaks of the same compound in two different samples before (A) and after (B) retention time alignment.
 
 
 .. _table_example:
@@ -282,30 +294,31 @@ Working with Tables
 -------------------
 
 
-Tables are a central data structure in *eMZed*. We give a short demonstration of its capabilities
+This section demonstrates some operations on tables, which are a central data
+structure in *eMZed*, you have allready seen them above as peak tables. 
 
+An easy way to create tables is to parse a *csv* file. This is how the
+content of ``example.csv`` looks like:
 
 .. pycon::
 
+    print open("example.csv").read()
+
+We load this table and print some information about it:
+
+.. pycon::
     substances = ms.loadCSV("example.csv")
     substances.info()
+    substances.print_()
     
 
-That is the table has two columns named *name* and *mf* and both
+That is the table has two columns named ``name`` and ``mf`` and both
 contain data of type ``str``.
 
-This is a small table which we print the table on the console
 
 
-
-
-.. pycon::
-
-    substances.print_()
-
-
-
-If the table is to complex or large for printing, we have a graphical interface for inspecting the table.
+If the table is to complex or large for printing, you can open a dialog by clicking to the
+``substances`` entry in the *variable explorer*  or from the command line:
 
 
 .. pycon::
@@ -314,16 +327,20 @@ If the table is to complex or large for printing, we have a graphical interface 
 
 
 
-Adding a new, computed column is easy. Here we introduce a new column *m0* which contains the monoisotopic masses corresponding to the contents of the *mf* column
-
+Adding a new, computed column is easy. Here we want to generate a new column ``m0``
+which contains the monoisotopic masses corresponding to the contents of the
+``mf`` column. Converting a molecular formula to the corresponding monoisotopic
+weight can be done by the function ``mass.of``:
 
 
 
 .. pycon::
 
-    print mass.of("H2O") # calculates monoisotopic weights
+    print mass.of("H2O") 
 
 
+Generating the new column ``m0`` is done by applying this function to
+the columnt ``substances.mf``:
 
 .. pycon::
 
@@ -332,21 +349,21 @@ Adding a new, computed column is easy. Here we introduce a new column *m0* which
 
 
 
-We load another table
-
-
+Now we want to add some extra information to ``substances``, this
+information is stored in ``information.csv``:
 
 
 .. pycon::
-
+    print open("information.csv").read()
     info = ms.loadCSV("information.csv") 
     info.print_()
 
+As you can see ``ms.loadCSV`` recognized that the column ``info.onEarth`` only
+contains integers.
 
 
-And use an SQL-like *LEFTJOIN* to match rows with the same molecular formula
-
-
+To combine both tables we use an SQL-like ``LEFTJOIN`` to match rows with the
+same molecular formula:
 
 
 .. pycon::
@@ -354,11 +371,7 @@ And use an SQL-like *LEFTJOIN* to match rows with the same molecular formula
     joined = substances.leftJoin(info, substances.mf==info.mf)
     joined.print_()
 
-We want to get rid of non terrestial substances by filtering the rows
-
-
-
-
+To restrict to substances which are known to exist on earth we can do:
 
 .. pycon::
 
@@ -366,24 +379,20 @@ We want to get rid of non terrestial substances by filtering the rows
     common.print_()
 
 
-
-The ``tab`` module contains some databases, eg the substances from pubchem 
-categorized as *metabolomic compounds*
-
-
-
+The ``tab`` module contains some databases, eg the substances from Pubchem  [pubchem]_
+categorized as *metabolomic compounds*. These databases are hold in tables:
 
 .. pycon::
 
     pc = tab.pc_full 
+    pc.filter(pc.cid <= 3).print_()
     ms.inspect(pc)  !noexec
 
 
 
-Before matching our data against the large pubchem table, we build an index on tthis table in order to speed up the following ``leftJoin`` call.
-Building an index is done by sorting the corresponding column
-
-
+Before matching our data against the large pubchem table, we build an index on
+this table in order to speed up the following ``leftJoin`` call.  Building an
+index is done by sorting the corresponding column:
 
 
 .. pycon::
@@ -391,18 +400,18 @@ Building an index is done by sorting the corresponding column
     pc.sortBy("m0")
     matched = joined.leftJoin(pc, (joined.onEarth__0==1) & joined.m0.approxEqual(pc.m0, 15*MMU))
     print matched.numRows()
+    matched.print_()
     ms.inspect(matched)  !noexec
 
 
-Another way to identify compounds is to use the Metlin webpage which provides a formular for running queries against the database. This access is automated
-
-
+Another way to identify compounds is to use the Metlin webpage which provides a formular for running queries against the database. This access is automated: 
 
 
 .. pycon::
 
     common.addColumn("polarity", "-") # metlin need this
     matched2 = ms.matchMetlin(common, "m0", ppm=15)
+    matched2.print_()
     ms.inspect(matched2) !noexec
 
 
@@ -435,6 +444,8 @@ formula
 
     print mass.of("C6H2O6")
 
+
+One can consider isotopes too:
 
 
 .. pycon::
@@ -539,8 +550,7 @@ Statistical Analysis
 
 The framework provides two methods for comparing two datasets by analysis of variance: classical *one way ANOVA* and
 non parametric *Kruskal Wallis* analysis.
-
-These methods work on tables (is anybody surprised ?) like
+These methods work on tables like
 this
 
 
@@ -561,7 +571,7 @@ this
 
 
 
-``ms.oneWayAnova`` returns the correspoding *F* and *p* value, ``ms.kruskalWallis`` the *H* and *p* value
+``ms.oneWayAnova`` returns the correspoding ``F`` and ``p`` value, ``ms.kruskalWallis`` the ``H`` and ``p`` value
 
 
 
@@ -585,11 +595,14 @@ this
 Building graphical interfaces
 -----------------------------
 
-Beyond the ``Table``-Explorer ``ms.inspect`` and the
-Peakmap-Explorer ``ms.inspectPeakMap`` assisted workflows
-request certain parameters and decisions at certain processing steps. To support this mzExplore has an builder for
-graphical input forms
+Beyond the ``Table``-Explorer ``ms.inspect`` and the Peakmap-Explorer
+``ms.inspectPeakMap`` assisted workflows request certain parameters and
+decisions at certain processing steps. To support this mzExplore has an builder
+for graphical input forms. 
 
+The following dialogue is created by the simple commands below:
+
+.. image:: dialogbuilder.png
 
 
 .. pycon::
