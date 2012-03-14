@@ -6,5 +6,5 @@ def testOne():
     tn = ms.matchMetlin(t, "m0", 30)
     tn.info()
     tn._print()
-    assert len(tn) >= 10, len(tn)
-    assert len(tn.colNames) == 13
+    assert len(tn) >= 3, len(tn)
+    assert len(tn.colNames) == 12

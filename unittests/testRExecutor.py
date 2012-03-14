@@ -1,5 +1,5 @@
 from libms.RConnect.RExecutor import *
-from libms.RConnect.XCMSExecutor import *
+from libms.RConnect.XCMSConnector import *
 
 
 def testOne():
