@@ -55,7 +55,7 @@ class PubChemDB(object):
         doc = etree.fromstring(data)
         if not doc.findall("IdList"):
             raise Exception("Pubchem returned data in unknown format")
-        idlist = [id_.text for id_ in  doc.findall("IdList")[0].findall("Id")]
+        idlist = [int(id_.text) for id_ in  doc.findall("IdList")[0].findall("Id")]
         return idlist
 
     @staticmethod
@@ -171,7 +171,7 @@ class PubChemDB(object):
             print "DELETE", len(missingIds), "ENTRIES FROM LOCAL DB"
             self.table = self.table.filter(~self.table.cid.isIn(missingIds))
         url = "http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?cid="
-        self.table.addColumn("url", url+self.table.cid, type_=str)
+        self.table.addColumn("url", url+self.table.cid.apply(str), type_=str)
         self.table.addColumn("m0", self.massCalculator, type_=float, format="%.7f", insertBefore="mw")
         #self.table = self.table.filter(self.table.m0 != None)
         self.table.sortBy("m0")# build index
