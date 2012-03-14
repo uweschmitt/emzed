@@ -8,7 +8,6 @@ We thank for helpful support:
 
      *  Department of Biology, ETH Zurich
 
-     *  `The OpenMS project <http://open-ms.sourceforge.net/>`_
 
      *  `Julia A Vorholt <http://www.micro.biol.ethz.ch/research/vorholt/jvorholt>`_
 
@@ -17,6 +16,14 @@ We thank for helpful support:
      *  `Peter Zoltan Kunszt <http://www.systemsx.ch/projects/systemsxch-projects/sybit/>`_
 
      *  `Lars Gustav Malström <http://www.imsb.ethz.ch/researchgroup/malars>`_
+
+We make use of the following framework and we thank their developers for the
+great work:
+
+     * Open-MS [openms]_
+     * XCMS [xcms]_
+     * Spyderlib [spyderlib]_
+     * guidata and guiplot [guidata]_, [guiplot]_
 
 
 

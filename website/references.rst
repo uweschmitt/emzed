@@ -10,3 +10,5 @@ References
 .. [xcms] http://metlin.scripps.edu/xcms
 .. [ipython] http://ipython.org
 .. [ipython_introduction] http://ipython.org/ipython-doc/dev/interactive/
+.. [guidata] http://code.google.com/p/guidata
+.. [guiplot] http://code.google.com/p/guiplot

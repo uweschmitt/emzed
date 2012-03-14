@@ -57,9 +57,12 @@ Contents
    :maxdepth: 1
 
    installation
+   contact
+   license
    tour
    explorers
    cookbook
+
    references
 
    api_ms
@@ -67,8 +70,6 @@ Contents
    api_tables_expressions
    api_other
 
-   license
-   contact
 
 
 Indices and tables
