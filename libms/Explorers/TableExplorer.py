@@ -506,7 +506,8 @@ class TableExplorer(QDialog):
 
 def inspect(what, offerAbortOption=False):
     """
-    inspectes Tables
+    allows the inspection and editing of simple or multiple
+    tables.
 
     """
     if isinstance(what, Table):

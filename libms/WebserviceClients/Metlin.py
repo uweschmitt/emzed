@@ -27,7 +27,7 @@ class MetlinMatcher(object):
         dd["ppm"] = ppm
         dd["modes"] = 1
         sign = { "+": " ", "-": "-" }[polarity]
-        adducts =  ["M", "M%sH" % sign, "M%s2H" % sign]
+        adducts =  ["M%sH" % sign, "M%s2H" % sign]
         dd["formVar"]=",".join(adducts)
         data = dd.items()
         for add in adducts:

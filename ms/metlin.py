@@ -25,6 +25,8 @@ def matchMetlin(table, massColumn, ppm):
         result = table.leftJoin(metlinMatch, table.getColumn(internalRefColumn)\
                                             == metlinMatch.inputmass)
         result.dropColumn(internalRefColumn)
+        result.set(result.colFormats, "dppm__0", "%3.1f")
+        result.dropColumn("inputmass__0")
     finally:
         if table.hasColumn(internalRefColumn):
             table.dropColumn(internalRefColumn)

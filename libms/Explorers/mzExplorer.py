@@ -183,7 +183,9 @@ class MzExplorer(QDialog):
 
 
 def inspectPeakMap(peakmap):
-    """Testing this simple Qt/guiqwt example"""
+    """
+    allows the visual inspection of a peakmap
+    """
 
     if len(peakmap) == 0:
         raise Exception("empty peakmap")

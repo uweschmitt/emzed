@@ -58,7 +58,7 @@ Contents
 
    installation
    tour
-   working_with_explorers
+   explorers
    cookbook
    references
 

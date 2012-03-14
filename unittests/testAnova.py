@@ -80,6 +80,8 @@ def testOnTables():
     tresult = ms.kruskalWallisOnTables(setOne, setTwo, idColumn="compound",
                                                      valueColumn="area")
 
+    tresult.print_()
+
     assert tresult.id.values == ["A", "B"]
     assert tresult.n1.values == [4, 5]
     assert tresult.n2.values == [6, 6]

@@ -1,8 +1,11 @@
 
 
 def storePeakMap(pm, path=None):
-
-    """ saves mzXML, mzML and mzData files """
+    """ Stores peakmap *pm* in mzXML, mzML or mzData format.
+        The used format depends on the fileextension given
+        in *path*. If no *path* is given, a dialog for
+        choosing an ouput file name is opened.
+    """
 
     # local import in order to keep namespaces clean
     import ms
@@ -25,10 +28,11 @@ def storePeakMap(pm, path=None):
 
 
 def storeTable(tab, path=None, forceOverwrite=False):
-    """ saves .table files
-
-        If path is not provided, a file dialog opens
+    """ Saves *tab* in a binary ``.table`` file.
+        If *path* is not provided, a file dialog opens
         for choosing the files name and location.
+
+        *path* must have file extension ``.table``.
     """
 
     # local import in order to keep namespaces clean
@@ -46,6 +50,10 @@ def storeTable(tab, path=None, forceOverwrite=False):
 
 
 def storeCSV(tab, path=None):
+    """ Saves *tab* in a textual ``.csv`` file.
+        If *path* is not provided, a file dialog opens
+        for choosing the files name and location.
+    """
 
     # local import in order to keep namespaces clean
     import ms

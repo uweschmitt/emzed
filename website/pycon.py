@@ -83,6 +83,7 @@ class PyCon(Directive):
                     exec(line, PyCon.__globals)
                 except:
                     traceback.print_exc(file=captured)
+                    traceback.print_exc(file=sys.stderr)
             sys.stdout = sys.__stdout__
 
         out = captured.getvalue()# .decode(output_encoding)

@@ -2,7 +2,11 @@
 
 def integrate(ftable, integratorid="std", showProgress = True):
     """ integrates features  in ftable.
-        returns processed table. *ftable* is not changed inplace
+        returns processed table. ``ftable`` is not changed inplace.
+
+        The peak integrator corresponding to the integratorId is
+        defined in ``configs.py`` or ``local_configs.py``
+
     """
     from configs import peakIntegrators
     from libms.DataStructures.Table import Table

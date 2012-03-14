@@ -6,6 +6,23 @@ def mzAlign(table, fullC13=False, tol=15*MMU, mz_reference_table=None,
             destination=None, minR2=0.95, minPoints=5, interactive=False):
 
     """
+    performs affine linear mz-correction for a feature table.
+
+    you need a ``mz_reference_table`` with the theoretical ideal masses
+    and retention times of some universal metabolites. This table needs
+    columns ``m0`` for the neutral mass, ``rtmin``, ``rtmax`` for the
+    retention time window for restricting the match of the table against
+    the  ``mz_reference_table`` and the molecular formula ``mf``.
+
+    If you specify ``fullC13=True`` the ``mf`` is used to correct ``m0``.
+
+    ``destination`` is a directory which will be used for storing the
+    result and intermediate data.  If you do not specify this value, a
+    dialog for choosing the destination directory will be opened.
+
+    The input table **is not mofied** in place, the function returns the
+    aligned table.
+
     """
 
     import ms
