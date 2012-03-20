@@ -33,7 +33,7 @@ class _FD(_BatchRunner.BatchRunner):
 
 
 
-def runCentwave(pattern=None, destination=None, configid=None, **params):
+def runCentwave(pattern=None, destination=None, configid="std", **params):
 
     """
          runs centwave algorithm from xcms in batch mode.
@@ -96,7 +96,7 @@ def runCentwave(pattern=None, destination=None, configid=None, **params):
 import libms.RConnect as __libmsrconnect
 runCentwave.__doc__ += __libmsrconnect.CentwaveFeatureDetector.__doc__
 
-def runMatchedFilter(pattern=None, destination=None, configid=None, **params):
+def runMatchedFilter(pattern=None, destination=None, configid="std", **params):
 
     """
          runs matched filters algorithm from xcms in batch mode.

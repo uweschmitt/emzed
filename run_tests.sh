@@ -1,3 +1,3 @@
 #!/bin/env sh
-nosetests -w unittests $*
+nosetests -w tests $*
 
