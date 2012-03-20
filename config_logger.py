@@ -1,5 +1,23 @@
 import logging, os, _winreg
 
+
+def memoize(function):
+    """ decorator for caching results """
+    memo = {}
+
+    def wrapper(*args):
+        if args in memo:
+            return memo[args]
+        else:
+            rv = function(*args)
+            memo[args] = rv
+            return rv
+
+    return wrapper
+
+
+#only call once !
+@memoize
 def do_config():
 
     logger = logging.getLogger('de.mineway.emzed')
