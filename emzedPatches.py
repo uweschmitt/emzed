@@ -85,7 +85,23 @@ def patch_baseshell():
         return baseshell._orig_add_pathlist_to_PYTHONPATH(env, pathlist)
 
 def patch_userconfig():
-    from spyderlib.userconfig import UserConfig, NoDefault
+    from spyderlib.userconfig import UserConfig, NoDefault, get_home_dir
+
+    @replace(get_home_dir, verbose=True)
+    def patch():
+        import _winreg, os
+        key =_winreg.OpenKey(_winreg.HKEY_CURRENT_USER,
+                            "Software\\Microsoft\\Windows\\CurrentVersion"
+                            "\\Explorer\\User Shell Folders")
+
+        appRoot,_ = _winreg.QueryValueEx(key, "AppData")
+        appRoot = _winreg.ExpandEnvironmentStrings(appRoot)
+        appFolder = os.path.join(appRoot, "emzed")
+        if not os.path.exists(appFolder):
+            os.makedirs(appFolder)
+        return appFolder
+
+
     @replace(UserConfig.get)
     def patch(self, section, option, default=NoDefault):
         override_defaults = {
@@ -106,6 +122,8 @@ def patch_userconfig():
 
 def patch_baseconfig():
     from spyderlib import baseconfig
+
+
     @replace(baseconfig.get_module_source_path, verbose=True)
     def patch(modname, basename=None):
         if modname == "spyderlib.widgets.externalshell"\

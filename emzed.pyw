@@ -68,7 +68,6 @@ getattr(LLL, logging.getLevelName(LLL.level).lower())("this is internal")
 # Keeping a reference to the original sys.exit before patching it
 ORIGINAL_SYS_EXIT = sys.exit
 
-
 # Windows platforms only: support for hiding the attached console window
 set_attached_console_visible = None
 is_attached_console_visible = None
@@ -78,7 +77,7 @@ if os.name == 'nt':
         win32console.GetConsoleWindow() # do nothing, this is just a test
         def set_attached_console_visible(state):
             """Show/hide console window attached to current window
-            
+
             This is for Windows platforms only. Requires pywin32 library."""
             win32gui.ShowWindow(win32console.GetConsoleWindow(),
                                 win32con.SW_SHOW if state else win32con.SW_HIDE)
