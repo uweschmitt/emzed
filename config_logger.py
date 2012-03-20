@@ -1,4 +1,4 @@
-import logging, os
+import logging, os, _winreg
 
 def do_config():
 
@@ -12,7 +12,18 @@ def do_config():
     except:
         pass
 
-    fh = logging.FileHandler('logs/emzed.log')
+    key =_winreg.OpenKey(_winreg.HKEY_CURRENT_USER,
+                        "Software\\Microsoft\\Windows\\CurrentVersion"
+                        "\\Explorer\\User Shell Folders")
+
+    appRoot,_ = _winreg.QueryValueEx(key, "Local AppData")
+    appRoot = _winreg.ExpandEnvironmentStrings(appRoot)
+
+    logPath = os.path.join(appRoot, "emzed")
+    if not os.path.exists(logPath):
+        os.makedirs(logPath)
+
+    fh = logging.FileHandler(os.path.join(logPath, "emzed.log"))
     fh.setLevel(logging.DEBUG)
 
     # create console handler with a higher log level
@@ -28,4 +39,6 @@ def do_config():
     logger.addHandler(fh)
 
     __builtins__["LLL"] = logger
+
+    logger.debug("start logging")
 
