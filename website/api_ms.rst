@@ -73,30 +73,8 @@ Statistics
 see :ref:`statistics_example` for example usage
 
 .. autofunction:: ms.oneWayAnovaOnTables
-
-   Compares two sets of tables. Eg.:
-
-.. pycon::
-   :invisible:
-
-   t = ms.toTable("id", ["ATP", "ADP"])
-   t.addColumn("n1", [4,5])
-   t.addColumn("n2", [6,6])
-   t.addColumn("avg1_foldChange", [1.4, 1.6])
-   t.addColumn("std1_foldChange", [0.4, 0.13])
-   t.addColumn("avg2_foldChange", [0.4, 1.5])
-   t.addColumn("std2_foldChange", [0.3, 0.08])
-   t.addColumn("p_value", [0.9, 0.23])
-   tresult=t
-
-
-.. pycon::
-   tresult = ms.oneWayAnovaOnTables(tables1, tables2, idColumn="compound", valueColumn="foldChange") !noexec
-   tresult.print_()
-
 .. autofunction:: ms.kruskalWallisOnTables
 
-   Same as :py:meth:`~ms.oneWayAnovaOnTables` above.
 
 Online Feature Matching
 ~~~~~~~~~~~~~~~~~~~~~~~
