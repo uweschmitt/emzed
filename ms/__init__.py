@@ -2,7 +2,6 @@ from load_utils import *
 from store_utils import *
 from custom_dialogs import *
 from integration import *
-from shell_helpers import *
 from align import *
 from isotope_calculator import *
 from tools import *
