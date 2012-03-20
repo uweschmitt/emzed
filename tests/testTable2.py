@@ -2,6 +2,11 @@ import ms, mass
 
 from libms.DataStructures.Table import Table, toOpenMSFeatureMap
 
+def testBinary():
+    t = ms.toTable("compound", ["Na", "NaCl", "H2O"])
+    t2 = t.filter(t.containsElement("Na") | t.containsElement("Cl"))
+    assert len(t2) == 2
+
 
 def testFullJoin():
     t = ms.toTable("a", [None, 2, 3])
@@ -363,6 +368,8 @@ def testAppend():
     t.append(t2, [t2, t2], (t2,))
     assert len(t) == 10
     assert t.a.values == [1,2]*5
+
+
 
 
 def testToOpenMSFeatureMap():
