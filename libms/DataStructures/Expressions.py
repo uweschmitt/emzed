@@ -691,7 +691,8 @@ class BinaryExpression(BaseExpression):
             values = [ self.efun(l, rvals[0]) for l in lvals ]
         else:
             values = [ self.efun(l, r) for (l, r) in zip(lvals, rvals) ]
-        return values, None , ct
+
+        return container(ct)(values), None , ct
 
 
 class AggregateExpression(BaseExpression):
