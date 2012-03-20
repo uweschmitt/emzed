@@ -49,6 +49,10 @@ try:
 except:
     pass
 try:
+    del mzalign
+except:
+    pass
+try:
     del isotope_calculator
 except:
     pass
