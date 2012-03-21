@@ -59,8 +59,12 @@ def buildZipFile(zip_name, files, exclude=[], relocate_path=".", prefixpath=".")
 # todo: relocate_path mit files verwurschteldn ?
 buildZipFile("emzed_files.zip", files, exclude = [".*", "*.pyc"], relocate_path="..")
 
+try:
+    os.remove("emzed_1.0.zip")
+except:
+    pass
+
 buildZipFile("emzed_1.0.zip", ["README", "installer.py", "License.txt", "emzed_files.zip"], prefixpath="emzed_1.0")
 
-import os
 os.remove("emzed_files.zip")
 
