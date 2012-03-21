@@ -16,7 +16,10 @@ def rtAlign(tables, refTable = None, destination = None, nPeaks=-1,
               searching matching features.
 
             - *maxMzDifference*: max allowed difference in mz values for
-              searching matching features.
+              super imposer.
+
+            - *maxMzDifferencePairfinder*: max allowed difference in mz values 
+              for pair finding.
 
             - *numBreakpoints*: number of break points of fitted spline.
               default:5, more points result in splines with higher variation.
