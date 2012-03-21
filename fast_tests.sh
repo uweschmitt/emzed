@@ -1,8 +1,7 @@
 #!/bin/sh
+./run_tests.sh --tests=testTable2.py $*
 ./run_tests.sh --tests=testExpressions.py $*
 ./run_tests.sh --tests=testTable.py $*
-./run_tests.sh --tests=testExpressions.py $*
-./run_tests.sh --tests=testTable2.py $*
 ./run_tests.sh --tests=testMSTypes.py $*
 ./run_tests.sh --tests=testTableParsers.py $*
 ./run_tests.sh --tests=regTestTable.py $*

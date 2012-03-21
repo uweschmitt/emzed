@@ -1,5 +1,6 @@
 def rtAlign(tables, refTable = None, destination = None, nPeaks=-1,
-            numBreakpoints=5, maxRtDifference = 100, maxMzDifference = 0.3,
+            numBreakpoints=5, maxRtDifference = 100, maxMzDifference = 0.01,
+            maxMzDifferencePairfinder = 0.01,
             forceAlign=False):
 
     """ aligns feature tables in respect to retetion times.
@@ -77,12 +78,16 @@ def rtAlign(tables, refTable = None, destination = None, nPeaks=-1,
                 P.DataValue(nPeaks),
                 P.String(),
                 P.StringList())
+    pp.setValue(P.String("superimposer:mz_pair_max_distance"),
+                P.DataValue(float(maxMzDifference)),
+                P.String(),
+                P.StringList())
     pp.setValue(P.String("pairfinder:distance_RT:max_difference"),
                 P.DataValue(float(maxRtDifference)),
                 P.String(),
                 P.StringList())
     pp.setValue(P.String("pairfinder:distance_MZ:max_difference"),
-                P.DataValue(float(maxMzDifference)), # in dalton resp u. 
+                P.DataValue(float(maxMzDifferencePairfinder)), # in dalton resp u. 
                 P.String(),
                 P.StringList())
     pp.setValue(P.String("pairfinder:distance_MZ:unit"),
