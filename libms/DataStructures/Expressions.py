@@ -241,7 +241,7 @@ class BaseExpression(object):
         return XorExpression(self, other)
 
     def __invert__(self):
-        return FunctionExpression(lambda a: not a, "not %s", self)
+        return FunctionExpression(lambda a: not a, "not %s", self, bool)
 
     def _neededColumns(self):
         lc = self.left._neededColumns()
@@ -286,7 +286,7 @@ class BaseExpression(object):
         Example: ``tab.id.isIn([1,2,3])``
 
         """
-        return FunctionExpression(lambda a, b=li: a in b, "%%s.isIn(%s)"%li, self)
+        return FunctionExpression(lambda a, b=li: a in b, "%%s.isIn(%s)"%li, self, bool)
 
     def inRange(self, minv, maxv):
         """
@@ -339,7 +339,7 @@ class BaseExpression(object):
 
         Example::  ``tab.addColumn("amplitude", tab.time.apply(sin))``
         """
-        return FunctionExpression(fun, str(fun), self)
+        return FunctionExpression(fun, str(fun), self, None)
 
     @property
     def min(self):
@@ -459,7 +459,7 @@ class BaseExpression(object):
                 raise Exception("only None values in %s" % self)
             if len(diff) > 1:
                 raise Exception("more than one None value in %s" % self)
-            return [v for v in values if v is not None][0]
+            return diff.pop()
         return AggregateExpression(self, select, "uniqueNotNone(%s)",\
                                    None, ignoreNone=False)
 
@@ -810,29 +810,36 @@ class Value(BaseExpression):
 
 class FunctionExpression(BaseExpression):
 
-    def __init__(self, efun, efunname, child):
+    def __init__(self, efun, efunname, child, restype):
         if not isinstance(child, BaseExpression):
             child = Value(child)
         self.child = child
         self.efun = efun
         self.efunname = efunname
+        self.restype  = restype
 
     def _eval(self, ctx=None):
         values, index, type_ = saveeval(self.child, ctx)
         # the secenod expressions is true if values contains no Nones,
         # so we can apply ufucns/vecorized funs
+        if len(values) == 0:
+            return [], None, self.restype or object
         if type(values) == np.ndarray and not hasNone(values):
             if type(self.efun) == np.ufunc:
                 values = self.efun(values)
             else:
                 vtest = self.efun(values[0])
                 if cleanup(type(vtest)) in _basic_num_types:
-                    values = np.vectorize(self.efun)(values)
+                    try:
+                        values = np.vectorize(self.efun)(values)
+                    except ValueError:
+                        # vectorize failed
+                        values = np.array([self.efun(v) for v in values])
                 else:
                     values = [ self.efun(v) for v in values ]
             return values, None, common_type_for(values)
         new_values = [self.efun(v) if v is not None else None for v in values]
-        type_ = common_type_for(new_values)
+        type_ = self.restype or common_type_for(new_values)
         if type_ in _basic_num_types:
             new_values = np.array(new_values)
 

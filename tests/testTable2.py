@@ -8,6 +8,21 @@ def testBinary():
     assert len(t2) == 2
 
 
+def testEmptyApply():
+    t = ms.toTable("a", [])
+    t.addColumn("b", t.a.apply(len))
+    assert len(t) == 0
+    assert t.colTypes == [object, object]
+
+def testRound():
+    # failed in ealrier versions, as np.vectorize does not like round !
+    t = ms.toTable("a", [1.23, 0.5])
+    t.addColumn("b", t.a.apply(round))
+    assert len(t)==2
+    assert t.b.values == [ 1.0, 1.0]
+
+
+
 def testFullJoin():
     t = ms.toTable("a", [None, 2, 3])
     t2 = t.join(t, True)
