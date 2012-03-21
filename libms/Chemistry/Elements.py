@@ -95,7 +95,7 @@ class MonoIsotopicElements(Table):
 
             self.resetInternals()
             self.renameColumns(mass="m0")
-            self.dropColumn("abundance")
+            self.dropColumns("abundance")
             self.sortBy("number")
 
         # borg pattern is shit for columns which hold a reference to the

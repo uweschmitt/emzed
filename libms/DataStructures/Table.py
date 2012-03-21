@@ -513,12 +513,6 @@ class Table(object):
         return Table(self.colNames, self.colTypes, self.colFormats, [],
                      self.title, self.meta.copy(), circumventNameCheck=True)
 
-    def dropColumn(self, name):
-        """ removes a column with given ``name`` from the table.
-            Works **inplace**
-        """
-        return self.dropColumns(name)
-
     def dropColumns(self, *names):
         """ removes columns with given ``names`` from the table.
             Works **inplace**
@@ -665,7 +659,7 @@ class Table(object):
         # bit slower. but that does not matter at this point of time:
         rv = self.addColumn(name+"__tmp", what, type_, format,\
                             insertBefore=name)
-        self.dropColumn(name)
+        self.dropColumns(name)
         self.renameColumns(**{name+"__tmp": name})
         return rv
 
@@ -677,7 +671,7 @@ class Table(object):
         For the parameters see :py:meth:`~libms.DataStructures.Table.addColumn`
         """
         if self.hasColumn(name):
-            self.dropColumn(name)
+            self.dropColumns(name)
 
         return self.addColumn(name, what, type_, format, insertBefore)
 

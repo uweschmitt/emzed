@@ -175,8 +175,7 @@ def run(t, colnames, rows):
     assert tn.colNames == ["id", "iii", "long", "x"]
     assert len(tn) == 3
 
-    tn.dropColumn("id")
-    tn.dropColumn("x")
+    tn.dropColumns("id", "x")
     t2 = tn.copy()
     res = tn.leftJoin(t2, tn.iii == tn.long)
     assert len(res) == len(t2)
@@ -439,7 +438,7 @@ def testDynamicColumnAttributes():
     col = pickle.loads(pickle.dumps(t.aa))
     assert len(col.values) == 0
 
-    t.dropColumn("aa")
+    t.dropColumns("aa")
     assert "aa" not in t.colNames
     try:
         t.aa

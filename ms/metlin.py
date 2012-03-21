@@ -12,24 +12,24 @@ def matchMetlin(table, massColumn, ppm):
 
     internalRefColumn = "__metlin_massmatch"
     if table.hasColumn(internalRefColumn):
-        table.dropColumn(internalRefColumn)
+        table.dropColumns(internalRefColumn)
     table.addColumn(internalRefColumn, masses)
 
     try:
         metlinMatch = MetlinMatcher.query(masses, ppm, polarity)
         if metlinMatch is None:
             table.addColumn("molid", None)
-            table.dropColumn(internalRefColumn)
+            table.dropColumns(internalRefColumn)
             return table
 
         result = table.leftJoin(metlinMatch, table.getColumn(internalRefColumn)\
                                             == metlinMatch.inputmass)
-        result.dropColumn(internalRefColumn)
+        result.dropColumns(internalRefColumn)
         result.set(result.colFormats, "dppm__0", "%3.1f")
-        result.dropColumn("inputmass__0")
+        result.dropColumns("inputmass__0")
     finally:
         if table.hasColumn(internalRefColumn):
-            table.dropColumn(internalRefColumn)
+            table.dropColumns(internalRefColumn)
     return result
 
 

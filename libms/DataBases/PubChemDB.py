@@ -160,11 +160,11 @@ class PubChemDB(object):
                 row = [ dd.get(n) for n in self.colNames ]
                 self.table.rows.append(row)
         try:
-            self.table.dropColumn("url")
+            self.table.dropColumns("url")
         except:
             pass
         try:
-            self.table.dropColumn("m0")
+            self.table.dropColumns("m0")
         except:
             pass
         if len(missingIds):
