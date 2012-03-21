@@ -22,7 +22,6 @@ def testRound():
     assert t.b.values == [ 1.0, 1.0]
 
 
-
 def testFullJoin():
     t = ms.toTable("a", [None, 2, 3])
     t2 = t.join(t, True)
