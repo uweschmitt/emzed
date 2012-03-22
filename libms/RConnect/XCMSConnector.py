@@ -16,13 +16,14 @@ def installXcmsIfNeeded():
     if os.path.exists(os.path.join(R_LIBS, "xcms")):
         return
 
+    r_libs = R_LIBS.replace("\\", "\\\\")
     script = """
                 if (require("xcms") == FALSE)
                 {
                     source("http://bioconductor.org/biocLite.R")
-                    biocLite("xcms", dep=T)
+                    biocLite("xcms", dep=T, lib="%s", destdir="%s")
                 }
-            """
+            """ % (r_libs, r_libs)
     RExecutor().run_command(script)
 
 
