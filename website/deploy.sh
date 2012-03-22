@@ -1,4 +1,4 @@
 #!/bin/sh
 
 cd _build/html
-cp -R . //mickey/mz$
+cp -v -R . //mickey/mz$
