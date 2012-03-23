@@ -1,1 +1,1 @@
-python emzed.py
+python emzed.pyw

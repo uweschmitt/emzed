@@ -1,0 +1,35 @@
+
+- ABOUT ----------------------------------------------------------------------
+
+
+    eMZed  -- Copyright (c) 2012:
+
+     *  Institute of Microbiology, Department of Biology, ETH Zurich
+     *  Patrick Kiefer
+     *  Uwe Schmitt
+
+
+- INSTRUCTIONS ---------------------------------------------------------------
+
+    Unzip this archive to a local folder.
+
+    If your Python installation works correctly, clicking
+    at install.py should start installation.
+
+    If you get error message concerning "Access denied" you have
+    to start install.py with administrator rights, or you
+    have to install to a local folder where you are allowed
+    to create sub folders and files.
+
+
+- LINKS ----------------------------------------------------------------------
+
+
+    More info at 
+
+        - http://emzed.ethz.ch
+        - http://groups.google.com/group/emzed-users
+
+
+------------------------------------------------------------------------------
+

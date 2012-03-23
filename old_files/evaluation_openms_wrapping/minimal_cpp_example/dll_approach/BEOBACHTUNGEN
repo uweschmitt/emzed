@@ -1,9 +1,0 @@
-
-PRO:
-	- alles in der hand
-
-CONTRA:
-	- viel code schreiben
-        - hohes risiko mem leaks, invalid pointer, etc.....
-	- excption handling schwierig
-        - zwei layer: die cdll und der python wrappper

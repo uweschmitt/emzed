@@ -24,6 +24,9 @@ import emzedPatches
 emzedPatches.patch_spyder()
 
 
+from version import version as emzed_version
+
+
 import os
 try:
     # Test if IPython v0.11+ is installed
@@ -1343,7 +1346,7 @@ class MainWindow(QMainWindow):
         """About eMZed / Spyder"""
         QMessageBox.about(self,
             _("About %s") % "eMZed",
-            """<b>eMZed 1.0</b>
+            """<b>eMZed %s</b>
             <br>Workspace for Analysing LCMS Data
             <p>Copyright &copy; 2012
      <br>- Institute of Microbiology, Department of Biology, ETH Zurich
@@ -1359,7 +1362,7 @@ class MainWindow(QMainWindow):
      <br> - Spyder 2.1.7 <a href="http://code.google.com/p/spyderlib/">http://code.google.com/p/spyderlib</a>
 
 
-        """)
+        """ % emzed_version)
     
     def report_issue(self):
         qt_api = os.environ['QT_API']
