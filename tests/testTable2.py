@@ -7,6 +7,16 @@ def testBinary():
     t2 = t.filter(t.compound.containsElement("Na") | t.compound.containsElement("Cl"))
     assert len(t2) == 2
 
+def testJoinNameGeneration():
+
+    t = ms.toTable("a",[])
+    t2 = t.copy()
+    t = t.join(t2, False)
+    assert t.colNames== ["a", "a__0"]
+    t = t.join(t2, False)
+    assert t.colNames== ["a", "a__0", "a__1"]
+    t = t.join(t.copy(), False)
+    assert t.colNames== ["a", "a__0", "a__1", "a__2", "a__3", "a__4"]
 
 def testEmptyApply():
     t = ms.toTable("a", [])

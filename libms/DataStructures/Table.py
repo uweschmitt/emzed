@@ -1137,15 +1137,20 @@ class Table(object):
         table.rows = rows
         return table
 
-    def maxPostfix(self):
+    def _postfixValues(self):
         "" # no autodoc ?
 
         """ finds postfixes 0, 1, .. in  __0, __1, ... in self.colNames
             an empty postfix "" is recognized as -1 """
         postfixes = set( getPostfix(c) for c in self.colNames )
         postfixes.discard(None) # internal cols starting witn __
-        values = [ -1 if p=="" else int(p[2:]) for p in postfixes ]
-        return  max(values)
+        return [ -1 if p=="" else int(p[2:]) for p in postfixes ]
+
+    def maxPostfix(self):
+        return  max(self._postfixValues())
+
+    def minPostfix(self):
+        return  min(self._postfixValues())
 
     def findPostfixes(self):
         postfixes = set( getPostfix(c) for c in self.colNames )
@@ -1157,15 +1162,16 @@ class Table(object):
         for c in self.colNames:
             pf = getPostfix(c)
             if pf is not None:
-                val = 0 if pf =="" else int(pf[2:])
-                prefix = c if pf == "" else c[:-2]
+                val = -1 if pf =="" else int(pf[2:]) 
+                prefix = c if pf == "" else c.split("__")[0]
                 newName = prefix+"__"+str(by+val)
+                #print "val=%s prefix=%s newName=%s" % (val, prefix, newName)
             newColNames.append(newName)
         return newColNames
 
     def _buildJoinTable(self, t):
 
-        incrementBy = self.maxPostfix()+1
+        incrementBy = self.maxPostfix()-t.minPostfix() + 1
 
         colNames = self.colNames + list(t.incrementedPostfixes(incrementBy))
 
