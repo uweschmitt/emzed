@@ -17,6 +17,9 @@ def testJoinNameGeneration():
     assert t.colNames== ["a", "a__0", "a__1"]
     t = t.join(t.copy(), False)
     assert t.colNames== ["a", "a__0", "a__1", "a__2", "a__3", "a__4"]
+    t.dropColumns("a")
+    t = t.join(t.copy(), False)
+    assert t.colNames== ["a__%d" % i for i in range(10)]
 
 def testEmptyApply():
     t = ms.toTable("a", [])
