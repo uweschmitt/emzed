@@ -9,7 +9,7 @@ files="""
     emzedPatches.py tab.py db.py elements.py abundance.py
     config_logger.py configs.py convert_universals.py example_scripts/
     installConstants.py mass.py splash.png  userConfig.py
-    spyderlib/ """.split()
+    tables spyderlib/ """.split()
 
 
 def split(path):
