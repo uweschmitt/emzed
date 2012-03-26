@@ -176,7 +176,7 @@ class MzExplorer(QDialog):
     def plotMz(self):
         minRT = self.rtPlotter.minRTRangeSelected
         maxRT = self.rtPlotter.maxRTRangeSelected
-        peaks = self.level1Peakmap.ms1Spectrum(minRT, maxRT)
+        peaks = self.level1Peakmap.ms1Peaks(minRT, maxRT)
         self.mzPlotter.resetAxes()
         self.mzPlotter.plot([peaks])
         self.mzPlotter.replot()

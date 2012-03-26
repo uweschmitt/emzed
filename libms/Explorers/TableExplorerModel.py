@@ -3,6 +3,8 @@
 from PyQt4.QtGui import  *
 from PyQt4.QtCore import *
 
+from ..DataStructures.MSTypes import PeakMap
+
 import guidata
 
 import os
@@ -106,7 +108,7 @@ class SortTableAction(TableAction):
         table = self.model.table
         ascending = self.order == Qt.AscendingOrder
         colName = table.colNames[self.dataColIdx]
-        # memory is the permutation which sorted the table rows
+        # 'memory' is the permutation which sorted the table rows
         # sortBy returns this permutation:
         self.memory = table.sortBy(colName, ascending)
         self.model.reset()
@@ -390,10 +392,6 @@ class TableModel(QAbstractTableModel):
     def eicColNames(self):
         return ["peakmap", "mzmin", "mzmax", "rtmin", "rtmax"]
 
-    def getEicValues(self, rowIdx, p):
-        get = lambda nn: self.table.get(self.table.rows[rowIdx], nn+p)
-        return dict((nn+p, get(nn)) for nn in self.eicColNames())
-
     def hasFeatures(self):
         return self.checkForAny(*self.eicColNames())
 
@@ -447,6 +445,8 @@ class TableModel(QAbstractTableModel):
         peakMaps = []
         for p in self.table.supportedPostfixes(["peakmap"]):
             pm = self.table.get(self.table.rows[rowIdx], "peakmap"+p)
+            if pm is None:
+                pm = PeakMap([])
             peakMaps.append(pm)
         return peakMaps
 
@@ -454,15 +454,15 @@ class TableModel(QAbstractTableModel):
         spectra=[]
         postfixes = []
         for p in self.table.supportedPostfixes(self.eicColNames()):
-            #values = self.getEicValues(rowIdx, p)
             values = self.table.get(self.table.rows[rowIdx], None)
             pm = values["peakmap"+p]
             rtmin = values["rtmin"+p]
             rtmax = values["rtmax"+p]
-            for spec in pm.levelNSpecs(minLevel, maxLevel):
-                if rtmin <= spec.rt <= rtmax:
-                    spectra.append(spec)
-                    postfixes.append(p)
+            if pm is not None and rtmin is not None and rtmax is not None:
+                for spec in pm.levelNSpecs(minLevel, maxLevel):
+                    if rtmin <= spec.rt <= rtmax:
+                        spectra.append(spec)
+                        postfixes.append(p)
         return postfixes, spectra
 
     def getEics(self, rowIdx):
@@ -473,21 +473,20 @@ class TableModel(QAbstractTableModel):
         rtmaxs = []
         allrts = []
         for p in self.table.supportedPostfixes(self.eicColNames()):
-            #values = self.getEicValues(rowIdx, p)
             values = self.table.get(self.table.rows[rowIdx], None)
             pm = values["peakmap"+p]
             mzmin = values["mzmin"+p]
             mzmax = values["mzmax"+p]
             rtmin = values["rtmin"+p]
             rtmax = values["rtmax"+p]
-            rtmins.append(rtmin)
-            rtmaxs.append(rtmax)
-            if mzmin is None or mzmax is None:
+            if mzmin is None or mzmax is None or rtmin is None or rtmax is None:
                 chromo = [],[]
             else:
                 chromo = pm.chromatogram(mzmin, mzmax)
                 mzmins.append(mzmin)
                 mzmaxs.append(mzmax)
+                rtmins.append(rtmin)
+                rtmaxs.append(rtmax)
             eics.append(chromo)
             allrts.extend(chromo[0])
         if not mzmins:

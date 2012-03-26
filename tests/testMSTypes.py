@@ -39,13 +39,13 @@ class TestMSTypes(object):
         assert os.path.basename(pm.meta["source"]) ==  basename
 
         rtmin, rtmax = pm.rtRange()
-        ms1s = pm.ms1Spectrum(rtmin, rtmax)
+        ms1s = pm.ms1Peaks(rtmin, rtmax)
         assert ms1s.shape == (1797, 2), ms1s.shape
 
-        ms1s2 = pm.ms1Spectrum(rtmax=rtmax)
+        ms1s2 = pm.ms1Peaks(rtmax=rtmax)
         assert np.all(ms1s == ms1s2)
 
-        ms1s3 = pm.ms1Spectrum(rtmin=0)
+        ms1s3 = pm.ms1Peaks(rtmin=0)
         assert np.all(ms1s == ms1s3)
 
         spec = pm.spectra[0]
@@ -118,8 +118,17 @@ class TestMSTypes(object):
         PeakMap(pm.spectra) 
 
 
-
-
+    def testEmptyPeakMap(self):
+        pm = PeakMap([])
+        assert pm.extract(0, 9999, 0, 10000).spectra == []
+        assert pm.filter(lambda t: True).spectra == []
+        assert pm.specsInRange(0, 10e6) == []
+        assert pm.levelOneSpecsInRange(0, 10e6) == []
+        assert pm.chromatogram(0, 10e6, 0, 10e6) == ([], [])
+        assert pm.ms1Peaks(0, 10e6).tolist() == []
+        assert pm.allRts() == []
+        assert pm.levelOneRts() == []
+        assert pm.levelNSpecs(1,2) == []
 
     def compare_exp(self, pm, exp, basename):
 

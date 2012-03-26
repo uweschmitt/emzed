@@ -158,15 +158,18 @@ class PeakMap(object):
         intensities = [s.intensityInRange(mzmin, mzmax) for s in specs]
         return rts, intensities
 
-    def ms1Spectrum(self, rtmin=None, rtmax=None):
+    def ms1Peaks(self, rtmin=None, rtmax=None):
         if rtmin is None:
             rtmin = self.spectra[0].rt
         if rtmax is None:
             rtmax = self.spectra[-1].rt
         specs = self.levelOneSpecsInRange(rtmin, rtmax)
-        peaks = np.vstack([s.peaks for s in specs])
-        perm = np.argsort(peaks[:,0])
-        return peaks[perm,:]
+        # following vstack does not like empty sequence, so:
+        if len(specs):
+            peaks = np.vstack([s.peaks for s in specs])
+            perm = np.argsort(peaks[:,0])
+            return peaks[perm,:]
+        return np.zeros((0,2), dtype=float)
 
     def allRts(self):
         return [spec.rt for spec in self.spectra]

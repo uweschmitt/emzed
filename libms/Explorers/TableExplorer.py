@@ -477,18 +477,18 @@ class TableExplorer(QDialog):
 
         # get spectra for current row in given rt-range:
         peakmaps = self.model.getPeakmaps(self.currentRowIdx)
-        spectra = [pm.ms1Spectrum(rtmin, rtmax) for pm in peakmaps]
+        peaks = [pm.ms1Peaks(rtmin, rtmax) for pm in peakmaps]
 
-        # plot spectra
-        configs = configsForSpectra(spectra)
+        # plot peaks
+        configs = configsForSpectra(peaks)
         postfixes = self.model.table.supportedPostfixes(self.model.eicColNames())
         titles = map(repr, postfixes)
-        self.mzPlotter.plot(spectra, configs, titles if len(titles)>1 else None)
+        self.mzPlotter.plot(peaks, configs, titles if len(titles)>1 else None)
 
         if resetLimits:
             mzmin, mzmax = resetLimits
             Imaxes = []
-            for p  in spectra:
+            for p  in peaks:
                 imin = p[:,0].searchsorted(mzmin)
                 imax = p[:,0].searchsorted(mzmax, side='right')
                 found = p[imin:imax,1]
