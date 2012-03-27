@@ -149,6 +149,8 @@ class PeakMap(object):
                                              and spec.msLevel == 1]
 
     def chromatogram(self, mzmin, mzmax, rtmin=None, rtmax=None):
+        if not self.spectra:
+            return [], []
         if rtmin is None:
             rtmin = self.spectra[0].rt
         if rtmax is None:

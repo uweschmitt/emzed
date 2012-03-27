@@ -125,6 +125,7 @@ class TestMSTypes(object):
         assert pm.specsInRange(0, 10e6) == []
         assert pm.levelOneSpecsInRange(0, 10e6) == []
         assert pm.chromatogram(0, 10e6, 0, 10e6) == ([], [])
+        assert pm.chromatogram(0, 10e6) == ([], [])
         assert pm.ms1Peaks(0, 10e6).tolist() == []
         assert pm.allRts() == []
         assert pm.levelOneRts() == []
