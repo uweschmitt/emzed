@@ -36,7 +36,6 @@ peakIntegrators = [ ( "std",  SGIntegrator(window_size=11, order=2) ) ,
                    ]
 
 
-assert "std" in set(k for k, i in peakIntegrators), "integratorid 'std' missing"
 
 
 import os.path
@@ -57,3 +56,5 @@ for p in repositoryPathes:
         dd = locals()
         dd["is_exec"]=True
         execfile(pp, globals(), dd)
+
+assert "std" in set(k for k, i in peakIntegrators), "integratorid 'std' missing"
