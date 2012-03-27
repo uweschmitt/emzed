@@ -329,7 +329,7 @@ class MzPlot(ModifiedCurvePlot):
             and zooms to them
         """
 
-        if self.centralMz is None:
+        if not hasattr(self, "centralMz") or self.centralMz is None:
             mz = self.get_unique_item(Marker).xValue()
         else:
             mz = self.centralMz
