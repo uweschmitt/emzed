@@ -114,7 +114,8 @@ class PubChemDB(object):
     def __init__(self, path=None):
         self.path = path
         if path is not None and os.path.exists(path):
-            self.table = cPickle.load(open(path,"rb"))
+            #self.table = cPickle.load(open(path,"rb"))
+            self.table = Table.load(path)
             self.table.resetInternals()
         else:
             self.table = self._emptyTable()
@@ -181,7 +182,8 @@ class PubChemDB(object):
             path = self.path
         assert path is not None, "no path given in constructor nor as argument"
         # + for win issues on network drives:
-        cPickle.dump(self.table, open(path,"w+b"))
+        self.table.store(path, forceOverwrite=True)
+        #cPickle.dump(self.table, open(path,"w+b"))
 
     def __getattr__(self, colName):
         return getattr(self.table, colName)

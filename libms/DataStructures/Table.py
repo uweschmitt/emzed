@@ -486,12 +486,10 @@ class Table(object):
 
         Latter the file can be loaded with :py:meth:`~libms.DataStructures.Table.load`
         """
-        if not os.path.splitext(path)[1].upper()==".TABLE":
-            raise Exception("%s has wrong extension, need .table" % path)
         if not forceOverwrite and os.path.exists(path):
             raise Exception("%s exists. You may use forceOverwrite=True" % path)
         with open(path, "w+b") as fp:
-            cPickle.dump(self, fp)
+            cPickle.dump(self, fp, protocol=2)
 
     @staticmethod
     def load(path):
