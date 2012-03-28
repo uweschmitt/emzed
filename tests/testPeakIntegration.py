@@ -78,7 +78,7 @@ def testPeakIntegration():
 
     run(integrator,  120481.9, 0.0)
 
-    integrator = dict(configs.peakIntegrators)["sgolay"]
+    integrator = dict(configs.peakIntegrators)["std"]
     run(integrator,  119149.7, 6854.8)
 
 
