@@ -170,13 +170,13 @@ class IntegrateAction(TableAction):
 
     def do(self):
         #pyqtRemoveInputHook()
-        integrator = dict(configs.peakIntegrators)[self.method]
+        integrator = dict(configs.peakIntegrators).get(self.method)
         table = self.model.table
         # returns Bunch which sublcasses dict
         args = table.get(table.rows[self.idx], None)
         postfix = self.postfix
 
-        if all(args[f+postfix]
+        if integrator and all(args[f+postfix]
                is not None
                for f in ["mzmin", "mzmax", "rtmin", "rtmax", "peakmap"]):
 
@@ -434,9 +434,10 @@ class TableModel(QAbstractTableModel):
             values = self.getIntegrationValues(rowIdx, p)
             method = values["method"+p]
             params = values["params"+p]
-            integrator = dict(configs.peakIntegrators)[method]
-            data = integrator.getSmoothed(rts, params)
-            if data is None:
+            integrator = dict(configs.peakIntegrators).get(method)
+            if method is not None:
+                data = integrator.getSmoothed(rts, params)
+            if method is None or data is None:
                 data = ([], [])
             allsmoothed.append(data)
         return allsmoothed
