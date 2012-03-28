@@ -77,7 +77,7 @@ class PubChemDB(object):
         doc = etree.fromstring(data)
         items = []
         for summary in doc[0]:
-            cid = summary.findall("CID")[0].text
+            cid = int(summary.findall("CID")[0].text)
             mw = float(summary.findall("MolecularWeight")[0].text)
             mf = summary.findall("MolecularFormula")[0].text
             iupac = summary.findall("IUPACName")[0].text
