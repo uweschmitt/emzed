@@ -73,8 +73,8 @@ def loadCSV(path=None, sep=";", **specialFormats):
     with open(path,"r") as fp:
         # remove clutter at right margin
         reader = csv.reader(fp, delimiter=sep)
+        # reduce multiple spaces to single underscore
         colNames = [ re.sub(" +", "_", n.strip()) for n in reader.next()]
-        colNames = [ re.sub("_+", "_", n) for n in colNames]
         rows = [ [bestConvert(c.strip()) for c in row] for row in reader]
 
 
