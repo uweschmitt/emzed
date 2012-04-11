@@ -79,7 +79,7 @@ def loadCSV(path=None, sep=";", keepNone = False, **specialFormats):
         if keepNone:
             conv = bestConvert
         else:
-            conv = lambda v: bestConvert(None if v=="None" else v)
+            conv = lambda v: None if v=="None" else bestConvert(v)
 
         rows = [ [conv(c.strip()) for c in row] for row in reader]
 
