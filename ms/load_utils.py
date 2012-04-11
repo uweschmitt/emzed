@@ -57,7 +57,7 @@ def loadTable(path=None):
 
     return Table.load(path)
 
-def loadCSV(path=None, sep=";", **specialFormats):
+def loadCSV(path=None, sep=";", keepNone = False, **specialFormats):
     # local import in order to keep namespaces clean
     import ms
     import csv, os.path, sys, re
@@ -75,7 +75,13 @@ def loadCSV(path=None, sep=";", **specialFormats):
         reader = csv.reader(fp, delimiter=sep)
         # reduce multiple spaces to single underscore
         colNames = [ re.sub(" +", "_", n.strip()) for n in reader.next()]
-        rows = [ [bestConvert(c.strip()) for c in row] for row in reader]
+
+        if keepNone:
+            conv = bestConvert
+        else:
+            conv = lambda v: bestConvert(None if v=="None" else v)
+
+        rows = [ [conv(c.strip()) for c in row] for row in reader]
 
 
     columns = [[row[i] for row in rows] for i in range(len(colNames))]
