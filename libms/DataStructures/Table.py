@@ -239,7 +239,7 @@ class Table(object):
             to get the values of the colum you can use
             ``table.getColumn("index").values``.
 
-            See: :py:meth:`~libms.DataStructures.Expressions.ColumnExpression`
+            See: :py:class:`~libms.DataStructures.Expressions.ColumnExpression`
         """
         return getattr(self, name)
 
@@ -484,7 +484,7 @@ class Table(object):
         coresponding peakMaps are written too.
         The file name extension must be ".table".
 
-        Latter the file can be loaded with :py:meth:`~libms.DataStructures.Table.load`
+        Latter the file can be loaded with :py:meth:`~.load`
         """
         if not forceOverwrite and os.path.exists(path):
             raise Exception("%s exists. You may use forceOverwrite=True" % path)
@@ -493,7 +493,7 @@ class Table(object):
 
     @staticmethod
     def load(path):
-        """loads a table stored with :py:meth:`~libms.DataStructures.Table.store`
+        """loads a table stored with :py:meth:`~.store`
 
            **Note**: as this is a static method, it has to be called as
            ``tab = Table.load("xzy.table")``
@@ -642,7 +642,7 @@ class Table(object):
 
         For the values ``what`` you can use
 
-           - an expression (see :py:mod:`~libms.DataStructures.Expressions`)
+           - an expression (see :py:class:`~libms.DataStructures.Expressions`)
              as ``table.addColumn("diffrt", table.rtmax-table.rtmin)``
            - a callback with signature ``callback(table, row, name)``
            - a constant value
@@ -666,7 +666,7 @@ class Table(object):
         """
         Replaces the column ``name`` if it exists. Else the column is added.
 
-        For the parameters see :py:meth:`~libms.DataStructures.Table.addColumn`
+        For the parameters see :py:meth:`~.addColumn`
         """
         if self.hasColumn(name):
             self.dropColumns(name)
@@ -678,7 +678,7 @@ class Table(object):
         adds a column **inplace**.
 
         For the meaning of the  parameters
-        see :py:meth:`~libms.DataStructures.Table.replaceColumn`
+        see :py:meth:`~.replaceColumn`
 
         If you do not want the column be added at the end, one can use
         ``insertBefore``, which maybe the name of an existing column, or an
@@ -767,10 +767,10 @@ class Table(object):
     def addConstantColumn(self, name, value, type_=None, format="",\
                           insertBefore=None):
         """
-        see :py:meth:`~libms.DataStructures.Table.addColumn`.
+        see :py:meth:`~.addColumn`.
 
         ``value`` is inserted in the column, despite its class. So the
-        cases in py:meth:`addColumn` are not considered, which is useful,
+        cases in py:meth:`~.addColumn` are not considered, which is useful,
         eg. if you want to set all cells in a column to as ``list``.
         """
 
@@ -1079,10 +1079,10 @@ class Table(object):
     def leftJoin(self, t, expr, debug = False, progress=False):
         """performs an *left join* also known as *outer join* of two tables.
 
-           It works similar to :py:meth:`~libms.DataStructures.Table.join` 
+           It works similar to :py:meth:`~.join` 
            but keeps nonmatching rows of
            the first table. So if we take the example from 
-           :py:meth:`~libms.DataStructures.Table.join` 
+           :py:meth:`~.join` 
 
            Then the result of ``t1.leftJoin(t2, (t1.mz >= t2.mz -20) & (t1.mz <= t2.mz + 20)``
            is

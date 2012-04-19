@@ -90,8 +90,16 @@ class Spectrum(object):
 
 class PeakMap(object):
 
+    """ This is the container object for spectra of type :ref:Spectrum.
+        Peakmaps can be loaded from .mzML, .mxXML or .mzData files,
+        using :py:func:`~ms.loadPeakMap`
+    """
+ 
+
     def __init__(self, spectra, meta=dict()):
         self.spectra = spectra
+        """ attribute spectra is a list of objects of type 
+            :py:class:`~.Spectrum` """
         self.meta = meta
         polarities = set(spec.polarity for spec in spectra)
         if len(polarities) > 1:
@@ -136,12 +144,21 @@ class PeakMap(object):
 
 
     def filter(self, condition):
+        """ builds new peakmap where ``condition(s)`` is ``True`` for
+            spectra ``s`
+        """
         return PeakMap([s for s in self.spectra if condition(s)], self.meta)
 
     def specsInRange(self, rtmin, rtmax):
+        """
+        returns list of spectra with rt values in range ``rtmin...rtmax``
+        """
         return [spec for spec in self.spectra if rtmin <= spec.rt <= rtmax]
 
     def levelOneSpecsInRange(self, rtmin, rtmax):
+        """
+        returns lists level one spectra in peakmap
+        """
         # rt values can be truncated/rounded from gui or other sources,
         # so wie dither the limits a bit, spaces in realistic rt values
         # are much higher thae 1e-2 seconds
@@ -149,6 +166,13 @@ class PeakMap(object):
                                              and spec.msLevel == 1]
 
     def chromatogram(self, mzmin, mzmax, rtmin=None, rtmax=None):
+        """
+        extracts chromatorgram in given rt- and mz-window.
+        returns a tuple ``(rts, intensities)`` where ``rts`` is a list of
+        rt values (in seconds, as allways)  and ``intensities`` is a 
+        list of same lenght containing the summed up peaks for each
+        rt value.
+        """
         if not self.spectra:
             return [], []
         if rtmin is None:

@@ -118,8 +118,13 @@ For an example see  :ref:`dialogbuilder_example`
 I/O
 ~~~
 
+.. autofunction:: ms.loadPeakMap
 .. autofunction:: ms.storePeakMap
+
+.. autofunction:: ms.loadCSV
 .. autofunction:: ms.storeCSV
+
+.. autofunction:: ms.loadTable
 .. autofunction:: ms.storeTable
 
 
