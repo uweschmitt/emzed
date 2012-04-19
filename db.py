@@ -15,7 +15,12 @@ if not os.environ.get("NO_PUBCHEM_UPDATE"):
             print len(newIds), "NEW ENTRIES"
         if missingIds:
             print len(missingIds), "DELETED ENTRIES"
-        if os.access(exchangeFolder, os.W_OK):
+        writable = True
+        try:
+            open(os.path.join(exchangeFolder, "_test"), "w")
+        except IOError:
+            writable = False
+        if writable:
             pubChemDB.update()
             print "WRITE CURRENT DB"
             pubChemDB.store()
