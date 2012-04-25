@@ -1,12 +1,5 @@
 import functools, inspect, sys
 
-
-try:
-    LLL
-except:
-
-    from config_logger import do_config
-    do_config()    
   
 def replace( orig_func, target=None, verbose=False):
    
@@ -20,13 +13,11 @@ def replace( orig_func, target=None, verbose=False):
         if inspect.ismethod(orig_func):
             if target is None:
                 target =  orig_func.im_class
-            LLL.debug("replace method %s in %s with %s" %( orig_func, target, new_func))
             setattr(target, orig_func.__name__, wrapper)
             setattr(target, "_orig_%s" % orig_func.__name__, orig_func)
         elif inspect.isfunction(orig_func):
             if target is None:
                 target = sys.modules[orig_func.__module__]
-            LLL.debug("replace function %s in %s with %s" %( orig_func, target, new_func))
             setattr(target, orig_func.func_name, wrapper)
             setattr(target, "_orig_%s" % orig_func.__name__, orig_func)
         else:
@@ -40,8 +31,6 @@ def replace( orig_func, target=None, verbose=False):
 def add(target, verbose=False):
 
     def decorator(new_func, target=target):
-
-        LLL.debug("add %s to %s" % (new_func, target))
         setattr(target, new_func.__name__, new_func)
 
     return decorator

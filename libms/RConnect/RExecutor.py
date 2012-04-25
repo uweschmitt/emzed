@@ -25,10 +25,8 @@ class RExecutor(object):
     def __init__(self):
 
         self.rHome = RExecutor.findRHome()
-        LLL.debug("found R home at "+self.rHome)
         rExe  = RExecutor.findRExe(self.rHome)
         self.rExe = win32api.GetShortPathName(rExe)
-        LLL.debug("found R.exe at "+self.rExe)
 
     @staticmethod
     def findRHome():

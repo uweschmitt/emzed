@@ -1,9 +1,12 @@
 import urllib, urllib2
 import time, os
 import xml.etree.ElementTree  as etree
-import cPickle
 from ..DataStructures.Table import Table
 from ..Chemistry.Tools import monoisotopicMass
+
+import logging
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+
 
 
 class PubChemDB(object):
@@ -48,6 +51,7 @@ class PubChemDB(object):
         url="http://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
         req = urllib2.Request(url, urllib.urlencode(data))
         resp = urllib2.urlopen(req)
+
         data = resp.read()
         if len(data)==0:
             print "FAILED TO CONNECT"
@@ -128,18 +132,22 @@ class PubChemDB(object):
         return len(self.table)
 
     def getDiff(self, maxIds = None):
-        counts = PubChemDB._get_count()
-        unknown = []
-        missing = []
-        if counts!=len(self.table):
-            uis = set(PubChemDB._get_uilist(maxIds))
-            known_uis = set(self.table.cid.values)
-            unknown = list(uis - known_uis)
-            missing = list(known_uis-uis)
-        return unknown, missing
+        try:
+            counts = PubChemDB._get_count()
+            unknown = []
+            missing = []
+            if counts!=len(self.table):
+                uis = set(PubChemDB._get_uilist(maxIds))
+                if uis is not None:
+                    known_uis = set(self.table.cid.values)
+                    unknown = list(uis - known_uis)
+                    missing = list(known_uis-uis)
+            return unknown, missing
+        except Exception, e:
+            logging.error(e)
+            return [], [] # failed
 
     def reset(self):
-        #ids = PubChemDB._get_uilist()
         self.table = self._emptyTable()
         self.update()
         self.store()
@@ -148,6 +156,13 @@ class PubChemDB(object):
         return monoisotopicMass(table.get(row, "mf"))
 
     def update(self, maxIds=None):
+        try:
+            self._update(maxIds)
+        except Exception, e:
+            logging.error(e)
+
+
+    def _update(self, maxIds):
 
         newIds, missingIds = self.getDiff()
         if maxIds is not None:
@@ -174,16 +189,13 @@ class PubChemDB(object):
         url = "http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?cid="
         self.table.addColumn("url", url+self.table.cid.apply(str), type_=str)
         self.table.addColumn("m0", self.massCalculator, type_=float, format="%.7f", insertBefore="mw")
-        #self.table = self.table.filter(self.table.m0 != None)
         self.table.sortBy("m0")# build index
 
     def store(self, path=None):
         if path is None:
             path = self.path
         assert path is not None, "no path given in constructor nor as argument"
-        # + for win issues on network drives:
         self.table.store(path, forceOverwrite=True)
-        #cPickle.dump(self.table, open(path,"w+b"))
 
     def __getattr__(self, colName):
         return getattr(self.table, colName)
