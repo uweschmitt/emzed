@@ -118,7 +118,6 @@ class PubChemDB(object):
     def __init__(self, path=None):
         self.path = path
         if path is not None and os.path.exists(path):
-            #self.table = cPickle.load(open(path,"rb"))
             self.table = Table.load(path)
             self.table.resetInternals()
         else:
