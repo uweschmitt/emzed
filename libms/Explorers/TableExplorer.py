@@ -247,7 +247,11 @@ class TableExplorer(QDialog):
     def connectSignals(self):
         for i, action in enumerate(self.chooseTableActions):
             def handler(i=i):
-                self.setupViewForTable(i)
+                try:
+                    self.setupViewForTable(i)
+                except Exception, e:
+                    print e
+                    pass
             self.menubar.connect(action, SIGNAL("triggered()"), handler)
 
         for view in self.tableViews:
@@ -258,7 +262,10 @@ class TableExplorer(QDialog):
 
             self.connect(vh, SIGNAL("sectionClicked(int)"), self.rowClicked)
             def handleClick(index, model=view.model()):
-                self.handleClick(index, model)
+                try:
+                    self.handleClick(index, model)
+                except Exception, e:
+                    print e
             self.connect(view, SIGNAL("clicked(QModelIndex)"), handleClick)
 
         self.connect(self.reintegrateButton, SIGNAL("clicked()"),
@@ -332,13 +339,16 @@ class TableExplorer(QDialog):
 
     def dataChanged(self, ix1, ix2, src):
         # updates plots
-        if self.hasFeatures:
-            minr, maxr = sorted((ix1.row(), ix2.row()))
-            if minr <= self.currentRowIdx <= maxr:
-                if isinstance(src, IntegrateAction):
-                    self.updatePlots(reset=False)
-                else:
-                    self.updatePlots(reset=True)
+        try:
+            if self.hasFeatures:
+                minr, maxr = sorted((ix1.row(), ix2.row()))
+                if minr <= self.currentRowIdx <= maxr:
+                    if isinstance(src, IntegrateAction):
+                        self.updatePlots(reset=False)
+                    else:
+                        self.updatePlots(reset=True)
+        except Exception, e:
+            print e
 
     def abort(self):
         self.result = 1
@@ -349,6 +359,12 @@ class TableExplorer(QDialog):
         self.close()
 
     def openContextMenu(self, point):
+        try:
+            self._openContextMenu(point)
+        except Exception, e:
+            print e
+
+    def _openContextMenu(self, point):
         idx = self.tableView.verticalHeader().logicalIndexAt(point)
         menu = QMenu()
         cloneAction = menu.addAction("Clone row")
@@ -372,25 +388,32 @@ class TableExplorer(QDialog):
             self.model.redoLastAction()
 
     def doIntegrate(self):
-        if self.currentRowIdx < 0:
-            return # no row selected
+        try:
+            if self.currentRowIdx < 0:
+                return # no row selected
 
-        # QString -> Python str:
-        method = str(self.chooseIntMethod.currentText())
-        # Again QString -> Python str.
-        # For better readibilty we put single quotes around the postfix
-        # entry in the QComboBox which we have to remove now:
-        postfix = str(self.choosePostfix.currentText()).strip("'")
-        rtmin, rtmax = self.rtPlotter.getRangeSelectionLimits()
-        self.model.integrate(postfix, self.currentRowIdx, method, rtmin, rtmax)
+            # QString -> Python str:
+            method = str(self.chooseIntMethod.currentText())
+            # Again QString -> Python str.
+            # For better readibilty we put single quotes around the postfix
+            # entry in the QComboBox which we have to remove now:
+            postfix = str(self.choosePostfix.currentText()).strip("'")
+            rtmin, rtmax = self.rtPlotter.getRangeSelectionLimits()
+            self.model.integrate(postfix, self.currentRowIdx, method, rtmin, rtmax)
+        except Exception, e:
+            print e
 
     def rowClicked(self, rowIdx):
-        if not self.hasFeatures: return
-        self.currentRowIdx = rowIdx
-        self.rtPlotter.setEnabled(True)
-        self.updatePlots(reset=True)
-        if self.hasFeatures:
-            self.setupSpectrumChooser()
+        try:
+            if not self.hasFeatures: return
+            self.currentRowIdx = rowIdx
+            self.rtPlotter.setEnabled(True)
+            self.updatePlots(reset=True)
+            if self.hasFeatures:
+                self.setupSpectrumChooser()
+        except Exception, e:
+            print e
+
 
     def setupSpectrumChooser(self):
         # delete QComboBox:
@@ -456,18 +479,21 @@ class TableExplorer(QDialog):
         self.plotMz(resetLimits=limits)
 
     def spectrumChosen(self, idx):
-        if idx==0:
-            self.rtPlotter.setEnabled(True)
-            self.chooseIntMethod.setEnabled(True)
-            self.reintegrateButton.setEnabled(True)
-            self.plotMz()
-        else:
-            self.rtPlotter.setEnabled(False)
-            self.chooseIntMethod.setEnabled(False)
-            self.reintegrateButton.setEnabled(False)
-            self.mzPlotter.plot([self.currentLevelNSpecs[idx-1].peaks])
-            self.mzPlotter.resetAxes()
-            self.mzPlotter.replot()
+        try:
+            if idx==0:
+                self.rtPlotter.setEnabled(True)
+                self.chooseIntMethod.setEnabled(True)
+                self.reintegrateButton.setEnabled(True)
+                self.plotMz()
+            else:
+                self.rtPlotter.setEnabled(False)
+                self.chooseIntMethod.setEnabled(False)
+                self.reintegrateButton.setEnabled(False)
+                self.mzPlotter.plot([self.currentLevelNSpecs[idx-1].peaks])
+                self.mzPlotter.resetAxes()
+                self.mzPlotter.replot()
+        except Exception, e:
+            print e
 
     def plotMz(self, resetLimits=None):
         """ this one is used from updatePlots and the rangeselectors

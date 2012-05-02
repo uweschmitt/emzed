@@ -77,17 +77,24 @@ class MzExplorer(QDialog):
             print e
 
     def levelNSpecChosen(self, idx):
-        if idx == 0:
-            self.plotMz()
-        else:
-            spec = self.levelNSpecs[idx-1]
-            self.mzPlotter.plot([spec.peaks])
-            self.mzPlotter.resetAxes()
-            self.mzPlotter.replot()
-        self.rtPlotter.setEnabled(idx==0)
+        try:
+            if idx == 0:
+                self.plotMz()
+            else:
+                spec = self.levelNSpecs[idx-1]
+                self.mzPlotter.plot([spec.peaks])
+                self.mzPlotter.resetAxes()
+                self.mzPlotter.replot()
+            self.rtPlotter.setEnabled(idx==0)
+        except Exception, e:
+            print e
 
     def resetButtonPressed(self):
-        self.resetMzLimits()
+        try:
+            self.resetMzLimits()
+        except Exception, e:
+            print e
+
 
     def resetMzLimits(self):
         self.minMZ = self.absMinMZ
@@ -145,11 +152,11 @@ class MzExplorer(QDialog):
         except:
             pass
     def mzUpdated(self, txt):
-        txt = str(txt)
-        if txt.strip()=="":
-            self.mzPlotter.setCentralMz(None)
-            return
         try:
+            txt = str(txt)
+            if txt.strip()=="":
+                self.mzPlotter.setCentralMz(None)
+                return
             self.mzPlotter.setCentralMz(float(txt))
         except:
             pass
