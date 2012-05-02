@@ -1,8 +1,7 @@
-import functools, inspect, sys
+import inspect, sys
 
-  
 def replace( orig_func, target=None, verbose=False):
-   
+
     def decorator(new_func, target=target):
 
         def wrapper(*a, **kw):
