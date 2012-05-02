@@ -734,6 +734,9 @@ class AggregateExpression(BaseExpression):
             return values[0]
         return None
 
+    def _evalsize(self):
+        return 1
+
 
 class LogicExpression(BaseExpression):
 
