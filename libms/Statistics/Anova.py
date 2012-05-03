@@ -59,8 +59,8 @@ def _runStatistcsOnTables(tableSet1, tableSet2, idColumn, valueColumn,
 
         result.addRow([id_,
                       len(samples1), len(samples2),
-                      _numpy.mean(samples1), _numpy.mean(samples2),
-                      _numpy.std(samples1), _numpy.std(samples2),
+                      _numpy.mean(samples1), _numpy.std(samples1),
+                      _numpy.mean(samples2), _numpy.std(samples2),
                       p])
     return result
 
