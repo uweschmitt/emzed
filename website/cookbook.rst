@@ -25,8 +25,9 @@ The following code gives does not work correctly:
 This code will in most cases not delete all columns with a name ending
 with "__0" as the columnames we iterate over change during iteration.
 
-With the little modification in the for statment the code
-works:
+With the little modification in the *for* statment the code
+works, we iterate over **a copy** of the list containing the column
+names:
 
 .. pycon::
    for name in t.colNames[:]:  !noexec
