@@ -5,10 +5,11 @@ import userConfig
 root = userConfig.getExchangeFolder()
 
 # all installled libs will get to local folder
-R_LIBS=os.path.join(root, "r_libs")
-os.environ["R_LIBS"] = R_LIBS
-if not os.path.exists(R_LIBS):
-    os.makedirs(R_LIBS)
+if root is not None:
+    R_LIBS=os.path.join(root, "r_libs")
+    os.environ["R_LIBS"] = R_LIBS
+    if not os.path.exists(R_LIBS):
+        os.makedirs(R_LIBS)
 
 from ..intern_utils import TemporaryDirectoryWithBackup
 
@@ -116,5 +117,3 @@ class RExecutor(object):
             with TemporaryDirectoryWithBackup() as dir_:
                 return run(dir_, command)
 
-if __name__ == "__main__":
-   RExecutor().test()

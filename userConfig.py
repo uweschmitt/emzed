@@ -77,6 +77,11 @@ def getDataHome():
 def getExchangeFolder():
     folder = _GlobalConfig().getExchangeFolder()
     if folder:
+        try:
+            os.stat(folder)
+        except:
+            # not reachable, may happen for network folders
+            return None
         return folder
     # no global exchange folder set, use local folder instead:
     exchangeFolder = os.path.join(getDataHome(), "shared")

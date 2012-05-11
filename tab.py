@@ -55,20 +55,21 @@ elements = Elements()
 # next line only valid after execution of 100loadpubchem.py during
 # startup:
 
-if not os.environ.get("WITHOUT_PUBCHEM"):
+if not os.environ.get("WITHOUT_PUBCHEM"): 
     import db
-    pc_full = db.pubChemDB.table
-    pc_full = pc_full.filter(pc_full.m0 != None)
+    if db.pubChemDB is not None:
+        pc_full = db.pubChemDB.table
+        pc_full = pc_full.filter(pc_full.m0 != None)
 
-    # older versions have camel case colulmnname
-    if pc_full.hasColumn("isInKEGG"):
-        pc_kegg = pc_full.filter(pc_full.isInKEGG == 1)
-    else:
-        pc_kegg = pc_full.filter(pc_full.is_in_kegg == 1)
-    if pc_full.hasColumn("isInHMDB"):
-        pc_hmdb = pc_full.filter(pc_full.isInHMDB == 1)
-    else:
-        pc_hmdb = pc_full.filter(pc_full.is_in_hmdb == 1)
+        # older versions have camel case colulmnname
+        if pc_full.hasColumn("isInKEGG"):
+            pc_kegg = pc_full.filter(pc_full.isInKEGG == 1)
+        else:
+            pc_kegg = pc_full.filter(pc_full.is_in_kegg == 1)
+        if pc_full.hasColumn("isInHMDB"):
+            pc_hmdb = pc_full.filter(pc_full.isInHMDB == 1)
+        else:
+            pc_hmdb = pc_full.filter(pc_full.is_in_hmdb == 1)
     del db
 
 del repositoryPathes

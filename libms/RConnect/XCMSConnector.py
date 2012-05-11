@@ -7,7 +7,15 @@ import os, sys
 from ..intern_utils import TemporaryDirectoryWithBackup
 from pyOpenMS import FileHandler
 
+from userConfig import getExchangeFolder
+
+exchangeFolderAvailable = getExchangeFolder() is not None
+
 def installXcmsIfNeeded():
+
+    if not exchangeFolderAvailable:
+        print "no xcms install as exchange folder is not available"
+        return 
 
     R_LIBS = os.environ.get("R_LIBS")
     if R_LIBS == None:
@@ -29,6 +37,10 @@ def installXcmsIfNeeded():
 
 def lookForXcmsUpgrades():
 
+    if not exchangeFolderAvailable:
+        print "no xcms upgrade check as exchange folder is not available"
+        return 
+
     script = """
                  source("http://bioconductor.org/biocLite.R")
                  todo <- old.packages(repos=biocinstallRepos())
@@ -41,6 +53,10 @@ def lookForXcmsUpgrades():
         print num, "updates found"
 
 def doXcmsUpgrade():
+
+    if not exchangeFolderAvailable:
+        print "no xcms upgrade as exchange folder is not available"
+        return 
 
     script = """
      source("http://bioconductor.org/biocLite.R")
