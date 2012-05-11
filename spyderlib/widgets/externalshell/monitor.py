@@ -561,10 +561,10 @@ class Monitor(threading.Thread):
                     logging.debug("error!")
                 context = dict(glbs=glbs, lcls=lcls, command=command)
                 log_last_error(LOG_FILENAME, context)
-                logging.error("Exception: %s" % e)
-                logging.error("command: %s" % command)
-                logging.error("glbs: %s" % glbs)
-                logging.error("lcls: %s" % lcls)
+                print "Exception %s in monitor thread" % e
+                print "  command: %s" % command
+                print "  glbs: %s" % glbs
+                print "  lcls: %s" % lcls
             finally:
                 try:
                     if DEBUG:
