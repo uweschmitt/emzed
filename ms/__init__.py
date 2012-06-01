@@ -14,8 +14,6 @@ from libms.gui.DialogBuilder import (DialogBuilder,
                                      showWarning,
                                      showInformation)
 
-from shell_helpers import cleanup
-
 __all__ = [ "inspectMap", "inspectFeatures", "alignFeatureTables" ]
 
 __builtins__["MMU"] = 0.001
