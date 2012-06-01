@@ -117,6 +117,11 @@ class App(object):
             except:
                 pass
             os.makedirs(testPath)
+            try:
+                # cleanup from leftoverso of other installs
+                os.removedirs(testPath)
+            except:
+                pass
             testFile = os.path.join(self.targetDir, "TEST")
             try:
                 # cleanup from leftoverso of other installs

@@ -14,12 +14,20 @@
     Unzip this archive to a local folder.
 
     If your Python installation works correctly, clicking
-    at install.py should start installation.
+    at install.bat should start installation.
 
     If you get error message concerning "Access denied" you have
     to start install.py with administrator rights, or you
     have to install to a local folder where you are allowed
     to create sub folders and files.
+
+    If installation fails for some reasons, you should see
+    a Python stack trace in the dos window. In case you do not
+    understand this, please post it to the google 
+    group http://groups.google.com/group/emzed-users
+
+    In the end the installer keeps the dos box open until
+    you press the enter key.
 
 
 - LINKS ----------------------------------------------------------------------
