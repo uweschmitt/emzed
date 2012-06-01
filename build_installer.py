@@ -38,6 +38,7 @@ def buildZipFile(zip_name, files, exclude=[], relocate_path=".", prefixpath=".")
         p = p.strip()
         print "    ADD", p
         full_path = os.path.join(relocate_path, p)
+        assert os.path.exists(full_path), "%s does not exist" % full_path
         if os.path.isfile(full_path):
             zf.write(full_path, os.path.join(prefixpath, p))
         else:
@@ -69,7 +70,7 @@ try:
 except:
     pass
 
-buildZipFile(emzedzip, ["README", "installer.py", "License.txt", "emzed_files.zip"], prefixpath="emzed_1.0.1", relocate_path="installer_files")
+buildZipFile(emzedzip, ["README", "installer.py", "install.bat", "License.txt", "emzed_files.zip"], prefixpath="emzed_1.0.1", relocate_path="installer_files")
 
 os.remove("installer_files/emzed_files.zip")
 
