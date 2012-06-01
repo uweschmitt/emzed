@@ -57,11 +57,19 @@ def _runStatistcsOnTables(tableSet1, tableSet2, idColumn, valueColumn,
 
         p = pCalculator(samples1, samples2)
 
-        result.addRow([id_,
-                      len(samples1), len(samples2),
-                      _numpy.mean(samples1), _numpy.std(samples1),
-                      _numpy.mean(samples2), _numpy.std(samples2),
-                      p])
+        new_row = [ id_,
+                      len(samples1), len(samples2), ]
+        for v in [ _numpy.mean(samples1), _numpy.std(samples1),
+                   _numpy.mean(samples2), _numpy.std(samples2),
+                   p]:
+            if _numpy.isnan(v):
+                v = None
+            else:
+                v = float(v)
+            new_row.append(v)
+
+        result.addRow(new_row)
+
     return result
 
 
