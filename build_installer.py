@@ -2,6 +2,8 @@ from version import version
 import zipfile
 import os
 import fnmatch
+import shutil
+from version import version
 
 
 files="""
@@ -70,7 +72,8 @@ try:
 except:
     pass
 
-buildZipFile(emzedzip, ["README", "installer.py", "install.bat", "License.txt", "emzed_files.zip"], prefixpath="emzed_1.0.1", relocate_path="installer_files")
+shutil.copyfile("version.py", "installer_files/version.py")
+buildZipFile(emzedzip, ["README", "installer.py", "install.bat", "License.txt", "emzed_files.zip", "version.py"], prefixpath="emzed_"+version, relocate_path="installer_files")
 
 os.remove("installer_files/emzed_files.zip")
 

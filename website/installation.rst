@@ -36,7 +36,7 @@ For installing *eMZed* on Windows please follow **carefully** the stepwise instr
 
 2. Install *R* from http://www.r-project.org. 
 
-3. Download and install the current Versions of *pyOpenMS* and *eMZed* from http://emzed.ethz.ch/downloads.
+3. Download and install the latest version of *pyOpenMS* and *eMZed* from http://emzed.ethz.ch/downloads.
 
    Now you should have a start icon on your Desktop.
 

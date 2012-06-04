@@ -5,6 +5,7 @@ import os
 
 from win32com.client import Dispatch
 
+from version import version
 
 def getLocalUserShellFolders():
     return _winreg.OpenKey(_winreg.HKEY_CURRENT_USER,
@@ -15,8 +16,6 @@ def getLocalMachineShellFolders():
     return _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE,
                            "Software\\Microsoft\\Windows\\CurrentVersion"
                            "\\Explorer\\User Shell Folders")
-    return key
-
 def expandVars(valueEx, **kw):
     saved = dict ( (k, os.environ.get(k)) for k in kw.keys())
     os.environ.update(kw)
@@ -77,29 +76,38 @@ class App(object):
         c = Checkbutton(frame, text="I read and accept the license", variable=self.checked, command=self.licenceCheck)
         set_grid(c, 1, 1, sticky=W)
 
+        comments="""Please provide a full path to the install folder. emzed will be installed
+to this folder and not to a capsulated subfolder:"""
+        l = Label(frame, text = comments, justify=LEFT)
+        set_grid(l, 2, 1, sticky=W)
+
         l = Label(frame, text = "Install to:", width=10)
-        set_grid(l, 2,0, sticky=E)
+        set_grid(l, 3, 0, sticky=E)
         self.path = Entry(frame, width=80)
 
         programFolder = os.environ.get("PROGRAMFILES")
         # folgendes konfigurierbar machen:
         if os.access(programFolder, os.W_OK):
-            defaultDir = os.path.join(programFolder, "emzed", "emzed_1.0")
+            defaultDir = os.path.join(programFolder, "emzed", "emzed_"+version)
         else:
             personalRoot = getPersonalRoot()
-            defaultDir =  os.path.join(personalRoot, "emzed", "emzed_1.0")
+            defaultDir =  os.path.join(personalRoot, "emzed", "emzed_"+version)
 
         self.path.insert(0, defaultDir)
-        set_grid(self.path, 2,1, columnspan = 2)
+        set_grid(self.path, 3,1, columnspan = 2)
+
 
         self.dirbutton = Button(frame, text="choose Destination", command=self.file_dialog)
-        set_grid(self.dirbutton, 2, 3)
+        set_grid(self.dirbutton, 3, 3)
 
         b = Button(frame, text="Abort", command=self.abort, width=30, height=2)
-        set_grid(b, 3, 1, sticky=W)
+        set_grid(b, 4, 1, sticky=W)
 
         self.okbutton = Button(frame, text="Install", command=self.install, width=30, height=2)
-        set_grid(self.okbutton, 3, 2, sticky=E)
+        set_grid(self.okbutton, 4, 2, sticky=E)
+
+        self.targetDir = None
+        self.initialTargetDir = None
 
         self.licenceCheck()
 
@@ -116,27 +124,38 @@ class App(object):
                 os.removedirs(testPath)
             except:
                 pass
+            print "create", testPath
             os.makedirs(testPath)
             try:
                 # cleanup from leftoverso of other installs
+                print "cleanup", testPath
                 os.removedirs(testPath)
             except:
                 pass
-            testFile = os.path.join(self.targetDir, "TEST")
+        except BaseException, e:
+            tkMessageBox.showwarning("Target", "could not create folder in"+self.targetDir)
+            return
+        testFile = os.path.join(self.targetDir, "TEST")
+        try:
             try:
                 # cleanup from leftoverso of other installs
                 os.remove(testFile)
             except:
                 pass
+            print "test write to", testFile
             open(testFile, "w").write("42")
+            print "cleanup", testFile
             os.remove(testFile)
         except BaseException, e:
-            tkMessageBox.showwarning("Target", str(e))
+            tkMessageBox.showwarning("Target", "could not write to "+self.targetDir)
         else:
             self.frame.quit()
 
     def file_dialog(self):
-        dirname=tkFileDialog.askdirectory()
+        if self.initialTargetDir is None:
+            personalData = os.environ.get("HOME")
+            self.initialTargetDir = personalData
+        dirname=tkFileDialog.askdirectory(initialdir=self.initialTargetDir)
         self.path.delete(0,END)
         self.path.insert(0, dirname)
 
@@ -160,6 +179,7 @@ if app.targetDir is None:
 import zipfile
 
 f = zipfile.ZipFile("emzed_files.zip")
+print "extract to", app.targetDir
 f.extractall(app.targetDir)
 
 
@@ -177,11 +197,11 @@ def createLink(path, name):
 
 
 try:
-    createLink(getCommonDesktop(), "emzed 1.0.lnk")
-    createLink(getCommonPrograms(), "emzed 1.0.lnk")
+    createLink(getCommonDesktop(), "emzed %s.lnk" % version)
+    createLink(getCommonPrograms(), "emzed %s.lnk" % version)
 except:
-    createLink(getPersonalDesktop(), "emzed 1.0.lnk")
-    createLink(getPersonalPrograms(), "emzed 1.0.lnk")
+    createLink(getPersonalDesktop(), "emzed %slnk" % version)
+    createLink(getPersonalPrograms(), "emzed %s.lnk" % version)
 
 
 
