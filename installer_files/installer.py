@@ -115,8 +115,18 @@ to this folder and not to a capsulated subfolder:"""
         self.targetDir = None
         self.frame.quit()
 
+    def closeEvent(self, evt):
+        self.abort()
+
     def install(self):
         self.targetDir = self.path.get()
+        pre, post = os.path.split(self.targetDir)
+        if not "emzed" in post.lower():
+            msg = "Your install path looks suspicous.\n"
+            msg += "Are you shure you want to install to\n%s\n????" % self.targetDir
+            if not tkMessageBox.askyesno("Install path ok ?", msg):
+                return
+
         try:
             testPath = os.path.join(self.targetDir, "TESTPATH")
             try:
@@ -129,7 +139,7 @@ to this folder and not to a capsulated subfolder:"""
             try:
                 # cleanup from leftoverso of other installs
                 print "cleanup", testPath
-                os.removedirs(testPath)
+                os.removedir(testPath)
             except:
                 pass
         except BaseException, e:
@@ -148,8 +158,9 @@ to this folder and not to a capsulated subfolder:"""
             os.remove(testFile)
         except BaseException, e:
             tkMessageBox.showwarning("Target", "could not write to "+self.targetDir)
-        else:
-            self.frame.quit()
+            return
+
+        self.frame.quit()
 
     def file_dialog(self):
         if self.initialTargetDir is None:
@@ -200,7 +211,7 @@ try:
     createLink(getCommonDesktop(), "emzed %s.lnk" % version)
     createLink(getCommonPrograms(), "emzed %s.lnk" % version)
 except:
-    createLink(getPersonalDesktop(), "emzed %slnk" % version)
+    createLink(getPersonalDesktop(), "emzed %s.lnk" % version)
     createLink(getPersonalPrograms(), "emzed %s.lnk" % version)
 
 
