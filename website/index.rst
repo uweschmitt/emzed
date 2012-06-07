@@ -14,7 +14,7 @@ About
    :scale: 50 %
    :align: right
 
-*eMZed* is an open source framework for anaylising and processing LCMS
+*eMZed* is an open source framework for analyzing and processing LCMS
 data. The framework was developed by D-BIOL (Patrick Kiefer, lab of
 Julia Vorholt, Institute of Microbiology ) and Uwe Schmitt (mineway
 GmbH) with several ideas in mind:
@@ -39,9 +39,9 @@ one of the reasons why we choose Python.
 
 * The invention of workspace providing software as Matlab and R really
   leveraged the productivity of mathematicians and other scientists. We
-  try to introduce this concept for analyizing LCMS data.
+  try to introduce this concept for analyzing LCMS data.
 
-  *eMZed* is heavilly based on Spyder [spyderlib]_ for providing
+  *eMZed* is heavily based on Spyder [spyderlib]_ for providing
   the workspace and [guiqwt]_ and [guidata]_ for plotting.
 
 * Instead of reinventing the wheel we cherry picked algorithms from
@@ -83,12 +83,12 @@ great work:
 
      * Open-MS [openms]_
      * XCMS [xcms]_
-     * Spyderlib [spyderlib]_
+     * spyderlib [spyderlib]_
      * guidata and guiqwt [guidata]_, [guiqwt]_
 
 Personal thanks go to:
 
-     *  Department of Biology, ETH Zurich
+     *  Department of Biology, ETH Zürich
 
      *  `Julia A Vorholt <http://www.micro.biol.ethz.ch/research/vorholt/jvorholt>`_
 
@@ -104,7 +104,7 @@ Personal thanks go to:
 
 
 
-Indices and tables
+Indexes and tables
 ~~~~~~~~~~~~~~~~~~
 
 * :ref:`genindex`

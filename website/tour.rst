@@ -7,7 +7,7 @@ Please follow the instructions at :ref:`installation` before you
 continue.
 
 When you start *eMZed* the first time, after some setup as described in
-:ref:`installation`, the application window will look similiar to the following
+:ref:`installation`, the application window will look similar to the following
 screenshot:
 
 .. figure:: eMZed.png
@@ -73,8 +73,8 @@ using *IPython* [ipython]_ see the Introduction at [ipython_introduction]_ .
 
 .. _peakmaps_example:
 
-Working with Peakmaps
---------------------- 
+Working with Peak Maps
+---------------------- 
 
 *eMZed* allows loading, inspecting and basic filtering of
 LC-MS(/MS) data files in different formats. To load your single data files to
@@ -96,7 +96,7 @@ folder:
 .. pycon::
    ds = ms.loadPeakMap() !noexec
 
-You can access the spectra in this peakmap using Python:
+You can access the spectra in this peak map using Python:
 
 .. pycon::
    firstSpec = ds.spectra[0]
@@ -104,7 +104,7 @@ You can access the spectra in this peakmap using Python:
    lastSpec = ds.spectra[-1]
    print lastSpec.rt
 
-Internally retention times are allways stored as seconds.
+Internally retention times are always stored as seconds.
 
 The variable ``ds`` will appear in the *variable explorer*. You see that we
 have 464 spectra in this dataset and you can visualize them simply by double
@@ -150,11 +150,11 @@ Extracting chromatographic peaks
 
 Actually, *eMZed* includes two peak detection algorithm of the *XCMS* [xcms]_ package:
 *centwave* [centwave]_ and *matched filters*. Accepted input file formats are *mzML*,
-*mzxml*, and *mzData*.  The output file format is *eMZed*-specfic 
+*mzxml*, and *mzData*.  The output file format is *eMZed*-specific 
 and has the file extension ``.table``. In addition ``.csv`` files are saved.
 
-We continue with an example of centwave algorithm for high resolution LC-MS data. 
-You can start the *centwave* feature detector by typing
+We continue with an example of Centwave algorithm for high resolution LC-MS data. 
+You can start the *Centwave* feature detector by typing
 
 .. pycon::
    tables = batches.runCentwave("*.mzXML", destination=".", configid="tour")!noexec 
@@ -166,7 +166,7 @@ You can start the *centwave* feature detector by typing
    for i, t in enumerate(tables): t.store("feat%d.table" % i) !noexec
    tables = [ ms.loadTable("feat%d.table" % i) for i in range(3) ]
        
-The feature detectore needs a few minutes depending on the power of your computer, we ommitted the
+The feature detector needs a few minutes depending on the power of your computer, we omitted the
 verbose output from *XCMS* [xcms]_ .
 We predefined a combination of parameters with the identifier ``tour`` in order
 to simplify the tour. In general various parameters can be provided
@@ -195,7 +195,7 @@ A. Now you can select a specific table using the ``Choose Table`` menu at the
    row wise. You can visualize corresponding *Extracted Ion Chromatograms*
    (*EIC*) and mass spectra by clicking to the left of a row. Table entries
    are editable (just double click to a certain cell) and all modifications are
-   stored in place.  Notice that the original peakmap is linked to the table
+   stored in place.  Notice that the original peak map is linked to the table
    and the underlying spectral data is accessible. 
 
 B. If you click with the right mouse button to the left of a row
@@ -238,7 +238,7 @@ A. For all integrated peaks *area* and *rmse* values are added automatically
 B. You can manually reintegrate individual *EIC* peaks by adapting the *rt* bounds
    in the chromatogram plot, then choosing one of the provided integration
    methods and pressing ``Integrate``.
-   The result will be plotted in the chromatogram plot and the correspoding
+   The result will be plotted in the chromatogram plot and the corresponding
    row is updated.
 
 
@@ -292,7 +292,7 @@ Working with Tables
 
 
 This section demonstrates some operations on tables, which are a central data
-structure in *eMZed*, you have allready seen them above as peak tables. 
+structure in *eMZed*, you have already seen them above as peak tables. 
 
 An easy way to create tables is to parse a *csv* file. This is how the
 content of ``example.csv`` looks like:
@@ -325,8 +325,8 @@ If the table is to complex or large for printing, you can open a dialog by click
 
 
 Adding a new, computed column is easy. Here we want to generate a new column ``m0``
-which contains the monoisotopic masses corresponding to the contents of the
-``mf`` column. Converting a molecular formula to the corresponding monoisotopic
+which contains the mono-isotopic masses corresponding to the contents of the
+``mf`` column. Converting a molecular formula to the corresponding mono-isotopic
 weight can be done by the function ``mass.of``:
 
 
@@ -337,7 +337,7 @@ weight can be done by the function ``mass.of``:
 
 
 Generating the new column ``m0`` is done by applying this function to
-the columnt ``substances.mf``:
+the column ``substances.mf``:
 
 .. pycon::
 
@@ -376,7 +376,7 @@ To restrict to substances which are known to exist on earth we can do:
     common.print_()
 
 
-The ``tab`` module contains some databases, eg the substances from Pubchem  [pubchem]_
+The ``tab`` module contains some databases, e.g. the substances from PubChem  [pubchem]_
 categorized as *metabolomic compounds*. These databases are hold in tables:
 
 .. pycon::
@@ -387,7 +387,7 @@ categorized as *metabolomic compounds*. These databases are hold in tables:
 
 
 
-Before matching our data against the large pubchem table, we build an index on
+Before matching our data against the large PubChem table, we build an index on
 this table in order to speed up the following ``leftJoin`` call.  Building an
 index is done by sorting the corresponding column:
 
@@ -401,7 +401,7 @@ index is done by sorting the corresponding column:
     ms.inspect(matched)  !noexec
 
 
-Another way to identify compounds is to use the Metlin webpage which provides a formular for running queries against the database. This access is automated: 
+Another way to identify compounds is to use the Metlin web page which provides a form for running queries against the database. This access is automated: 
 
 
 .. pycon::
@@ -474,12 +474,12 @@ common elements
 
 .. _isotope_example:
 
-Analysing isotope patterns
+Analyzing isotope patterns
 --------------------------
 
-As the ``Table`` objects provide powerfull matchings, all we need to
-analyse isotope patterns occuring in feature tables is a way to generate
-tables containing theese data. ``ms.isotopeDistributionTable``
+As the ``Table`` objects provide powerful matchings, all we need to
+analyze isotope patterns occurring in feature tables is a way to generate
+tables containing these data. ``ms.isotopeDistributionTable``
 does this 
 
 
@@ -493,7 +493,7 @@ does this
 
 
 Non natural distributions as in marker experiments can be
-simmulated too
+simulated too
 
 
 
@@ -568,7 +568,7 @@ this
 
 
 
-``ms.oneWayAnova`` returns the correspoding ``F`` and ``p`` value, ``ms.kruskalWallis`` the ``H`` and ``p`` value
+``ms.oneWayAnova`` returns the corresponding ``F`` and ``p`` value, ``ms.kruskalWallis`` the ``H`` and ``p`` value
 
 
 
@@ -592,8 +592,8 @@ this
 Building graphical interfaces
 -----------------------------
 
-Beyond the ``Table``-Explorer ``ms.inspect`` and the Peakmap-Explorer
-``ms.inspectPeakMap`` assisted workflows request certain parameters and
+Beyond the ``Table``-Explorer ``ms.inspect`` and the ``PeakMap``-Explorer
+``ms.inspectPeakMap`` assisted work-flows request certain parameters and
 decisions at certain processing steps. To support this mzExplore has an builder
 for graphical input forms. 
 

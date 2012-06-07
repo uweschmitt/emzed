@@ -1,6 +1,12 @@
 API Tables and Expressions
 ==========================
 
+.. spelling::
+
+   py
+   meth
+   colNames
+   colFormats
 
 Tables
 ------

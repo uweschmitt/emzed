@@ -6,7 +6,7 @@ Centwave Feature Detector
 
 .. autofunction:: batches.runCentwave
 
-Machted Filter Feature Detector
+Matched Filter Feature Detector
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: batches.runMatchedFilter

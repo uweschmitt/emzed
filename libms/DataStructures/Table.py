@@ -102,18 +102,18 @@ def _formatter(f):
 
 class Table(object):
     """
-    A table holds rows of the same lenght. Each Column of the table has
+    A table holds rows of the same length. Each Column of the table has
     a *name*, a *type* and *format* information, which indicates how to render
     values in this column.
     Further a table has a title and meta information which is a dictionary.
 
-    columntypes can be any python type.
+    column types can be any python type.
 
     format can be:
 
-         - a string interpolation string, eg "%.2f"
-         - ``None``, which supresses rendering of this column
-         - python code which renders an object of name ``o``, eg
+         - a string interpolation string, e.g. "%.2f"
+         - ``None``, which suppresses rendering of this column
+         - python code which renders an object of name ``o``, e.g.
            ``str(o)+"x"``
 
     """
@@ -158,7 +158,7 @@ class Table(object):
 
         self.editableColumns = set()
 
-        # as we provide  access to colums via __getattr__, colnames must
+        # as we provide  access to columns via __getattr__, colNames must
         # not be in objects __dict__ and must not be name of member
         # functions:
         memberNames = [name for name, obj in inspect.getmembers(self)]
@@ -236,7 +236,7 @@ class Table(object):
 
     def getColumn(self, name):
         """ returns ColumnExpression object for column ``name``.
-            to get the values of the colum you can use
+            to get the values of the column you can use
             ``table.getColumn("index").values``.
 
             See: :py:class:`~libms.DataStructures.Expressions.ColumnExpression`
@@ -312,7 +312,7 @@ class Table(object):
             Example: ``table.get(table.rows[0], "mz")``
 
             if ``colName`` is not provided, one gets the content of
-            the ``row`` as a dict mapping colnames to values.
+            the ``row`` as a dict mapping column names to values.
 
             Example::
 
@@ -320,10 +320,10 @@ class Table(object):
                 print row["mz"]
 
             **Note**: you can use this for other lists according
-            to columndata as
+            to column data as
 
             ``table.get(table.colTypes)`` gives you a dict for
-            which maps colNames to the corresponding colTypes.
+            which maps column names to the corresponding column types.
 
             Example::
 
@@ -409,8 +409,8 @@ class Table(object):
         return copy.deepcopy(self)
 
     def extractColumns(self, *names):
-        """extracts the given columnames ``names`` and returns a new
-           table with these colums
+        """extracts the given column names ``names`` and returns a new
+           table with these columns
 
            Example: ``t.extractColumns("id", "name"))``
            """
@@ -423,7 +423,7 @@ class Table(object):
                      self.meta.copy(), circumventNameCheck=True)
 
     def renameColumns(self, **kw):
-        """renames colums **inplace**.
+        """renames columns **inplace**.
 
            So if you want to rename "mz_1" to "mz" and "rt_1"
            to "rt", ``table.renameColumns(mz_1=mz, rt_1=rt)``
@@ -436,7 +436,7 @@ class Table(object):
             raise Exception("you try to rename two columns to the same name")
         for name in newNames:
             if name in self.colNames:
-                raise Exception("column %s allready exists" % name)
+                raise Exception("column %s already exists" % name)
 
         for k in kw.keys():
             if k not in self.colNames:
@@ -454,8 +454,8 @@ class Table(object):
         """writes the table in .csv format. The ``path`` has to end with
            '.csv'.
 
-           If the file allready exists, the routine tries names
-           ``*.csv.1, *.csv.2, ...`` until a nonexisting file name is found
+           If the file already exists, the routine tries names
+           ``*.csv.1, *.csv.2, ...`` until a non-existing file name is found
 
            As .csv is a text format all binary information is lost !
         """
@@ -481,7 +481,7 @@ class Table(object):
     def store(self, path, forceOverwrite=False):
         """
         writes the table in binary format. All information, as
-        coresponding peakMaps are written too.
+        corresponding peak maps are written too.
         The file name extension must be ".table".
 
         Latter the file can be loaded with :py:meth:`~.load`
@@ -606,7 +606,7 @@ class Table(object):
               t1.append(t2, [t3, t4])
 
         the column names and the column types have to match !
-        columnformat is taken from the original table.
+        column format is taken from the original table.
         """
         alltables = []
         for table in tables:
@@ -771,7 +771,7 @@ class Table(object):
 
         ``value`` is inserted in the column, despite its class. So the
         cases in py:meth:`~.addColumn` are not considered, which is useful,
-        eg. if you want to set all cells in a column to as ``list``.
+        e.g. if you want to set all cells in a column to as ``list``.
         """
 
         if type_ is not None:
@@ -824,13 +824,13 @@ class Table(object):
 
         The table can be split into several subtables by
         providing an extra ``groupBy`` parameter,
-        which can be a colummname or a list of columnames,
+        which can be a column name or a list of column names,
         then the aggregation is only performed per group.
 
         In each group the values corresponding to ``groupBy``
         are constant.
 
-        ``newName`` is the columnname for the aggregations.
+        ``newName`` is the column name for the aggregations.
 
         If we have a table ``t1`` with
 
@@ -952,7 +952,7 @@ class Table(object):
         return result
 
     def filter(self, expr, debug = False):
-        """builds a new table with columns selected according to ``expr``. Eg ::
+        """builds a new table with columns selected according to ``expr``. E.g. ::
 
                table.filter(table.mz >= 100.0)
                table.filter((table.mz >= 100.0) & (table.rt <= 20))
@@ -1080,7 +1080,7 @@ class Table(object):
         """performs an *left join* also known as *outer join* of two tables.
 
            It works similar to :py:meth:`~.join` 
-           but keeps nonmatching rows of
+           but keeps non-matching rows of
            the first table. So if we take the example from 
            :py:meth:`~.join` 
 
@@ -1241,7 +1241,7 @@ class Table(object):
 
     @staticmethod
     def toTable(colName, iterable,  format="", type_=None, title="", meta=None):
-        """ generates a one-column table from an iterable, eg from a list,
+        """ generates a one-column table from an iterable, e.g. from a list,
             colName is name for the column.
 
             - if ``type_`` is not given a common type for all values is determined,

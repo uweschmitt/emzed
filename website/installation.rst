@@ -10,7 +10,7 @@ Before you start
 ~~~~~~~~~~~~~~~~
 
 If you plan to use *eMZed* for more than one user we recommend to provide a
-shared folder, which can be accessed by all targetted users. We call this the
+shared folder, which can be accessed by all targeted users. We call this the
 *global exchange folder*.  *eMZed* will store databases, *XCMS* [xcms]_ related code there.
 Further you can use this folder to exchange scripts and configuration settings.
 
@@ -31,7 +31,7 @@ For installing *eMZed* on Windows please follow **carefully** the stepwise instr
 1. Install *Python XY* from http://www.pythonxy.com.  We recommend version *2.7.2.1*.
     
     This is a Python
-    distribution targetting scientific computing with Python. It contains the
+    distribution targeting scientific computing with Python. It contains the
     right versions of Python and the used libraries.
 
 2. Install *R* from http://www.r-project.org. 
@@ -63,7 +63,7 @@ For installing *eMZed* on Windows please follow **carefully** the stepwise instr
 
 
 
-You can clone a  current developer snaphsot of *eMZed* from http://github.com/uweschmitt/emzed.
+You can clone a  current developer snapshot of *eMZed* from http://github.com/uweschmitt/emzed.
 
 
 In case of trouble, please use the *eMZed group* at http://groups.google.com/group/emzed-users.

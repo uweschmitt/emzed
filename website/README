@@ -1,0 +1,4 @@
+for spellchecking install sphinxcontrib.spelling:
+   pip install sphinxcontrib-spelling
+
+->  http://www.doughellmann.com/docs/sphinxcontrib.spelling/install.html

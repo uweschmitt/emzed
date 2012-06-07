@@ -1,6 +1,11 @@
 Contact
 =======
 
+.. spelling::
+
+   uschmitt
+   mineway
+   de
 
 .. important::
 
