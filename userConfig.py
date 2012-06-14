@@ -1,20 +1,14 @@
-import _winreg
-import os, shutil
+import os, sys
 import ConfigParser
 
 class _GlobalConfig(object):
 
     def __init__(self):
-        key =_winreg.OpenKey(_winreg.HKEY_CURRENT_USER,
-                            "Software\\Microsoft\\Windows\\CurrentVersion"
-                            "\\Explorer\\User Shell Folders")
-
-        appRoot,_ = _winreg.QueryValueEx(key, "AppData")
-        appRoot = _winreg.ExpandEnvironmentStrings(appRoot)
-        appFolder = os.path.join(appRoot, "emzed")
-        if not os.path.exists(appFolder):
-            os.makedirs(appFolder)
-        self.configFilePath=os.path.join(appFolder, "global.ini")
+        appRoot = getAppDataFolder()
+        emzedFolder = os.path.join(appRoot, "emzed")
+        if not os.path.exists(emzedFolder):
+            os.makedirs(emzedFolder)
+        self.configFilePath=os.path.join(emzedFolder, "global.ini")
         if not os.path.exists(self.configFilePath):
             self.editConfig()
             self.saveConfig()
@@ -62,13 +56,42 @@ class _GlobalConfig(object):
         p.write(open(self.configFilePath, "w"))
 
 
-
-def getDocumentFolder():
+def userShellFolderKey():
+    import _winreg
     key =_winreg.OpenKey(_winreg.HKEY_CURRENT_USER,
                         "Software\\Microsoft\\Windows\\CurrentVersion"
                         "\\Explorer\\User Shell Folders")
-    personalRoot,_ = _winreg.QueryValueEx(key, "Personal")
-    return _winreg.ExpandEnvironmentStrings(personalRoot)
+    return key
+
+def _query(key, subKey):
+    import _winreg
+    val, _ = _winreg.QueryValueEx(key, subKey)
+    return _winreg.ExpandEnvironmentStrings(val)
+
+def linuxdefault(path):
+    def wrapper(fun):
+        def run_fun():
+            if sys.platform == "win32":
+                return fun()
+            else:
+                return path
+        return run_fun
+    return wrapper
+
+@linuxdefault(os.environ.get("HOME"))
+def getDocumentFolder():
+    key = userShellFolderKey()
+    return _query(key, "Personal")
+
+@linuxdefault(os.environ.get("HOME"))
+def getAppDataFolder():
+    key = userShellFolderKey()
+    return _query(key, "AppData")
+
+@linuxdefault(os.environ.get("HOME"))
+def getLocalAppDataFolder():
+    key = userShellFolderKey()
+    return _query(key, "Local AppData")
 
 def getDataHome():
     dataHome = os.path.join(getDocumentFolder(), "emzed_files")
