@@ -1,5 +1,5 @@
 
-import _winreg, os, glob, subprocess, sys, win32api
+import os, glob, subprocess, sys
 
 import userConfig
 root = userConfig.getExchangeFolder()
@@ -24,13 +24,18 @@ class RExecutor(object):
         return cls._instance
 
     def __init__(self):
-
-        self.rHome = RExecutor.findRHome()
-        rExe  = RExecutor.findRExe(self.rHome)
-        self.rExe = win32api.GetShortPathName(rExe)
+        if sys.platform == "win32":
+            self.rHome = RExecutor.findRHome()
+            rExe  = RExecutor.findRExe(self.rHome)
+            import win32api
+            self.rExe = win32api.GetShortPathName(rExe)
+        else:
+            self.rExe = "R"
 
     @staticmethod
     def findRHome():
+        assert sys.platform == "win32"
+        import _winreg
         pathToR = None
         for finder in [
                        lambda : RExecutor.path_from(_winreg.HKEY_CURRENT_USER),
@@ -81,6 +86,8 @@ class RExecutor(object):
 
     @staticmethod
     def path_from(regsection):
+        assert sys.platform == "win32"
+        import _winreg
         key = _winreg.OpenKey(regsection, "Software\\R-core\\R")
         return _winreg.QueryValueEx(key, "InstallPath")[0]
 

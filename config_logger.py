@@ -1,4 +1,5 @@
-import logging, os, _winreg
+import logging, os
+import userConfig
 
 
 def memoize(function):
@@ -30,12 +31,8 @@ def do_config():
     except:
         pass
 
-    key =_winreg.OpenKey(_winreg.HKEY_CURRENT_USER,
-                        "Software\\Microsoft\\Windows\\CurrentVersion"
-                        "\\Explorer\\User Shell Folders")
 
-    appRoot,_ = _winreg.QueryValueEx(key, "Local AppData")
-    appRoot = _winreg.ExpandEnvironmentStrings(appRoot)
+    appRoot = userConfig.getLocalAppDataFolder()
 
     logPath = os.path.join(appRoot, "emzed")
     if not os.path.exists(logPath):

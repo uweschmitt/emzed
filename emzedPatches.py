@@ -86,20 +86,16 @@ def patch_baseshell():
 
 def patch_userconfig():
     from spyderlib.userconfig import UserConfig, NoDefault, get_home_dir
+    import userConfig
 
     @replace(get_home_dir, verbose=True)
     def patch():
-        import _winreg, os
-        key =_winreg.OpenKey(_winreg.HKEY_CURRENT_USER,
-                            "Software\\Microsoft\\Windows\\CurrentVersion"
-                            "\\Explorer\\User Shell Folders")
-
-        appRoot,_ = _winreg.QueryValueEx(key, "AppData")
-        appRoot = _winreg.ExpandEnvironmentStrings(appRoot)
-        appFolder = os.path.join(appRoot, "emzed")
-        if not os.path.exists(appFolder):
-            os.makedirs(appFolder)
-        return appFolder
+        import os
+        appRoot = userConfig.getAppDataFolder()
+        emzedFolder = os.path.join(appRoot, "emzed")
+        if not os.path.exists(emzedFolder):
+            os.makedirs(emzedFolder)
+        return emzedFolder
 
 
     @replace(UserConfig.get)
