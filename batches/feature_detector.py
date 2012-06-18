@@ -3,7 +3,6 @@ class _FD(_BatchRunner.BatchRunner):
 
     def __init__(self, *a, **kw):
         import libms.RConnect
-        libms.RConnect.RExecutor.findRHome() # throws exception if R is not found
         super(_FD, self).__init__(*a, **kw)
 
     def process(self, path):

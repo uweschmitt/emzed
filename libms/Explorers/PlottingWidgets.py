@@ -1,5 +1,5 @@
 import guiqwt
-assert guiqwt.__version__ == "2.1.5", guiqwt.__version__
+##assert guiqwt.__version__ == "2.1.5", guiqwt.__version__
 
 from guiqwt.plot import CurveWidget, PlotManager
 from guiqwt.builder import make
