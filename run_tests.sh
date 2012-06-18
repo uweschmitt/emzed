@@ -1,3 +1,3 @@
-#!/bin/env sh
+#!/bin/sh
 nosetests -w tests $*
 

@@ -111,7 +111,3 @@ def getExchangeFolder():
     if not os.path.exists(exchangeFolder):
         os.makedirs(exchangeFolder)
     return exchangeFolder
-
-
-
-
