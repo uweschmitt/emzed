@@ -1,5 +1,6 @@
 import os, sys
 import ConfigParser
+import functools
 
 class _GlobalConfig(object):
 
@@ -69,13 +70,14 @@ def _query(key, subKey):
     return _winreg.ExpandEnvironmentStrings(val)
 
 def linuxdefault(path):
-    def wrapper(fun):
-        def run_fun():
+    def wrapper(fun, path=path):
+        @functools.wraps(fun)
+        def new_fun():
             if sys.platform == "win32":
                 return fun()
             else:
                 return path
-        return run_fun
+        return new_fun
     return wrapper
 
 @linuxdefault(os.environ.get("HOME"))
