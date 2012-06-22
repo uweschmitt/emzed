@@ -11,6 +11,9 @@ from ..DataStructures.Table import Table
 
 from TableExplorerModel import *
 
+if __builtins__.get("__appemzed__") is None:
+    __builtins__["__appemzed__"] = guidata.qapplication()
+
 def getColors(i, light=False):
      colors = [(0, 0, 150), (50, 50, 50), (0,100,0),
                 (100, 0, 0), (70, 70, 0), (100, 100, 0)]
@@ -538,7 +541,6 @@ def inspect(what, offerAbortOption=False):
     """
     if isinstance(what, Table):
         what = [what]
-    app = guidata.qapplication()
     explorer = TableExplorer(what, offerAbortOption)
     explorer.raise_()
     explorer.exec_()

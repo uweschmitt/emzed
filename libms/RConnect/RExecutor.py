@@ -98,9 +98,15 @@ class RExecutor(object):
     def run_script(self, path):
 
         with open(path, "r") as fp:
-            proc = subprocess.Popen(['%s --vanilla --silent' % self.rExe],
-                                    stdin = fp, stdout = sys.__stdout__,
-                                    bufsize=0, shell=True)
+            # do not know why diff platforms behave differntly:
+            if sys.platform == "win32":
+                proc = subprocess.Popen(['%s' % self.rExe, '--vanilla', '--silent'],
+                                        stdin = fp, stdout = sys.__stdout__,
+                                        bufsize=0, shell=True)
+            else:
+                proc = subprocess.Popen(['%s --vanilla --silent' % self.rExe],
+                                        stdin = fp, stdout = sys.__stdout__,
+                                        bufsize=0, shell=True)
             out, err = proc.communicate()
             if err is not None:
                 print err

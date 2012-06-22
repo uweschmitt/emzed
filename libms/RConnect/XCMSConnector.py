@@ -18,9 +18,6 @@ def path_to_r_libs():
     if R_LIBS == None:
         raise Exception("inconsistent system: R_LIBS not set.")
 
-    if os.path.exists(os.path.join(R_LIBS, "xcms")):
-        return
-
     r_libs = R_LIBS.replace("\\", "\\\\")
   
     return r_libs
