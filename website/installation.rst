@@ -23,8 +23,8 @@ first user who starts eMZed. Else eMZed will not be able to work correctly.**
 
 
 
-Instructions
-~~~~~~~~~~~~
+Installing on Windows
+~~~~~~~~~~~~~~~~~~~~~
 
 For installing *eMZed* on Windows please follow **carefully** the stepwise instructions:
 
@@ -62,11 +62,38 @@ For installing *eMZed* on Windows please follow **carefully** the stepwise instr
    **If you provided a global exchange folder and have no write permissions to it, this step wil be skipped**.
 
 
+Installing on Linux
+~~~~~~~~~~~~~~~~~~~
 
-You can clone a  current developer snapshot of *eMZed* from http://github.com/uweschmitt/emzed.
+A detailed set of instructions is in progress. In short, you need
+
+* Python 2.7
+
+* numpy, scipy and matplotlib for Python 2.7
+
+* R
+
+* libnetcdf
+
+* guiqwt
+
+* guidata 
+
+* IPython 0.10 (this is not the most current version !)
+
+* pyOpenMS (see http://emzed.ethz.ch/downloads)
+
+Use *git* to clone the current developer snapshot from http://github.com/uweschmitt/emzed.
+
+Start *emzed.py* in this folder and follow the windows instruction above, beginning at item no. 5.
 
 
-In case of trouble, please use the *eMZed group* at http://groups.google.com/group/emzed-users.
+Help
+~~~~
+
+In case of any trouble, please use the *eMZed group* at http://groups.google.com/group/emzed-users.
+
+
 
 
 

@@ -52,6 +52,9 @@ one of the reasons why we choose Python.
   integrate all needed functionality in one framework
 
 
+The current version of *eMZed* was developed and tested on 32 bit Windows OS.
+We paritally testet on 64 bit Ubuntu 12.04, a 64 bit version for Windows OS
+is in progress.
 
 
 Contents
