@@ -12,6 +12,9 @@ import os
 from PlottingWidgets import RtPlotter, MzPlotter
 import numpy as np
 
+if __builtins__.get("__appemzed__") is None:
+    __builtins__["__appemzed__"] = guidata.qapplication()
+
 class MzExplorer(QDialog):
 
     def __init__(self):
@@ -197,8 +200,6 @@ def inspectPeakMap(peakmap):
     if len(peakmap) == 0:
         raise Exception("empty peakmap")
 
-    app = guidata.qapplication()
-
     win = MzExplorer()
     win.setup(peakmap)
     win.activateWindow()
@@ -209,4 +210,3 @@ def inspectPeakMap(peakmap):
     del win.rts
 
 
-    
