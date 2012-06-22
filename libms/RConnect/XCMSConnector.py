@@ -11,11 +11,8 @@ from userConfig import getExchangeFolder
 
 exchangeFolderAvailable = getExchangeFolder() is not None
 
-def installXcmsIfNeeded():
 
-    if not exchangeFolderAvailable:
-        print "no xcms install as exchange folder is not available"
-        return 
+def path_to_r_libs():
 
     R_LIBS = os.environ.get("R_LIBS")
     if R_LIBS == None:
@@ -25,14 +22,29 @@ def installXcmsIfNeeded():
         return
 
     r_libs = R_LIBS.replace("\\", "\\\\")
+  
+    return r_libs
+
+def install_xmcs_if_needed_statements():
+    r_libs = path_to_r_libs()
+
     script = """
                 if (require("xcms") == FALSE)
                 {
                     source("http://bioconductor.org/biocLite.R")
-                    biocLite("xcms", dep=T, lib="%s", destdir="%s")
+                    install.packages(c("xcms"), repos=biocinstallRepos(), dep=T, lib="%s", destdir="%s")
                 }
             """ % (r_libs, r_libs)
-    RExecutor().run_command(script)
+
+    return script
+
+def installXcmsIfNeeded():
+
+    if not exchangeFolderAvailable:
+        print "no xcms install as exchange folder is not available"
+        return 
+
+    RExecutor().run_command(install_xmcs_if_needed_statements())
 
 
 def lookForXcmsUpgrades():
@@ -43,9 +55,10 @@ def lookForXcmsUpgrades():
 
     script = """
                  source("http://bioconductor.org/biocLite.R")
-                 todo <- old.packages(repos=biocinstallRepos())
+                 todo <- old.packages(repos=biocinstallRepos(), lib="%s")
                  q(status=length(todo))
-             """
+             """ % path_to_r_libs()
+
     num = RExecutor().run_command(script)
     if not num:
         print "No update needed"
@@ -57,12 +70,15 @@ def doXcmsUpgrade():
     if not exchangeFolderAvailable:
         print "no xcms upgrade as exchange folder is not available"
         return 
+	
+    r_libs = path_to_r_libs()
 
     script = """
      source("http://bioconductor.org/biocLite.R")
-     todo <- update.packages(repos=biocinstallRepos(), ask=FALSE, checkBuilt=TRUE)
+     todo <- update.packages(repos=biocinstallRepos(), ask=FALSE, checkBuilt=TRUE, lib="%s", destdir="%s")
      q(status=length(todo))
-    """
+    """ % (r_libs, r_libs)
+
     return RExecutor().run_command(script)
 
 class CentwaveFeatureDetector(object):
@@ -128,12 +144,9 @@ class CentwaveFeatureDetector(object):
             dd["fitgauss"] = str(dd["fitgauss"]).upper()
             dd["verbose_columns"] = str(dd["verbose_columns"]).upper()
 
-            script = """
-                        if (require("xcms") == FALSE)
-                        {
-                            source("http://bioconductor.org/biocLite.R")
-                            biocLite("xcms", dep=T)
-                        }
+        
+
+            script = install_xmcs_if_needed_statements() + """
                         library(xcms)
                         xs <- xcmsSet(%(temp_input)r, method="centWave",
                                           ppm=%(ppm)d,
@@ -148,13 +161,13 @@ class CentwaveFeatureDetector(object):
                                           mzCenterFun = %(mzCenterFun)r
                                      )
                         write.table(xs@peaks, file=%(temp_output)r)
-                        q(status=4711)
+                        q(status=123)
                      """ % dd
 
             del dd["temp_input"]
             del dd["temp_output"]
 
-            if RExecutor().run_command(script, td) != 4711:
+            if RExecutor().run_command(script, td) != 123:
                 raise Exception("R operation failed")
 
             # parse csv and shift rt related values to undo rt modifiaction
@@ -228,12 +241,7 @@ class MatchedFilterFeatureDetector(object):
             dd["temp_output"] = temp_output
             dd["index"] = str(dd["index"]).upper()
 
-            script = """
-                        if (require("xcms") == FALSE)
-                        {
-                            source("http://bioconductor.org/biocLite.R")
-                            biocLite("xcms", dep=T)
-                        }
+            script = install_xmcs_if_needed_statements() + """
                         library(xcms)
                         xs <- xcmsSet(%(temp_input)r, method="matchedFilter",
                                        fwhm = %(fwhm)f, sigma = %(sigma)f,
@@ -245,13 +253,13 @@ class MatchedFilterFeatureDetector(object):
                                        sleep=0
                                      )
                         write.table(xs@peaks, file=%(temp_output)r)
-                        q(status=4711)
+                        q(status=123)
                      """ % dd
 
             del dd["temp_input"]
             del dd["temp_output"]
 
-            if RExecutor().run_command(script, td) != 4711:
+            if RExecutor().run_command(script, td) != 123:
                 raise Exception("R opreation failed")
 
             # parse csv and

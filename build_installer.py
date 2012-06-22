@@ -10,7 +10,7 @@ files="""
     emzed.ico
     ms libms batches/ startup/ patched_modules/ emzed.pyw
     emzedPatches.py tab.py db.py elements.py abundance.py
-    config_logger.py configs.py convert_universals.py example_scripts/
+    config_logger.py configs.py convert_universals.py emzed_files/
     installConstants.py mass.py splash.png  userConfig.py
     tables spyderlib/ """.split()
 

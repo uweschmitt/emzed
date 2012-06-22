@@ -136,10 +136,19 @@ on Windows platforms (only IPython v0.10 is fully supported).
     except ImportError:
         pass
     
-    # fourth modification eMZed # #############################################
+    # fourth modification eMZed # #
+    ############################################
     ###########################################################################
-    ip = IPython.ipapi.get()
-    if ip.options.pylab_import_all:
+    ip = None
+    try:    
+        ip = IPython.ipapi.get()
+    except:
+        try:
+            ip = IPython.core.interactiveshell.InteractiveShell.instance()
+        except:
+            pass
+            
+    if ip:
         for name in ["e", "pi", "path"]:
             try:
                 ip.ex("del %s" % name)

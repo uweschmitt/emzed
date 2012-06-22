@@ -1,10 +1,10 @@
 
 .. _explorers:
 
-Exploring Peakmaps and Tables
-=============================
+Exploring Peak Maps and Tables
+==============================
 
-**Table:** Functions and commands for peakmap inspection
+**Table:** Functions and commands for Peak map inspection
 
 +-------------------+--------------+--------------------------------------+
 | description       |              |       command                        |

@@ -18,8 +18,8 @@ For an example see :ref:`rtalign_example`
    
 
 
-Inspecting Tables and Peakmaps
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Inspecting Tables and Peak maps
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 .. autofunction:: ms.inspectPeakMap

@@ -148,7 +148,7 @@ class BaseExpression(object):
       .. note::
 
           Due to some Python internals, these operators have a low precedence,
-          so you have to use parantheses like ``(t1 <= t2) & (t1 > t3)```
+          so you have to use parentheses like ``(t1 <= t2) & (t1 > t3)```
 
     """
 
@@ -308,7 +308,7 @@ class BaseExpression(object):
 
     def thenElse(self, then, else_):
         """
-        ``a.thenElse(b, c)`` avaluates to ``b`` if ``a`` is *True*, if not it
+        ``a.thenElse(b, c)`` evaluates to ``b`` if ``a`` is *True*, if not it
         evaluates to ``c``.
         """
 
@@ -473,7 +473,7 @@ class BaseExpression(object):
 
     def toTable(self, colName, fmt=None, type_=None, title="", meta=None):
         """
-        Generates a one column :py:class:`~libms.DataStructures.Table` from an expession.
+        Generates a one column :py:class:`~libms.DataStructures.Table` from an expression.
 
         Example: ``tab = substances.name.toTable()``
         """

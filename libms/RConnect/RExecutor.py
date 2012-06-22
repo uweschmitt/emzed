@@ -92,15 +92,13 @@ class RExecutor(object):
         return _winreg.QueryValueEx(key, "InstallPath")[0]
 
     def run_test(self):
-        assert self.run_command("q(status=4711);") == 4711
+        status = self.run_command("q(status=123);")
+        assert status == 123, repr(status)
 
     def run_script(self, path):
-        # hyphens are needed as pathes may contain spaces
-        cmd = '"%s" --vanilla --silent < %s' % (self.rExe, path)
-        print cmd
 
         with open(path, "r") as fp:
-            proc = subprocess.Popen(['%s' % self.rExe, "--vanilla", "--silent"],
+            proc = subprocess.Popen(['%s --vanilla --silent' % self.rExe],
                                     stdin = fp, stdout = sys.__stdout__,
                                     bufsize=0, shell=True)
             out, err = proc.communicate()
