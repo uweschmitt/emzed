@@ -29,6 +29,9 @@ def sumPartition(n, s):
     if n==1:
         yield [s]
         return
+    if n==0:
+        yield []
+        return
     for i in range(s+1):
         for k in sumPartition(n-1, s-i):
             yield [i] + k

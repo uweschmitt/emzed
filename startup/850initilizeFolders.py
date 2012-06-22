@@ -12,6 +12,5 @@ _first_start = not os.path.exists(_flag_file)
 if _first_start:
     # set flag
     open(_flag_file, "w").close()
-
-    shutil.copytree("emzed_files", _dataHome)
     os.chdir(_dataHome)
+    shutil.copytree("emzed_files", _dataHome)
