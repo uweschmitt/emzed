@@ -9,5 +9,9 @@ def test_XCMSParser():
     assert len(table.rows)==8, len(table.rows)
     assert len(table.colNames)==11, len(table.colNames)
     assert len(table.colTypes)==11, len(table.colTypes)
+    # sometimes centwave delivers int values, which the parser
+    # should convert to float (we put a integeger in the first row of
+    # xcms_output.csv to test this !)
+    assert all(type(v) == float for v in table.rtmax.values)
 
     table.storeCSV("temp_output/test.csv")
