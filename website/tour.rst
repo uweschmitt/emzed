@@ -84,7 +84,7 @@ command, you can get some help as follows:
 .. pycon::
    :invisible:
  
-   ds = ms.loadPeakMap("../example_scripts/example1.mzXML") 
+   ds = ms.loadPeakMap("../emzed_files/example1.mzXML") 
 
 .. pycon::
     help(ms.loadPeakMap) 

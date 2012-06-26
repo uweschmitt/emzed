@@ -27,7 +27,7 @@ import sys, os
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 sys.path.insert(0, "..")
 sys.path.insert(0, ".")
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.viewcode', 'pycon', 'sphinxcontrib.spelling']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.viewcode', 'pycon', 'sphinxcontrib.spelling'][:-1]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
