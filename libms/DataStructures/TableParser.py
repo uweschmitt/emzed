@@ -26,6 +26,11 @@ class TableParser(object):
             for i, format_ in knownFormats:
                 if format_ is not None:
                     formats[i] = format_
+
+            for i, row in enumerate(rows):
+                rows[i] = [ t(v) if t is not object else v  for (t, v) in  zip(columnTypes, row) ] 
+
+
         else:
             columnTypes = numCol * (str, )
             formats     = numCol * ("%r", )

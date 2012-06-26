@@ -9,8 +9,10 @@ _flag_file = os.path.join(_dataHome, ".first_init_done")
 
 _first_start = not os.path.exists(_flag_file)
 
+
 if _first_start:
     # set flag
     open(_flag_file, "w").close()
+    _this_path, _  = os.path.split(os.path.abspath(__file__))
+    shutil.copytree(os.path.join(_this_path, "..", "emzed_files"), _dataHome)
     os.chdir(_dataHome)
-    shutil.copytree("emzed_files", _dataHome)
