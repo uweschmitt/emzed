@@ -11,8 +11,6 @@ from ..DataStructures.Table import Table
 
 from TableExplorerModel import *
 
-if __builtins__.get("__appemzed__") is None:
-    __builtins__["__appemzed__"] = guidata.qapplication()
 
 def getColors(i, light=False):
      colors = [(0, 0, 150), (50, 50, 50), (0,100,0),
@@ -252,9 +250,9 @@ class TableExplorer(QDialog):
             def handler(i=i):
                 try:
                     self.setupViewForTable(i)
-                except Exception, e:
-                    print e
-                    pass
+                except Exception:
+                    import traceback
+                    traceback.print_exc()
             self.menubar.connect(action, SIGNAL("triggered()"), handler)
 
         for view in self.tableViews:
@@ -267,8 +265,9 @@ class TableExplorer(QDialog):
             def handleClick(index, model=view.model()):
                 try:
                     self.handleClick(index, model)
-                except Exception, e:
-                    print e
+                except:
+                    import traceback
+                    traceback.print_exc()
             self.connect(view, SIGNAL("clicked(QModelIndex)"), handleClick)
 
         self.connect(self.reintegrateButton, SIGNAL("clicked()"),
@@ -350,22 +349,32 @@ class TableExplorer(QDialog):
                         self.updatePlots(reset=False)
                     else:
                         self.updatePlots(reset=True)
-        except Exception, e:
-            print e
+        except:
+            import traceback
+            traceback.print_exc()
 
     def abort(self):
-        self.result = 1
-        self.close()
+        try:
+            self.result = 1
+            self.close()
+        except:
+            import traceback
+            traceback.print_exc()
 
     def ok(self):
-        self.result = 0
-        self.close()
+        try:
+            self.result = 0
+            self.close()
+        except:
+            import traceback
+            traceback.print_exc()
 
     def openContextMenu(self, point):
         try:
             self._openContextMenu(point)
-        except Exception, e:
-            print e
+        except:
+            import traceback
+            traceback.print_exc()
 
     def _openContextMenu(self, point):
         idx = self.tableView.verticalHeader().logicalIndexAt(point)
@@ -403,8 +412,9 @@ class TableExplorer(QDialog):
             postfix = str(self.choosePostfix.currentText()).strip("'")
             rtmin, rtmax = self.rtPlotter.getRangeSelectionLimits()
             self.model.integrate(postfix, self.currentRowIdx, method, rtmin, rtmax)
-        except Exception, e:
-            print e
+        except:
+            import traceback
+            traceback.print_exc()
 
     def rowClicked(self, rowIdx):
         try:
@@ -414,8 +424,9 @@ class TableExplorer(QDialog):
             self.updatePlots(reset=True)
             if self.hasFeatures:
                 self.setupSpectrumChooser()
-        except Exception, e:
-            print e
+        except:
+            import traceback
+            traceback.print_exc()
 
 
     def setupSpectrumChooser(self):
@@ -495,8 +506,9 @@ class TableExplorer(QDialog):
                 self.mzPlotter.plot([self.currentLevelNSpecs[idx-1].peaks])
                 self.mzPlotter.resetAxes()
                 self.mzPlotter.replot()
-        except Exception, e:
-            print e
+        except:
+            import traceback
+            traceback.print_exc()
 
     def plotMz(self, resetLimits=None):
         """ this one is used from updatePlots and the rangeselectors
@@ -541,6 +553,7 @@ def inspect(what, offerAbortOption=False):
     """
     if isinstance(what, Table):
         what = [what]
+    app = guidata.qapplication() # singleton !
     explorer = TableExplorer(what, offerAbortOption)
     explorer.raise_()
     explorer.exec_()

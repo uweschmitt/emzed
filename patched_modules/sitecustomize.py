@@ -152,6 +152,8 @@ try:
 except ImportError:
     pass
 
+import guidata
+__builtin__.__appemzed__ = guidata.qapplication()
 
 # Communication between Spyder and the remote process
 if os.environ.get('SPYDER_SHELL_ID') is None:

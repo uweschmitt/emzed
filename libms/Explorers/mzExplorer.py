@@ -12,8 +12,6 @@ import os
 from PlottingWidgets import RtPlotter, MzPlotter
 import numpy as np
 
-if __builtins__.get("__appemzed__") is None:
-    __builtins__["__appemzed__"] = guidata.qapplication()
 
 class MzExplorer(QDialog):
 
@@ -76,8 +74,9 @@ class MzExplorer(QDialog):
             self.maxMZ= mz+w2
             self.updateChromatogram()
             self.plotChromatogramm()
-        except Exception, e:
-            print e
+        except Exception:
+            import traceback
+            traceback.print_exc()
 
     def levelNSpecChosen(self, idx):
         try:
@@ -89,14 +88,16 @@ class MzExplorer(QDialog):
                 self.mzPlotter.resetAxes()
                 self.mzPlotter.replot()
             self.rtPlotter.setEnabled(idx==0)
-        except Exception, e:
-            print e
+        except Exception:
+            import traceback
+            traceback.print_exc()
 
     def resetButtonPressed(self):
         try:
             self.resetMzLimits()
-        except Exception, e:
-            print e
+        except Exception:
+            import traceback
+            traceback.print_exc()
 
 
     def resetMzLimits(self):
@@ -152,8 +153,9 @@ class MzExplorer(QDialog):
     def w2Updated(self, txt):
         try:
             self.mzPlotter.setHalfWindowWidth(float(txt))
-        except:
-            pass
+        except Exception:
+            import traceback
+            traceback.print_exc()
     def mzUpdated(self, txt):
         try:
             txt = str(txt)
@@ -161,8 +163,9 @@ class MzExplorer(QDialog):
                 self.mzPlotter.setCentralMz(None)
                 return
             self.mzPlotter.setCentralMz(float(txt))
-        except:
-            pass
+        except Exception:
+            import traceback
+            traceback.print_exc()
 
     def handleCPressed(self, (mz, I)):
         self.inputMZ.setText("%.6f" % mz)
@@ -200,6 +203,7 @@ def inspectPeakMap(peakmap):
     if len(peakmap) == 0:
         raise Exception("empty peakmap")
 
+    app = guidata.qapplication() # singleton !
     win = MzExplorer()
     win.setup(peakmap)
     win.activateWindow()

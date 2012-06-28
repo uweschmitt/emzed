@@ -351,30 +351,45 @@ class MzPlot(ModifiedCurvePlot):
             self.current_peak
             self.c_call_back
         except:
+            import traceback
+            traceback.print_exc()
             return
 
         self.c_call_back(self.current_peak)
 
     def start_drag_mode(self, filter_, evt):
-        mz = self.invTransform(self.xBottom, evt.x())
-        I = self.invTransform(self.yLeft, evt.y())
-        self.start_coord = self.next_peak_to(mz, I)
+        try:
+            mz = self.invTransform(self.xBottom, evt.x())
+            I = self.invTransform(self.yLeft, evt.y())
+            self.start_coord = self.next_peak_to(mz, I)
+        except:
+            import traceback
+            traceback.print_exc()
 
     def move_in_drag_mode(self, filter_, evt):
-        mz = self.invTransform(self.xBottom, evt.x())
-        I = self.invTransform(self.yLeft, evt.y())
-        current_coord = self.next_peak_to(mz, I)
+        try:
+            mz = self.invTransform(self.xBottom, evt.x())
+            I = self.invTransform(self.yLeft, evt.y())
+            current_coord = self.next_peak_to(mz, I)
 
-        line = self.get_unique_item(SegmentShape)
-        line.set_rect(self.start_coord[0], self.start_coord[1], current_coord[0], current_coord[1])
-        line.setVisible(1)
+            line = self.get_unique_item(SegmentShape)
+            line.set_rect(self.start_coord[0], self.start_coord[1], current_coord[0], current_coord[1])
+            line.setVisible(1)
 
-        self.replot()
+            self.replot()
+        except:
+            import traceback
+            traceback.print_exc()
 
     def stop_drag_mode(self, filter_, evt):
-        line = self.get_unique_item(SegmentShape)
-        line.setVisible(0)
-        self.replot()
+        try:
+            line = self.get_unique_item(SegmentShape)
+            line.setVisible(0)
+            self.replot()
+        except:
+            import traceback
+            traceback.print_exc()
+
 
 
 

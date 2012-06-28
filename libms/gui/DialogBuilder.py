@@ -2,9 +2,6 @@
 import guidata
 
 
-if __builtins__.get("__appemzed__") is None:
-    __builtins__["__appemzed__"] = guidata.qapplication()
-
 import guidata.dataset.datatypes as dt
 import guidata.dataset.dataitems as di
 

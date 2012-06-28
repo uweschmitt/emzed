@@ -357,22 +357,29 @@ class TableModel(QAbstractTableModel):
         return None
 
     def undoLastAction(self):
-        if len(self.actions):
-            action = self.actions.pop()
-            action.undo()
-            self.redoActions.append(action)
-            self.parent.updateMenubar()
-            return
-        raise Exception("no action to be undone")
+        try:
+            if len(self.actions):
+                action = self.actions.pop()
+                action.undo()
+                self.redoActions.append(action)
+                self.parent.updateMenubar()
+                return
+        except:
+            import traceback
+            traceback.print_exc()
+
 
     def redoLastAction(self):
-        if len(self.redoActions):
-            action = self.redoActions.pop()
-            action.do()
-            self.actions.append(action)
-            self.parent.updateMenubar()
-            return
-        raise Exception("no action to be redone")
+        try:
+            if len(self.redoActions):
+                action = self.redoActions.pop()
+                action.do()
+                self.actions.append(action)
+                self.parent.updateMenubar()
+                return
+        except:
+            import traceback
+            traceback.print_exc()
 
     def cloneRow(self, position):
         self.runAction(CloneRowAction, position)

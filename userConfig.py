@@ -2,6 +2,7 @@ import os, sys
 import ConfigParser
 import functools
 
+
 class _GlobalConfig(object):
 
     def __init__(self):
@@ -23,7 +24,9 @@ class _GlobalConfig(object):
 
     def editConfig(self):
         import guidata
-        app = guidata.qapplication()
+
+        app = guidata.qapplication() # singleton !
+
         import guidata.dataset.datatypes as dt
         import guidata.dataset.dataitems as di
 

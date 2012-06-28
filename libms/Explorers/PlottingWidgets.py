@@ -198,11 +198,15 @@ class RtPlotter(PlotterBase):
         self.rangeSelectionCallback = saved
 
     def rangeSelectionHandler(self, obj, left, right):
-        min_, max_ = sorted((left, right))
-        self.minRTRangeSelected = min_
-        self.maxRTRangeSelected = max_
-        if self.rangeSelectionCallback is not None:
-            self.rangeSelectionCallback()
+        try:
+            min_, max_ = sorted((left, right))
+            self.minRTRangeSelected = min_
+            self.maxRTRangeSelected = max_
+            if self.rangeSelectionCallback is not None:
+                self.rangeSelectionCallback()
+        except:
+            import traceback
+            traceback.print_exc()
 
 class MzCursorInfo(ObjectInfo):
     def __init__(self, marker, line):
