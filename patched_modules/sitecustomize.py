@@ -152,6 +152,7 @@ try:
 except ImportError:
     pass
 
+print "install __appemzed__"
 import guidata
 __builtin__.__appemzed__ = guidata.qapplication()
 
