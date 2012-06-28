@@ -7,29 +7,19 @@ import os, sys
 from ..intern_utils import TemporaryDirectoryWithBackup
 from pyOpenMS import FileHandler
 
-from userConfig import getExchangeFolder
+from userConfig import getExchangeFolder, getRLibsFolder
 
 exchangeFolderAvailable = getExchangeFolder() is not None
 
 
-def path_to_r_libs():
-
-    R_LIBS = os.environ.get("R_LIBS")
-    if R_LIBS == None:
-        raise Exception("inconsistent system: R_LIBS not set.")
-
-    r_libs = R_LIBS.replace("\\", "\\\\")
-  
-    return r_libs
-
 def install_xmcs_if_needed_statements():
-    r_libs = path_to_r_libs()
+    r_libs = getRLibsFolder().replace("\\", "\\\\")
 
     script = """
                 if (require("xcms") == FALSE)
                 {
                     source("http://bioconductor.org/biocLite.R")
-                    install.packages(c("xcms"), repos=biocinstallRepos(), dep=T, lib="%s", destdir="%s")
+                    biocLite("xcms", dep=T, lib="%s", destdir="%s")
                 }
             """ % (r_libs, r_libs)
 
@@ -38,6 +28,7 @@ def install_xmcs_if_needed_statements():
 def installXcmsIfNeeded():
 
     if not exchangeFolderAvailable:
+# all installled libs will get to local folder
         print "no xcms install as exchange folder is not available"
         return 
 
@@ -54,7 +45,7 @@ def lookForXcmsUpgrades():
                  source("http://bioconductor.org/biocLite.R")
                  todo <- old.packages(repos=biocinstallRepos(), lib="%s")
                  q(status=length(todo))
-             """ % path_to_r_libs()
+             """ % getRLibsFolder().replace("\\", "\\\\")
 
     num = RExecutor().run_command(script)
     if not num:
@@ -68,7 +59,7 @@ def doXcmsUpgrade():
         print "no xcms upgrade as exchange folder is not available"
         return 
 	
-    r_libs = path_to_r_libs()
+    r_libs = getRLibsFolder().replace("\\", "\\\\")
 
     script = """
      source("http://bioconductor.org/biocLite.R")

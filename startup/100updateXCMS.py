@@ -5,9 +5,10 @@ print "INSTALL XCMS IF NEEDED"
 print
 installXcmsIfNeeded()
 print
-print "LOOK FOR XCMS UPDATES"
-print
-doXcmsUpgrade()
+#temprarily disabled, due to xcms version issues:
+#print "LOOK FOR XCMS UPDATES"
+#print
+#doXcmsUpgrade()
 
 del installXcmsIfNeeded
 del doXcmsUpgrade

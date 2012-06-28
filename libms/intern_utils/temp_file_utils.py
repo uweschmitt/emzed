@@ -1,5 +1,6 @@
 from tempfile import mkdtemp
 from shutil   import rmtree, copytree
+import os
 
 class TemporaryDirectoryWithBackup(object):
 
@@ -16,6 +17,7 @@ class TemporaryDirectoryWithBackup(object):
         rmtree(backupdir, ignore_errors = True) # might not exist
         try:
             copytree(self.d, backupdir)
+            print "backuped logs to", os.path.abspath(backupdir)
         except:
             pass # sometimes copytree fails
 

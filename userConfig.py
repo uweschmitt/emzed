@@ -95,6 +95,7 @@ def getLocalAppDataFolder():
     key = userShellFolderKey()
     return _query(key, "Local AppData")
 
+
 def getDataHome():
     dataHome = os.path.join(getDocumentFolder(), "emzed_files")
     return dataHome
@@ -113,3 +114,9 @@ def getExchangeFolder():
     if not os.path.exists(exchangeFolder):
         os.makedirs(exchangeFolder)
     return exchangeFolder
+
+def getRLibsFolder():
+    root = getExchangeFolder()
+    if root is None:
+        return None
+    return os.path.join(root, "r_libs")

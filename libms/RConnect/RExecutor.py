@@ -2,14 +2,15 @@
 import os, glob, subprocess, sys
 
 import userConfig
-root = userConfig.getExchangeFolder()
 
-# all installled libs will get to local folder
-if root is not None:
-    R_LIBS=os.path.join(root, "r_libs")
-    os.environ["R_LIBS"] = R_LIBS
-    if not os.path.exists(R_LIBS):
-        os.makedirs(R_LIBS)
+r_libs_folder = userConfig.getRLibsFolder()
+if r_libs_folder is not None:
+    r_libs=[path for path in os.environ.get("R_LIBS", "").split(":") if path]
+    if r_libs_folder not in r_libs:
+        if not os.path.exists(r_libs_folder):
+            os.makedirs(r_libs_folder)
+        r_libs.insert(0, r_libs_folder)
+        os.environ["R_LIBS"] = ":".join(r_libs)
 
 from ..intern_utils import TemporaryDirectoryWithBackup
 
@@ -119,6 +120,9 @@ class RExecutor(object):
             fp = file(os.path.join(dir_, "script.R"), "w")
             print >> fp, command
             fp.close()
+            fp2 = file(os.path.join(dir_, "R_exe"), "w")
+            print >> fp2, os.path.abspath(self.rExe)
+            fp2.close()
             return self.run_script(fp.name)
 
         if dir_ is not None:
