@@ -25,6 +25,7 @@ def formatSeconds(seconds):
 class RtRangeSelectionInfo(ObjectInfo):
 
     def __init__(self, range_):
+        ObjectInfo.__init__(self)
         self.range_ = range_
 
     def get_text(self):
@@ -68,6 +69,7 @@ class PlotterBase(object):
 
 class RtCursorInfo(ObjectInfo):
     def __init__(self, marker):
+        ObjectInfo.__init__(self)
         self.marker = marker
 
     def get_text(self):
@@ -210,6 +212,7 @@ class RtPlotter(PlotterBase):
 
 class MzCursorInfo(ObjectInfo):
     def __init__(self, marker, line):
+        ObjectInfo.__init__(self)
         self.marker = marker
         self.line   = line
 
