@@ -10,21 +10,6 @@ from guiqwt.shapes import Marker, SegmentShape, XRangeSelection
 import numpy as np
 
 
-def memoize(function):
-    """ decorator for caching results """
-    memo = {}
-
-    def wrapper(*args):
-        if args in memo:
-            return memo[args]
-        else:
-            rv = function(*args)
-            memo[args] = rv
-            return rv
-
-    return wrapper
-
-
 class ModifiedCurveItem(CurveItem):
     """ modification(s):
           selection (which plots a square at each (x,y) ) is turned off
