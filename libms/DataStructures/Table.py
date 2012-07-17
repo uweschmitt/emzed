@@ -405,8 +405,12 @@ class Table(object):
         self.resetInternals()
 
     def copy(self):
-        """ returns a deep copy of the table """
-        return copy.deepcopy(self)
+        """ returns a 'semi-deep' copy of the table """
+        prototype = self.buildEmptyClone()
+        for row in self.rows:
+            prototype.rows.append(row[:])
+        prototype.resetInternals()
+        return prototype
 
     def extractColumns(self, *names):
         """extracts the given column names ``names`` and returns a new
