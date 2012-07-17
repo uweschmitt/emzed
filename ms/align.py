@@ -115,7 +115,9 @@ def rtAlign(tables, refTable = None, destination = None, nPeaks=-1,
             refMap = toOpenMSFeatureMap(refTable)
     results = []
     for fm, table in fms:
-        table = copy.deepcopy(table) # so we do not modify existing table !
+        # we do not modify existing table inkl. peakmaps: (rt-values
+        # might change below in _transformTable) !
+        table = copy.deepcopy(table) 
         if fm is refMap:
             results.append(table)
             continue

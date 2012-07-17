@@ -333,6 +333,7 @@ def _findParametersManually(tobe, real):
 
 def _applyTransform(table, transform):
     import copy
+    # as we modify peakmaps below we need a real deepcopy here:
     table = copy.deepcopy(table)
     table.replaceColumn("mz", table.mz.apply(transform))
     table.replaceColumn("mzmin", table.mzmin.apply(transform))
