@@ -206,7 +206,6 @@ def inspectPeakMap(peakmap):
     app = guidata.qapplication() # singleton !
     win = MzExplorer()
     win.setup(peakmap)
-    win.activateWindow()
     win.raise_()
     win.exec_()
     del win.level1Peakmap

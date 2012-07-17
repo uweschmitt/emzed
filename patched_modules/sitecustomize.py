@@ -167,6 +167,8 @@ else:
                       os.environ['SPYDER_SHELL_ID'],
                       float(os.environ['SPYDER_AR_TIMEOUT']),
                       os.environ["SPYDER_AR_STATE"].lower() == "true")
+    # fix: atach ref to monitor thread for lifetime
+    monitor.__appemzed__ = guidata.qapplication()
     monitor.start()
     
     def open_in_spyder(source, lineno=1):
