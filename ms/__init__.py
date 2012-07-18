@@ -14,7 +14,6 @@ from libms.gui.DialogBuilder import (DialogBuilder,
                                      showWarning,
                                      showInformation)
 
-__all__ = [ "inspectMap", "inspectFeatures", "alignFeatureTables" ]
 
 __builtins__["MMU"] = 0.001
 __builtins__["MASS_E"] = 5.4857990946e-4

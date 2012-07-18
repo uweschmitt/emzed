@@ -102,6 +102,8 @@ class MzSelectionTool(InteractiveTool):
         return setup_standard_tool_filter(filter, start_state)
 
 
+del CurvePlot.__del__
+
 class ModifiedCurvePlot(CurvePlot):
     """ modifications:
             - zooming preserves x asix at bottom of plot

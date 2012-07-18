@@ -193,7 +193,10 @@ class DialogBuilder(object):
 
             For more info see the docs of guidata how those classes
             are declared to get the wanted dialog.
+
         """
+        import guidata
+        app = guidata.qapplication()
 
         # put the class level attributes in a dict
         attributes = dict(zip(self.fieldNames, self.items))
