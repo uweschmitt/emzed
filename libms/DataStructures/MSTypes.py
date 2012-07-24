@@ -40,14 +40,17 @@ class Spectrum(object):
         return self.peaksInRange(mzmin, mzmax)[:,1].sum()
 
     def peaksInRange(self, mzmin=None, mzmax=None):
+        mzs = None
+        if mzmin is not None or mzmax is not None:
+            mzs = self.peaks[:,0]
         if mzmin is None and mzmax is None:
             raise Exception("no limits provided. need mzmin or mzmax")
         if mzmin is not None:
-            imin = self.peaks[:,0].searchsorted(mzmin)
+            imin = mzs.searchsorted(mzmin)
         else:
             imin = 0
         if mzmax is not None:
-            imax = self.peaks[:,0].searchsorted(mzmax, side='right')
+            imax = mzs.searchsorted(mzmax, side='right')
         else:
             # exclusive:
             imax = self.peaks.shape[0]
@@ -207,7 +210,6 @@ class PeakMap(object):
         rtmin = self.spectra[0].rt if len(self.spectra) else 1e300
         rtmax = self.spectra[-1].rt if len(self.spectra) else -1e300
         return rtmin, rtmax
-
 
     @classmethod
     def fromMSExperiment(clz, mse):
