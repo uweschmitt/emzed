@@ -101,7 +101,8 @@ class MzSelectionTool(InteractiveTool):
         #self.connect(handler, SIGNAL("doubleClicked()"), baseplot.do_c_pressed)
         return setup_standard_tool_filter(filter, start_state)
 
-
+# remove __del__ as we get unbreakable dependency cycles
+# if we plot a lot.
 del CurvePlot.__del__
 
 class ModifiedCurvePlot(CurvePlot):
