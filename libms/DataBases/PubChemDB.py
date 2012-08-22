@@ -1,4 +1,4 @@
-import urllib, urllib2
+import urllib, urllib2, httplib
 import time, os
 import xml.etree.ElementTree  as etree
 from ..DataStructures.Table import Table
@@ -6,6 +6,15 @@ from ..Chemistry.Tools import monoisotopicMass
 
 import logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+
+
+def _multitryread(req):
+    for trial in range(4):
+        try:
+            return urllib2.urlopen(req, timeout=3).read()
+        except urllib2.URLError, httplib.IncompleteRead:
+            pass
+    return None
 
 
 
@@ -26,8 +35,8 @@ class PubChemDB(object):
                     email="tools@emzed.ethz.ch",
                     )
         req = urllib2.Request(url, urllib.urlencode(data))
-        resp = urllib2.urlopen(req)
-        doc = etree.fromstring(resp.read())
+        data = _multitryread(req)
+        doc = etree.fromstring(data)
         counts = doc.findall("Count")
         assert len(counts)==1
         count = int(counts[0].text)
@@ -50,9 +59,7 @@ class PubChemDB(object):
                     )
         url="http://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
         req = urllib2.Request(url, urllib.urlencode(data))
-        resp = urllib2.urlopen(req)
-
-        data = resp.read()
+        data = _multitryread(req)
         if len(data)==0:
             print "FAILED TO CONNECT"
             return []
@@ -72,9 +79,7 @@ class PubChemDB(object):
                     )
         url="http://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi"
         req = urllib2.Request(url, urllib.urlencode(data))
-        resp = urllib2.urlopen(req)
-        data = resp.read()
-        return data
+        return _multitryread(req)
 
     @staticmethod
     def _parse_data(data, keggIds=None, humanMBdbIds=None):
