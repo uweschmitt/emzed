@@ -163,16 +163,3 @@ class TestMSTypes(object):
         assert spec.intensityInRange(2.0, 2.0) == 1.0
         assert spec.intensityInRange(2.1, 2.0) == 0.0
 
-    def testMemoize(self):
-
-        # list for passing reference to mutable data to fun()
-        counter = [0]
-        @memoize
-        def fun(counter=counter):
-            counter[0] += 1
-            return 42
-
-        assert fun() == 42
-        assert fun() == 42
-        assert counter[0] == 1, counter[0]
-
