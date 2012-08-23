@@ -4,6 +4,7 @@ from custom_dialogs import *
 from integration import *
 from align import *
 from isotope_calculator import *
+from formula_generator import *
 from tools import *
 from statistics import *
 from mzalign import mzAlign
