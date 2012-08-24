@@ -19,6 +19,13 @@ def plotIsotopeDistribution(formula, R=None, fullC13=False, minp=0.01,
     centroids according to the used resolution are shown.
 
     For low *minp* the choice *plotGauss=False* the plot is drawn faster.
+
+    .. pycon::
+
+       ms.plotIsotopeDistribution("C3H7NO2", C=dict(C13=0.5, C12=0.5), R=5000) !noexec
+
+    .. image:: isopattern_alanin.png 
+
     """
     gen = _setupIsotopeDistributionGenerator(formula, R, fullC13, minp, **kw)
     gen.show(plotGauss)
@@ -40,6 +47,20 @@ def isotopeDistributionTable(formula, R=None, fullC13=False, minp=0.01, **kw):
     the natural abundances, you can tell that like
     ``ms.isotopeDistributionTable("S4C4", C=dict(C13=0.5, C12=0.5))``
 
+    Examples:
+
+    .. pycon::
+
+       import ms !onlyoutput
+       # natural abundances:
+       tab = ms.isotopeDistributionTable("C3H7NO2")
+       tab.abundance /= tab.abundance.sum()
+       tab.print_()
+
+       # artifical abundances:
+       tab = ms.isotopeDistributionTable("C3H7NO2", C=dict(C13=0.5, C12=0.5))
+       tab.abundance /= tab.abundance.sum()
+       tab.print_()
 
     \
     """

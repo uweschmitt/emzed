@@ -38,17 +38,6 @@ Generating Formulas for given mass range
 
 .. autofunction:: ms.formulaTable
 
-    Examples:
-
-    .. pycon::
-
-       import ms !nooutput
-       import mass !nooutput
-
-       m0 = mass.of("C6H12O3")
-       tab = ms.formulaTable(m0-0.01, m0+0.01, C=(0, 100), H=(0, 100), O=(0, 100))
-       tab.print_()
-
 
 
 Simulating Isotope Distributions
@@ -56,29 +45,9 @@ Simulating Isotope Distributions
 
 .. autofunction:: ms.isotopeDistributionTable
 
-    Examples:
 
-    .. pycon::
-
-       import ms !nooutput
-       # natural abundances:
-       tab = ms.isotopeDistributionTable("C3H7NO2")
-       tab.abundance /= tab.abundance.sum()
-       tab.print_()
-
-       # artifical abundances:
-       tab = ms.isotopeDistributionTable("C3H7NO2", C=dict(C13=0.5, C12=0.5))
-       tab.abundance /= tab.abundance.sum()
-       tab.print_()
 
 .. autofunction:: ms.plotIsotopeDistribution
-
-
-    .. pycon::
-    
-       ms.plotIsotopeDistribution("C3H7NO2", C=dict(C13=0.5, C12=0.5), R=5000) !noexec
-
-    .. image:: isopattern_alanin.png 
 
 
 Statistics

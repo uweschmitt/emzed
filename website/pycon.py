@@ -53,8 +53,9 @@ class PyCon(Directive):
 
         suppress_output = "suppress_output" in self.options
 
-        captured = cStringIO.StringIO()
+        out = ""
         for line in self.content:
+            captured = cStringIO.StringIO()
             fields = line.split("!noexec")
             donotexec = len(fields)>1
             if donotexec:
@@ -66,13 +67,21 @@ class PyCon(Directive):
             donotoutput = len(fields)>1
             if donotoutput:
                 del fields[1]
-                line = "".join(fields)
+                line = "".join(fields).trim()
 
             fields = line.split("!onlyoutput")
             onlyoutput = len(fields)>1
             if onlyoutput:
                 del fields[1]
                 line = "".join(fields)
+
+            fields = line.split("!shortentable")
+            shortentable = len(fields)>1
+            if shortentable:
+                del fields[1]
+                line = "".join(fields)
+
+
             if not onlyoutput:
                 print >> captured, ">>>", line
 
@@ -85,8 +94,14 @@ class PyCon(Directive):
                     traceback.print_exc(file=captured)
                     traceback.print_exc(file=sys.stderr)
             sys.stdout = sys.__stdout__
+            if shortentable:
+                lines = captured.getvalue().split("\n")
+                lines = lines[:6]+["..."]+lines[-4:]
+                out += "\n".join(lines)
+            else:
+                out += captured.getvalue()
 
-        out = captured.getvalue()# .decode(output_encoding)
+        #out = captured.getvalue()# .decode(output_encoding)
         literal = nodes.literal_block(out,out)
         literal['language'] = "python"
         literal['linenos'] = 'linenos' in self.options

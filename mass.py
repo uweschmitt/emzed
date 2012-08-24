@@ -1,5 +1,3 @@
-print "LOAD MASSES"
-
 from libms.Chemistry.Elements import (Elements as _Elements,
                                       MonoIsotopicElements as _Mono)
 
