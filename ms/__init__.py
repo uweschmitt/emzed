@@ -53,6 +53,10 @@ try:
 except:
     pass
 try:
+    del formula_generator
+except:
+    pass
+try:
     del isotope_calculator
 except:
     pass

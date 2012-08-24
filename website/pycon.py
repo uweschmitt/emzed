@@ -67,7 +67,7 @@ class PyCon(Directive):
             donotoutput = len(fields)>1
             if donotoutput:
                 del fields[1]
-                line = "".join(fields).trim()
+                line = "".join(fields)
 
             fields = line.split("!onlyoutput")
             onlyoutput = len(fields)>1
