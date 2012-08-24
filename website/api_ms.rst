@@ -33,6 +33,23 @@ Integrating Peaks
 
 .. autofunction:: ms.integrate
 
+Generating Formulas for given mass range
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: ms.formulaTable
+
+    Examples:
+
+    .. pycon::
+
+       import ms !nooutput
+       import mass !nooutput
+
+       m0 = mass.of("C6H12O3")
+       tab = ms.formulaTable(m0-0.01, m0+0.01, C=(0, 100), H=(0, 100), O=(0, 100))
+       tab.print_()
+
+
 
 Simulating Isotope Distributions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
