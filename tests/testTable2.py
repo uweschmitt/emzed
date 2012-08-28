@@ -63,14 +63,15 @@ def testApply():
     assert t.id.values == [None, 2, 3 ]
 
 
-    sub = ms.toTable("mf", ["Na", "H2O", "Kr", None])
+    sub = ms.toTable("mf", ["Na", "H2O", None])
 
     # apply with Nones in cols
     expr = sub.mf.apply(mass.of)
     sub.addColumn("m0", expr)
 
     sub.addColumn("m0s", sub.m0.apply(str))
-    assert sub.colTypes == [ str, float, str]
+    sub.print_()
+    assert sub.colTypes == [ str, float, str], sub.colTypes
 
     # apply without None values:
     sub = sub.filter(sub.m0 != None)

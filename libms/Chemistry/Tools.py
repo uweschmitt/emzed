@@ -164,4 +164,3 @@ def formulaTable(min_mass, max_mass, C=(0, None),
                                     rows.append([mf, max_mass - resmh_max])
     return Table(["mf", "m0"],[str, float], ["%s", "%.5f"], rows)
 
-

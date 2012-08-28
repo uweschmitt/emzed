@@ -447,7 +447,8 @@ One can consider isotopes too:
 
 .. pycon::
 
-    print mass.of("C6H2O6", C=elements.C13)
+    print mass.of("[13]C6H2O6")
+    print mass.of("[13]C3[12]C3H2O6")
 
 
 

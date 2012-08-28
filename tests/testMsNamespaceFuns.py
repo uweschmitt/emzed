@@ -4,6 +4,14 @@ import numpy as np
 import copy
 
 
+def testFormula():
+    mf1 = ms.formula("H2O")
+    mf2 = ms.formula("CH2O")
+    assert str(mf1+mf2) == "CH4O2"
+    mf3 = mf1 + mf2 - mf2
+    assert str(mf3) == "H2O"
+
+
 def testLoadMap():
     from_ = u"data/SHORT_MS2_FILE.mzXML"
     ds = ms.loadPeakMap(from_)

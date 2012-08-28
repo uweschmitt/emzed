@@ -1,6 +1,7 @@
 #!/bin/sh
 nosetests -w tests --tests=testTable2.py\
 ,testExpressions.py\
+,testMolecularFormula.py\
 ,testTable.py\
 ,testMSTypes.py\
 ,testTableParsers.py\

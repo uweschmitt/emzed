@@ -1,13 +1,14 @@
 from libms.Chemistry.Elements import (Elements as _Elements,
                                       MonoIsotopicElements as _Mono)
+import libms.Chemistry.MolecularFormula as _MolecularFormula
 
-from libms.Chemistry.Tools import monoisotopicMass as _monoisotopicMass
 
 e = 5.4857990946e-4
 p = 1.007276466812
 n = 1.00866491600
 
-of = _monoisotopicMass
+def of(mf, **assignments):
+    return _MolecularFormula(mf).mass()
 
 _elements = _Elements()
 _symbols = _elements.symbol.values

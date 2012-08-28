@@ -10,6 +10,8 @@ from statistics import *
 from mzalign import mzAlign
 from metlin import matchMetlin
 
+from formula import formula
+
 from libms.Explorers       import inspectPeakMap, inspect
 from libms.gui.DialogBuilder import (DialogBuilder,
                                      showWarning,

@@ -39,6 +39,12 @@ Generating Formulas for given mass range
 .. autofunction:: ms.formulaTable
 
 
+Working with molecular formulas
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: ms.formula
+
+
 
 Simulating Isotope Distributions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

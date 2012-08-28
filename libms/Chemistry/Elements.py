@@ -64,9 +64,23 @@ class Elements(Table):
                                            title="Elements")
             self.sortBy("number")
 
-        # borg pattern is shit for columns which hold a reference to the
+            self.massDict = dict()
+            for row in self.rows:
+                sym = self.get(row, "symbol")
+                massnum = self.get(row, "massnumber")
+                mass = self.get(row, "mass")
+                self.massDict[sym, massnum] = mass
+            syms = set(s for s, _ in self.massDict.keys())
+            for sym in syms:
+                minmass = min(mass for (s, mass) in self.massDict.keys() if s == sym)
+                self.massDict[sym, None] = self.massDict[sym, minmass]
+
+        # borg pattern is sh*t for columns which hold a reference to the
         # table which might change, but the columns stay the same !!!
         self.resetInternals()
+
+    def getMass(self, symbol, massnumber):
+        return self.massDict.get((symbol, massnumber))
 
 
 class MonoIsotopicElements(Table):
@@ -97,10 +111,19 @@ class MonoIsotopicElements(Table):
             self.renameColumns(mass="m0")
             self.dropColumns("abundance")
             self.sortBy("number")
+            self.massDict = dict()
+            for row in self.rows:
+                sym = self.get(row, "symbol")
+                mass = self.get(row, "m0")
+                self.massDict[sym] = mass
 
-        # borg pattern is shit for columns which hold a reference to the
+        # borg pattern is sh*t for columns which hold a reference to the
         # table which might change, but the columns stay the same !!!
         self.resetInternals()
+
+
+    def getMass(self, symbol):
+        return self.massDict.get(symbol)
 
 
     def buildSymbolIndex(self):
