@@ -36,6 +36,9 @@ class PubChemDB(object):
                     )
         req = urllib2.Request(url, urllib.urlencode(data))
         data = _multitryread(req)
+        if data is None:
+            print "FAILED TO CONNECT"
+            return 0
         doc = etree.fromstring(data)
         counts = doc.findall("Count")
         assert len(counts)==1
@@ -60,7 +63,7 @@ class PubChemDB(object):
         url="http://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
         req = urllib2.Request(url, urllib.urlencode(data))
         data = _multitryread(req)
-        if len(data)==0:
+        if data is None:
             print "FAILED TO CONNECT"
             return []
         doc = etree.fromstring(data)
@@ -108,6 +111,10 @@ class PubChemDB(object):
         items = []
         for i, j in enumerate(jobs):
             data = PubChemDB._get_summary_data(j)
+            if data is None:
+                print "FAILED TO CONNECT"
+                data = []
+
             items.extend(PubChemDB._parse_data(data, keggIds, humanMBdbIds))
             print "   %3d %%" % (100.0 * (i+1)/len(jobs)), "done",
             needed = time.time()-started
