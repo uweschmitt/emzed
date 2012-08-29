@@ -19,7 +19,8 @@ def _multitryread(req):
                 print
                 print "REQUEST FAILED:"
                 print "full url:   ", req.get_full_url()
-                print "header  :   ", req.get_header()
+                print "headers :   ", req.headers
+                print "data    :   ", req.get_data()
                 print
     return None
 
