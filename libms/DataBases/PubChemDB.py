@@ -12,10 +12,16 @@ def _multitryread(req):
     for trial in range(4):
         try:
             return urllib2.urlopen(req, timeout=3).read()
-        except urllib2.URLError, httplib.IncompleteRead:
-            pass
+        except (urllib2.URLError, httplib.IncompleteRead) as e:
+            if trial==0:
+                import traceback
+                traceback.print_exc()
+                print
+                print "REQUEST FAILED:"
+                print "full url:   ", req.get_full_url()
+                print "header  :   ", req.get_header()
+                print
     return None
-
 
 
 class PubChemDB(object):
@@ -89,6 +95,9 @@ class PubChemDB(object):
         doc = etree.fromstring(data)
         items = []
         for summary in doc[0]:
+            if len(summary.findall("error")):
+                print "RETRIEVAL FOR ID=%s FAILED" % (summary.attrib.get("uid"))
+                continue
             cid = int(summary.findall("CID")[0].text)
             mw = float(summary.findall("MolecularWeight")[0].text)
             mf = summary.findall("MolecularFormula")[0].text
