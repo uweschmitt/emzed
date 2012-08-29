@@ -612,3 +612,4 @@ The following dialogue is created by the simple commands below:
     b.addFloat("Threshold")
     b.addFileOpen("Input File")
     print b.show()                            !noexec
+    (10, 1.02, 'C:/Dokumente und Einstellungen/e001.mzML') #!asoutput

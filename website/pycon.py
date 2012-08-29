@@ -81,13 +81,19 @@ class PyCon(Directive):
                 del fields[1]
                 line = "".join(fields)
 
-
-            if not onlyoutput:
-                print >> captured, ">>>", line
+            fields = line.split("!asoutput")
+            asoutput = len(fields)>1
+            if asoutput:
+                del fields[1]
+                line = "".join(fields)
+                print >> captured, line
+            else:
+                if not onlyoutput:
+                    print >> captured, ">>>", line
 
             if not suppress_output and not donotoutput:
                 sys.stdout = captured
-            if not donotexec:
+            if not donotexec and not asoutput:
                 try:
                     exec(line, PyCon.__globals)
                 except:
