@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 def _multitryread(req):
     for trial in range(4):
         try:
-            return urllib2.urlopen(req, timeout=3).read()
+            return urllib2.urlopen(req).read()
         except (urllib2.URLError, httplib.IncompleteRead) as e:
             if trial==0:
                 import traceback
