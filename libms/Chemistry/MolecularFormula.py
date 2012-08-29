@@ -17,7 +17,9 @@ class MolecularFormula(object):
             self.dictForm = dict( (e,c) for (e,c) in form.items() if c)
 
     def asDict(self):
-        return self.dictForm
+        # maybe dictForm is a Counter, so in order to provide too much
+        # surprise we convert to dict:
+        return dict(self.dictForm)
 
     def __str__(self):
         return self.stringForm
