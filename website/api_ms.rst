@@ -44,6 +44,7 @@ Working with molecular formulas
 
 .. autofunction:: ms.formula
 
+.. autofunction:: ms.addmf
 
 
 Simulating Isotope Distributions

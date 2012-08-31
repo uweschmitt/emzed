@@ -58,5 +58,13 @@ def testAdducts():
     assert len(t) == 14
     assert len(t.colNames) == 3
 
+def testfoumulaadd():
+    import ms
+    assert ms.addmf("H2O") == "H2O"
+    assert ms.addmf("H2O", "O") == "H2O2"
+    assert ms.addmf("H2O", "-O") == "H2"
+    assert ms.addmf("H2O", "-H2") == "O"
+    assert ms.addmf("H2O", "O", "O", "O2") == "H2O5"
+    assert ms.addmf("(CH2)7", "COOH", "Cl", "-H2O") == "C8H13OCl"
 
 

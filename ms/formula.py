@@ -35,6 +35,35 @@ def formula(mf):
     import libms.Chemistry.MolecularFormula as MF
     return MF(mf)
 
+def addmf(formula0, *formulas):
+    """
+    Combines molecular formulas by addition and subraction:
+
+    .. pycon::
+
+       import ms !onlyoutput
+       print ms.addmf("H2O", "COOH")
+       print ms.addmf("H2O", "COOH", "NaCl")
+
+    A leading minus sign subtracts the formla following this sign:
+
+    .. pycon::
+
+       print ms.addmf("H2O2", "-H2O")
+       print ms.addmf("H2O", "COOH", "NaCl", "-H2O2")
+       print ms.addmf("(CH2)7COOH", "-C7")
+
+    """
+
+    mf0 = formula(formula0)
+    for f in formulas:
+        if f.startswith("-"):
+            mf0 -= formula(f[1:])
+        else:
+            mf0 += formula(f)
+    return str(mf0)
+
+
 
 # vim: ts=4 et sw=4 sts=4
 
