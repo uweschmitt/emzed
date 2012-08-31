@@ -1,6 +1,9 @@
 API helper modules
 ==================
 
+Data of chemical Elements
+-------------------------
+
 .. automodule:: elements
 
 .. pycon::
@@ -22,6 +25,8 @@ Data of chemical elemets are available from the *elements* module, e.g:
 
 .. automodule:: mass
 
+Masses and Masscalculation
+--------------------------
 
 Masses can be quried like this:
 
@@ -43,6 +48,10 @@ And isotopes can be specified in brackets:
    print mass.of("[13]C4H8O2")
    print mass.of("[13]CC2H8O2")
 
+
+Natural Abundances of isotopes
+------------------------------
+
 .. automodule:: abundance
 
 .. pycon::
@@ -51,6 +60,9 @@ And isotopes can be specified in brackets:
    print abundance.C[12]
    print abundance.C12
 
+
+Data of common Adducts
+----------------------
 
 .. automodule:: adducts
 

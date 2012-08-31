@@ -10,3 +10,4 @@ import tab
 import mass
 import abundance
 import elements
+import adducts
