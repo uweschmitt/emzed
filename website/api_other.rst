@@ -105,7 +105,7 @@ selection of all adducts or of a subgroup:
 
 .. pycon::
 
-    tab = adducts.all.askForSelection().toTable() !noexec
+    tab = adducts.all.buildTableFromUserDialog() !noexec
     tab.print_() !noexec
     adduct_name mass_shift z       !asoutput
     str         float      int     !asoutput

@@ -68,10 +68,17 @@ class _Adducts(object):
                                       default=[0])
         return builder
 
-    def askForSelection(self):
+    def buildTableFromUserDialog(self):
         dlg = self.createMultipleChoice()
-        pos, neg = dlg.show()
-        return self.getSelected(pos, neg)
+        res  = dlg.show()
+        pos, neg = [], []
+        if self.positives and self.negatives:
+            pos, neg = res
+        elif self.positives:
+            pos = res
+        elif self.negatives:
+            neg = res
+        return self.getSelected(pos, neg).toTable()
 
     def getSelected(self, posIndices=None, negIndices=None):
         if posIndices is None:
