@@ -25,7 +25,7 @@ def _parseOptionalInt(reminder):
 
 def _parseElementWithCount(reminder):
     token, reminder = _next(reminder)
-    assert token in _CAPITALS, token+reminder
+    assert token in _CAPITALS, "illegal formula: stopped parsing at "+token+reminder
     element = token
     if reminder[0] in _LOWERS:
         token, reminder = _next(reminder)
@@ -39,16 +39,16 @@ def _subFormulaParser(reminder, formula, indent):
     token, reminder = _next(reminder)
     subformula, reminder = _parse(reminder, indent+"    ")
     count, reminder = _parseOptionalInt(reminder)
-    assert count > 0, reminder
+    assert count > 0, "illegal formula: stopped parsing at "+reminder
     return reminder, formula +  subformula*count
 
 def _isotopeParser(reminder, formula, indent):
     token, reminder = _next(reminder)
     isonumber, reminder = _parseOptionalInt(reminder)
-    assert isonumber > 0, reminder
+    assert isonumber > 0, "illegal formula: stopped at "+reminder
     assert reminder[0] == _RIGHT_BRACKET
     token, reminder = _next(reminder)
-    assert reminder[0] in _CAPITALS
+    assert reminder[0] in _CAPITALS, "illegal formula: stopped at "+reminder
     elem, count, reminder = _parseElementWithCount(reminder)
     formula.extend(((elem, isonumber),)*count)
     return reminder, formula
