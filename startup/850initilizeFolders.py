@@ -1,5 +1,5 @@
 import userConfig as _userConfig, os
-import shutil, glob
+import shutil
 _dataHome = _userConfig.getDataHome()
 
 if not os.path.exists(_dataHome):
@@ -15,6 +15,9 @@ if _first_start:
     open(_flag_file, "w").close()
     _this_path, _  = os.path.split(os.path.abspath(__file__))
     _this_emzed_files = os.path.join(_this_path, "..", "emzed_files")
-    if not os.path.exists(_this_emzed_files):
-        shutil.copytree(_this_emzed_files, _dataHome)
+
+    for f in os.listdir(_this_emzed_files):
+        orig = os.path.join(_this_emzed_files, f)
+        if os.path.isfile(orig):
+            shutil.copy2(orig, _dataHome)
     os.chdir(_dataHome)
