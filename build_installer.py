@@ -9,9 +9,11 @@ from version import version
 files="""
     emzed.ico
     ms libms batches/ startup/ patched_modules/ emzed.pyw
+    adducts.py
     emzedPatches.py tab.py db.py elements.py abundance.py
     config_logger.py configs.py convert_universals.py emzed_files/
     installConstants.py mass.py splash.png  userConfig.py
+    version.py
     tables spyderlib/ """.split()
 
 
@@ -63,17 +65,20 @@ def buildZipFile(zip_name, files, exclude=[], relocate_path=".", prefixpath=".")
     zf.close()
 
 
-# todo: relocate_path mit files verwurschteldn ?
-buildZipFile("installer_files/emzed_files.zip", files, exclude = [".*", "*.pyc"])
+emzed_files="emzed_files_%s.zip" % version
 
-emzedzip = "emzed_%s.zip" % version
+# todo: relocate_path mit files verwurschteldn ?
+buildZipFile("installer_files/"+emzed_files, files, exclude = [".*", "*.pyc"])
+
+buildZipFile(emzed_files, files, exclude = [".*", "*.pyc"], prefixpath="emzed")
+
+emzedzip = "emzed_%s_for_windows.zip" % version
 try:
     os.remove(emzedzip)
 except:
     pass
 
 shutil.copyfile("version.py", "installer_files/version.py")
-buildZipFile(emzedzip, ["README", "installer.py", "install.bat", "License.txt", "emzed_files.zip", "version.py"], prefixpath="emzed_"+version, relocate_path="installer_files")
+buildZipFile(emzedzip, ["README", "installer.py", "install.bat", "License.txt", emzed_files, "version.py"], prefixpath="emzed_"+version, relocate_path="installer_files")
 
-os.remove("installer_files/emzed_files.zip")
 
