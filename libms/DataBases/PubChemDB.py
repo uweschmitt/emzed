@@ -1,5 +1,5 @@
 import urllib, urllib2, httplib
-import time, os
+import time, os, sys
 import xml.etree.ElementTree  as etree
 from ..DataStructures.Table import Table
 from ..Chemistry.Tools import monoisotopicMass
@@ -13,15 +13,14 @@ def _multitryread(req):
         try:
             return urllib2.urlopen(req).read()
         except (urllib2.URLError, httplib.IncompleteRead) as e:
-            if trial==0:
-                import traceback
-                traceback.print_exc()
-                print
-                print "REQUEST FAILED:"
-                print "full url:   ", req.get_full_url()
-                print "headers :   ", req.headers
-                print "data    :   ", req.get_data()
-                print
+            import traceback
+            traceback.print_exc()
+            print
+            print "REQUEST FAILED:"
+            print "full url:   ", req.get_full_url()
+            print "headers :   ", req.headers
+            print "data    :   ", req.get_data()
+            print
     return None
 
 
@@ -115,8 +114,9 @@ class PubChemDB(object):
     def _download(idlist, keggIds=None, humanMBdbIds=None):
         print
         print "START DOWNLOAD OF", len(idlist), "ITEMS"
+        sys.stdout.flush()
         started = time.time()
-        batchsize = 3000
+        batchsize = 1000
         jobs = [idlist[i:i+batchsize] for i in range(0, len(idlist), batchsize)]
         items = []
         for i, j in enumerate(jobs):
@@ -131,6 +131,7 @@ class PubChemDB(object):
             time_per_batch = needed / (i+1)
             remaining = time_per_batch * (len(jobs)-i-1)
             print "   end of download in %.fm %.fs" % divmod(remaining, 60)
+            sys.stdout.flush()
 
         needed = time.time()-started
         print
