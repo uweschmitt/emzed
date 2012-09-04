@@ -66,6 +66,7 @@ elif os.environ.get('IPYTHON', False):
     # execute all files in startup
     for python_file in sorted(glob.glob(pattern)):
         user_ns["__file__"] = os.path.abspath(python_file)
+        print "STARTUP, EXE", python_file
         execfile(python_file, user_ns)
 
     try:

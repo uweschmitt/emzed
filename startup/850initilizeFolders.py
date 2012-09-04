@@ -6,8 +6,10 @@ if not os.path.exists(_dataHome):
     os.makedirs(_dataHome)
 
 _flag_file = os.path.join(_dataHome, ".first_init_done")
+print "FLAGFILE=", _flag_file
 
 _first_start = not os.path.exists(_flag_file)
+print "IS FIRST START=", _first_start
 
 
 if _first_start:
