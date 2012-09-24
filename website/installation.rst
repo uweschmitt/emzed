@@ -62,30 +62,47 @@ For installing *eMZed* on Windows please follow **carefully** the stepwise instr
    **If you provided a global exchange folder and have no write permissions to it, this step wil be skipped**.
 
 
-Installing on Linux
-~~~~~~~~~~~~~~~~~~~
+Installing on Ubuntu 12.04
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A detailed set of instructions is in progress. In short, you need
+An more comfortable installation package is work in progress. 
 
-* Python 2.7
+For the current version of *eMZed* you need run the following instructions with ``sudo`` or you have to login as an adminstrator:
 
-* numpy, scipy and matplotlib for Python 2.7
+* ``apt-get install python2.7``
+* ``apt-get install python-numpy``
+* ``apt-get install python-scipy``
+* ``apt-get install python-matplotlib``
+* ``apt-get install python-pip``
+* ``apt-get install python-qt4``
+* ``apt-get install python-qwt5-qt4``
+* ``apt-get install r-base``
+* ``apt-get install netcdf-bin``
+* ``apt-get install libnetcdf-dev``
+* ``apt-get install libqt4-core libqt4-gui``
 
-* R
+* ``sudo pip install guiqwt`` (tested with version 2.2.0)
+* ``sudo pip install guidata`` (tested with version 1.5.0)
 
-* libnetcdf
+Then install
 
-* guiqwt
+* IPython 0.10. 
+   * Download archive http://archive.ipython.org/release/0.10.2/ipython-0.10.2.tar.gz 
+  unpack it and run
+   * ``python setup.py install``
 
-* guidata 
+* Open-MS 1.8: Download 
+   * http://sourceforge.net/projects/open-ms/files/OpenMS/OpenMS-1.8/OpenMS-1.8.0-Linux_64.deb
+  and run 
+   * ``sudo dpkg --install OpenMS-1.8.0-Linux_64.deb`` from the directory containing this download.
 
-* IPython 0.10 (this is not the most current version !)
+* Download pyOpenMS (see http://emzed.ethz.ch/downloads), unzip it and 
+   * run ``install.sh``, choose "global install to".
 
-* pyOpenMS (see http://emzed.ethz.ch/downloads)
+* Dowload latest *eMZed* (see http://emzed.ethz.ch/downloads/emzed_files_1.x.y.zip)
+  and unzip it. Creates folder ``emzed/``
 
-Use *git* to clone the current developer snapshot from http://github.com/uweschmitt/emzed.
-
-Start *emzed.py* in this folder and follow the windows instruction above, beginning at item no. 5.
+Start ``python emzed.pyw`` in the extracted folder and follow the windows instruction above, beginning at item no. 5.
 
 
 Help

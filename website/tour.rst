@@ -162,7 +162,7 @@ You can start the *Centwave* feature detector by typing
 .. pycon::
    :invisible:
 
-   tables = batches.runCentwave("../example_scripts/*.mzXML", destination=".", configid="tour") !noexec
+   tables = batches.runCentwave("../emzed_files/*.mzXML", destination=".", configid="tour") !noexec
    for i, t in enumerate(tables): t.store("feat%d.table" % i) !noexec
    tables = [ ms.loadTable("feat%d.table" % i) for i in range(3) ]
        
