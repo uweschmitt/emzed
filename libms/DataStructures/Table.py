@@ -137,6 +137,10 @@ class Table(object):
                 assert len(row) == len(colNames)
         else:
             rows = []
+
+        if not all(isinstance(row, list) for row in rows):
+            raise Exception("not all rows are lists !")
+
         self.colNames = list(colNames)
 
         self.colTypes = list(colTypes)

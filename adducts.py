@@ -25,6 +25,7 @@ _all_adducts=[("[M+H]+"     , _mass.p                    , 1),
               ("[M-H3]3-"   , -3*_mass.p                , -3)
              ]
 
+
 _shortname = lambda key: key[1:].split("]")[0].replace("+", "_plus_")\
                                               .replace("-", "_minus_")
 
@@ -52,7 +53,7 @@ class _Adducts(object):
         return Table(["adduct_name", "mass_shift", "z"],
                      [ str, float, int],
                      ["%s", "%.6f", "%+d"],
-                     self.adducts)
+                     map(list, self.adducts))
 
     def createMultipleChoice(self, builder=None):
         if builder is None:

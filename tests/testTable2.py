@@ -129,6 +129,17 @@ def testNonBoolean():
     else:
         raise Exception()
 
+def testIllegalRows():
+    try:
+        t = Table(["a","b"], [float,float], ["%f", "%f"], [(1,2)])
+    except Exception, e:
+        assert "not all rows are lists" in str(e), str(e)
+    else:
+        pass
+
+    import adducts
+    adducts.all.toTable()
+
 
 
 def testForDanglingReferences():
@@ -182,7 +193,7 @@ def testSupportedPostfixes():
             "mzmax3 mz4 mzmin4".split()
 
 
-    t = Table(names, [float]*len(names), [None]*len(names), circumventNameCheck=True)
+    t = Table(names, [float]*len(names), [], circumventNameCheck=True)
     assert len(t.supportedPostfixes(["mz"])) == len(names)
     assert t.supportedPostfixes(["mz", "mzmin"]) == [ "", "0", "4", "__0"]
     assert t.supportedPostfixes(["mz", "mzmin", "mzmax"]) == ["", "0", "__0"]
