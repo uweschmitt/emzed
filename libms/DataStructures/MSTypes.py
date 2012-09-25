@@ -26,7 +26,7 @@ class Spectrum(object):
                 pyOpenMS.Polarity.POSITIVE: '+',
                 pyOpenMS.Polarity.NEGATIVE: '-'
               }.get(mspec.getInstrumentSettings().getPolarity())
-        res = clz(mspec.get_peaks(), mspec.getRT(), 
+        res = clz(mspec.get_peaks(), mspec.getRT(),
                   mspec.getMSLevel(), pol, pcs)
         return res
 
@@ -82,11 +82,12 @@ class PeakMap(object):
         Peakmaps can be loaded from .mzML, .mxXML or .mzData files,
         using :py:func:`~ms.loadPeakMap`
     """
- 
+
 
     def __init__(self, spectra, meta=dict()):
-        self.spectra = spectra
-        """ attribute spectra is a list of objects of type 
+        self.spectra = sorted(spectra, key = lambda spec : spec.rt)
+
+        """ attribute spectra is a list of objects of type
             :py:class:`~.Spectrum` """
         self.meta = meta
         polarities = set(spec.polarity for spec in spectra)
@@ -116,7 +117,7 @@ class PeakMap(object):
             pm.extract(rtmin = 12.5 * 60, mzmax = 200)
             pm.extract(mzmax = 200)
 
-        \ 
+        \
         """
         spectra = copy.deepcopy(self.spectra)
         if rtmin:
@@ -157,7 +158,7 @@ class PeakMap(object):
         """
         extracts chromatorgram in given rt- and mz-window.
         returns a tuple ``(rts, intensities)`` where ``rts`` is a list of
-        rt values (in seconds, as allways)  and ``intensities`` is a 
+        rt values (in seconds, as allways)  and ``intensities`` is a
         list of same lenght containing the summed up peaks for each
         rt value.
         """
@@ -207,8 +208,8 @@ class PeakMap(object):
 
     def rtRange(self):
         """ returns rt-range *(rtmin, tax)* of current peakmap """
-        rtmin = self.spectra[0].rt if len(self.spectra) else 1e300
-        rtmax = self.spectra[-1].rt if len(self.spectra) else -1e300
+        rtmin = min(s.rt for s in self.spectra) if len(self.spectra) else 1e300
+        rtmax = max(s.rt for s in self.spectra) if len(self.spectra) else 1e300
         return rtmin, rtmax
 
     @classmethod
