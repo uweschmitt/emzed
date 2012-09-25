@@ -16,7 +16,6 @@ class _FD(_BatchRunner.BatchRunner):
             print "reading FAILED"
             return None
 
-        ds = ds.filter(lambda spec: spec.msLevel == 1)
         table = self.det.process(ds)
         table.title = path
 
@@ -112,7 +111,7 @@ def runMatchedFilter(pattern=None, destination=None, configid="std", **params):
          if you have a single config this one is used automatically
 
          examples:
-                
+
               runMatchedFilter():
                      asks for source files and target directory
                      asks for config if multiple configs are defined
@@ -124,7 +123,7 @@ def runMatchedFilter(pattern=None, destination=None, configid="std", **params):
               runMatchedFilter(ppm=13):
                      asks for source files and target directory
                      runs matched filter with modified ppm=13 parameter.
-                     
+
               runMatchedFilter(pattern):
                      looks for map files matching pattern
                      resulting csv files are stored next to input map file
@@ -137,7 +136,7 @@ def runMatchedFilter(pattern=None, destination=None, configid="std", **params):
               runMatchedFilter(pattern, destination):
                      looks for map files matching pattern
                      resulting csv files are stored at destination directory
-                    
+
               runMatchedFilter(pattern, destination, ppm=17, peakwidth=(5,100) ):
                      looks for map files matching pattern
                      resulting csv files are stored at destination directory
