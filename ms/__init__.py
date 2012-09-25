@@ -10,12 +10,16 @@ from statistics import *
 from mzalign import mzAlign
 from metlin import matchMetlin
 
+from feature_detectors import *
+
 from formula import *
 
 from libms.Explorers       import inspectPeakMap, inspect
 from libms.gui.DialogBuilder import (DialogBuilder,
                                      showWarning,
                                      showInformation)
+
+
 
 
 __builtins__["MMU"] = 0.001
