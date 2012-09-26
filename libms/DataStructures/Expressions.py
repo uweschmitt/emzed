@@ -5,7 +5,7 @@ import re
 
 __doc__ = """
 
-Working with tables relies on so called ``Expressions`` 
+Working with tables relies on so called ``Expressions``
 
 
 """
@@ -170,7 +170,7 @@ class BaseExpression(object):
             return sl
         if sr==sl:
             return sl
-        raise Exception("sizes %d and %d do not fit" % (sl, sr))
+        raise Exception("column lengths %d and %d do not fit" % (sl, sr))
 
     def __nonzero__(self):
         """ this one raises and exception if "and" or "or" are used to
@@ -258,20 +258,22 @@ class BaseExpression(object):
 
         """
 
-        return BinaryExpression(self, other, lambda a,b: a.startswith(b), "%s.startswith(%s)", bool)
+        return BinaryExpression(self, other, lambda a,b: a.startswith(b),
+                                "%s.startswith(%s)", bool)
 
     def contains(self, other):
         """
         ``a.contains(b)`` tests if ``b in a``.
         """
-        return BinaryExpression(self, other, lambda a,b: b in a, "%s.contains(%s)", bool)
+        return BinaryExpression(self, other, lambda a,b: b in a,
+                                "%s.contains(%s)", bool)
 
 
     def containsElement(self, element):
         """
-        For a string valued expression ``a`` which represents a molecular formula
-        the expressions ``a.containsElement(element)`` tests if the
-        given ``element`` is contained in ``a``.
+        For a string valued expression ``a`` which represents a
+        molecular formula the expressions ``a.containsElement(element)``
+        tests if the given ``element`` is contained in ``a``.
 
         Example:  ``tab.mf.containsElement("Na")``
         """
@@ -281,12 +283,14 @@ class BaseExpression(object):
 
     def isIn(self, li):
         """
-        ``a.isIn(li)`` tests if the value of ``a`` is contained in a list ``li``.
+        ``a.isIn(li)`` tests if the value of ``a`` is contained in a
+        list ``li``.
 
         Example: ``tab.id.isIn([1,2,3])``
 
         """
-        return FunctionExpression(lambda a, b=li: a in b, "%%s.isIn(%s)"%li, self, bool)
+        return FunctionExpression(lambda a, b=li: a in b, "%%s.isIn(%s)"%li,
+                                  self, bool)
 
     def inRange(self, minv, maxv):
         """
@@ -319,7 +323,7 @@ class BaseExpression(object):
         ``a.ifNotNoneElse(b)`` evaluates to ``a`` if a is not *None*, else
         it evaluates to ``b``.
 
-        Example: ``tab.rt.replaceColumn("rt", rt.ifNotNoneElse(tab.rt_default))``
+        Example: ``t.rt.replaceColumn("rt", rt.ifNotNoneElse(t.rt_default))``
 
         """
         return (self==None).thenElse(other, self)
@@ -436,19 +440,20 @@ class BaseExpression(object):
     @property
     def hasNone(self):
         """
-        This is an **aggretation expression** which evaluates an
-        Column expression to *True* if and only if the column contains a *None* value.
+        This is an **aggretation expression** which evaluates an Column
+        expression to *True* if and only if the column contains a *None*
+        value.
         """
-        return AggregateExpression(self, lambda v: int(None in v) , "hasNone(%s)",\
-                                   bool, ignoreNone=False)
+        return AggregateExpression(self, lambda v: int(None in v) ,
+                                   "hasNone(%s)", bool, ignoreNone=False)
 
     @property
     def uniqueNotNone(self):
         """
-        This is an **aggretation expression**. If applied to an expression ``t``
-        ``t.uniqueNotNone`` evaluates to
-        ``v`` if ``t`` only contains two values ``v`` and ``None``.
-        Else it raises an Exception.
+        This is an **aggretation expression**. If applied to an
+        expression ``t`` ``t.uniqueNotNone`` evaluates to ``v`` if ``t``
+        only contains two values ``v`` and ``None``.  Else it raises an
+        Exception.
 
         Example: ``tab.peakmap.uniqueNotNone``
         """
@@ -473,7 +478,8 @@ class BaseExpression(object):
 
     def toTable(self, colName, fmt=None, type_=None, title="", meta=None):
         """
-        Generates a one column :py:class:`~libms.DataStructures.Table` from an expression.
+        Generates a one column :py:class:`~libms.DataStructures.Table`
+        from an expression.
 
         Example: ``tab = substances.name.toTable()``
         """
@@ -495,7 +501,7 @@ class CompExpression(BaseExpression):
         rhs, ixr, tr = saveeval(self.right, ctx)
 
         assert len(lhs) <= 1 or len(rhs)<=1 or len(lhs) == len(rhs),\
-            "sizes do not fit"
+            "column lenghts do not fit"
 
         if len(lhs) == 0:
             return np.zeros((0,), dtype=np.bool), None, bool
@@ -529,7 +535,8 @@ class CompExpression(BaseExpression):
         assert len(lvals) == len(rvals)
         # default impl: comparing to None is not poissble:
         if hasNone(lvals) or hasNone(rvals):
-            raise Exception("Comparing None with %s is not possible" % self.symbol)
+            raise Exception("Comparing None with %s is not possible"\
+                            % self.symbol)
         return self.comparator(lvals, rvals).astype(bool)
 
 def Range(start, end, len):
@@ -658,7 +665,8 @@ class BinaryExpression(BaseExpression):
         if ll==0 and lr==0:
             return container(ct)([]), None, ct
 
-        assert ll ==1 or lr ==1 or ll == lr, "can not cast sizes %d and %d" % (ll, lr)
+        assert ll ==1 or lr ==1 or ll == lr,\
+               "can not cast sizes %d and %d" % (ll, lr)
 
         if tl in _basic_num_types and tr in _basic_num_types:
             idx = None
@@ -675,7 +683,9 @@ class BinaryExpression(BaseExpression):
 
             if hasNone(lvals) or hasNone(rvals):
                 nones = (lvals <= None)  | (rvals <= None)
-                res = self.efun(np.where(nones, 1, lvals), np.where(nones, 1, rvals))
+                lfilterd = np.where(nones, 1, lvals)
+                rfilterd = np.where(nones, 1, rvals)
+                res = self.efun(lfilterd, rfilterd)
             else:
                 nones = None
                 res = self.efun(lvals, rvals)
@@ -752,7 +762,8 @@ class AndExpression(LogicExpression):
     def _eval(self, ctx=None):
         lhs, _, tlhs = saveeval(self.left, ctx)
         if len(lhs) == 1 and not lhs[0]:
-            return np.zeros((self.right._evalsize(ctx),), dtype=np.bool), None, bool
+            return np.zeros((self.right._evalsize(ctx),), dtype=np.bool),\
+                   None, bool
         rhs, _, trhs = saveeval(self.right, ctx)
         if len(rhs) == 1 and not rhs[0]:
             return np.zeros((len(lhs),), dtype=np.bool), None, bool
@@ -768,7 +779,8 @@ class OrExpression(LogicExpression):
     def _eval(self, ctx=None):
         lhs, _, tlhs = saveeval(self.left, ctx)
         if len(lhs) == 1 and lhs[0]:
-            return np.ones((self.right._evalsize(ctx),), dtype=np.bool), None, bool
+            return np.ones((self.right._evalsize(ctx),), dtype=np.bool),\
+                   None, bool
         rhs, _, trhs = saveeval(self.right, ctx)
         if len(rhs) == 1 and rhs[0]:
             return np.ones((len(lhs),), dtype=np.bool), None, bool
@@ -912,8 +924,8 @@ class IfThenElse(BaseExpression):
                 return res, _, ct
             return np.where(values1, values2, values3), _, ct
 
-        return [ None if val1 is None else (val2 if val1 else val3) for (val1, val2, val3) \
-                in zip(values1, values2, values3) ], _, ct
+        return [ None if v1 is None else (v2 if v1 else v3)\
+                 for v1, v2, v3 in zip(values1, values2, values3) ], _, ct
 
     def __str__(self):
         return "%s(%s)" % (self.efunname, self.child)
@@ -924,14 +936,16 @@ class IfThenElse(BaseExpression):
         s3 = self.e3._evalsize(ctx)
         if s1==1:
             if (s2==1 and s3>1) or (s2>1 and s3==1):
-                raise Exception("sizes %d, %d and %d do not fit!"% (s1, s2, s3))
+                raise Exception("column lenghts %d, %d and %d do not fit!"\
+                                %(s1, s2, s3))
             return max(s2, s3)
 
         if s2 == s3 == 1:
             return s1
 
         if (s3==1 and s2 != s1) or (s2==1 and s3 != s1):
-            raise Exception("sizes %d, %d and %d do not fit!"% (s1, s2, s3))
+            raise Exception("column lenghts %d, %d and %d do not fit!"\
+                            % (s1, s2, s3))
 
         return s1
 
