@@ -70,7 +70,7 @@ def integrate(ftable, integratorid="std", showProgress = True):
 
 
     resultTable.meta["integrated"]=True
-    resultTable.title = "integrated: "+resultTable.title
+    resultTable.title = "integrated: "+ (resultTable.title or "")
     needed = time.time() - started
     minutes = int(needed)/60
     seconds = needed - minutes * 60
