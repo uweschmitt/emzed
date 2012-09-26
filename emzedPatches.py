@@ -172,7 +172,7 @@ def patch_spyder():
         return self.is_peakmap(key) \
             or self.is_table(key) \
             or self.is_tablelist(key) \
-            or RemoteDictEditorTableView._orig_oedit_possible(self, key)
+            or RemoteDictEditorTableView._orig_oedit_possible(self, key) 
 
     from spyderlib.widgets.externalshell.monitor import communicate
     from spyderlib.widgets.externalshell.namespacebrowser\
@@ -227,9 +227,12 @@ def patch_external_shell():
     @replace(dicteditorutils.is_supported, verbose=True)
     def is_supported( value, *a, **kw):
         import libms.DataStructures
+        import numpy
         return dicteditorutils._orig_is_supported(value, *a, **kw) \
             or isinstance(value, libms.DataStructures.PeakMap) \
-            or isinstance(value, libms.DataStructures.Table)
+            or isinstance(value, libms.DataStructures.Table) \
+            or numpy.number in getattr(type(value), "__mro__", [])
+
 
     @replace(dicteditorutils.get_size, verbose=True)
     def get_size( item ):
@@ -248,6 +251,8 @@ def patch_external_shell():
         # dicteditorutils.get_type which leads to strange results
 
         from libms.DataStructures import Table, PeakMap
+        import numpy
+
         if isinstance(item, list) and all(isinstance(ii, Table) for ii in item):
             # here I avoid dots by using the unicode char for "...":
             return u"[Table, %s]" % unichr(0x2026) 
@@ -255,12 +260,17 @@ def patch_external_shell():
             return "PeakMap"
         if isinstance(item, Table):
             return "Table"
+        if numpy.number in getattr(type(item), "__mro__", []):
+            # str(type) returns something lilke "<type 'numpy.float32'>",
+            # so we cut out 'float32':
+            return str(type(item))[7:-2]
         return dicteditorutils._orig_get_type_string(item)
 
     @replace(dicteditorutils.value_to_display, verbose=True)
     def  value_to_display(value, *a, **kw):
         from libms.DataStructures import Table, PeakMap
         import os
+        import numpy
 
         trunc_len = kw.get("trunc_len", 80)
         truncate = kw.get("truncate", False)
@@ -295,6 +305,10 @@ def patch_external_shell():
                 except Exception, e:
                     return "exception: "+e.message
             return trunc(res)
+
+        if numpy.number in getattr(type(value), "__mro__", []):
+            return str(value)
+
         return dicteditorutils._orig_value_to_display(value, *a, **kw)
 
 
