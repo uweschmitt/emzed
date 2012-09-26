@@ -56,6 +56,25 @@ class Spectrum(object):
             imax = self.peaks.shape[0]
         return self.peaks[imin:imax]
 
+    def mzRange(self):
+        """ returns pair min(mz), max(mz) for mz values in current spec.
+            may return None, None if spec is emtpy !
+        """
+        return self.mzMin(), self.mzMax()
+
+    def mzMin(self):
+        if len(self.peaks):
+            return float(self.peaks[:,0].min())
+        return None
+
+    def mzMax(self):
+        if len(self.peaks):
+            return float(self.peaks[:,0].max())
+        return None
+
+    def maxIntensity(self):
+        return float(self.peak[:,1].max())
+
     def toMSSpectrum(self):
         spec = pyOpenMS.MSSpectrum()
         spec.setRT(self.rt)
@@ -192,7 +211,9 @@ class PeakMap(object):
     def levelOneRts(self):
         return [spec.rt for spec in self.spectra if spec.msLevel == 1]
 
-    def levelNSpecs(self, minN, maxN):
+    def levelNSpecs(self, minN, maxN=None):
+        if maxN is None:
+            maxN = minN
         return [spec for spec in self.spectra if minN <= spec.msLevel <= maxN]
 
     def shiftRt(self, delta):
@@ -202,8 +223,10 @@ class PeakMap(object):
 
     def mzRange(self):
         """ returns mz-range *(mzmin, mzmax)* of current peakmap """
-        mzmin = min(s.peaks[:, 0].min() for s in self.spectra if len(s.peaks))
-        mzmax = max(s.peaks[:, 0].max() for s in self.spectra if len(s.peaks))
+
+        mzranges = [s.mzRange() for s in self.spectra]
+        mzmin = min(mzmin for (mzmin, mzmax) in mzranges if mzmin is not None)
+        mzmax = max(mzmax for (mzmin, mzmax) in mzranges if mzmax is not None)
         return float(mzmin), float(mzmax)
 
     def rtRange(self):

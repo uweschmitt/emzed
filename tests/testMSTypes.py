@@ -65,6 +65,15 @@ class TestMSTypes(object):
         assert level1[0].msLevel == 1
         assert level2[0].msLevel == 2
 
+        # use default arg: nmax = nmin if not provided:
+        level1 = pm.levelNSpecs(1)
+        level2 = pm.levelNSpecs(2)
+        assert len(level1) > 0
+        assert len(level2) > 0
+        assert len(level1) + len(level2) == len(level12) == len(pm)
+        assert level1[0].msLevel == 1
+        assert level2[0].msLevel == 2
+
         lone = pm.levelOneRts()
         assert len(lone) == len(level1)
 
