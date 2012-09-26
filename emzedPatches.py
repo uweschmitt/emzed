@@ -30,9 +30,32 @@ def replace( orig_func, target=None, verbose=False):
 def add(target, verbose=False):
 
     def decorator(new_func, target=target):
-        #LLL.debug("add %s to %s" % (new_func, target))
         setattr(target, new_func.__name__, new_func)
     return decorator
+
+
+def patch_guiqwt():
+
+    import guiqwt.plot
+    import guiqwt.curve
+
+    # remove __del__ as we get unbreakable dependency cycles
+    #  if we plot a lot.
+    del guiqwt.curve.CurvePlot.__del__
+
+    # caused by the latter patch, get_active_plot sometimes raises
+    # exception (i guess) because the underlying c++ object does not
+    # exist anymore.
+    # so we supress this exception:
+
+    @replace(guiqwt.plot.PlotManager.get_active_plot)
+    def patch(self):
+        try:
+            return guiqwt.plot.PlotManaager._orig_get_active_plot(self)
+        except:
+            return self.default_plot
+
+
 
 def patch_oedit():
     # runs in external console, is triggered if someone clickst at items
@@ -135,6 +158,8 @@ def patch_spyder():
     patch_userconfig()
     patch_baseconfig()
 
+    patch_guiqwt()
+
     # the following path must appear before patching Externalshell, as the
     # corresponding import of ExternalConsole implies import of baseshell. So
     # patching baseshell will not work, as it is registered in sys.modules in
@@ -195,6 +220,8 @@ def patch_spyder():
             return self.get_view_settings()
 
 def patch_external_shell():
+
+    patch_guiqwt()
 
     from  spyderlib.widgets import dicteditorutils
     @replace(dicteditorutils.is_supported, verbose=True)
