@@ -79,6 +79,18 @@ def _parse(reminder, indent=""):
 
 
 def parseFormula(mf):
+    """
+    Returns Counter mapping (symbol, sassnumber) -> sount
+    corresponding to mf.
+    For symbols in mf, where no massnumber is specified, this
+    funcion returns None as massnumber.
+
+    Eg.::
+
+        >>> parseFormula("[13]C2C4H")
+        Counter({('C', None): 4, ('C', 13): 2, ('H', None): 1})
+
+    """
     from collections import Counter
     symbols, _ =  _parse(mf+chr(0))
     return Counter(symbols)

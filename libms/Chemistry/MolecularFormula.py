@@ -4,6 +4,8 @@
 import FormulaParser
 import Elements
 
+import collections
+
 
 class MolecularFormula(object):
 
@@ -39,10 +41,43 @@ class MolecularFormula(object):
         assert all(c>=0 for c in dd.values()), "negative counts not allowed"
         return MolecularFormula(dd)
 
-    def mass(self):
+    def mass(self, **specialisations):
+        """
+        specialisations maps symbol to a dictionary d providing a mass
+        by d["mass"], eg:
+
+            specialisations = { 'C' : 12.0 }
+            inst.mass(C=12.0)
+
+        or if you use the mass module:
+
+            inst.mass(C=mass.C12)
+
+        or you use mass in connection with the elements module:
+
+            inst.mass(C=elements.C12)
+        """
+
         el = Elements.Elements()
         items = self.dictForm.items()
-        masses = list(el.getMass(sym, massnum) for (sym, massnum), _  in items)
+        def get_mass(sym, massnum):
+            # if mass num is None, and there is a specialisation
+            # provided, we take this specialisation. Else we use
+            # data from el, where a massnumber None is mapped to the
+            # monoisotopic element:
+            if massnum is None:
+                specialisation = specialisations.get(sym)
+                if specialisation is not None:
+                    if isinstance(specialisation, collections.Mapping):
+                        return specialisation["mass"]
+                    try:
+                        return float(specialisation)
+                    except:
+                        raise Exception("specialisation %r for %s invalid"\
+                                        % (specialisation, sym))
+
+            return el.getMass(sym, massnum)
+        masses = list(get_mass(sym, massnum) for (sym, massnum), _  in items)
         if None in masses:
             return None
         return sum(m * c for m, (_, c) in zip(masses, items) )

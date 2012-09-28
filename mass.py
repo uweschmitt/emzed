@@ -7,8 +7,8 @@ e = 5.4857990946e-4
 p = 1.007276466812
 n = 1.00866491600
 
-def of(mf, **assignments):
-    return _MolecularFormula(mf).mass()
+def of(mf, **specialisations):
+    return _MolecularFormula(mf).mass(**specialisations)
 
 _elements = _Elements()
 _symbols = _elements.symbol.values
