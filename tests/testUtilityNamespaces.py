@@ -12,8 +12,8 @@ def testAccessAndConsistency():
     assert c12["name"] == "Carbon"
     assert c12["number"] == 6
     assert  mass.of("[13]C") - mass.of("C") == mass.C13-mass.C12
-    assert  mass.of("C", C=mass.C13) - mass.of("C") == mass.C13-mass.C12
-    assert  mass.of("C", C=elements.C13) - mass.of("C") == mass.C13-mass.C12
+    assert  mass.of("C", C=mass.C13) == mass.of("[13]C")
+    assert  mass.of("C", C=elements.C13) == mass.of("[13]C")
 
 
 def testAdducts():
