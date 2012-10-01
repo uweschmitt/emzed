@@ -150,6 +150,19 @@ class PeakMap(object):
 
         return PeakMap(spectra, self.meta.copy())
 
+    def representingMzPeak(self, mzmin, mzmax, rtmin, rtmax):
+        mzsum = wsum = 0
+        for s in self.spectra:
+            if rtmin <= s.rt <= rtmax:
+                ix = (mzmin <= s.peaks[:,0]) * (s.peaks[:,0] <= mzmax)
+                weights = np.log(s.peaks[ix,1] + 1.0)
+                wsum += np.sum(weights)
+                mzsum += np.sum(s.peaks[ix,0]*weights)
+        if wsum > 0.0:
+            return mzsum / wsum
+        else:
+            return None
+
 
     def filter(self, condition):
         """ builds new peakmap where ``condition(s)`` is ``True`` for

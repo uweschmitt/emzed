@@ -124,7 +124,9 @@ class TestMSTypes(object):
         pm.spectra[0].polarity = "+"
         pm.spectra[1].polarity = "-"
 
-        PeakMap(pm.spectra) 
+        pm = PeakMap(pm.spectra) 
+        mz = pm.representingMzPeak(0, 99999, 0, 99999)
+        assert abs(mz-831.86538) < 0.00001
 
 
     def testEmptyPeakMap(self):
