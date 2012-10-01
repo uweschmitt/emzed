@@ -370,6 +370,20 @@ def testAggWithIterable():
     assert t.a.values == [ (1,2), None]
 
 
+def testUniqueValue():
+    t = ms.toTable("a", [ 1, 1, 1])
+    assert t.a.uniqueValue() == 1
+
+    t = ms.toTable("a", [ 1.2, 1.21, 1.19])
+    assert t.a.uniqueValue(up_to_digits=1) == 1.2
+    
+    a = dict(b=3)
+    b = dict(b=3)
+
+    t = ms.toTable("a", [ a, b])
+    print t.a.uniqueValue()
+
+
 
 def testSpecialFormats():
     for name in ["mz", "mzmin", "mzmax", "mw", "m0"]:

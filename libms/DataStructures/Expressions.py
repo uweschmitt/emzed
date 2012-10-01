@@ -468,8 +468,38 @@ class BaseExpression(object):
         return AggregateExpression(self, select, "uniqueNotNone(%s)",\
                                    None, ignoreNone=False)
 
+
+
     @property
     def values(self):
+        values, _, t = self._eval(None)
+        if t in _basic_num_types:
+            return values.tolist()
+        return values
+
+    def uniqueValue(self, up_to_digits=None):
+
+        values = self.values
+        if up_to_digits is not None:
+            try:
+                values = [ round(v, up_to_digits) if v is not None else v \
+                            for v in values ]
+                print values
+            except:
+                raise Exception("round to %d digits not possible" \
+                                    % up_to_digits)
+
+        # working with a set would be easier, but we get problems if
+        # there are unhashable objects in 'values', eg a dict...
+        # so we resort to itertools.groupby:
+        import itertools
+        values = [k for k, v in itertools.groupby(sorted(values))]
+        if len(values) != 1:
+            raise Exception("not one unique value in %s" % self)
+        return values.pop()
+
+
+    def value(self):
         values, _, t = self._eval(None)
         if t in _basic_num_types:
             return values.tolist()
