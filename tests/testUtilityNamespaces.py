@@ -33,32 +33,58 @@ def testAdducts():
 
 
     # tst namespace constants
-    assert adducts.M_plus_H[-1] == +1
-    assert adducts.M_plus_NH4[-1] == +1
-    assert adducts.M_plus_Na[-1] == 1
-    assert adducts.M_plus_H_minus_H2O[-1]  ==1
-    assert adducts.M_plus_H_minus_H4O2[-1]  ==1
-    assert adducts.M_plus_K[-1]  ==1
-    assert adducts.M_plus_CH4O_plus_H[-1]  ==1
-    assert adducts.M_plus_2Na_minus_H[-1]  ==1
-    assert adducts.M_plus_H2[-1]  ==2
-    assert adducts.M_plus_H3[-1]  ==3
-    assert adducts.M_plus_Na_plus_H[-1]  ==2
-    assert adducts.M_plus_H2_plus_Na[-1]  ==3
-    assert adducts.M_plus_Na2[-1]  ==2
-    assert adducts.M_plus_H_plus_Na2[-1]  ==3
-    assert adducts.M_minus_H[-1]  ==-1
-    assert adducts.M_minus_H_minus_H2O[-1] == -1
-    assert adducts.M_plus_Na_minus_H2[-1]  ==-1
-    assert adducts.M_plus_Cl[-1]  ==-1
-    assert adducts.M_plus_K_minus_H2[-1]  ==-1
-    assert adducts.M_minus_H2[-1]  ==-2
-    assert adducts.M_minus_H3[-1]  ==-3
-    assert adducts.M_plus_Na_minus_H2[-1] == -1
+    assert adducts.M_plus_H.toTable().z.uniqueValue() == 1
+    assert adducts.M_plus_NH4.toTable().z.uniqueValue() == +1
+    assert adducts.M_plus_Na.toTable().z.uniqueValue() == 1
+    assert adducts.M_plus_H_minus_H2O.toTable().z.uniqueValue()  ==1
+    assert adducts.M_plus_H_minus_H4O2.toTable().z.uniqueValue()  ==1
+    assert adducts.M_plus_K.toTable().z.uniqueValue()  ==1
+    assert adducts.M_plus_CH4O_plus_H.toTable().z.uniqueValue()  ==1
+    assert adducts.M_plus_2Na_minus_H.toTable().z.uniqueValue()  ==1
+    assert adducts.M_plus_H2.toTable().z.uniqueValue()  ==2
+    assert adducts.M_plus_H3.toTable().z.uniqueValue()  ==3
+    assert adducts.M_plus_Na_plus_H.toTable().z.uniqueValue()  ==2
+    assert adducts.M_plus_H2_plus_Na.toTable().z.uniqueValue()  ==3
+    assert adducts.M_plus_Na2.toTable().z.uniqueValue()  ==2
+    assert adducts.M_plus_H_plus_Na2.toTable().z.uniqueValue()  ==3
+    assert adducts.M_plus_Na_minus_H2.toTable().z.uniqueValue()  ==1
+    assert adducts.M_plus_Cl.toTable().z.uniqueValue()  ==1
+    assert adducts.M_plus_K_minus_H2.toTable().z.uniqueValue()  ==1
+    assert adducts.M_plus_Na_minus_H2.toTable().z.uniqueValue() == 1
+
+    assert adducts.M_plus_H.toTable().z_signed.uniqueValue() == 1
+    assert adducts.M_plus_NH4.toTable().z_signed.uniqueValue() == +1
+    assert adducts.M_plus_Na.toTable().z_signed.uniqueValue() == 1
+    assert adducts.M_plus_H_minus_H2O.toTable().z_signed.uniqueValue()  ==1
+    assert adducts.M_plus_H_minus_H4O2.toTable().z_signed.uniqueValue()  ==1
+    assert adducts.M_plus_K.toTable().z_signed.uniqueValue()  ==1
+    assert adducts.M_plus_CH4O_plus_H.toTable().z_signed.uniqueValue()  ==1
+    assert adducts.M_plus_2Na_minus_H.toTable().z_signed.uniqueValue()  ==1
+    assert adducts.M_plus_H2.toTable().z_signed.uniqueValue()  ==2
+    assert adducts.M_plus_H3.toTable().z_signed.uniqueValue()  ==3
+    assert adducts.M_plus_Na_plus_H.toTable().z_signed.uniqueValue()  ==2
+    assert adducts.M_plus_H2_plus_Na.toTable().z_signed.uniqueValue()  ==3
+    assert adducts.M_plus_Na2.toTable().z_signed.uniqueValue()  ==2
+    assert adducts.M_plus_H_plus_Na2.toTable().z_signed.uniqueValue()  ==3
+
+    assert adducts.M_plus_Na_minus_H2.toTable().z_signed.uniqueValue()  == -1
+    assert adducts.M_plus_Cl.toTable().z_signed.uniqueValue()  == -1
+    assert adducts.M_plus_K_minus_H2.toTable().z_signed.uniqueValue()  == -1
+    assert adducts.M_plus_Na_minus_H2.toTable().z_signed.uniqueValue() ==  -1
+
+
+    assert adducts.M_minus_H.toTable().z.uniqueValue()  ==1
+    assert adducts.M_minus_H_minus_H2O.toTable().z.uniqueValue() == 1
+    assert adducts.M_minus_H2.toTable().z.uniqueValue()  ==2
+    assert adducts.M_minus_H3.toTable().z.uniqueValue()  ==3
+    assert adducts.M_minus_H.toTable().z_signed.uniqueValue()  == -1
+    assert adducts.M_minus_H_minus_H2O.toTable().z_signed.uniqueValue() == -1
+    assert adducts.M_minus_H2.toTable().z_signed.uniqueValue()  == -2
+    assert adducts.M_minus_H3.toTable().z_signed.uniqueValue()  == -3
 
     t = adducts.positive.toTable()
     assert len(t) == 14
-    assert len(t.colNames) == 3
+    assert len(t.colNames) == 4
 
 def testfoumulaadd():
     import ms

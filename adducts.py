@@ -50,10 +50,12 @@ class _Adducts(object):
 
     def toTable(self):
         from libms.DataStructures import Table
-        return Table(["adduct_name", "mass_shift", "z"],
-                     [ str, float, int],
-                     ["%s", "%.6f", "%+d"],
-                     map(list, self.adducts))
+        t = Table(["adduct_name", "mass_shift", "z_signed"],
+                  [ str, float, int],
+                  ["%s", "%.6f", "%+d"],
+                   map(list, self.adducts))
+        t.addColumn("z", t.z_signed.apply(abs))
+        return t
 
     def createMultipleChoice(self, builder=None):
         if builder is None:
@@ -110,7 +112,8 @@ negative_double_charged = adductsForZ(-2)
 negative_triple_charged = adductsForZ(-3)
 
 for name, masscorr, mode in _all_adducts:
-    exec("%s=(%s)" % ( _shortname(name), (name, masscorr, mode)))
+    exec("%s=_Adducts([('%s', %e, %d)])" % (_shortname(name), name, masscorr,
+                                            mode))
 
 def get(*names):
     found = [ item for item in _all_adducts if item[0] in names ]
