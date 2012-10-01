@@ -1252,6 +1252,15 @@ class Table(object):
 
     _print = print_   # backwards compatibility
 
+    def renamePostfixes(self, **kw):
+        collected = dict()
+        for postfix_old, postfix_new in kw.items():
+            for c in self.colNames:
+                if c.endswith(postfix_old):
+                    c_new = c[:-len(postfix_old)]+postfix_new
+                    collected[c]= c_new
+        self.renameColumns(**collected)
+
     @staticmethod
     def toTable(colName, iterable,  format="", type_=None, title="", meta=None):
         """ generates a one-column table from an iterable, e.g. from a list,

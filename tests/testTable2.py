@@ -423,6 +423,13 @@ def testAppend():
     assert t.a.values == [1,2]*5
 
 
+def testRenamePostfixes():
+    t = ms.toTable("a", [1,2])
+    t.addColumn("b", t.a+1)
+    t = t.join(t)
+    assert t.colNames == [ "a", "b", "a__0", "b__0"], t.colNames
+    t.renamePostfixes(__0 = "_new")
+    assert t.colNames == [ "a", "b", "a_new", "b_new"], t.colNames
 
 
 def testToOpenMSFeatureMap():
