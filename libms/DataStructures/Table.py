@@ -1018,7 +1018,7 @@ class Table(object):
 
         return sorted(set(supported))
 
-    def join(self, t, expr, debug = False):
+    def join(self, t, expr=True, debug=False):
         """joins two tables.
 
            So if you have two table ``t1`` and ``t2`` as
@@ -1052,6 +1052,9 @@ class Table(object):
            1      200.0  2      200.0  30.0
            ====   =====  ====   =====  ====
 
+           If you do not provide an expression, this method returns the full
+           cross product.
+
         """
         # no direct type check below, as databases decorate member tables:
         try:
@@ -1084,7 +1087,7 @@ class Table(object):
         table.rows = rows
         return table
 
-    def leftJoin(self, t, expr, debug = False, progress=False):
+    def leftJoin(self, t, expr=True, debug=False, progress=False):
         """performs an *left join* also known as *outer join* of two tables.
 
            It works similar to :py:meth:`~.join` 
@@ -1104,6 +1107,8 @@ class Table(object):
            2      300.0  None   None   None
            ====   =====  ====   =====  ====
 
+           If you do not provide an expression, this method returns the full
+           cross product.
         """
         # no direct type check below, as databases decorate member tables:
         try:

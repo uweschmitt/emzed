@@ -37,7 +37,7 @@ def testRound():
 
 def testFullJoin():
     t = ms.toTable("a", [None, 2, 3])
-    t2 = t.join(t, True)
+    t2 = t.join(t)
     t2.print_()
     assert len(t2) == 9
     assert t2.a.values == [ None, None, None, 2, 2, 2, 3, 3, 3]
