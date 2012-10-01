@@ -2,6 +2,7 @@ import pyOpenMS
 import numpy as np
 import os.path
 import copy
+from   collections import defaultdict
 
 
 class Spectrum(object):
@@ -183,7 +184,8 @@ class PeakMap(object):
         # rt values can be truncated/rounded from gui or other sources,
         # so wie dither the limits a bit, spaces in realistic rt values
         # are much higher thae 1e-2 seconds
-        return [spec for spec in self.spectra if rtmin-1e-2 <= spec.rt <= rtmax+1e-2
+        return [spec for spec in self.spectra if rtmin-1e-2 <= spec.rt \
+                                                            <= rtmax+1e-2
                                              and spec.msLevel == 1]
 
     def chromatogram(self, mzmin, mzmax, rtmin=None, rtmax=None):
@@ -267,3 +269,16 @@ class PeakMap(object):
         exp.updateRanges()
         exp.setLoadedFilePath(pyOpenMS.String(self.meta.get("source","")))
         return exp
+
+    def splitLevelN(self, n, significant_digits_precursor=2):
+        ms2_spectra = defaultdict(list)
+        for spectrum in self.spectra:
+            if spectrum.msLevel==n:
+                spectrum = copy.copy(spectrum)
+                key = round(spectrum.precursors[0][0],
+                            significant_digits_precursor)
+                ms2_spectra[key].append(spectrum)
+        return ms2_spectra
+
+
+
