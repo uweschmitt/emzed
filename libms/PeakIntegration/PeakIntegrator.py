@@ -8,8 +8,8 @@ class PeakIntegrator(object):
 
     def setPeakMap(self, peakMap):
         self.peakMap = peakMap
-        self.ms1specs = [spec for spec in self.peakMap.spectra if spec.msLevel == 1]
-        self.allrts  = sorted([ spec.rt for spec in self.ms1specs])
+        spectra = [spec for spec in self.peakMap.spectra if spec.msLevel == 1]
+        self.allrts  = sorted([ spec.rt for spec in spectra])
 
     def integrate(self, mzmin, mzmax, rtmin, rtmax):
 
