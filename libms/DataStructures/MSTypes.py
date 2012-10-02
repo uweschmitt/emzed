@@ -202,10 +202,22 @@ class PeakMap(object):
             rtmin = self.spectra[0].rt
         if rtmax is None:
             rtmax = self.spectra[-1].rt
-        specs = self.levelOneSpecsInRange(rtmin, rtmax)
+
+        levels = self.getMsLevels()
+        if 1 in levels:
+            specs = self.levelOneSpecsInRange(rtmin, rtmax)
+        else:
+            assert len(levels) == 1
+            level = levels[0]
+            specs = [s for s in self.spectra if s.msLevel == level and\
+                                              rtmin <= s.rt <= rtmax]
+
         rts = [s.rt for s in specs]
         intensities = [s.intensityInRange(mzmin, mzmax) for s in specs]
         return rts, intensities
+
+    def getMsLevels(self):
+        return sorted(set(spec.msLevel for spec in self.spectra))
 
     def ms1Peaks(self, rtmin=None, rtmax=None):
         if rtmin is None:
