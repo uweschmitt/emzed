@@ -9,7 +9,6 @@ import guidata
 
 import os
 import re
-import copy
 
 import configs
 
@@ -183,18 +182,7 @@ class IntegrateAction(TableAction):
 
             # TODO: restructure datatypes to avoid this dirty workaround
             # for ms 2 spectra:
-            pm = args["peakmap"+postfix]
-            levels = pm.getMsLevels()
-            if len(levels) == 1:
-                level = levels[0]
-                if level> 1:
-                    spectra = []
-                    for spec in pm.spectra:
-                        spec = copy.copy(spec)
-                        spec.msLevel = 1
-                        spectra.append(spec)
-                    pm = PeakMap(spectra)
-
+            pm = args["peakmap"+postfix].getDominatingPeakmap()
             integrator.setPeakMap(pm)
 
             # integrate

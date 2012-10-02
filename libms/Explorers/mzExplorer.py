@@ -35,27 +35,32 @@ class MzExplorer(QDialog):
         self.plotChromatogramm()
         self.plotMz()
 
-    def processPeakmap(self, peakmap):
-        self.level1Peakmap = peakmap.filter(lambda s: s.msLevel == 1)
-        self.levelNSpecs = [ s for s in peakmap.spectra if s.msLevel > 1 ]
+    def processPeakmap(self, pm):
+        levels = pm.getMsLevels()
+        if len(levels) == 1 and levels[0]>1:
+            self.levelNSpecs = []
+        else:
+            self.levelNSpecs = [ s for s in pm.spectra if s.msLevel > 1 ]
 
-        self.rts = np.array([s.rt for s in self.level1Peakmap.spectra])
+        self.peakmap = pm.getDominatingPeakmap()
 
-        mzvals = np.hstack([ spec.peaks[:,0] for spec in peakmap.spectra ])
+        self.rts = np.array([s.rt for s in self.peakmap.spectra])
+
+        mzvals = np.hstack([ spec.peaks[:,0] for spec in pm.spectra ])
         self.absMinMZ = np.min(mzvals)
         self.absMaxMZ = np.max(mzvals)
         self.minMZ = self.absMinMZ
         self.maxMZ = self.absMaxMZ
         self.updateChromatogram()
 
-        title = os.path.basename(peakmap.meta.get("source", ""))
+        title = os.path.basename(pm.meta.get("source", ""))
         self.setWindowTitle(title)
 
     def updateChromatogram(self):
         min_, max_ = self.minMZ, self.maxMZ
         cc =[np.sum(spec.peaks[(spec.peaks[:,0] >= min_)\
                               *(spec.peaks[:,0] <= max_)][:, 1])\
-             for spec in self.level1Peakmap.spectra]
+             for spec in self.peakmap.spectra]
         self.chromatogram = np.array(cc)
 
     def connectSignalsAndSlots(self):
@@ -189,7 +194,7 @@ class MzExplorer(QDialog):
     def plotMz(self):
         minRT = self.rtPlotter.minRTRangeSelected
         maxRT = self.rtPlotter.maxRTRangeSelected
-        peaks = self.level1Peakmap.ms1Peaks(minRT, maxRT)
+        peaks = self.peakmap.ms1Peaks(minRT, maxRT)
         self.mzPlotter.resetAxes()
         self.mzPlotter.plot([peaks])
         self.mzPlotter.replot()
@@ -208,7 +213,7 @@ def inspectPeakMap(peakmap):
     win.setup(peakmap)
     win.raise_()
     win.exec_()
-    del win.level1Peakmap
+    del win.peakmap
     del win.levelNSpecs
     del win.rts
 
