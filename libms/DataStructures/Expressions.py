@@ -484,7 +484,6 @@ class BaseExpression(object):
             try:
                 values = [ round(v, up_to_digits) if v is not None else v \
                             for v in values ]
-                print values
             except:
                 raise Exception("round to %d digits not possible" \
                                     % up_to_digits)
