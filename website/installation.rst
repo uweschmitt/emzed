@@ -67,7 +67,8 @@ Installing on Ubuntu 12.04
 
 An more comfortable installation package is work in progress. 
 
-For the current version of *eMZed* you need run the following instructions with ``sudo`` or you have to login as an adminstrator:
+For the current version of *eMZed* you need run the following instructions with
+``sudo`` or you have to login as an adminstrator:
 
 * ``apt-get install python2.7``
 * ``apt-get install python-numpy``
@@ -103,6 +104,7 @@ Then install
   and unzip it. Creates folder ``emzed/``
 
 Start ``python emzed.pyw`` in the extracted folder and follow the windows instruction above, beginning at item no. 5.
+
 
 
 Help
