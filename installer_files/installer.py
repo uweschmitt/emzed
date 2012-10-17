@@ -188,10 +188,15 @@ if app.targetDir is None:
     exit()
 
 import zipfile
+from version import version
 
-f = zipfile.ZipFile("emzed_files.zip")
+emzed_files="emzed_files_%s.zip" % version
+f = zipfile.ZipFile(emzed_files)
 print "extract to", app.targetDir
 f.extractall(app.targetDir)
+
+import compileall
+compileall.compile_dir(app.targetDir)
 
 
 def createLink(path, name):
