@@ -1,3 +1,9 @@
+def _normalize_network_pathes(*pathes):
+    import sys
+    if sys.platform == "win32":
+        # sometimes probs with network pathes like "//gram/omics/....":
+        return [ p.replace("/", "\\") for p in pathes ]
+    return pathes
 
 def __fileDialog(startAt=None, onlyDirectories=False, anyFile=False,
                  multipleFiles=True, extensions=None, caption=None):
@@ -37,6 +43,7 @@ def __fileDialog(startAt=None, onlyDirectories=False, anyFile=False,
     if di.exec_():
         files= di.selectedFiles()
         res = [ str(f.toLatin1()) for f in files]
+        res = _normalize_network_pathes(*res)
         return res
     return [None]
 
@@ -70,7 +77,7 @@ def askForSave(startAt=None, extensions=None):
           returns the path of the selected file as a string,
           or None if the user aborts the dialog.
     """
-    return __fileDialog(startAt, anyFile=True, multipleFiles=False, 
+    return __fileDialog(startAt, anyFile=True, multipleFiles=False,
                                  extensions=extensions, caption="Save As")[0]
 
 def askForSingleFile(startAt=None, extensions=None):
@@ -82,7 +89,7 @@ def askForSingleFile(startAt=None, extensions=None):
           you can restrict the files to select by providing a list
           of extensions.
           eg::
-             
+
              askForSingleFile(extensions=["csv"])
 
           or::
