@@ -29,6 +29,9 @@ Installing on Windows
 For installing *eMZed* on Windows please follow **carefully** the stepwise instructions:
 
 1. Install *Python XY* from http://www.pythonxy.com.  We recommend version *2.7.2.x*.
+   *Python XY* is a Python distribution containing some needed libraries.
+   If you use other distributions as *Enthought Python* the following instructions
+   are not complete anymore.
     
     This is a Python
     distribution targeting scientific computing with Python. It contains the
