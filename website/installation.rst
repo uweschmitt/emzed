@@ -11,8 +11,9 @@ Before you start
 
 If you plan to use *eMZed* for more than one user we recommend to provide a
 shared folder, which can be accessed by all targeted users. We call this the
-*global exchange folder*.  *eMZed* will store databases, *XCMS* [xcms]_ related code there.
-Further you can use this folder to exchange scripts and configuration settings.
+*global exchange folder*.  *eMZed* will store databases, and *R* related code
+there.  Further you can use this folder to exchange scripts and configuration
+settings.
 
 You can use *eMZed* without such a folder. Then data is stored per user and
 sharing of scripts will not work.
@@ -21,6 +22,12 @@ If you decide to make use of the global exchange folder,
 **at least one of the users needs write access to this folder and should be the
 first user who starts eMZed. Else eMZed will not be able to work correctly.**
 
+In Case of trouble
+~~~~~~~~~~~~~~~~~~
+
+If you have problems installing *eMZed*, please use the discussion group
+at http://groups.google.com/group/emzed-users
+
 
 
 Installing on Windows
@@ -28,16 +35,32 @@ Installing on Windows
 
 For installing *eMZed* on Windows please follow **carefully** the stepwise instructions:
 
-1. Install *Python XY* from http://www.pythonxy.com.  We recommend version *2.7.2.x*.
-   *Python XY* is a Python distribution containing some needed libraries.
-   If you use other distributions as *Enthought Python* the following instructions
-   are not complete anymore.
-    
-    This is a Python
-    distribution targeting scientific computing with Python. It contains the
-    right versions of Python and the used libraries.
+1. Install *Python XY* (http://www.pythonxy.com). 
+
+   *Python XY* is a Python distribution targeting scientific computing with
+   Python. It contains the right versions of Python and the some needed
+   libraries.  If you use other distributions as *Enthought Python* the
+   following instructions are not complete anymore.
+
+   *eMZed* requires the latest  *2.7.2.x* version.
+
+   Finding distinct versions at the *Python XY* website is difficult and
+   downloads may be **mistaken** with the *Python XY* **update intstallers**,
+   which do not provide the full Python distribution.
+
+   You can find full installers of recent *Python XY* versions at:
+
+    * http://ftp.ntua.gr/pub/devel/pythonxy/
+    * http://pythonxy.connectmv.com/
+    * http://www.mirrorservice.org/sites/pythonxy.com
+
+
+   
 
 2. Install *R* from http://www.r-project.org. 
+
+   Please install *R* with administration rights, else you might get problems
+   using  *R* functionalities from *eMZed*.
 
 3. Download and install the latest version of *pyOpenMS* and *eMZed* from http://emzed.ethz.ch/downloads.
 
@@ -96,9 +119,10 @@ Then install
    * ``python setup.py install``
 
 * Open-MS 1.8: Download 
-   * http://sourceforge.net/projects/open-ms/files/OpenMS/OpenMS-1.8/OpenMS-1.8.0-Linux_64.deb
+   * http://downloads.sourceforge.net/project/open-ms/OpenMS/OpenMS-1.9/OpenMS-1.9.0-Linux_64bit.deb
+
   and run 
-   * ``sudo dpkg --install OpenMS-1.8.0-Linux_64.deb`` from the directory containing this download.
+   * ``sudo dpkg --install OpenMS-1.9.0-Linux_64.deb`` from the directory containing this download.
 
 * Download pyOpenMS (see http://emzed.ethz.ch/downloads), unzip it and 
    * run ``install.sh``, choose "global install to".

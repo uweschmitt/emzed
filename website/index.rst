@@ -4,7 +4,29 @@
    contain the root `toctree` directive.
 
 Welcome to eMZed
-================
+----------------
+
+Website Navigation
+~~~~~~~~~~~~~~~~~ 
+
+.. toctree::
+   :maxdepth: 1
+
+   installation
+   contact
+   license
+   tour
+   explorers
+   cookbook
+   faq
+
+   references
+
+   api_ms
+   api_mstypes
+   api_batches
+   api_tables_expressions
+   api_other
 
 
 About
@@ -57,26 +79,6 @@ We paritally testet on 64 bit Ubuntu 12.04, a 64 bit version for Windows OS
 is in progress.
 
 
-Contents
-~~~~~~~~
-
-.. toctree::
-   :maxdepth: 1
-
-   installation
-   contact
-   license
-   tour
-   explorers
-   cookbook
-
-   references
-
-   api_ms
-   api_mstypes
-   api_batches
-   api_tables_expressions
-   api_other
 
 Credits
 ~~~~~~~
