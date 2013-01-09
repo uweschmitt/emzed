@@ -1,3 +1,5 @@
+#encoding: utf-8
+
 from libms.DataStructures.Table import Table
 
 def toTable(colName, iterable,  fmt="", type_=None, title="", meta=None):

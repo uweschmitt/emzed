@@ -203,7 +203,7 @@ class ModifiedCurvePlot(CurvePlot):
 
 
 class RtPlot(ModifiedCurvePlot):
-    """ modified behaviour:
+    """ modified behavior:
             - space zooms to selected rt range
             - enter puts range marker to middle of currenct rt plot view
             - right crsr + left csrs + shift and alt modifiers move

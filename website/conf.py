@@ -27,7 +27,8 @@ import sys, os
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 sys.path.insert(0, "..")
 sys.path.insert(0, ".")
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.viewcode', 'pycon', 'sphinxcontrib.spelling'][:-1]
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest',
+'sphinx.ext.viewcode', 'pycon', 'sphinxcontrib.spelling']#[:-1]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -211,6 +212,8 @@ latex_documents = [
 spelling_lang='en_US'
 spelling_show_suggestions=True
 
+spelling_word_list_filename="spelling.txt"
+spelling_ignore_wiki_words=True
 
 # -- Options for manual page output --------------------------------------------
 

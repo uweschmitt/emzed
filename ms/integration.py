@@ -1,3 +1,5 @@
+#encoding: utf-8
+
 
 
 def integrate(ftable, integratorid="std", msLevel=1, showProgress = True):

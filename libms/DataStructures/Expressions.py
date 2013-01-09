@@ -27,7 +27,7 @@ def gt(a, x):
 #
 #  some design principles, READ FIRST:
 #
-#  columntypes int, long, float, bool are kept in np.array during _eval
+#  column types int, long, float, bool are kept in np.array during _eval
 #  calls with apropripate dtype if no Nones are present, else
 #  dtype=object. So checking against dtype==object is the same as
 #  testing if Nones are present.

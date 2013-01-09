@@ -1,4 +1,4 @@
-#encoding: latin-1
+#encoding: utf-8
 
 
 def formula(mf):
@@ -37,7 +37,7 @@ def formula(mf):
 
 def addmf(formula0, *formulas):
     """
-    Combines molecular formulas by addition and subraction:
+    Combines molecular formulas by addition and subtraction:
 
     .. pycon::
 
@@ -45,7 +45,7 @@ def addmf(formula0, *formulas):
        print ms.addmf("H2O", "COOH")
        print ms.addmf("H2O", "COOH", "NaCl")
 
-    A leading minus sign subtracts the formla following this sign:
+    A leading minus sign subtracts the formula following this sign:
 
     .. pycon::
 

@@ -14,7 +14,7 @@ Data of chemical Elements
    import abundance
    import adducts
 
-Data of chemical elemets are available from the *elements* module, e.g:
+Data of chemical elements are available from the *elements* module, e.g:
 
 .. pycon::
 
@@ -28,7 +28,7 @@ Data of chemical elemets are available from the *elements* module, e.g:
 Masses and Masscalculation
 --------------------------
 
-Masses can be quried like this:
+Masses can be queried like this:
 
 .. pycon::
  

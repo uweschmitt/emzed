@@ -59,7 +59,7 @@ class Spectrum(object):
 
     def mzRange(self):
         """ returns pair min(mz), max(mz) for mz values in current spec.
-            may return None, None if spec is emtpy !
+            may return None, None if spec is empty !
         """
         return self.mzMin(), self.mzMax()
 
@@ -200,8 +200,8 @@ class PeakMap(object):
         """
         extracts chromatorgram in given rt- and mz-window.
         returns a tuple ``(rts, intensities)`` where ``rts`` is a list of
-        rt values (in seconds, as allways)  and ``intensities`` is a
-        list of same lenght containing the summed up peaks for each
+        rt values (in seconds, as always)  and ``intensities`` is a
+        list of same length containing the summed up peaks for each
         rt value.
         """
         if not self.spectra:

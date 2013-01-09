@@ -1,10 +1,12 @@
+#encoding:utf-8
+
 def rtAlign(tables, refTable = None, destination = None, nPeaks=-1,
             numBreakpoints=5, maxRtDifference = 100, maxMzDifference = 0.01,
             maxMzDifferencePairfinder = 0.01,
             forceAlign=False):
 
-    """ aligns feature tables in respect to retetion times.
-        the algorithme produces new tables with aligend data.
+    """ aligns feature tables in respect to retention times.
+        the algorithm produces new tables with aligned data.
         **input tables including the assiciatoted peakmap(s) are not modified**.
 
         Parameters:
