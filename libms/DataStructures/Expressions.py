@@ -28,20 +28,20 @@ def gt(a, x):
 #  some design principles, READ FIRST:
 #
 #  column types int, long, float, bool are kept in np.array during _eval
-#  calls with apropripate dtype if no Nones are present, else
+#  calls with appropriate dtype if no Nones are present, else
 #  dtype=object. So checking against dtype==object is the same as
 #  testing if Nones are present.
 #
 #  other types are kept in lists.
-#  TODO: eval performance for arrays with strings, dicts, etc...
+#  TODO: eval performance for arrays with strings, dictionaries, etc...
 #
-#  as the dtype is not restrictive enough, _eval returs the columntype
+#  as the dtype is not restrictive enough, _eval returns the column type
 #  as python type as the last value.
 #
-#  Comparisions alllways return bool arrays without missing values ==
+#  Comparisons always return boolean arrays without missing values ==
 #  Nones !!!! so eg comparing "<= None" is not allowed in contrast to "== None"
 #
-#  Logical operations allways return bool values in contrast to pythons
+#  Logical operations always return boolean values in contrast to pythons
 #  logical operations.
 #
 ##############################################################################
@@ -176,7 +176,7 @@ class BaseExpression(object):
         """ this one raises and exception if "and" or "or" are used to
             build expressions.
             "and" and "or" can not be used as there are no methods
-            to overload these. Combining expressions this way allways
+            to overload these. Combining expressions this way always
             results in a call to this method to determine their
             equivalent "boolean value".
 
@@ -348,7 +348,7 @@ class BaseExpression(object):
     @property
     def min(self):
         """
-        This is an **aggretation expression** which evaluates an
+        This is an **aggregation expression** which evaluates an
         expression to its minimal value.
 
         Example: ``tab.rt.min``
@@ -358,7 +358,7 @@ class BaseExpression(object):
     @property
     def max(self):
         """
-        This is an **aggretation expression** which evaluates an
+        This is an **aggregation expression** which evaluates an
         expression to its maximal value.
 
         Example: ``tab.rt.max``
@@ -368,7 +368,7 @@ class BaseExpression(object):
     @property
     def sum(self):
         """
-        This is an **aggretation expression** which evaluates an
+        This is an **aggregation expression** which evaluates an
         expression to its sum.
 
         Example: ``tab.area.sum``
@@ -379,7 +379,7 @@ class BaseExpression(object):
     @property
     def mean(self):
         """
-        This is an **aggretation expression** which evaluates an
+        This is an **aggregation expression** which evaluates an
         expression to its mean.
 
         Example: ``tab.area.mean``
@@ -390,7 +390,7 @@ class BaseExpression(object):
     @property
     def std(self):
         """
-        This is an **aggretation expression** which evaluates an
+        This is an **aggregation expression** which evaluates an
         expression to its standard deviation.
 
         Example: ``tab.area.std``
@@ -410,7 +410,7 @@ class BaseExpression(object):
     @property
     def count(self):
         """
-        This is an **aggretation expression** which evaluates an
+        This is an **aggregation expression** which evaluates an
         column expression to the number of values in the column.
 
         Example:: ``tab.id.len``
@@ -421,7 +421,7 @@ class BaseExpression(object):
     @property
     def countNone(self):
         """
-        This is an **aggretation expression** which evaluates an
+        This is an **aggregation expression** which evaluates an
         Column expression to the number of None values in it.
         """
         return AggregateExpression(self,\
@@ -430,7 +430,7 @@ class BaseExpression(object):
     @property
     def countNotNone(self):
         """
-        This is an **aggretation expression** which evaluates an
+        This is an **aggregation expression** which evaluates an
         Column expression to the number of values != None in it.
         """
         return AggregateExpression(self,\
@@ -440,7 +440,7 @@ class BaseExpression(object):
     @property
     def hasNone(self):
         """
-        This is an **aggretation expression** which evaluates an Column
+        This is an **aggregation expression** which evaluates an Column
         expression to *True* if and only if the column contains a *None*
         value.
         """
@@ -450,7 +450,7 @@ class BaseExpression(object):
     @property
     def uniqueNotNone(self):
         """
-        This is an **aggretation expression**. If applied to an
+        This is an **aggregation expression**. If applied to an
         expression ``t`` ``t.uniqueNotNone`` evaluates to ``v`` if ``t``
         only contains two values ``v`` and ``None``.  Else it raises an
         Exception.
@@ -519,8 +519,8 @@ class BaseExpression(object):
 
 class CompExpression(BaseExpression):
 
-    # comparing to None is allowed by default, but is overidden in some
-    #  sublassess,
+    # comparing to None is allowed by default, but is overridden in some
+    # subclasses,
     # as eg  None <= x or None >=x give hard to predict results  and  is
     # very error prone:
     allowNone = True
@@ -530,7 +530,7 @@ class CompExpression(BaseExpression):
         rhs, ixr, tr = saveeval(self.right, ctx)
 
         assert len(lhs) <= 1 or len(rhs)<=1 or len(lhs) == len(rhs),\
-            "column lenghts do not fit"
+            "column lengths do not fit"
 
         if len(lhs) == 0:
             return np.zeros((0,), dtype=np.bool), None, bool
@@ -782,7 +782,7 @@ class LogicExpression(BaseExpression):
     def __init__(self, left, right):
         super(LogicExpression, self).__init__(left, right)
         if right.__class__ == Value and type(right.value) != bool:
-            print "warning: parentesis for logic op set ?"
+            print "warning: parenthesis for logic op set ?"
 
 
 class AndExpression(LogicExpression):
@@ -864,7 +864,7 @@ class FunctionExpression(BaseExpression):
 
     def _eval(self, ctx=None):
         values, index, type_ = saveeval(self.child, ctx)
-        # the secenod expressions is true if values contains no Nones,
+        # the second expressions is true if values contains no Nones,
         # so we can apply ufucns/vecorized funs
         if len(values) == 0:
             return [], None, self.restype or object
@@ -965,7 +965,7 @@ class IfThenElse(BaseExpression):
         s3 = self.e3._evalsize(ctx)
         if s1==1:
             if (s2==1 and s3>1) or (s2>1 and s3==1):
-                raise Exception("column lenghts %d, %d and %d do not fit!"\
+                raise Exception("column lengths %d, %d and %d do not fit!"\
                                 %(s1, s2, s3))
             return max(s2, s3)
 
@@ -973,7 +973,7 @@ class IfThenElse(BaseExpression):
             return s1
 
         if (s3==1 and s2 != s1) or (s2==1 and s3 != s1):
-            raise Exception("column lenghts %d, %d and %d do not fit!"\
+            raise Exception("column lengths %d, %d and %d do not fit!"\
                             % (s1, s2, s3))
 
         return s1
@@ -1023,7 +1023,7 @@ class ColumnExpression(BaseExpression):
         return iter(self.values)
 
     def _eval(self, ctx=None):
-        # self.values is allways a list ! for speedinig up things
+        # self.values is always a list ! for speeding up things
         # we convert numerical types to np.ndarray during evaluation
         # of expressions
         if ctx is None:

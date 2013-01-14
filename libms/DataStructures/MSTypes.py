@@ -21,9 +21,9 @@ class Spectrum(object):
                        retention time in seconds
 
            msLevel:    int
-                       ms-n level.
+                       MSn level.
 
-           polarity:   string of legth 1
+           polarity:   string of length 1
                        values: 0, + or -
 
            precursors: list of floats
@@ -237,7 +237,7 @@ class PeakMap(object):
 
     def filter(self, condition):
         """ builds new peakmap where ``condition(s)`` is ``True`` for
-            spectra ``s`
+            spectra ``s``
         """
         return PeakMap([s for s in self.spectra if condition(s)], self.meta)
 
@@ -260,7 +260,7 @@ class PeakMap(object):
 
     def chromatogram(self, mzmin, mzmax, rtmin=None, rtmax=None):
         """
-        extracts chromatorgram in given rt- and mz-window.
+        extracts chromatogram in given rt- and mz-window.
         returns a tuple ``(rts, intensities)`` where ``rts`` is a list of
         rt values (in seconds, as always)  and ``intensities`` is a
         list of same length containing the summed up peaks for each
@@ -311,7 +311,7 @@ class PeakMap(object):
         return [spec.rt for spec in self.spectra]
 
     def levelOneRts(self):
-        """returns rt values of al level one spectra in peakmap"""
+        """returns rt values of all level one spectra in peakmap"""
         return [spec.rt for spec in self.spectra if spec.msLevel == 1]
 
     def levelNSpecs(self, minN, maxN=None):
@@ -365,8 +365,9 @@ class PeakMap(object):
         return exp
 
     def splitLevelN(self, msLevel, significant_digits_precursor=2):
-        """splits peakmapt to dict of lists of spectra.
-           key of dict is precursor m/z rounded to significant_digits_precursor
+        """splits peakmapt to dictionary of lists of spectra.
+           key of dictionary is precursor m/z rounded to
+           significant_digits_precursor
         """
         ms2_spectra = defaultdict(list)
         for spectrum in self.spectra:
