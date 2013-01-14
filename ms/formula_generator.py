@@ -1,4 +1,4 @@
-#encoding: latin-1
+#encoding:utf-8
 
 from libms.Chemistry.Tools import formulaTable
 

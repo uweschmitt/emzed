@@ -1,2 +1,2 @@
-FAQ (Frequantly Asked Questions)
+FAQ (Frequently Asked Questions)
 ================================

@@ -1,10 +1,12 @@
+#encoding: utf-8
+
 
 
 def storePeakMap(pm, path=None):
     """ Stores peakmap *pm* in mzXML, mzML or mzData format.
-        The used format depends on the fileextension given
+        The used format depends on the file extension given
         in *path*. If no *path* is given, a dialog for
-        choosing an ouput file name is opened.
+        choosing an output file name is opened.
     """
 
     # local import in order to keep namespaces clean

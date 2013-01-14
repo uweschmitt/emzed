@@ -1,9 +1,11 @@
-def _normalize_network_pathes(*pathes):
+#encoding:utf-8
+
+def _normalize_network_paths(*paths):
     import sys
     if sys.platform == "win32":
-        # sometimes probs with network pathes like "//gram/omics/....":
-        return [ p.replace("/", "\\") for p in pathes ]
-    return pathes
+        # sometimes probs with network paths like "//gram/omics/....":
+        return [ p.replace("/", "\\") for p in paths ]
+    return paths
 
 def __fileDialog(startAt=None, onlyDirectories=False, anyFile=False,
                  multipleFiles=True, extensions=None, caption=None):
@@ -43,7 +45,7 @@ def __fileDialog(startAt=None, onlyDirectories=False, anyFile=False,
     if di.exec_():
         files= di.selectedFiles()
         res = [ str(f.toLatin1()) for f in files]
-        res = _normalize_network_pathes(*res)
+        res = _normalize_network_paths(*res)
         return res
     return [None]
 
@@ -54,7 +56,7 @@ def askForDirectory(startAt=None):
 
     you can provide a startup directory with parameter startAt.
 
-    returns the path to the selected diretory as a string,
+    returns the path to the selected directory as a string,
     or None if the user aborts the dialog.
     """
     return __fileDialog(startAt, onlyDirectories=True)[0]
@@ -116,7 +118,7 @@ def askForMultipleFiles(startAt=None, extensions=None):
 
               askForSingleFile(extensions=["mzXML", "mxData"])
 
-          returns the pathes of the selected files as a list of strings,
+          returns the paths of the selected files as a list of strings,
           or None if the user aborts the dialog.
     """
     return __fileDialog(startAt, multipleFiles=True, extensions=extensions)

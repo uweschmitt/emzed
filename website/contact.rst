@@ -31,8 +31,8 @@ Contact
        | patrick.kiefer (at) micro (dot) biol (dot) ethz (dot) ch
      - | Institute of Microbiology
        | Department of Biology
-       | ETH Zürich
-       | CH-8093 Zürich
+       | ETH Zurich
+       | CH-8093 Zurich
        | Swisse
 
    * - Software Design & Implementation

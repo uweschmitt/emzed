@@ -38,7 +38,7 @@ def runCentwave(pattern=None, destination=None, configid="std", **params):
          input files are map files (mzXML, mxML, mzData),
          ouput files are csv files
 
-         you can add modifications to the standard pamaeters, eg ppm,
+         you can add modifications to the standard parameters, eg ppm,
          as named arguments.
 
          if you have multiple configs for centwave, you can give an
@@ -65,10 +65,10 @@ def runCentwave(pattern=None, destination=None, configid="std", **params):
                      looks for map files matching pattern
                      resulting csv files are stored next to input map file
 
-              runCentwave(pattern, msDiff=0.003):
+              runCentwave(pattern, mzDiff=0.003):
                      looks for map files matching pattern
                      resulting csv files are stored next to input map file
-                     runs centwave with modified msDiff parameter
+                     runs centwave with modified mzDiff parameter
 
               runCentwave(pattern, destination):
                      looks for map files matching pattern
@@ -98,10 +98,10 @@ def runMatchedFilter(pattern=None, destination=None, configid="std", **params):
 
     """
          runs matched filters algorithm from xcms in batch mode.
-         input files are map files (mzXML, mxML, mzData),
-         ouput files are csv files
+         input files are map files (mzXML, mzML, mzData),
+         output files are csv files
 
-         you can add modifications to the standard pamaeters, eg ppm,
+         you can add modifications to the standard parameters, eg ppm,
          as named arguments.
 
          if you have multiple configs for matched filter, you can give an
@@ -128,10 +128,10 @@ def runMatchedFilter(pattern=None, destination=None, configid="std", **params):
                      looks for map files matching pattern
                      resulting csv files are stored next to input map file
 
-              runMatchedFilter(pattern, msDiff=0.003):
+              runMatchedFilter(pattern, mzDiff=0.003):
                      looks for map files matching pattern
                      resulting csv files are stored next to input map file
-                     runs matched filter with modified msDiff parameter
+                     runs matched filter with modified mzDiff parameter
 
               runMatchedFilter(pattern, destination):
                      looks for map files matching pattern

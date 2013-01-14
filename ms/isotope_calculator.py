@@ -1,3 +1,5 @@
+#encoding: utf-8
+
 
 def _setupIsotopeDistributionGenerator(formula, R, fullC13, minp, **kw):
     from libms.Chemistry.IsotopeDistribution import IsotopeDistributionGenerator
@@ -12,8 +14,8 @@ def plotIsotopeDistribution(formula, R=None, fullC13=False, minp=0.01,
     plots isotope distribution for given molecular formula *formula*.
     for all parameters, despite *plotGauss*: see isotopeDistributionTable()
 
-    If *R* is provided, gaussian peaks are plottet, else centroids.
-    This behaviour can be overrun by setting *plotGauss* to *True* or *False*.
+    If *R* is provided, gaussian peaks are plotted, else centroids.
+    This behavior can be overrun by setting *plotGauss* to *True* or *False*.
 
     If *plotGauss* is *True*, bell shaped curves are plotted, else the
     centroids according to the used resolution are shown.
@@ -24,7 +26,7 @@ def plotIsotopeDistribution(formula, R=None, fullC13=False, minp=0.01,
 
        ms.plotIsotopeDistribution("C3H7NO2", C=dict(C13=0.5, C12=0.5), R=5000) !noexec
 
-    .. image:: isopattern_alanin.png 
+    .. image:: isopattern_alanin.png
 
     """
     gen = _setupIsotopeDistributionGenerator(formula, R, fullC13, minp, **kw)
@@ -32,15 +34,15 @@ def plotIsotopeDistribution(formula, R=None, fullC13=False, minp=0.01,
 
 def isotopeDistributionTable(formula, R=None, fullC13=False, minp=0.01, **kw):
     """
-    generates Table for most common isotopes of molecule with given mass 
+    generates Table for most common isotopes of molecule with given mass
     *formula*.
 
-    If the resolution *R* is given, the measurment device is simulated, and
+    If the resolution *R* is given, the measurement device is simulated, and
     overlapping peaks may merge.
 
     *fullC13=True* assumes that only C13 carbon is present in formula.
 
-    Further you can give a threshhold *minp* for considering only isotope
+    Further you can give a threshold *minp* for considering only isotope
     peaks with an abundance above the value. Standard is *minp=0.01*.
 
     If you have special elementary isotope abundances which differ from

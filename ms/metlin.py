@@ -1,3 +1,5 @@
+#encoding: utf-8
+
 
 def matchMetlin(table, massColumn, ppm):
     table.requireColumn(massColumn)

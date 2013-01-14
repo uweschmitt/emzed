@@ -11,7 +11,7 @@ Arguments:
 
   object: 'xcmsSet' object
 
-     ppm: maxmial tolerated m/z deviation in consecutive scans, in ppm
+     ppm: maximal tolerated m/z deviation in consecutive scans, in ppm
           (parts per million)
 
 peakwidth: Chromatographic peak width, given as range (min,max) in
@@ -127,7 +127,7 @@ Author(s):
 
 References:
 
-     Ralf Tautenhahn, Christoph Böttcher, and Steffen Neumann "Highly
+     Ralf Tautenhahn, Christoph Boettcher, and Steffen Neumann "Highly
      sensitive feature detection for high resolution LC/MS" BMC
      Bioinformatics 2008, 9:504
 
