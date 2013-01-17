@@ -994,7 +994,7 @@ class Table(object):
 
         For a table with column names ``["rt", "rtmin", "rtmax", "rt1", "rtmin1"]``
 
-        ``supportedPostfixes(["rt"])`` returns ``["", "1"]``,
+        ``supportedPostfixes(["rt"])`` returns ``["", "min", "max", "1", "min1"]``,
 
         ``supportedPostfixes(["rt", "rtmin"])`` returns ``["", "1"]``,
 
