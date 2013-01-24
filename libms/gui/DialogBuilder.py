@@ -231,10 +231,9 @@ class WorkflowFrontendBuilder(dt.DataSet):
     def __init__(self):
         for item in self._items:
             if hasattr(item, "_run_method"):
-                name = item._name
-                target = item._run_method or getattr(self, "run_"+name)
+                name = item._run_method or "run_" + item._name
+                target = getattr(self, name)
                 def inner(self, a, b, c, target=target):
-                    print "inner"
                     target()
                 setattr(self, "_emzed_run_"+name, inner)
                 item.set_prop("display", callback=inner)
