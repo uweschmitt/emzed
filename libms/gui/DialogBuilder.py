@@ -215,3 +215,31 @@ class DialogBuilder(object):
         if len(result) == 1:
             result = result[0]
         return result
+
+
+for _itemName, _item in di.__dict__.items():
+    if _itemName.endswith("Item"):
+        exec ("%s = di.%s" % (_itemName, _itemName))
+
+def RunJobButton(label, method_name=None):
+    rv = ButtonItem(label, None)
+    rv._run_method = method_name
+    return rv
+
+class WorkflowFrontendBuilder(dt.DataSet):
+
+    def __init__(self):
+        for item in self._items:
+            if hasattr(item, "_run_method"):
+                name = item._name
+                target = item._run_method or getattr(self, "run_"+name)
+                def inner(self, a, b, c, target=target):
+                    print "inner"
+                    target()
+                setattr(self, "_emzed_run_"+name, inner)
+                item.set_prop("display", callback=inner)
+        dt.DataSet.__init__(self)
+
+    show = dt.DataSet.edit
+
+
