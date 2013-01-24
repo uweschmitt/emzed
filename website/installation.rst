@@ -22,8 +22,8 @@ If you decide to make use of the global exchange folder,
 **at least one of the users needs write access to this folder and should be the
 first user who starts eMZed. Else eMZed will not be able to work correctly.**
 
-In Case of trouble
-~~~~~~~~~~~~~~~~~~
+For support
+~~~~~~~~~~~
 
 If you have problems installing *eMZed*, please use the discussion group
 at http://groups.google.com/group/emzed-users
@@ -131,18 +131,6 @@ Then install
   and unzip it. Creates folder ``emzed/``
 
 Start ``python emzed.pyw`` in the extracted folder and follow the windows instruction above, beginning at item no. 5.
-
-
-
-Help
-~~~~
-
-In case of any trouble, please use the *eMZed group* at http://groups.google.com/group/emzed-users.
-
-
-
-
-
   
 
  

@@ -13,6 +13,7 @@ Website Navigation
    :maxdepth: 1
 
    installation
+   getting_started
    tour
    explorers
    cookbook
