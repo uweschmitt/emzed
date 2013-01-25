@@ -1,12 +1,14 @@
 import guidata
-_app = guidata.qapplication() # not required if a QApplication has already been created
+# not required if a you work inside emzed workbench:
+_app = guidata.qapplication()
 
 import libms.gui.DialogBuilder as gui
 
-class Test(gui.WorkflowFrontendBuilder):
+class TestFrontend(gui.WorkflowFrontend):
 
     parameter = gui.FloatItem("parameter")
-    name = gui.StringItem("name")
+    name = gui.StringItem("name", notempty=True)
+    optional = gui.StringItem("optional")
 
     method_one = gui.RunJobButton("patricks method")
     method_two = gui.RunJobButton("uwes method", method_name="uwe")
@@ -27,5 +29,5 @@ class Test(gui.WorkflowFrontendBuilder):
         self.name = "uwe"
         self.parameter = "23"
 
-Test().show()
+TestFrontend().show()
 
