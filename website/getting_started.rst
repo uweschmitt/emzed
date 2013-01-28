@@ -1,14 +1,12 @@
 .. _getting_started:
 
-===============
-Getting Started
-===============
+========================================
+Getting Started with eMZed Workbench
+========================================
 
-This tutorial is about the first steps to work with *eMZed*, we recommend
-to read it before following the tour at :ref:`guided_tour`.
+This tutorial helps you getting familiar with the *eMZed workbench*. We recommend to exercise it before following :ref:`getting_started_with_emzed_modules`.
 
-If you start *eMZed* the user interface should look like the following
-screen shot.
+If you start *eMZed* workbench the first time the user interface should look like the following screen shot.
 The window is divided into an editor for *Python* code at the left, and a *variable
 explorer* above a *IPython console* with an input prompt at the right. 
 You can resize and reorder
@@ -24,8 +22,7 @@ How to change the working directory?
 ------------------------------------
 
 Like a Linux command line *eMZed* has the concept of a *working directory*,
-this is where the editor opens new files, and where scripts are
-started from if you use the *IPython shell*.
+this is the location where the editor opens new files, and where scripts are started when using the *IPython* shell.
 
 
 .. figure:: emzed_working_dir.png
@@ -33,15 +30,19 @@ started from if you use the *IPython shell*.
 
 To change the working directory
 
-  1. Press the "choose folder button" of *eMZed* task bar (1.) and choose directory.
-  2. Press "set button" (2.) to set the current working directory to the chosen one.
+  1. Press the "choose folder" button of *eMZed* task bar (1.) and choose directory. 
+    
+  2. Press "set" button (2.) to set the current working directory to the chosen one.
 
 After pressing the "set button" the command to change to the new working
 directory is displayed in the IPython console.
 
+Please follow the instructions to change to the ``emzed_files/example_files`` directory, which is located inside your home directory. You see that the following statement is executed in your *IPython* shell:
+
 .. figure:: emzed_working_dir_cwd.png
    :scale: 75%
 
+This folder was created during the first startup of eMZed. 
 
 You can verify the current working directory by typing ``pwd`` in the IPython
 console. Press ``Enter``, type ``pwd`` and press ``Enter`` again.
@@ -51,6 +52,16 @@ console. Press ``Enter``, type ``pwd`` and press ``Enter`` again.
 
 You can display the content of the current working directory by submitting
 the ``ls`` command.
+
+.. figure:: emzed_working_dir_ls.png
+   :scale: 75 %
+
+
+We will create now a new folder ``first_steps`` in the ``emzed_files`` directory. You can do that by clicking again the "choose folder button". Then make a new folder called ``first_steps``, select it, and press again the "set" button. We will use that folder later on during this tutorial.
+
+.. figure:: emzed_working_dir_temp_folder.png
+   :scale: 75 %
+
 
 How to to work with the IPython console?
 ----------------------------------------
@@ -105,53 +116,6 @@ You can find a more detailed IPython tutorial here_.
 .. _here: http://ipython.org/ipython-doc/stable/interactive/tutorial.html
 
 
-
-How to run scripts ?
---------------------
-
-If you later program workflows these are Python scripts using functionalities
-from the *eMZed* framework.
-
-
-You can use the *Editor* to write scripts and functions which can be executed
-in the IPython console. Here is a very simple example which
-implements a function that calculates the mass of water:
-
-.. figure:: using_editor_code.png
-   :scale: 75 %
-
-Type the code into the editor and save it as ``using_editor_code.png``
-into your working directory.
-
-There are two possibilities to run scripts in *eMZed*.
-
- 1. You can execute the script currently displayed in the Editor  by simply
-    pressing the ``F5`` button. When the script is executed the first
-    time a dialog box will open. Choose the first option "Execute in current
-    IPython or Python interpreter".
-
-     .. figure:: run_script.png
-        :scale: 75 %
-
-    When running the script you see that the ``print`` statement in the
-    last line of the example code is executed. Further the function
-    ``mass_of_water`` is now available in the
-    IPython console. Type the name of the function followed by ``()``
-    and press ``Enter`` to execute it.
-
-     .. figure:: run_script_executing.png
-        :scale: 75 %
-
-
- 2. You can also use the command ``runfile``. If the file is saved in the
-    working directory you simply type ``runfile("filename.py")`` in the IPython
-    console. For given example:
-
-    .. figure:: run_script_alternative.png
-        :scale: 75 %
-
-If the script is not located in the working directory you have to add the path
-of the script to its name like  ``runfile(".../folder/filename.py")``.
 
 
 
@@ -211,16 +175,55 @@ a table object and you can directly print the result in the console.
 .. figure:: table_print().png
    :scale: 75 %
 
+How to run scripts ?
+--------------------
+
+*eMZed* workflows are Python scripts generally using functionalities provided by *eMZed* modules but also individual functions created by the user. 
 
 
-More about Python
------------------
+To build your own workflows you can use the *Editor* to write scripts and functions which can be executed in the IPython console. 
 
-To write your own scripts basic knowledge in Python is mandatory. However,
-Python is very easy to learn.
+Here is a very simple example which
+implements a function that calculates the mass of water using the module `mass`:
 
-You find a comprehensive list of Python tutorials at
-http://wiki.python.org/moin/BeginnersGuide
+.. figure:: using_editor_code.png
+   :scale: 75 %
+
+Type the code into the editor and save it as ``using_editor.py``
+into the current working directory.
+
+There are two possibilities to run scripts in *eMZed*.
+
+ 1. You can execute the script currently displayed in the Editor  by simply
+    pressing the ``F5`` button. When the script is executed the first
+    time a dialog box will open. Choose the first option "Execute in current
+    IPython or Python interpreter".
+
+     .. figure:: run_script.png
+        :scale: 75 %
+
+    When running the script you see that the ``print`` statement in the
+    last line of the example code is executed. Further the function
+    ``mass_of_water`` is now available in the
+    IPython console. Type the name of the function followed by ``()``
+    and press ``Enter`` to execute it.
+
+     .. figure:: run_script_executing.png
+        :scale: 75 %
 
 
+ 2. You can also use the command ``runfile``. For given example:
+
+    .. figure:: run_script_alternative.png
+        :scale: 75 %
+
+If the script is not located in the working directory you have to add the path
+of the script to its name like  ``runfile(".../folder/filename.py")``.
+
+
+
+Next 
+----
+
+Continue with :ref:`getting_started_with_emzed_modules`
 

@@ -1,8 +1,8 @@
-.. _guided_tour:
+.. _getting_started_with_emzed_modules:
 
-=============
-A Guided Tour
-=============
+==================================
+Getting started with eMZed modules
+==================================
 
 This is a short tour for getting a first impression about working with *eMZed*
 framework. We suppose that you followed the instructions at
@@ -574,3 +574,15 @@ The following dialogue is created by the simple commands below:
     b.addFileOpen("Input File")
     print b.show()                            !noexec
     (10, 1.02, 'C:/Dokumente und Einstellungen/e001.mzML') !asoutput
+
+
+More about Python
+-----------------
+
+To write your own scripts basic knowledge in Python is mandatory. However,
+Python is very easy to learn.
+
+You find a comprehensive list of Python tutorials at
+http://wiki.python.org/moin/BeginnersGuide
+
+
