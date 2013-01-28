@@ -82,7 +82,7 @@ methods which can be applied to the object ``welcome``. In the same way,
 available methods on any type of object are shown automatically. You can
 activate command completion after any character by pressing the ``Tab`` button.
 All methods which can be applied to the object are displayed in the console by
-typing the name of the object followed by ``.``.  For given example:
+typing the name of the object followed by a dot "``.``".  For given example:
 
 .. figure:: ipython_object_operations.png
    :scale: 75 %
@@ -93,7 +93,8 @@ get the documentation of ``capitalize`` by typing:
 .. figure:: ipython_object_function_documentation.png
    :scale: 75 %
 
-We can now to apply the function ``capitalize`` to the object ``welcome``:
+We can now to apply the function ``capitalize`` to the object ``welcome``,
+you can see the change of the first letter:
 
 .. figure:: ipython_apply_function.png
    :scale: 75 %
