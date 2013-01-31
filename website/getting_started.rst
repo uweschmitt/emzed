@@ -1,17 +1,32 @@
 .. _getting_started:
 
-========================================
-Getting started with eMZed workbench
-========================================
+==========================
+Getting started with eMZed
+==========================
 
-This tutorial helps you getting familiar with the *eMZed workbench*. We recommend to exercise it before following :ref:`getting_started_with_emzed_modules`.
+*eMZed* helps you to develop work flows by two means:
 
-If you start *eMZed* workbench the first time the user interface should look like the following screen shot.
-The window is divided into an editor for *Python* code at the left, and a *variable
-explorer* above a *IPython console* with an input prompt at the right. 
-You can resize and reorder
-them using your mouse. This configuration is stored if you close *eMZed* and if
-you start *eMZed* again, it will be restored.
+  * a development environment which we name *workbench* and
+
+  * a collection of *eMZed modules* for typical
+    tasks which provide building blocks for an LCMS analysis work flows.
+
+The following instructions help you to get started with the workbench,
+:ref:`getting_started_with_emzed_modules` gives a first impression of
+the functionalities provided by *eMZed* modules.
+
+We recommend to exercise the tutorial below before following
+:ref:`getting_started_with_emzed_modules`.
+
+The eMZed workbench
+-------------------
+
+If you start *eMZed* workbench the first time the user interface should look
+like the following screen shot.  The window is divided into an editor for
+*Python* code at the left, and a *variable explorer* above a *IPython console*
+with an input prompt at the right.  You can resize and reorder them using your
+mouse. This configuration is stored if you close *eMZed* and if you start
+*eMZed* again, it will be restored.
 
 .. figure:: emzed_workbench_overview.png
    :scale: 50 %
@@ -22,27 +37,31 @@ How to change the working directory?
 ------------------------------------
 
 Like a Linux command line *eMZed* has the concept of a *working directory*,
-this is the location where the editor opens new files, and where scripts are started when using the *IPython* shell.
+this is the location where the editor opens new files, and where scripts are
+started when using the *IPython* shell.
 
 
 .. figure:: emzed_working_dir.png
    :scale: 65 %
 
-To change the working directory
+To change the working directory look at the labeled buttons in the screen
+shot and follow theses instructions:
 
-  1. Press the "choose folder" button of *eMZed* task bar (1.) and choose directory. 
-    
+  1. Press the "choose folder" button of *eMZed* task bar (1.) and choose directory.
+
   2. Press "set" button (2.) to set the current working directory to the chosen one.
 
 After pressing the "set button" the command to change to the new working
 directory is displayed in the IPython console.
 
-Please follow the instructions to change to the ``emzed_files/example_files`` directory, which is located inside your home directory. You see that the following statement is executed in your *IPython* shell:
+If you you change to the ``emzed_files/example_files``
+directory, which is located inside your home directory, you see that
+a statement similar to the following one is executed in your *IPython* shell:
 
 .. figure:: emzed_working_dir_cwd.png
    :scale: 75%
 
-This folder was created during the first startup of eMZed. 
+This folder was created during the first startup of eMZed.
 
 You can verify the current working directory by typing ``pwd`` in the IPython
 console. Press ``Enter``, type ``pwd`` and press ``Enter`` again.
@@ -57,7 +76,10 @@ the ``ls`` command.
    :scale: 75 %
 
 
-We will create now a new folder ``first_steps`` in the ``emzed_files`` directory. You can do that by clicking again the "choose folder button". Then make a new folder called ``first_steps``, select it, and press again the "set" button. We will use that folder later on during this tutorial.
+We will create now a new folder ``first_steps`` in the ``emzed_files``
+directory. You can do that by clicking again the "choose folder button". Then
+make a new folder called ``first_steps``, select it, and press again the "set"
+button. We will use that folder later on during this tutorial.
 
 .. figure:: emzed_working_dir_temp_folder.png
    :scale: 75 %
@@ -80,9 +102,9 @@ the content of ``welcome`` is displayed in the console. The console provides
 command completion and automatic dialog boxes showing a list of possible
 methods which can be applied to the object ``welcome``. In the same way,
 available methods on any type of object are shown automatically. You can
-activate command completion after any character by pressing the ``Tab`` button.
+activate command completion after any character by pressing the ``Tab`` key.
 All methods which can be applied to the object are displayed in the console by
-typing the name of the object followed by ``.``.  For given example:
+typing the name of the object followed by a "``.``".  For given example:
 
 .. figure:: ipython_object_operations.png
    :scale: 75 %
@@ -125,14 +147,14 @@ How to use eMZed modules?
 
 As an *example* we determine the isotope distribution of molecular formula
 *C6H13O9P*. It can be calculated using the method *isotopeDistributionTable* of
-the main *eMZed* module ``ms``. After typing ``ms.`` the auto completion shows
-all methods of the module ms.
+the main *eMZed* module *ms*. After typing ``ms.`` the auto completion shows
+all methods of the module *ms*.
 
 .. figure:: ipython_autocompletion.png
    :scale: 75 %
 
 You can reduce the number of methods by typing ``ms.i`` and pressing the ``Tab``
-button.
+key.
 
 .. figure:: ipython_tab_button.png
    :scale: 75 %
@@ -178,24 +200,27 @@ a table object and you can directly print the result in the console.
 How to run scripts ?
 --------------------
 
-*eMZed* workflows are Python scripts generally using functionalities provided by *eMZed* modules but also individual functions created by the user. 
+*eMZed* work flows are Python scripts generally using functionalities provided
+by *eMZed* modules but also individual functions created by the user.
 
 
-To build your own workflows you can use the *Editor* to write scripts and functions which can be executed in the IPython console. 
+To build your own work flows you can use the *Editor* to write scripts and
+functions which can be executed in the IPython console.
 
-Here is a very simple example which
-implements a function that calculates the mass of water using the module `mass`:
+Here is a very simple example which implements a function that calculates the
+mass of water using the module `mass`:
 
 .. figure:: using_editor_code.png
    :scale: 75 %
 
 Type the code into the editor and save it as ``using_editor.py``
-into the current working directory.
+into the working directory ``.../emzed_files/first_steps`` which we
+set above.
 
 There are two possibilities to run scripts in *eMZed*.
 
  1. You can execute the script currently displayed in the Editor  by simply
-    pressing the ``F5`` button. When the script is executed the first
+    pressing the ``F5`` key. When the ``F5`` key is used the first
     time a dialog box will open. Choose the first option "Execute in current
     IPython or Python interpreter".
 
@@ -205,14 +230,14 @@ There are two possibilities to run scripts in *eMZed*.
     When running the script you see that the ``print`` statement in the
     last line of the example code is executed. Further the function
     ``mass_of_water`` is now available in the
-    IPython console. Type the name of the function followed by ``()``
-    and press ``Enter`` to execute it.
+    *IPython* console. To call this function type the name of the function
+    followed by ``()`` and press ``Enter``.
 
      .. figure:: run_script_executing.png
         :scale: 75 %
 
 
- 2. You can also use the command ``runfile``. For given example:
+ 2. You can also use the command ``runfile`` immediately. For given example:
 
     .. figure:: run_script_alternative.png
         :scale: 75 %
@@ -222,7 +247,7 @@ of the script to its name like  ``runfile(".../folder/filename.py")``.
 
 
 
-Next 
+Next
 ----
 
 Continue with :ref:`getting_started_with_emzed_modules`

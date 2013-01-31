@@ -1,3 +1,5 @@
+.. _cookbook:
+
 Cookbook -- Solutions for common problems
 =========================================
 

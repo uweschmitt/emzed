@@ -5,7 +5,7 @@ Getting started with eMZed modules
 ==================================
 
 This is a short tour for getting a first impression about working with *eMZed*
-framework. We suppose that you followed the instructions at
+modules. We suppose that you followed the instructions at
 :ref:`installation` to get *eMZed* installed and that you did the first
 steps as described in :ref:`getting_started`.
 
@@ -90,18 +90,16 @@ the bar with the center dot.
    :scale: 50 %
 
 A. You can move the bar in the upper chromatogram plot with the mouse by clicking
-   the bar.
-   m/z values and intensities of mass peaks in the chosen
-   spectrum are depicted in the lower plot.
+   the bar.  *m/z* values and intensities of mass peaks in the chosen spectrum
+   are depicted in the lower plot.
 
 B. You can extract an ion chromatogram by entering data
    into the two input fields  for providing a
-   central ``m/z`` value and a half window width ``w/2`` and then pressing ``Select``.
-   If you
-   press the right button during moving the mouse the plots will zoom in or out.
-   Pressing the ``backspace`` key will reset the active plot.
-   Further you can measure peak relations by dragging the mouse in the lower
-   plot.
+   central ``m/z`` value and a half window width ``w/2`` and then pressing
+   ``Select``.  If you press the right button during moving the mouse the plots
+   will zoom in or out.  Pressing the ``backspace`` key will reset the active
+   plot.  Further you can measure peak relations by dragging the mouse in the
+   lower plot.
 
 
 .. _centwave_example:
@@ -109,13 +107,17 @@ B. You can extract an ion chromatogram by entering data
 Extracting chromatographic peaks
 ---------------------------------
 
-Actually, *eMZed* includes two peak detection algorithm of the *XCMS* [xcms]_ package:
-*centwave* [centwave]_ and *matched filters*. Accepted input file formats are *mzML*,
-*mzxml*, and *mzData*.  The output file format is *eMZed*-specific
-and has the file extension ``.table``. In addition ``.csv`` files are saved.
+Actually, *eMZed* includes two peak detection algorithm of the *XCMS* [xcms]_
+package: *centwave* [centwave]_ and *matched filters*. Accepted input file
+formats are *mzML*, *mzxml*, and *mzData*.  The output file format is
+*eMZed*-specific and has the file extension ``.table``. In addition ``.csv``
+files are saved.
 
-We continue with an example of Centwave algorithm for high resolution LC-MS data.
-You can start the *Centwave* feature detector by typing
+We continue with an example of *centWave* algorithm for high resolution LC-MS
+MS-1-data. Analysing MS-n for *n=2* data is possible too, please look at the
+recipe discussed at :ref:`cookbook`:
+
+You can start the *centWave* feature detector by typing
 
 .. pycon::
    tables = batches.runCentwave("*.mzXML", destination=".", configid="tour")!noexec
@@ -127,11 +129,11 @@ You can start the *Centwave* feature detector by typing
    for i, t in enumerate(tables): t.store("feat%d.table" % i) !noexec
    tables = [ ms.loadTable("feat%d.table" % i) for i in range(3) ]
 
-The feature detector needs a few minutes depending on the power of your computer, we omitted the
-verbose output from *XCMS* [xcms]_ .
-We predefined a combination of parameters with the identifier ``tour`` in order
-to simplify the tour. In general various parameters can be provided
-individually. For getting (a lot of) details use the *Python* help system
+The feature detector needs a few minutes depending on the power of your
+computer, we omitted the verbose output from *XCMS* [xcms]_ .  We predefined a
+combination of parameters with the identifier ``tour`` in order to simplify the
+instructions. In general various parameters can be provided individually. For
+getting (a lot of) details use the *Python* help system
 
 .. pycon::
    help(batches.runCentwave) !noexec
@@ -143,9 +145,8 @@ you see them in the *variable explorer*.
 .. image:: tableListVarBrowser.png
    :scale: 50 %
 
-Please open
-the table list by double clicking the variable ``tables`` in the *variable
-explorer*.
+Please open the table list by double clicking the variable ``tables`` in the
+*variable explorer*.
 
 
 .. image:: table_explorer.png
@@ -169,10 +170,8 @@ B. If you click with the right mouse button to the left of a row
 Integrating Peaks
 -----------------
 
-
-To reduce the runtime in the
-following demonstration we will extract peaks with an signal to
-noise ratio above ``5e4``:
+To reduce the runtime in the following demonstration we will extract peaks with
+an signal to noise ratio above ``5e4``:
 
 .. pycon::
    tab1, tab2, tab3 = tables
@@ -243,7 +242,8 @@ Open now the table ``after``, sort again and choose the same row as above.
 .. image:: rtalignment.png
    :scale: 60 %
 
-The plot shows the overlay of two *EIC* peaks of the same compound in two different samples before (A) and after (B) retention time alignment.
+The plot shows the overlay of two *EIC* peaks of the same compound in two
+different samples before (A) and after (B) retention time alignment.
 
 
 .. _table_example:
@@ -275,8 +275,9 @@ contain data of type ``str``.
 
 
 
-If the table is to complex or large for printing, you can open a dialog by clicking to the
-``substances`` entry in the *variable explorer*  or from the command line:
+If the table is to complex or large for printing, you can open a dialog by
+clicking to the ``substances`` entry in the *variable explorer*  or from the
+command line:
 
 
 .. pycon::
@@ -284,11 +285,10 @@ If the table is to complex or large for printing, you can open a dialog by click
     ms.inspect(substances)  !noexec
 
 
-
-Adding a new, computed column is easy. Here we want to generate a new column ``m0``
-which contains the mono-isotopic masses corresponding to the contents of the
-``mf`` column. Converting a molecular formula to the corresponding mono-isotopic
-weight can be done by the function ``mass.of``:
+Adding a new, computed column is easy. Here we want to generate a new column
+``m0`` which contains the mono-isotopic masses corresponding to the contents of
+the ``mf`` column. Converting a molecular formula to the corresponding
+mono-isotopic weight can be done by the function ``mass.of``:
 
 
 
@@ -306,7 +306,6 @@ the column ``substances.mf``:
     substances.print_()
 
 
-
 Now we want to add some extra information to ``substances``, this
 information is stored in ``information.csv``:
 
@@ -320,7 +319,7 @@ As you can see ``ms.loadCSV`` recognized that the column ``info.onEarth`` only
 contains integers.
 
 
-To combine both tables we use an SQL-like ``LEFTJOIN`` to match rows with the
+To combine both tables we use an SQL-like ``LEFT JOIN`` to match rows with the
 same molecular formula:
 
 
@@ -337,8 +336,9 @@ To restrict to substances which are known to exist on earth we can do:
     common.print_()
 
 
-The ``tab`` module contains some databases, e.g. the substances from PubChem  [pubchem]_
-categorized as *metabolomic compounds*. These databases are hold in tables:
+The ``tab`` module contains some databases, e.g. the substances from PubChem
+[pubchem]_ categorized as *metabolomic compounds*. These databases are hold in
+tables:
 
 .. pycon::
 
@@ -348,9 +348,9 @@ categorized as *metabolomic compounds*. These databases are hold in tables:
 
 
 
-Before matching our data against the large PubChem table, we build an index on
-this table in order to speed up the following ``leftJoin`` call.  Building an
-index is done by sorting the corresponding column:
+Before matching our data against the large *PubChem* table, we build an index
+on this table in order to speed up the following ``leftJoin`` call.  Building
+an index is done by sorting the corresponding column:
 
 
 .. pycon::
@@ -362,12 +362,14 @@ index is done by sorting the corresponding column:
     ms.inspect(matched)  !noexec
 
 
-Another way to identify compounds is to use the Metlin web page which provides a form for running queries against the database. This access is automated:
+Another way to identify compounds is to use the *Metlin* web page which
+provides a form for running queries against the database. This access is
+automated:
 
 
 .. pycon::
 
-    common.addColumn("polarity", "-") # metlin need this
+    common.addColumn("polarity", "-") # metlin needs this
     matched2 = ms.matchMetlin(common, "m0", ppm=15)
     matched2.print_()
     ms.inspect(matched2) !noexec
@@ -379,9 +381,8 @@ Accessing Chemical Data
 -----------------------
 
 
-The ``mass`` module provides the masses of an electron, a
-proton or a neutron and all all important elements
-
+The ``mass`` module provides the masses of an electron, a proton or a neutron
+and all all important elements
 
 
 
@@ -391,12 +392,8 @@ proton or a neutron and all all important elements
     print mass.C, mass.C12, mass.C13
 
 
-
 Further it helps to calculate masses of molecules from their sum
 formula
-
-
-
 
 .. pycon::
 
@@ -405,19 +402,13 @@ formula
 
 One can consider isotopes too:
 
-
 .. pycon::
 
     print mass.of("[13]C")
     print mass.of("[13]C6H2O6")
     print mass.of("[13]C3[12]C3H2O6")
 
-
-
-The ``elements`` module provides information
-of important elements
-
-
+The ``elements`` module provides information of important elements
 
 
 .. pycon::
@@ -426,26 +417,21 @@ of important elements
     print elements.C13
 
 
-``abundance`` is a module which provides the natural abundances of
-common elements
-
+``abundance`` is a module which provides the natural abundances of common
+elements
 
 .. pycon::
 
     print abundance.C
 
-
 .. _isotope_example:
 
-Analyzing isotope patterns
---------------------------
+Generating isotope patterns
+---------------------------
 
-As the ``Table`` objects provide powerful matchings, all we need to
-analyze isotope patterns occurring in feature tables is a way to generate
-tables containing these data. ``ms.isotopeDistributionTable``
-does this
-
-
+As the ``Table`` objects provide powerful matchings, all we need to analyze
+isotope patterns occurring in feature tables is a way to generate tables
+containing these data. ``ms.isotopeDistributionTable`` does this
 
 
 .. pycon::
@@ -453,12 +439,7 @@ does this
     tab = ms.isotopeDistributionTable("C4S4", minp=0.01)
     tab.print_()
 
-
-
-Non natural distributions as in marker experiments can be
-simulated too
-
-
+Non natural distributions as in marker experiments can be simulated too
 
 
 .. pycon::
@@ -467,24 +448,14 @@ simulated too
     iso.replaceColumn("abundance", iso.abundance / iso.abundance.sum() * 100.0)
     iso.print_()
 
-
-
 The method can simulate the resolution of the used mass analyzer
-
-
-
 
 .. pycon::
 
     tab = ms.isotopeDistributionTable("C4S4", R=10000, minp=0.01)
     tab.print_()
 
-
-
 Matching isotope patterns now works like this
-
-
-
 
 .. pycon::
 
@@ -492,15 +463,11 @@ Matching isotope patterns now works like this
     iso.addEnumeration()
     iso.print_()
 
-
-
 .. pycon::
 
     common.dropColumns("mf__0", "onEarth__0")
     matched = iso.leftJoin(common, iso.mass.approxEqual(common.m0, 1*MMU))
     matched.print_()
-
-
 
 .. _statistics_example:
 
@@ -508,13 +475,9 @@ Statistical Analysis
 --------------------
 
 
-The framework provides two methods for comparing two datasets by analysis of variance: classical *one way ANOVA* and
-non parametric *Kruskal Wallis* analysis.
-These methods work on tables like
-this
-
-
-
+The framework provides two methods for comparing two datasets by analysis of
+variance: classical *one way ANOVA* and non parametric *Kruskal Wallis*
+analysis.  These methods work on tables like this
 
 .. pycon::
 
@@ -530,25 +493,18 @@ this
     t.print_()
 
 
-
-``ms.oneWayAnova`` returns the corresponding ``F`` and ``p`` value, ``ms.kruskalWallis`` the ``H`` and ``p`` value
-
-
-
+``ms.oneWayAnova`` returns the corresponding ``F`` and ``p`` value,
+``ms.kruskalWallis`` the ``H`` and ``p`` value
 
 .. pycon::
 
     F, p = ms.oneWayAnova(t.group, t.measurement)
     print p
 
-
-
 .. pycon::
 
     H, p = ms.kruskalWallis(t.group, t.measurement)
     print p
-
-
 
 .. _dialogbuilder_example:
 
@@ -557,10 +513,10 @@ Building graphical interfaces
 
 Beyond the ``Table``-Explorer ``ms.inspect`` and the ``PeakMap``-Explorer
 ``ms.inspectPeakMap`` assisted work-flows request certain parameters and
-decisions at certain processing steps. To support this mzExplore has an builder
-for graphical input forms.
+decisions at certain processing steps. To support this *eMZed* has an builder
+for input forms.
 
-The following dialogue is created by the simple commands below:
+The following dialog is created by the simple commands below:
 
 .. image:: dialogbuilder.png
 
