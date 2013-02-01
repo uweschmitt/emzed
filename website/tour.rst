@@ -9,9 +9,12 @@ modules. We suppose that you followed the instructions at
 :ref:`installation` to get *eMZed* installed and that you did the first
 steps as described in :ref:`getting_started`.
 
-Before you try out the examples below change the working directory
-to the folder ``emzed_files/example_scripts`` which you find in your personal
-home directory.
+
+As *Python* is a programming language with a very clear syntax, even a novice
+Python programmer will very likely be able to grasp the examples below.
+However, Python is very easy to learn.  You find a comprehensive list of Python
+tutorials at http://wiki.python.org/moin/BeginnersGuide
+
 
 
 .. pycon::
@@ -30,6 +33,11 @@ as
 
 .. pycon::
     print mass.C13
+
+
+Before you try out the examples below change the working directory
+to the folder ``emzed_files/example_scripts`` which you find in your personal
+home directory.
 
 
 .. _peakmaps_example:
@@ -532,13 +540,5 @@ The following dialog is created by the simple commands below:
     (10, 1.02, 'C:/Dokumente und Einstellungen/e001.mzML') !asoutput
 
 
-More about Python
------------------
-
-To write your own scripts basic knowledge in Python is mandatory. However,
-Python is very easy to learn.
-
-You find a comprehensive list of Python tutorials at
-http://wiki.python.org/moin/BeginnersGuide
 
 

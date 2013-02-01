@@ -1,19 +1,22 @@
 .. _getting_started:
 
-==========================
-Getting started with eMZed
-==========================
+====================================
+Getting started with eMZed workbench
+====================================
+
+Before you start
+----------------
 
 *eMZed* helps you to develop work flows by two means:
 
-  * a development environment which we name *workbench* and
+  * a supportive development environment which we name *workbench* and
 
   * a collection of *eMZed modules* for typical
     tasks which provide building blocks for an LCMS analysis work flows.
 
-The following instructions help you to get started with the workbench,
+The following instructions help you to get started with the *workbench*,
 :ref:`getting_started_with_emzed_modules` gives a first impression of
-the functionalities provided by *eMZed* modules.
+the functionalities provided by *eMZed modules*.
 
 We recommend to exercise the tutorial below before following
 :ref:`getting_started_with_emzed_modules`.
