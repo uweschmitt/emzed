@@ -189,12 +189,20 @@ class PeakMap(object):
         """
         returns lists level one spectra in peakmap
         """
+        print "\nWARNING: this method is depreciated, please use "\
+              "PeakMap.msNPeaks instead\n"
+        return self.levelNSpecsInRange(1, rtmin, rtmax)
+
+    def levelNSpecsInRange(self, n, rtmin, rtmax):
+        """
+        returns lists level one spectra in peakmap
+        """
         # rt values can be truncated/rounded from gui or other sources,
         # so wie dither the limits a bit, spaces in realistic rt values
         # are much higher thae 1e-2 seconds
         return [spec for spec in self.spectra if rtmin-1e-2 <= spec.rt \
                                                             <= rtmax+1e-2
-                                             and spec.msLevel == 1]
+                                             and spec.msLevel == n]
 
     def chromatogram(self, mzmin, mzmax, rtmin=None, rtmax=None):
         """
@@ -213,7 +221,7 @@ class PeakMap(object):
 
         levels = self.getMsLevels()
         if 1 in levels:
-            specs = self.levelOneSpecsInRange(rtmin, rtmax)
+            specs = self.levelNSpecsInRange(1, rtmin, rtmax)
         else:
             assert len(levels) == 1
             level = levels[0]
@@ -228,11 +236,16 @@ class PeakMap(object):
         return sorted(set(spec.msLevel for spec in self.spectra))
 
     def ms1Peaks(self, rtmin=None, rtmax=None):
+        print "\nWARNING: this method is depreciated, please use "\
+              "PeakMap.msNPeaks instead\n"
+        return self.msNPeaks(1, rtmin, rtmax)
+
+    def msNPeaks(self, n, rtmin=None, rtmax=None):
         if rtmin is None:
             rtmin = self.spectra[0].rt
         if rtmax is None:
             rtmax = self.spectra[-1].rt
-        specs = self.levelOneSpecsInRange(rtmin, rtmax)
+        specs = self.levelNSpecsInRange(n, rtmin, rtmax)
         # following vstack does not like empty sequence, so:
         if len(specs):
             peaks = np.vstack([s.peaks for s in specs])
@@ -298,7 +311,9 @@ class PeakMap(object):
                 key = round(spectrum.precursors[0][0],
                             significant_digits_precursor)
                 ms2_spectra[key].append(spectrum)
-        return ms2_spectra
+
+        return [(key, PeakMap(values, meta=self.meta.copy())) \
+                        for (key, values) in ms2_spectra.items()]
 
 
 
