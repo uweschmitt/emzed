@@ -1,3 +1,5 @@
+#encoding: utf-8
+
 
 import installConstants as _installConstants
 import numpy as _np

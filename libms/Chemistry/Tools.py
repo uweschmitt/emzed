@@ -27,21 +27,21 @@ def formulaTable(min_mass, max_mass, C=(0, None),
                                      prune=True):
 
     """
-    This is a reduced Python version of HR2 formula genarator,
+    This is a reduced Python version of HR2 formula generator,
     see http://fiehnlab.ucdavis.edu/projects/Seven_Golden_Rules/Software/
 
-    This function generates a table containing molecular formulas consising of
+    This function generates a table containing molecular formulas consisting of
     elements C, H, N, O, P and S having a mass in range
     [**min_mass**, **max_mass**].
     For each element one can provide an given count or an inclusive range of
-    atom counts consiederd in this process.
+    atom counts considered in this process.
 
     If **prune** is *True*, mass ratio rules and valence bond checks are used
     to avoid unrealistic compounds in the table, else all formulas explaining
     the given mass range are generated.
 
     Putting some restrictions on atomcounts, eg **C=(0, 100)**, can speed up
-    the process tremdously.
+    the process tremendously.
 
     """
     import mass

@@ -1,3 +1,5 @@
+#encoding: utf-8
+
 from load_utils import *
 from store_utils import *
 from custom_dialogs import *

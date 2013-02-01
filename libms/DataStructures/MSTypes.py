@@ -7,9 +7,44 @@ from   collections import defaultdict
 
 class Spectrum(object):
 
-    def __init__(self, peaks, rt, msLevel, polarity, precursors=[]):
+    """
+        MS Spectrum Type
+    """
+
+    def __init__(self, peaks, rt, msLevel, polarity, precursors=None):
+        """
+           peaks:      n x 2 matrix
+                       first column: m/z values
+                       second column: intensities
+
+           rt:         float
+                       retention time in seconds
+
+           msLevel:    int
+                       MSn level.
+
+           polarity:   string of length 1
+                       values: 0, + or -
+
+           precursors: list of floats
+                       precursor m/z values if msLevel > 1
+
+           """
         assert type(peaks) == np.ndarray, type(peaks)
+        assert peaks.ndim == 2, "peaks has wrong dimension"
+        assert peaks.shape[1] == 2, "peaks needs 2 columns"
+
         assert polarity in "0+-", "polarity must be +, - or 0"
+
+        assert msLevel >= 1, "invalid msLevel"
+
+        if precursors is None:
+            precursors = []
+
+        # level=1 -> no precursors
+        if msLevel == 1:
+            assert not precursors, "level 1 spec has no precursors"
+
         self.rt = rt
         self.msLevel = msLevel
         self.precursors = precursors
@@ -21,6 +56,7 @@ class Spectrum(object):
 
     @classmethod
     def fromMSSpectrum(clz, mspec):
+        """creates Spectrum from pyOpenMS.MSSpectrum"""
         assert type(mspec) == pyOpenMS.MSSpectrum, type(mspec)
         pcs = [ (p.getMZ(), p.getIntensity()) for p in mspec.getPrecursors()]
         pol = { pyOpenMS.Polarity.POLNULL: '0',
@@ -32,15 +68,23 @@ class Spectrum(object):
         return res
 
     def __len__(self):
+        """number of peaks in spectrum"""
         return self.peaks.shape[0]
+
 
     def __iter__(self):
         return iter(self.peaks)
 
     def intensityInRange(self, mzmin, mzmax):
+        """summed up intensities in given m/z range"""
         return self.peaksInRange(mzmin, mzmax)[:,1].sum()
 
     def peaksInRange(self, mzmin=None, mzmax=None):
+        """peaks in given m/z range as n x 2 matrix
+
+           first column:   m/z values
+           second column:  intenisities
+        """
         mzs = None
         if mzmin is not None or mzmax is not None:
             mzs = self.peaks[:,0]
@@ -58,25 +102,30 @@ class Spectrum(object):
         return self.peaks[imin:imax]
 
     def mzRange(self):
-        """ returns pair min(mz), max(mz) for mz values in current spec.
-            may return None, None if spec is emtpy !
+        """returns pair min(mz), max(mz) for mz values in current spec.
+           may return None, None if spec is empty !
         """
         return self.mzMin(), self.mzMax()
 
     def mzMin(self):
+        """minimal m/z value in spectrum"""
+
         if len(self.peaks):
             return float(self.peaks[:,0].min())
         return None
 
     def mzMax(self):
+        """maximal m/z value in spectrum"""
         if len(self.peaks):
             return float(self.peaks[:,0].max())
         return None
 
     def maxIntensity(self):
+        """maximal intensity in spectrum"""
         return float(self.peak[:,1].max())
 
     def toMSSpectrum(self):
+        """converts to pyOpenMS.MSSpectrum"""
         spec = pyOpenMS.MSSpectrum()
         spec.setRT(self.rt)
         spec.setMSLevel(self.msLevel)
@@ -97,18 +146,29 @@ class Spectrum(object):
         return spec
 
 class PeakMap(object):
-
-    """ This is the container object for spectra of type :ref:Spectrum.
+    """
+        This is the container object for spectra of type :ref:Spectrum.
         Peakmaps can be loaded from .mzML, .mxXML or .mzData files,
         using :py:func:`~ms.loadPeakMap`
+
+        A PeakMap is a list of :ref:Spectrum objects attached with
+        meta data about its source.
     """
 
 
     def __init__(self, spectra, meta=dict()):
-        self.spectra = sorted(spectra, key = lambda spec : spec.rt)
+        """
+            spectra : iterable (list, tuple, ...)  of objects of type
+            :py:class:`~.Spectrum`
 
-        """ attribute spectra is a list of objects of type
-            :py:class:`~.Spectrum` """
+            meta    : dictionary of meta values
+        """
+        try:
+            self.spectra = sorted(spectra, key = lambda spec : spec.rt)
+        except:
+            raise Exception("spectra param is not iterable")
+
+
         self.meta = meta
         polarities = set(spec.polarity for spec in spectra)
         if len(polarities) > 1:
@@ -125,8 +185,7 @@ class PeakMap(object):
             self.polarity = None
 
     def extract(self, rtmin=None, rtmax=None, mzmin=None, mzmax=None):
-        """
-        returns restricted Peakmap with given limits.
+        """ returns restricted Peakmap with given limits.
         Parameters with *None* value are not considered.
 
         Examples::
@@ -152,6 +211,9 @@ class PeakMap(object):
         return PeakMap(spectra, self.meta.copy())
 
     def representingMzPeak(self, mzmin, mzmax, rtmin, rtmax):
+        """returns a weighted mean m/z value in given range.
+           high intensities contribute with weight ln(I+1) to final m/z value
+        """
         mzsum = wsum = 0
         for s in self.spectra:
             if rtmin <= s.rt <= rtmax:
@@ -175,7 +237,7 @@ class PeakMap(object):
 
     def filter(self, condition):
         """ builds new peakmap where ``condition(s)`` is ``True`` for
-            spectra ``s`
+            spectra ``s``
         """
         return PeakMap([s for s in self.spectra if condition(s)], self.meta)
 
@@ -206,10 +268,10 @@ class PeakMap(object):
 
     def chromatogram(self, mzmin, mzmax, rtmin=None, rtmax=None):
         """
-        extracts chromatorgram in given rt- and mz-window.
+        extracts chromatogram in given rt- and mz-window.
         returns a tuple ``(rts, intensities)`` where ``rts`` is a list of
-        rt values (in seconds, as allways)  and ``intensities`` is a
-        list of same lenght containing the summed up peaks for each
+        rt values (in seconds, as always)  and ``intensities`` is a
+        list of same length containing the summed up peaks for each
         rt value.
         """
         if not self.spectra:
@@ -233,6 +295,8 @@ class PeakMap(object):
         return rts, intensities
 
     def getMsLevels(self):
+        """returns list of ms levels in current peak map"""
+
         return sorted(set(spec.msLevel for spec in self.spectra))
 
     def ms1Peaks(self, rtmin=None, rtmax=None):
@@ -241,6 +305,7 @@ class PeakMap(object):
         return self.msNPeaks(1, rtmin, rtmax)
 
     def msNPeaks(self, n, rtmin=None, rtmax=None):
+        """return ms level n peaks in given range"""
         if rtmin is None:
             rtmin = self.spectra[0].rt
         if rtmax is None:
@@ -254,23 +319,28 @@ class PeakMap(object):
         return np.zeros((0,2), dtype=float)
 
     def allRts(self):
+        """returns all rt values in peakmap"""
         return [spec.rt for spec in self.spectra]
 
     def levelOneRts(self):
+        """returns rt values of all level one spectra in peakmap"""
         return [spec.rt for spec in self.spectra if spec.msLevel == 1]
 
     def levelNSpecs(self, minN, maxN=None):
+        """returns list of spectra in given msLevel range"""
+
         if maxN is None:
             maxN = minN
         return [spec for spec in self.spectra if minN <= spec.msLevel <= maxN]
 
     def shiftRt(self, delta):
+        """shifts all rt values by delta"""
         for spec in self.spectra:
             spec.rt += delta
         return self
 
     def mzRange(self):
-        """ returns mz-range *(mzmin, mzmax)* of current peakmap """
+        """returns mz-range *(mzmin, mzmax)* of current peakmap """
 
         mzranges = [s.mzRange() for s in self.spectra]
         mzmin = min(mzmin for (mzmin, mzmax) in mzranges if mzmin is not None)
@@ -285,6 +355,7 @@ class PeakMap(object):
 
     @classmethod
     def fromMSExperiment(clz, mse):
+        """creates Spectrum from pyOpenMS.MSExperiment"""
         assert type(mse) ==pyOpenMS.MSExperiment
         specs = [ Spectrum.fromMSSpectrum(mse[i]) for i in range(mse.size()) ]
         meta = dict()
@@ -293,9 +364,11 @@ class PeakMap(object):
         return clz(specs, meta)
 
     def __len__(self):
+        """returns number of all spectra (all ms levels) in peakmap"""
         return len(self.spectra)
 
     def toMSExperiment(self):
+        """converts peakmap to pyOpenMS.MSExperiment"""
         exp = pyOpenMS.MSExperiment()
         for spec in self.spectra:
             exp.push_back(spec.toMSSpectrum())
@@ -303,10 +376,14 @@ class PeakMap(object):
         exp.setLoadedFilePath(pyOpenMS.String(self.meta.get("source","")))
         return exp
 
-    def splitLevelN(self, n, significant_digits_precursor=2):
+    def splitLevelN(self, msLevel, significant_digits_precursor=2):
+        """splits peakmapt to dictionary of lists of spectra.
+           key of dictionary is precursor m/z rounded to
+           significant_digits_precursor
+        """
         ms2_spectra = defaultdict(list)
         for spectrum in self.spectra:
-            if spectrum.msLevel==n:
+            if spectrum.msLevel==msLevel:
                 spectrum = copy.copy(spectrum)
                 key = round(spectrum.precursors[0][0],
                             significant_digits_precursor)
@@ -314,6 +391,3 @@ class PeakMap(object):
 
         return [(key, PeakMap(values, meta=self.meta.copy())) \
                         for (key, values) in ms2_spectra.items()]
-
-
-

@@ -30,7 +30,7 @@ def installXcmsIfNeeded():
     if not exchangeFolderAvailable:
 # all installled libs will get to local folder
         print "no xcms install as exchange folder is not available"
-        return 
+        return
 
     RExecutor().run_command(install_xmcs_if_needed_statements())
 
@@ -39,7 +39,7 @@ def lookForXcmsUpgrades():
 
     if not exchangeFolderAvailable:
         print "no xcms upgrade check as exchange folder is not available"
-        return 
+        return
 
     script = """
                  source("http://bioconductor.org/biocLite.R")
@@ -57,8 +57,8 @@ def doXcmsUpgrade():
 
     if not exchangeFolderAvailable:
         print "no xcms upgrade as exchange folder is not available"
-        return 
-	
+        return
+
     r_libs = getRLibsFolder().replace("\\", "\\\\")
 
     script = """
@@ -132,7 +132,6 @@ class CentwaveFeatureDetector(object):
             dd["fitgauss"] = str(dd["fitgauss"]).upper()
             dd["verbose_columns"] = str(dd["verbose_columns"]).upper()
 
-        
 
             script = install_xmcs_if_needed_statements() + """
                         library(xcms)

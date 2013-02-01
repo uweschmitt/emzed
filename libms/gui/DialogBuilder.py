@@ -1,7 +1,5 @@
 #encoding: latin-1
 import guidata
-
-
 import guidata.dataset.datatypes as dt
 import guidata.dataset.dataitems as di
 
@@ -215,3 +213,41 @@ class DialogBuilder(object):
         if len(result) == 1:
             result = result[0]
         return result
+
+
+for _itemName, _item in di.__dict__.items():
+    if _itemName.endswith("Item"):
+        exec ("%s = di.%s" % (_itemName, _itemName))
+
+def RunJobButton(label, method_name=None):
+    item = di.ButtonItem(label, None)
+    item._run_method = method_name
+    return item
+
+
+# patch ok / cancel: never check if needed fields are present ?!
+
+from guidata.dataset.qtwidgets import DataSetEditDialog
+DataSetEditDialog.check = lambda self: True
+
+
+class WorkflowFrontend(dt.DataSet):
+
+    def __init__(self):
+        for item in self._items:
+            if hasattr(item, "_run_method"):
+                name = item._run_method or "run_" + item._name
+                target = getattr(self, name)
+                def inner(ds, it, value, parent, target=target):
+                    invalidFields = ds.check()
+                    if len(invalidFields):
+                        msg = "The following fields are invalid: \n"
+                        msg += "\n".join(invalidFields)
+                        QMessageBox.warning(parent, "Error", msg)
+                        return
+                    target()
+                setattr(self, "_emzed_run_"+name, inner)
+                item.set_prop("display", callback=inner)
+        dt.DataSet.__init__(self)
+
+    show = dt.DataSet.edit

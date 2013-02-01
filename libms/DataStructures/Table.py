@@ -81,7 +81,7 @@ def bestConvert(val):
                 return str(val)
 
 def _formatter(f):
-    """ helper, is toplevel for supporting pickling of Table """
+    """ helper, is top level for supporting pickling of Table """
 
     if f is None:
         def noneformat(s):
@@ -199,7 +199,7 @@ class Table(object):
         """ adds a new row to the table, checks if values in row are of
             expected type or can be converted to this type.
 
-            Raises an ``AssertException`` if the len of ``row`` does not
+            Raises an ``AssertException`` if the length of ``row`` does not
             match to the numbers of columns of the table.
             """
 
@@ -278,7 +278,7 @@ class Table(object):
 
     def hasColumns(self, *names):
         """ checks if columns with given names exist.
-        
+
             Example: ``tab.hasColumn("rt", "rtmin", "rtmax")``
         """
         return all(self.hasColumn(n) for n in names)
@@ -296,7 +296,7 @@ class Table(object):
             """
         idx = self.colIndizes.get(colName, None)
         if idx is None:
-            raise Exception("colname %r not in table" % colName)
+            raise Exception("column with name %r not in table" % colName)
         return idx
 
     def set(self, row, colName, value):
@@ -316,7 +316,7 @@ class Table(object):
             Example: ``table.get(table.rows[0], "mz")``
 
             if ``colName`` is not provided, one gets the content of
-            the ``row`` as a dict mapping column names to values.
+            the ``row`` as a dictionary mapping column names to values.
 
             Example::
 
@@ -326,7 +326,7 @@ class Table(object):
             **Note**: you can use this for other lists according
             to column data as
 
-            ``table.get(table.colTypes)`` gives you a dict for
+            ``table.get(table.colTypes)`` gives you a dictionary for
             which maps column names to the corresponding column types.
 
             Example::
@@ -349,7 +349,7 @@ class Table(object):
                          self.getColumn(n).type_)) for n in names)
 
     def addEnumeration(self, colName="id"):
-        """ adds enumerated column as first column to table **inplace**.
+        """ adds enumerated column as first column to table **in place**.
 
             if ``colName`` is not given the default name is *"id"*
 
@@ -380,7 +380,7 @@ class Table(object):
 
     def sortBy(self, colName, ascending=True):
         """
-        sorts table in respect of column named *colName* **inplace**.
+        sorts table in respect of column named *colName* **in place**.
         *ascending* is boolean and tells if the values are sorted
         in ascending order or descending.
 
@@ -431,12 +431,12 @@ class Table(object):
                      self.meta.copy(), circumventNameCheck=True)
 
     def renameColumns(self, **kw):
-        """renames columns **inplace**.
+        """renames columns **in place**.
 
            So if you want to rename "mz_1" to "mz" and "rt_1"
            to "rt", ``table.renameColumns(mz_1=mz, rt_1=rt)``
 
-           For memoization read the ``=`` as ``->``.
+           For memorization read the ``=`` as ``->``.
         """
 
         newNames = set(kw.values())
@@ -448,7 +448,7 @@ class Table(object):
 
         for k in kw.keys():
             if k not in self.colNames:
-                raise Exception("colum %r does not exist" % k)
+                raise Exception("column %r does not exist" % k)
 
         for name in self.colNames:
             delattr(self, name)
@@ -468,7 +468,7 @@ class Table(object):
            As .csv is a text format all binary information is lost !
         """
         if not os.path.splitext(path)[1].upper()==".CSV":
-            raise Exception("%s has wrong filentype extension" % path)
+            raise Exception("%s has wrong file type extension" % path)
         it = itertools
         for p in it.chain([path], ( "%s.%d" % (path, i) for i in it.count(1))):
             if os.path.exists(p):
@@ -521,11 +521,11 @@ class Table(object):
 
     def dropColumns(self, *names):
         """ removes columns with given ``names`` from the table.
-            Works **inplace**
+            Works **in place**
 
             Example: ``tab.dropColumns("mz", "rt", "rmse")``
         """
-        # check all names before maninuplating the table,
+        # check all names before manipulating the table,
         # so this operation is atomic
         for name in names:
             self.requireColumn(name)
@@ -607,7 +607,7 @@ class Table(object):
 
     def append(self, *tables):
         """
-        appends ``tables`` to the existing table **inplace**. Can be called as ::
+        appends ``tables`` to the existing table **in place**. Can be called as ::
 
               t1.append(t2, t3)
               t1.append([t2, t3])
@@ -627,18 +627,18 @@ class Table(object):
 
         names = set((tuple(t.colNames)) for t in alltables)
         if len(names)>1:
-            raise Exception("the columNames do not match")
+            raise Exception("the column names do not match")
 
         types = set((tuple(t.colTypes)) for t in alltables)
         if len(types)>1:
-            raise Exception("the columTypes do not match")
+            raise Exception("the column types do not match")
         for t in alltables:
             self.rows.extend(t.rows)
         self.resetInternals()
 
     def replaceColumn(self, name, what, type_=None, format=""):
         """
-        replaces column ``name`` **inplace**.
+        replaces column ``name`` **in place**.
 
           - ``name`` is name of the new column
           - ``*type_`` is one of the valid types described above.
@@ -659,7 +659,7 @@ class Table(object):
         """
 
         self.requireColumn(name)
-        # we do: 
+        # we do:
         #      add tempcol, then delete oldcol, then rename tempcol -> oldcol
         # this is easier to implement, has no code duplication, but maybe a
         # bit slower. but that does not matter at this point of time:
@@ -683,7 +683,7 @@ class Table(object):
 
     def addColumn(self, name, what, type_=None, format="", insertBefore=None):
         """
-        adds a column **inplace**.
+        adds a column **in place**.
 
         For the meaning of the  parameters
         see :py:meth:`~.replaceColumn`
@@ -730,10 +730,10 @@ class Table(object):
         return self._addColumn(name, values, type_, format, insertBefore)
 
     def _addColumn(self, name, values, type_, format, insertBefore):
-        # works for lists, nubmers, objects: convers inner numpy dtypes
+        # works for lists, numbers, objects: converts inner numpy dtypes
         # to python types if present, else does nothing !!!!
 
-        assert len(values) == len(self), "lenght of new column %d does not "\
+        assert len(values) == len(self), "length of new column %d does not "\
                                          "fit number of rows %d in table"\
                                          % (len(values), len(self))
 
@@ -758,7 +758,7 @@ class Table(object):
 
         # now insertBefore is an int, or something we can not handle
         if isinstance(insertBefore, int):
-            if insertBefore < 0: # incexing from back
+            if insertBefore < 0: # indexing from back
                 insertBefore += len(self.colNames)
             self.colNames.insert(insertBefore, name)
             self.colTypes.insert(insertBefore, type_)
@@ -826,7 +826,7 @@ class Table(object):
     def aggregate(self, expr, newName, groupBy=None):
 
         """
-        adds new aggregated column to table **inplace**.
+        adds new aggregated column to table **in place**.
 
         ``expr`` calculates the aggregation.
 
@@ -943,7 +943,7 @@ class Table(object):
                          )) for n in names)
             value, _, type_ = expr._eval({self: ctx})
             # works for numbers and objects to, but not if values is
-            # iteraable:
+            # iterable:
             assert len(value)==1, "you did not use an aggregating "\
                                    "expression, or you aggregate over "\
                                    "a column which has lists or numpy "\
@@ -994,7 +994,7 @@ class Table(object):
 
         For a table with column names ``["rt", "rtmin", "rtmax", "rt1", "rtmin1"]``
 
-        ``supportedPostfixes(["rt"])`` returns ``["", "1"]``,
+        ``supportedPostfixes(["rt"])`` returns ``["", "min", "max", "1", "min1"]``,
 
         ``supportedPostfixes(["rt", "rtmin"])`` returns ``["", "1"]``,
 
@@ -1090,10 +1090,10 @@ class Table(object):
     def leftJoin(self, t, expr=True, debug=False, progress=False):
         """performs an *left join* also known as *outer join* of two tables.
 
-           It works similar to :py:meth:`~.join` 
+           It works similar to :py:meth:`~.join`
            but keeps non-matching rows of
-           the first table. So if we take the example from 
-           :py:meth:`~.join` 
+           the first table. So if we take the example from
+           :py:meth:`~.join`
 
            Then the result of ``t1.leftJoin(t2, (t1.mz >= t2.mz -20) & (t1.mz <= t2.mz + 20)``
            is
@@ -1114,7 +1114,7 @@ class Table(object):
         try:
             t._getColumnCtx
         except:
-            raise Exception("first arg is of wrong type")
+            raise Exception("first argument is of wrong type")
 
         if not isinstance(expr, BaseExpression):
             expr = Value(expr)
@@ -1165,7 +1165,7 @@ class Table(object):
 
     def findPostfixes(self):
         postfixes = set( getPostfix(c) for c in self.colNames )
-        postfixes.discard(None) # internal cols starting witn __
+        postfixes.discard(None) # internal cols starting with __
         return postfixes
 
     def incrementedPostfixes(self, by):
@@ -1173,7 +1173,7 @@ class Table(object):
         for c in self.colNames:
             pf = getPostfix(c)
             if pf is not None:
-                val = -1 if pf =="" else int(pf[2:]) 
+                val = -1 if pf =="" else int(pf[2:])
                 prefix = c if pf == "" else c.split("__")[0]
                 newName = prefix+"__"+str(by+val)
                 #print "val=%s prefix=%s newName=%s" % (val, prefix, newName)
@@ -1197,8 +1197,8 @@ class Table(object):
         """
         Prints the table to the console. ``w`` is the width of the columns,
         If you want to print to a file or stream instead, you can use the ``out``
-        parameter, et ``t.print_(out=sys.stderr)``.
-        If you support a ``title`` string this will be printed above the 
+        parameter, e.g. ``t.print_(out=sys.stderr)``.
+        If you support a ``title`` string this will be printed above the
         content of the table.
         """
         if out is None:
@@ -1296,7 +1296,7 @@ def toOpenMSFeatureMap(table):
     elif "area" in table.colNames:
         areas = table.area.values
     else:
-        print "features not integrated. I assume const intensity"
+        print "features not integrated. I assume constant intensity"
         areas = [None] * len(table)
 
 

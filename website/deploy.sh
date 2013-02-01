@@ -1,4 +1,18 @@
 #!/bin/sh
 
+platform=$(python -c "import sys; print sys.platform")
+
 cd _build/html
-cp -v -R . //mickey.ethz.ch/mz$
+
+if [ $platform = 'linux2' ]; then
+    if [ -d /mnt/mickey  ]; then
+        # on linux
+        cp -v -R . /mnt/mickey
+    else
+        echo "/mnt/mickey does not exit";
+        echo;
+    fi;
+else
+    echo "not implmented, need  test for mounted drive on cygwin"
+    #cp -v -R . //mickey.ethz.ch/mz$
+fi;

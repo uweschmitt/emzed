@@ -1,3 +1,5 @@
+#encoding:utf-8
+
 from libms.RConnect import CentwaveFeatureDetector as _Centwave
 from libms.RConnect import MatchedFilterFeatureDetector as _MatchedFilters
 

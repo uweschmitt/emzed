@@ -4,7 +4,30 @@
    contain the root `toctree` directive.
 
 Welcome to eMZed
-================
+----------------
+
+Website Navigation
+~~~~~~~~~~~~~~~~~~
+
+.. toctree::
+   :maxdepth: 1
+
+   installation
+   getting_started
+   tour
+   explorers
+   cookbook
+   faq
+   license
+   contact
+
+   references
+
+   api_ms
+   api_mstypes
+   api_batches
+   api_tables_expressions
+   api_other
 
 
 About
@@ -16,8 +39,8 @@ About
 
 *eMZed* is an open source framework for analyzing and processing LCMS
 data. The framework was developed by D-BIOL (Patrick Kiefer, lab of
-Julia Vorholt, Institute of Microbiology ) and Uwe Schmitt (mineway
-GmbH) with several ideas in mind:
+Julia Vorholt, Institute of Microbiology, ETH Zurich) and Uwe Schmitt (mineway
+GmbH, Germany) with several ideas in mind:
 
 .. image:: emzed_screen.png
    :align: right
@@ -25,7 +48,7 @@ GmbH) with several ideas in mind:
 * Current frameworks and software are located on one of the following extremes: 
 
  * Fast and flexible frameworks, but in languages as C++ which only
-   can be used by experienced programmers. Further playing with new
+   can be used efficiently by experienced programmers. Further playing with new
    ideas for analyzing data is hard due to the programming
    effort and slow edit-compile cycles.  
 
@@ -37,11 +60,11 @@ to learn framework which is flexible and allows inspection and analysis
 of data either interactive or by easy to write Python scripts. This is
 one of the reasons why we choose Python.
 
-* The invention of workspace providing software as Matlab and R really
+* The invention of workspace providing software as Matlab and R
   leveraged the productivity of mathematicians and other scientists. We
   try to introduce this concept for analyzing LCMS data.
 
-  *eMZed* is heavily based on Spyder [spyderlib]_ for providing
+  *eMZed* is based on Spyder [spyderlib]_ for providing
   the workspace and [guiqwt]_ and [guidata]_ for plotting.
 
 * Instead of reinventing the wheel we cherry picked algorithms from
@@ -49,34 +72,14 @@ one of the reasons why we choose Python.
   algorithms from Open-MS [openms]_ and XCMS [xcms]_.
 
 * In order to avoid imports and exports to other software, we try to
-  integrate all needed functionality in one framework
+  integrate all needed functionality in one framework.
 
 
 The current version of *eMZed* was developed and tested on 32 bit Windows OS.
-We paritally testet on 64 bit Ubuntu 12.04, a 64 bit version for Windows OS
+We partially tested on 64 bit Ubuntu 12.04, a 64 bit version for Windows OS
 is in progress.
 
 
-Contents
-~~~~~~~~
-
-.. toctree::
-   :maxdepth: 1
-
-   installation
-   contact
-   license
-   tour
-   explorers
-   cookbook
-
-   references
-
-   api_ms
-   api_mstypes
-   api_batches
-   api_tables_expressions
-   api_other
 
 Credits
 ~~~~~~~
@@ -91,7 +94,7 @@ great work:
 
 Personal thanks go to:
 
-     *  Department of Biology, ETH Zürich
+     *  Department of Biology, ETH Zurich
 
      *  `Julia A Vorholt <http://www.micro.biol.ethz.ch/research/vorholt/jvorholt>`_
 
@@ -113,7 +116,3 @@ Indexes and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
-
-
- 

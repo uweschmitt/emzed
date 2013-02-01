@@ -77,7 +77,7 @@ def oneWayAnovaOnTables(tableSet1, tableSet2, idColumn, valueColumn):
     """
     Compares two sets of tables. Each set is a list of tables, with
     common columns ``idColumn`` and ``valueColumn``. The first one
-    is a factor which used to build groups, the latter is the dependend
+    is a factor which used to build groups, the latter is the dependent
     numerical value.
 
     Eg you have to lists with tables, where each table has factor column
