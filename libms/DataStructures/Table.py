@@ -259,8 +259,33 @@ class Table(object):
         """
         return len(self.rows)
 
+    def __getitem__(self, ix):
+        """
+        supports creating a new table from a subset of current rows
+        using brackets notation.
+
+        Example::
+
+                t = ms.toTable("a", [1, 2, 3])
+                t[0].a.values == [1]
+                t[:1].a.values == [1]
+                t[1:].a.values == [2, 3]
+                t[:].a.values == [1, 2, 3]
+
+                t[:] == t.copy()
+
+
+        """
+        if not isinstance(ix, slice):
+            ix = slice(ix, ix+1)
+        prototype = self.buildEmptyClone()
+        for row in self.rows[ix]:
+            prototype.rows.append(row[:])
+        prototype.resetInternals()
+        return prototype
+
     def __getstate__(self):
-        """ for pickling. """
+        """ **for internal use**: filters some attributes for pickling. """
         dd = self.__dict__.copy()
         # self.colFormatters can not be pickled
         del dd["colFormatters"]
@@ -269,6 +294,7 @@ class Table(object):
         return dd
 
     def __setstate__(self, dd):
+        """ **for internal use**: builds table from pickled data."""
         self.__dict__ = dd
         self.resetInternals()
 
@@ -410,11 +436,8 @@ class Table(object):
 
     def copy(self):
         """ returns a 'semi-deep' copy of the table """
-        prototype = self.buildEmptyClone()
-        for row in self.rows:
-            prototype.rows.append(row[:])
-        prototype.resetInternals()
-        return prototype
+        # thanks god that we implemented __getitem__:
+        return self[:]
 
     def extractColumns(self, *names):
         """extracts the given column names ``names`` and returns a new

@@ -1,13 +1,13 @@
 API Tables and Expressions
 ==========================
 
-
 Tables
 ------
 
 
 .. autoclass:: libms.DataStructures.Table.Table
    :members:
+   :special-members:
 
 Expressions
 -----------

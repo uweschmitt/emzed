@@ -491,5 +491,13 @@ def testConstantColumn():
     t.addConstantColumn("b", dict())
     assert len(set(id(x) for x in t.b.values)) == 1
 
+def testSlicing():
+    t = ms.toTable("a", [1, 2, 3])
+    assert t[0].a.values == [1]
+    assert t[:1].a.values == [1]
+    assert t[1:].a.values == [2, 3]
+    assert t[:].a.values == [1, 2, 3]
+
+
 
 
