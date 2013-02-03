@@ -1,8 +1,10 @@
 *.pyc
-.idea
-.swp
+*.idea
+*.swp
+*.swo
+*.bak
 sandbox
-.ropeproject
+*.ropeproject
 spyder_crash.log
 docs/
 logs
