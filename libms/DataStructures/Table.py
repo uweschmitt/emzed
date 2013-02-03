@@ -430,29 +430,61 @@ class Table(object):
         return Table(names, types, formats, rows, self.title,
                      self.meta.copy(), circumventNameCheck=True)
 
-    def renameColumns(self, **kw):
+    def renameColumns(self, *dicts, **keyword_args):
         """renames columns **in place**.
 
            So if you want to rename "mz_1" to "mz" and "rt_1"
            to "rt", ``table.renameColumns(mz_1=mz, rt_1=rt)``
 
            For memorization read the ``=`` as ``->``.
+
+           Sometimes it is helpful to build dictionaries which describe the
+           renaming. In this case you can pass an arbitrary number of
+           dictionaries, and even additional keywword arguments (if you want)
+           to this method.
+
+           Example::
+
+               table.renameColumns(dict(a="b", c="d"))
+               table.renameColumns(dict(a="b"), dict(c="d"))
+               table.renameColumns(dict(a="b"), c="d"))
+
         """
 
-        newNames = set(kw.values())
-        if len(newNames)<len(kw):
-            raise Exception("you try to rename two columns to the same name")
-        for name in newNames:
-            if name in self.colNames:
-                raise Exception("column %s already exists" % name)
+        assert all(isinstance(d, dict) for d in dicts), "expect dicts"
 
-        for k in kw.keys():
-            if k not in self.colNames:
-                raise Exception("column %r does not exist" % k)
+        def check_old_names(d, old_names):
+            for old_name in d.keys():
+                if old_name in old_names:
+                    raise Exception("name overlap in column names to rename")
+                if old_name not in self.colNames:
+                    raise Exception("column %r does not exist" % old_name)
+                old_names.add(old_name)
+            return old_names
+
+        old_names = check_old_names(keyword_args, set())
+        for d in dicts:
+            old_names = check_old_names(d, old_names)
+
+        def check_new_names(d, new_names):
+            for new_name in d.values():
+                if new_name in new_names:
+                    raise Exception("name overlap in new column names")
+                if new_name in self.colNames:
+                    raise Exception("column %s already exists" % new_name)
+                new_names.add(new_name)
+            return new_names
+
+        new_names = check_new_names(keyword_args, set())
+        for d in dicts:
+            new_names = check_new_names(d, new_names)
+
+        for d in dicts:
+            keyword_args.update(d)
 
         for name in self.colNames:
             delattr(self, name)
-        self.colNames = [ kw.get(n,n) for n in self.colNames]
+        self.colNames = [ keyword_args.get(n,n) for n in self.colNames]
         self.resetInternals()
 
     def __len__(self):

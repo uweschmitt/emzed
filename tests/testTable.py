@@ -425,7 +425,7 @@ def testDynamicColumnAttributes():
     assert len(t.b.values) == 0
     assert len(t.c.values) == 0
 
-    t.renameColumns(a="aa")
+    t.renameColumns(dict(a="aa"))
     assert "a" not in t.colNames
     assert "aa"  in t.colNames
     t.aa
@@ -446,6 +446,24 @@ def testDynamicColumnAttributes():
     except:
         pass
 
+def testRename():
+    t = ms.toTable("a", [1,1,3,4])
+    t.addColumn("b", [1,1,3,3])
+    t.addColumn("c", [1,2,1,4])
+    with ExceptionTester():
+        t.renameColumns(dict(d="e"))
+
+    with ExceptionTester():
+        t.renameColumns(a="b")
+
+    with ExceptionTester():
+        t.renameColumns(a="x", b="x")
+
+    with ExceptionTester():
+        t.renameColumns(dict(a="f"), a="d")
+
+    t.renameColumns(dict(a="x"), dict(c="z"), b="y")
+    assert tuple(t.colNames) == ("x", "y", "z")
 
 def testSplitBy():
     t = ms.toTable("a", [1,1,3,4])

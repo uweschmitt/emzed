@@ -1,5 +1,6 @@
 *.pyc
 .idea
+.swp
 sandbox
 .ropeproject
 spyder_crash.log
