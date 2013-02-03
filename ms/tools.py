@@ -7,21 +7,138 @@ def toTable(colName, iterable,  fmt="", type_=None, title="", meta=None):
 
 toTable.__doc__ = Table.toTable.__doc__
 
-def mergeTables(tables):
+
+def _topo_sort_with_in_order(orderings):
+
+    for ordering in orderings:
+        assert isinstance(ordering, (list, tuple, str))
+
+    # give nodes some rank according to first appearance
+    # in orderings:
+    rank = dict()
+    for i, n in enumerate(orderings):
+        for ni in n:
+            if ni not in rank: # first occurance ?
+                rank[ni]=i
+
+    # build graph. each node has follower list, sinks have
+    # empty follower list
+    nodes = set(ni for n in orderings for ni in n)
+    graph = dict()
+    for node in nodes:
+        graph[node] = set()
+
+    for ordering in orderings:
+        for n0, n1 in zip(ordering[:-1], ordering[1:]):
+            graph[n0].add(n1)
+
+    # topological sort is easy: remove sinks until graph is empty
+    topo_ordering = []
+
+    sinks_to_process = set(n for n in graph if not graph[n])
+    while sinks_to_process:
+        # here comes special modification: remove sink which appears
+        # last in input args of this function:
+        current_sink = max(sinks_to_process, key = lambda n: rank[n])
+
+        # remove current sink from todo list
+        sinks_to_process.remove(current_sink)
+        # update topo_ordering
+        topo_ordering.insert(0, current_sink)
+
+        # remove current sink from graph
+        del graph[current_sink]
+        for followers in graph.values():
+            if current_sink in followers:
+                followers.remove(current_sink)
+
+        # as we removed sink, maybe new sinks appeared, so
+        # update sinks_to_process:
+        for n in graph:
+            if not graph[n]:
+                sinks_to_process.add(n)
+
+    if len(topo_ordering) != len(nodes):
+        return None # failed
+    return topo_ordering
+
+
+def _build_starttable(tables, force_merge):
+    colname_orders = []
+    for table in tables:
+        colname_orders.append(table.colNames)
+
+    colum_names = _topo_sort_with_in_order(colname_orders)
+    if colum_names is None:
+        raise Exception("could not combine all column names to a "\
+                "consistent order. you have to provide a reference table")
+
+    types = dict()
+    for table in tables:
+        for name in table.colNames:
+            type_ = table.getType(name)
+            if types.get(name, type_) != type_:
+                if not force_merge:
+                    raise Exception("type conflictfor column %s" % name)
+            types[name] = type_
+
+    formats = dict()
+    for table in tables:
+        for name in table.colNames:
+            format_ = table.getFormat(name)
+            if formats.get(name, format_) != format_:
+                if not force_merge:
+                    raise Exception("format conflict for column %s" % name)
+            formats[name] = format_
+
+    final_types = [types.get(n) for n in colum_names]
+    final_formats = [formats.get(n) for n in colum_names]
+
+    prototype = Table(colum_names, final_types, final_formats,
+                                                      circumventNameCheck=True)
+    return prototype, colum_names
+
+def mergeTables(tables, reference_table=None, force_merge=False):
     """ merges tables. Eg:
 
         .. pycon::
-           t1 = ms.toTable("a",[1,2])
+           t1 = ms.toTable("a",[1])
            t2 = t1.copy()
-           t1.addColumn("b", [3,4])
-           t2.addColumn("b", [5,5])
+           t1.addColumn("b", 3)
+           t2.addColumn("c", 5)
+
+           t1.print_()
+           t2.print_()
            t3 = ms.mergeTables([t1, t2])
            t3.print_()
 
+        in case of conflicting names, name orders, types or formats
+        you can try ``force_merge=True`` or provide a reference
+        table. This reference table just serves information about
+        wanted column names, types and formats and  is merged to the result
+        only if it appers in  ``tables``.
+
     """
-    t0 = tables[0].buildEmptyClone()
-    t0.append(tables)
-    return t0
+    if reference_table is not None:
+        final_colnames = reference_table.colNames
+        start_with = reference_table.buildEmptyClone()
+    else:
+        start_with, final_colnames  = _build_starttable(tables, force_merge)
+
+    extended_tables = []
+    for table in tables:
+        missing_names = [c for c in final_colnames if c not in table.colNames]
+        for name in missing_names:
+            type_ = start_with.getType(name)
+            format_ = start_with.getFormat(name)
+            table.addColumn(name, None, type_, format_)
+        table = table.extractColumns(*final_colnames)
+        extended_tables.append(table)
+
+    result = extended_tables[0]
+    result.append(extended_tables[1:])
+    return result
+
 
 def openInBrowser(urlPath):
     """

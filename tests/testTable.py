@@ -499,5 +499,21 @@ def testSlicing():
     assert t[:].a.values == [1, 2, 3]
 
 
+def testMerge():
+    t1 = ms.toTable("a", [1])
+    t1.addColumn("b", [2])
+    t1.addColumn("c", [3])
+
+    t2 = ms.toTable("a", [1,2])
+    t2.addColumn("c", [1,3])
+    t2.addColumn("d", [1,4])
+
+    tn = ms.mergeTables([t1, t2])
+
+    assert tn.a.values == [1, 1, 2]
+    assert tn.b.values == [2, None, None]
+    assert tn.c.values == [3, 1, 3]
+    assert tn.d.values == [None, 1, 4]
+
 
 
