@@ -8,66 +8,133 @@ Created on Fri Nov 30 11:00:49 2012
 
 import ms
 
-def _fragmentOverlay(compound_table, pstfx="__0"):
+
+def process_srm_data(peakmap):
+
+    tables = split_srm_peakmap_to_tables(peakmap, _debug=True)
+    # Each table in tables now contains chromatograms for each precursor
+
+    # We flatten each of these tables to one row tables, so that
+    # the table explorer overlays these chromatograms if you select
+    # a specific row.
+    flattened_tables = [flatten(t) for t in tables]
+
+    # Concatenate all theses one row table to one big result table:
+    merged =  ms.mergeTables(flattened_tables)
+
+    # For later visual inspection with the table explorer a title is helpful.
+    # Here we use the name of the peakmap file:
+    merged.title = "SRM/MRM analysis of %s" % peakmap.meta["source"]
+    return merged
+
+
+def split_srm_peakmap_to_tables(peakmap, n_digits=2, _debug=False):
+    """ Processes a srm/mrm peakmap.
+    The result is a list of tables with chromatographic peaks of MS2 data. The
+    peaks are integrated over the full time range of the individual MS2
+    peakmaps.
+
+    n_digits is the precision of the precursor m/z values.
+
+    Detecting the peaks does not use a peak detector as centWave, but uses
+    known rt and mz ranges to fit a chromatogram to the underlying raw peaks.
+    This avoids cumbersome parameter optimization of a peak detector and
+    returns all peaks irrespective of filtering according to some heuristic
+    criterion for peak quality.
     """
-    """
-
-    assert len(compound_table), "can not handle empty table"
-
-    ions = compound_table.splitBy("fragment_ion")
-    assert all(len(ion) == 1 for ion in ions)
-
-    #rename columns for nicer naming scheme:
-    mapping = dict((name, name+pstfx) for name in ions[0].colNames)
-    ions[0].renameColumns(mapping)
-
-    ions = compound_table.splitBy("fragment_ion")
-    assert all(len(ion) == 1 for ion in ions)
-
-    # we build a flat one row table from a list of one row tables by
-    # horizontally appending the columns:
-    result = ions[0]
-    for ion in ions[1:]:
-        result = result.leftJoin(ion)
-    return result
-
-def split_srm_peakmap_to_tables(peakmap):
 
     result = []
+    ms2_maps = peakmap.splitLevelN(2, n_digits)
+    if _debug:
+        ms2_maps = ms2_maps[:3]
 
-    ms2_maps = peakmap.splitLevelN(2, 2) # level 2, 2 digits precursor presc
-    for pre_mz, ms2_map in ms2_maps[:3]:
+    # resolution according to n_digits:
+    delta_mz = 0.5 * (0.1)**n_digits
 
+    for pre_mz, ms2_map in ms2_maps:
+
+        # get unique m/z values in level 2 map in ascending order:
         ions = sorted(set(mz for mz, I in ms2_map.msNPeaks(2)))
 
+        # build a  table with 'number of ions' rows
         table = ms.toTable("precursor", [pre_mz] * len(ions))
         table.addColumn("fragment_ion", ions)
 
+        # Set rt range for later integration. We do no specific peak detection
+        # here but use the full time range:
         rtmin, rtmax = ms2_map.rtRange()
         table.addColumn("rtmin", rtmin)
         table.addColumn("rtmax", rtmax)
-
-        table.addColumn("mzmin", table.fragment_ion - 0.05)
-        table.addColumn("mzmax", table.fragment_ion + 0.05)
-
+        table.addColumn("mzmin", table.fragment_ion - delta_mz)
+        table.addColumn("mzmax", table.fragment_ion + delta_mz)
         table.addColumn("peakmap", ms2_map)
 
+        # Now rtmin/rtmax, mzmin/mzmax and peakmap columns are created. These
+        # are mandatory for fitting and integrating peaks with ms.integrate:
         table = ms.integrate(table, "emg_exact")
-        table.title = "%.2f" % pre_mz
-
-        flattened = _fragmentOverlay(table)
-        result.append(flattened)
+        result.append(table)
 
     return result
+
+
+def flatten(table):
+    """
+    Merges all rows of a table vertically, so a table with n rows
+    and m columns is converted to a table with one row and m*n columns.
+
+    The origin of the columns are indicated by postfixes "__i", where
+    i starts with zero and is the index of underlying row.
+
+    So if we have a input table like
+
+        a     b
+        ----- -----
+        0     1
+        2     3
+
+    the flattened table is
+
+        a__0  b__0  a__1  b__1
+        ----- ----  ----- -----
+        0     1     2     3
+    """
+
+    # We rename columns for wanted naming scheme, without this modification,
+    # the example result above would have column names [ "a", "b", "a__0",
+    # "b__0"]
+    # This is caused by the way leftJoin creates column names for the result.
+
+    if len(table) == 0:
+        add_postfix_to_column_names(table, "__0")
+        return table
+
+    # tables support indexing for building subtables:
+    # (using slices, as table[1:-1] or table[::2] works too !)
+    result = table[0]
+    add_postfix_to_column_names(result, "__0")
+
+    # here we build the result:
+    for i in range(1, len(table)):
+        result = result.leftJoin(table[i])
+    return result
+
+
+def add_postfix_to_column_names(table, postfix):
+    mapping = dict((name, name + postfix) for name in table.colNames)
+    table.renameColumns(mapping)
+
 
 if __name__ == "__main__":
 
     import sys
-    fname, = sys.argv[1:]
-    peakmap=ms.loadPeakMap(fname)
-    result= split_srm_peakmap_to_tables(peakmap)
-    result = ms.mergeTables(result)
+    if len(sys.argv) == 2:
+        fname = sys.argv[1]
+    elif len(sys.argv) == 1:
+        fnams = ms.askForSingleFile()
+    else:
+        raise Exception("can only handle zero or one paths on command line")
+
+    peakmap = ms.loadPeakMap(fname)
+
+    result = process_srm_data(peakmap)
     ms.inspect(result)
-
-
-
