@@ -13,8 +13,8 @@ from TableExplorerModel import *
 
 
 def getColors(i, light=False):
-     colors = [(0, 0, 150), (50, 50, 50), (0,100,0),
-                (100, 0, 0), (70, 70, 0), (100, 100, 0)]
+     colors = [(0, 0, 200), (70, 70, 70), (0,150,0),
+                (200, 0, 0), (200, 200, 0), (100, 70, 0)]
      c = colors[i % len(colors)]
      if light:
          c = tuple([min(i+50,  255) for i in c])
@@ -24,7 +24,7 @@ def getColors(i, light=False):
 
 def configsForEics(eics):
     n = len(eics)
-    return [dict(linewidth=1.0, color=getColors(i)) for i in range(n)]
+    return [dict(linewidth=1.5, color=getColors(i)) for i in range(n)]
 
 def configsForSmootheds(smootheds):
     n = len(smootheds)

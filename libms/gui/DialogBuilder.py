@@ -234,6 +234,8 @@ DataSetEditDialog.check = lambda self: True
 class WorkflowFrontend(dt.DataSet):
 
     def __init__(self):
+        import guidata
+        self.app = guidata.qapplication()
         for item in self._items:
             if hasattr(item, "_run_method"):
                 name = item._run_method or "run_" + item._name

@@ -1,6 +1,3 @@
-import guidata
-# not required if a you work inside emzed workbench:
-_app = guidata.qapplication()
 
 import libms.gui.DialogBuilder as gui
 
@@ -20,7 +17,7 @@ class TestFrontend(gui.WorkflowFrontend):
         print "self.name=", self.name
         print "self.parameter=", self.parameter
         print
-        
+
 
     def uwe(self):
         self.name = "uwe"
