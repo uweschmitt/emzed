@@ -9,9 +9,9 @@ Created on Fri Nov 30 11:00:49 2012
 import ms
 
 
-def process_srm_data(peakmap):
+def process_srm_data(peakmap, n_digits):
 
-    tables = split_srm_peakmap_to_tables(peakmap, _debug=True)
+    tables = split_srm_peakmap_to_tables(peakmap, n_digits)
     # Each table in tables now contains chromatograms for each precursor
 
     # We flatten each of these tables to one row tables, so that
@@ -28,7 +28,7 @@ def process_srm_data(peakmap):
     return merged
 
 
-def split_srm_peakmap_to_tables(peakmap, n_digits=2, _debug=False):
+def split_srm_peakmap_to_tables(peakmap, n_digits=2):
     """ Processes a srm/mrm peakmap.
     The result is a list of tables with chromatographic peaks of MS2 data. The
     peaks are integrated over the full time range of the individual MS2
@@ -45,8 +45,6 @@ def split_srm_peakmap_to_tables(peakmap, n_digits=2, _debug=False):
 
     result = []
     ms2_maps = peakmap.splitLevelN(2, n_digits)
-    if _debug:
-        ms2_maps = ms2_maps[:3]
 
     # resolution according to n_digits:
     delta_mz = 0.5 * (0.1)**n_digits
@@ -85,7 +83,7 @@ def flatten(table):
     The origin of the columns are indicated by postfixes "__i", where
     i starts with zero and is the index of underlying row.
 
-    So if we have a input table like
+    So if we have a input table
 
         a     b
         ----- -----
@@ -126,15 +124,20 @@ def add_postfix_to_column_names(table, postfix):
 
 if __name__ == "__main__":
 
-    import sys
-    if len(sys.argv) == 2:
-        fname = sys.argv[1]
-    elif len(sys.argv) == 1:
-        fnams = ms.askForSingleFile()
-    else:
-        raise Exception("can only handle zero or one paths on command line")
+    import libms.gui.DialogBuilder as gui
 
-    peakmap = ms.loadPeakMap(fname)
+    class SRMExplorer(gui.WorkflowFrontend):
+        n_digits = gui.IntItem("no of significant digits\nof precursor m/z",
+                                default=2)
+        path = gui.FileOpenItem("data file to process",
+                                ("mzXML", "mzML", "mzData"))
 
-    result = process_srm_data(peakmap)
-    ms.inspect(result)
+
+    frontend = SRMExplorer()
+    exit_code = frontend.show()
+    if exit_code:
+        print "LOAD DATA"
+        peakmap = ms.loadPeakMap(frontend.path)
+        print "PROCESS DATA"
+        result = process_srm_data(peakmap, frontend.n_digits)
+        ms.inspect(result)
