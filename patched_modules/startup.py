@@ -156,6 +156,7 @@ on Windows platforms (only IPython v0.10 is fully supported).
                 ip.ex("del %s" % name)
             except:
                 pass
+    __ipythonshell__.magic('config PromptManager.in_template = "EMZED_DEVELOP\\nIn [\\#]:"')
     __ipythonshell__.mainloop()
 
     # end of fourth modification ##############################################
