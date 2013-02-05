@@ -126,36 +126,39 @@ on Windows platforms (only IPython v0.10 is fully supported).
         __ipythonshell__ = IPython.Shell.start(user_ns=user_ns)
         __ipythonshell__.IP.stdin_encoding = os.environ['SPYDER_ENCODING']
         __ipythonshell__.IP.autoindent = 0
-    
+
     # Workaround #2 to make the HDF5 I/O variable explorer plugin work:
-    # we import h5py only after initializing IPython in order to avoid 
-    # a premature import of IPython *and* to enable the h5py/IPython 
-    # completer (which wouldn't be enabled if we used the same approach 
+    # we import h5py only after initializing IPython in order to avoid
+    # a premature import of IPython *and* to enable the h5py/IPython
+    # completer (which wouldn't be enabled if we used the same approach
     # as workaround #1)
     # (see sitecustomize.py for the Workaround #1)
     try:
         import h5py  #analysis:ignore
     except ImportError:
         pass
-    
+
     # fourth modification eMZed # #
     ############################################
     ###########################################################################
     ip = None
-    try:    
+    try:
         ip = IPython.ipapi.get()
     except:
         try:
             ip = IPython.core.interactiveshell.InteractiveShell.instance()
         except:
             pass
-            
+
     if ip:
+        ip.ex('%config PromptManager.in_template = "EMZED_DEVELOP\nIn [\\#]: "%config')
+        print "HI"
         for name in ["e", "pi", "path"]:
             try:
                 ip.ex("del %s" % name)
             except:
                 pass
+    __ipythonshell__.magic('config PromptManager.in_template = "EMZED_DEVELOP\\nIn [\\#]:"')
     __ipythonshell__.mainloop()
 
     # end of fourth modification ##############################################
