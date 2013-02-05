@@ -151,8 +151,6 @@ on Windows platforms (only IPython v0.10 is fully supported).
             pass
 
     if ip:
-        ip.ex('%config PromptManager.in_template = "EMZED_DEVELOP\nIn [\\#]: "%config')
-        print "HI"
         for name in ["e", "pi", "path"]:
             try:
                 ip.ex("del %s" % name)
