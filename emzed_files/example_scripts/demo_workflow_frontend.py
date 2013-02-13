@@ -2,6 +2,11 @@
 import libms.gui.DialogBuilder as gui
 
 class TestFrontend(gui.WorkflowFrontend):
+    """TestFrontEnd
+    The first line of this docstring appeas as windows title,
+    the following text (the text you read right now) appears
+    as instrutions at the top of the dialog.
+    """
 
     parameter = gui.FloatItem("parameter")
     name = gui.StringItem("name", notempty=True)
