@@ -3,19 +3,22 @@ import copy, os, itertools, re, numpy, cPickle, sys, inspect
 from   Expressions import BaseExpression, ColumnExpression, Value, _basic_num_types, common_type_for
 import numpy as np
 from   collections import Counter, OrderedDict, defaultdict
+import warnings
 
 
 __doc__ = """
 
 """
 
+def deprecation(message):
+    warnings.warn(message, DeprecationWarning, stacklevel=2)
 
 standardFormats = { int: "%d", long: "%d", float : "%.2f", str: "%s" }
 fms = "'%.2fm' % (o/60.0)"  # format seconds to floating point minutes
 
 def guessFormatFor(name, type_):
     if type_ in (float, int):
-        if name.startswith("mz"):
+        if name.startswith("m"):
             return  "%.5f"
         if name.startswith("rt"):
             return fms
@@ -142,9 +145,9 @@ class Table(object):
         if not all(isinstance(row, list) for row in rows):
             raise Exception("not all rows are lists !")
 
-        self.colNames = list(colNames)
+        self._colNames = list(colNames)
 
-        self.colTypes = list(colTypes)
+        self._colTypes = list(colTypes)
 
         is_numpy_type = lambda t: np.number in t.__mro__
 
@@ -152,7 +155,7 @@ class Table(object):
             raise Exception("using numpy floats instead of python floats "\
                   "is not a good idea.\nTable operations may crash")
 
-        self.colFormats = [None if f=="" else f for f in colFormats]
+        self._colFormats = [None if f=="" else f for f in colFormats]
 
         self.rows = rows
         self.title = title
@@ -173,6 +176,42 @@ class Table(object):
 
         self.resetInternals()
 
+    @property
+    def colNames(self):
+        deprecation("please use getColNames() in future versions instead "\
+                "of accessing .colNames")
+        return self._colNames[:]
+
+    def getColNames(self):
+        """ returns a copied list of column names, one can operator on this
+            list without corrupting the underlying table
+        """
+        return self._colNames[:]
+
+    @property
+    def colTypes(self):
+        deprecation("please use getColTypes() in future versions instead "\
+                "of accessing .colTypes")
+        return self._colTypes[:]
+
+    def getColTypes(self):
+        """ returns a copied list of column names, one can operator on this
+            list without corrupting the underlying table
+        """
+        return self._colTypes[:]
+
+    @property
+    def colFormats(self):
+        deprecation("please use getColFormats() in future versions instead "\
+                "of accessing .colFormats")
+        return self._colFormats[:]
+
+    def getColFormats(self):
+        """ returns a copied list of column formats, one can operator on this
+            list without corrupting the underlying table.
+        """
+        return self._colFormats[:]
+
     def info(self):
         """
         prints some table information and some table statistics
@@ -185,8 +224,8 @@ class Table(object):
         pprint.pprint(self.meta)
         print "   rows=", len(self)
         print
-        for i, p in enumerate(zip(self.colNames, self.colTypes,\
-                              self.colFormats)):
+        for i, p in enumerate(zip(self._colNames, self._colTypes,\
+                              self._colFormats)):
             vals = getattr(self, p[0]).values
             nones = sum( 1 for v in vals if v is None )
             numvals = len(set(id(v) for v in vals))
@@ -204,9 +243,9 @@ class Table(object):
             match to the numbers of columns of the table.
             """
 
-        assert len(row) == len(self.colNames)
+        assert len(row) == len(self._colNames)
         # check for conversion !
-        for i, (v, t) in enumerate(zip(row, self.colTypes)):
+        for i, (v, t) in enumerate(zip(row, self._colTypes)):
             if v is not None and t in [int, float, long, str]:
                     row[i] = t(v)
             else:
@@ -220,24 +259,24 @@ class Table(object):
         return colName in self.editableColumns
 
     def _updateIndices(self):
-        self.colIndizes = dict((n, i) for i, n in enumerate(self.colNames))
+        self.colIndizes = dict((n, i) for i, n in enumerate(self._colNames))
 
     def getVisibleCols(self):
         """ returns a list with the names of the columns which are
             visible. that is: the corresponding format is not None """
-        return [n for (n, f) in zip (self.colNames, self.colFormats)\
+        return [n for (n, f) in zip (self._colNames, self._colFormats)\
                               if f is not None ]
 
     def getFormat(self, colName):
         """ returns for format for the given column ``colName`` """
-        return self.colFormats[self.getIndex(colName)]
+        return self._colFormats[self.getIndex(colName)]
 
     def getType(self, colName):
         """ returns for format for the given column ``colName`` """
-        return self.colTypes[self.getIndex(colName)]
+        return self._colTypes[self.getIndex(colName)]
 
     def _setupFormatters(self):
-        self.colFormatters = [_formatter(f) for f in self.colFormats ]
+        self.colFormatters = [_formatter(f) for f in self._colFormats ]
 
     def getColumn(self, name):
         """ returns ColumnExpression object for column ``name``.
@@ -249,9 +288,9 @@ class Table(object):
         return getattr(self, name)
 
     def _setupColumnAttributes(self):
-        for name in self.colNames:
+        for name in self._colNames:
             ix = self.getIndex(name)
-            col = ColumnExpression(self, name, ix, self.colTypes[ix])
+            col = ColumnExpression(self, name, ix, self._colTypes[ix])
             setattr(self, name, col)
 
     def numRows(self):
@@ -290,18 +329,30 @@ class Table(object):
         dd = self.__dict__.copy()
         # self.colFormatters can not be pickled
         del dd["colFormatters"]
-        for name in self.colNames:
+        for name in self._colNames:
             del dd[name]
         return dd
 
     def __setstate__(self, dd):
         """ **for internal use**: builds table from pickled data."""
+        # attribute conversion for loading tables of older emzed versions
+        # which hat attributes colNames, colFormats and colTypes, which are
+        # now properties to access _colNames, _colFormats and _colTypes.
+        old_attribs = ["colNames", "colTypes", "colFormats"]
+        if any(a in dd for a in old_attribs):
+            if all(a in dd for a in old_attribs):
+                for a in old_attribs:
+                    dd["_" + a] = dd[a]
+                    del dd[a]
+            else:
+                raise Exception("can not unpickle table, internal mismatch")
+
         self.__dict__ = dd
         self.resetInternals()
 
     def hasColumn(self, name):
         """ checks if column with given name ``name`` exists """
-        return name in self.colNames
+        return name in self._colNames
 
     def hasColumns(self, *names):
         """ checks if columns with given names exist.
@@ -312,7 +363,7 @@ class Table(object):
 
     def requireColumn(self, name):
         """ throws exception if column with name ``name`` does not exist"""
-        if not name in self.colNames:
+        if not name in self._colNames:
             raise Exception("column %r required" % name)
         return self
 
@@ -366,7 +417,7 @@ class Table(object):
 
         """
         if colName is None:
-            return Bunch( (n, self.get(row, n)) for n in self.colNames )
+            return Bunch( (n, self.get(row, n)) for n in self._colNames )
         return row[self.getIndex(colName)]
 
     def _getColumnCtx(self, needed):
@@ -383,10 +434,10 @@ class Table(object):
             Enumeration starts with zero.
         """
 
-        if colName in self.colNames:
+        if colName in self._colNames:
             raise Exception("column with name %r already exists" % colName)
-        self.colNames.insert(0, colName)
-        self.colTypes.insert(0, int)
+        self._colNames.insert(0, colName)
+        self._colTypes.insert(0, int)
         if len(self)>99999:
             fmt = "%6d"
         elif len(self) > 9999:
@@ -400,7 +451,7 @@ class Table(object):
         else:
             fmt = "%d"
         fmt = "%d"
-        self.colFormats.insert(0, fmt)
+        self._colFormats.insert(0, fmt)
         for i, r in enumerate(self.rows):
             r.insert(0, i)
         self.resetInternals()
@@ -448,8 +499,8 @@ class Table(object):
            """
         assert len(set(names)) == len(names), "duplicate column name"
         indices = [self.getIndex(name)  for name in names]
-        types = [ self.colTypes[i] for i in indices ]
-        formats = [self.colFormats[i] for i in indices]
+        types = [ self._colTypes[i] for i in indices ]
+        formats = [self._colFormats[i] for i in indices]
         rows = [[row[i] for i in indices] for row in self.rows]
         return Table(names, types, formats, rows, self.title,
                      self.meta.copy(), circumventNameCheck=True)
@@ -481,7 +532,7 @@ class Table(object):
             for old_name in d.keys():
                 if old_name in old_names:
                     raise Exception("name overlap in column names to rename")
-                if old_name not in self.colNames:
+                if old_name not in self._colNames:
                     raise Exception("column %r does not exist" % old_name)
                 old_names.add(old_name)
             return old_names
@@ -494,7 +545,7 @@ class Table(object):
             for new_name in d.values():
                 if new_name in new_names:
                     raise Exception("name overlap in new column names")
-                if new_name in self.colNames:
+                if new_name in self._colNames:
                     raise Exception("column %s already exists" % new_name)
                 new_names.add(new_name)
             return new_names
@@ -506,9 +557,9 @@ class Table(object):
         for d in dicts:
             keyword_args.update(d)
 
-        for name in self.colNames:
+        for name in self._colNames:
             delattr(self, name)
-        self.colNames = [ keyword_args.get(n,n) for n in self.colNames]
+        self._colNames = [ keyword_args.get(n,n) for n in self._colNames]
         self.resetInternals()
 
     def __len__(self):
@@ -535,7 +586,7 @@ class Table(object):
                     if onlyVisibleColumns:
                         colNames = self.getVisibleCols()
                     else:
-                        colNames = self.colNames
+                        colNames = self._colNames
                     print >> fp, "; ".join(colNames)
                     for row in self.rows:
                         data = [self.get(row, v) for v in colNames]
@@ -572,7 +623,7 @@ class Table(object):
     def buildEmptyClone(self):
         """ returns empty table with same names, types, formatters,
             title and meta data """
-        return Table(self.colNames, self.colTypes, self.colFormats, [],
+        return Table(self._colNames, self._colTypes, self._colFormats, [],
                      self.title, self.meta.copy(), circumventNameCheck=True)
 
     def dropColumns(self, *names):
@@ -591,9 +642,9 @@ class Table(object):
         indices = [ self.getIndex(n) for n in names ]
         indices.sort()
         for ix in reversed(indices):
-            del self.colNames[ix]
-            del self.colFormats[ix]
-            del self.colTypes[ix]
+            del self._colNames[ix]
+            del self._colFormats[ix]
+            del self._colTypes[ix]
             for row in self.rows:
                 del row[ix]
         self.resetInternals()
@@ -681,11 +732,11 @@ class Table(object):
             else:
                 raise Exception("can not join object %r" % table)
 
-        names = set((tuple(t.colNames)) for t in alltables)
+        names = set((tuple(t._colNames)) for t in alltables)
         if len(names)>1:
             raise Exception("the column names do not match")
 
-        types = set((tuple(t.colTypes)) for t in alltables)
+        types = set((tuple(t._colTypes)) for t in alltables)
         if len(types)>1:
             raise Exception("the column types do not match")
         for t in alltables:
@@ -757,7 +808,7 @@ class Table(object):
         if type_ is not None:
             assert isinstance(type_, type), "type_ param is not a type"
 
-        if name in self.colNames:
+        if name in self._colNames:
             raise Exception("column with name %r already exists" % name)
 
         if isinstance(what, BaseExpression):
@@ -804,21 +855,21 @@ class Table(object):
 
         if insertBefore is None:
             # list.insert(len(list), ..) is the same as append(..) !
-            insertBefore = len(self.colNames)
+            insertBefore = len(self._colNames)
 
         # colname -> index
         if isinstance(insertBefore, str):
-            if insertBefore not in self.colNames:
+            if insertBefore not in self._colNames:
                 raise Exception("column %r does not exist", insertBefore)
             insertBefore = self.getIndex(insertBefore)
 
         # now insertBefore is an int, or something we can not handle
         if isinstance(insertBefore, int):
             if insertBefore < 0: # indexing from back
-                insertBefore += len(self.colNames)
-            self.colNames.insert(insertBefore, name)
-            self.colTypes.insert(insertBefore, type_)
-            self.colFormats.insert(insertBefore, format)
+                insertBefore += len(self._colNames)
+            self._colNames.insert(insertBefore, name)
+            self._colTypes.insert(insertBefore, type_)
+            self._colFormats.insert(insertBefore, format)
             for row, v in zip(self.rows, values):
                 row.insert(insertBefore, v)
 
@@ -841,7 +892,7 @@ class Table(object):
         if type_ is not None:
             assert isinstance(type_, type), "type_ param is not a type"
 
-        if name in self.colNames:
+        if name in self._colNames:
             raise Exception("column with name '%s' already exists" % name)
 
         return self._addColumn(name, [value]*len(self), type_, format,
@@ -853,8 +904,8 @@ class Table(object):
 
             must be called after manipulation  of
 
-            - self.colNames
-            - self.colFormats
+            - self._colNames
+            - self._colFormats
 
         or
 
@@ -976,9 +1027,9 @@ class Table(object):
 
         if len(self) == 0:
             rv = self.buildEmptyClone()
-            rv.colNames.append(newName)
-            rv.colTypes.append(object)
-            rv.colFormats.append("%r")
+            rv._colNames.append(newName)
+            rv._colTypes.append(object)
+            rv._colFormats.append("%r")
             rv.resetInternals()
             return rv
 
@@ -1059,7 +1110,7 @@ class Table(object):
         """
 
         collected = defaultdict(list)
-        for name in self.colNames:
+        for name in self._colNames:
             for prefix in colNamesToSupport:
                 if name.startswith(prefix):
                     collected[prefix].append(name[len(prefix):])
@@ -1130,7 +1181,7 @@ class Table(object):
         cmdlineProgress = _CmdLineProgress(len(self))
         rows = []
         for ii, r1 in enumerate(self.rows):
-            r1ctx = dict((n, ([v], None, t)) for (n,v, t) in zip(self.colNames, r1, self.colTypes))
+            r1ctx = dict((n, ([v], None, t)) for (n,v, t) in zip(self._colNames, r1, self._colTypes))
             ctx = {self:r1ctx, t:tctx}
             flags,_,_ = expr._eval(ctx)
             if len(flags) == 1:
@@ -1181,12 +1232,12 @@ class Table(object):
             print "# %s.leftJoin(%s, %s)" % (self._name, t._name, expr)
         tctx = t._getColumnCtx(expr._neededColumns())
 
-        filler = [None] * len(t.colNames)
+        filler = [None] * len(t._colNames)
         cmdlineProgress = _CmdLineProgress(len(self))
 
         rows = []
         for ii, r1 in enumerate(self.rows):
-            r1ctx = dict((n, ([v], None, t)) for (n,v, t) in zip(self.colNames, r1, self.colTypes))
+            r1ctx = dict((n, ([v], None, t)) for (n,v, t) in zip(self._colNames, r1, self._colTypes))
             ctx = {self:r1ctx, t:tctx}
             flags,_,_ = expr._eval(ctx)
             if len(flags) == 1:
@@ -1207,9 +1258,9 @@ class Table(object):
     def _postfixValues(self):
         "" # no autodoc ?
 
-        """ finds postfixes 0, 1, .. in  __0, __1, ... in self.colNames
+        """ finds postfixes 0, 1, .. in  __0, __1, ... in self._colNames
             an empty postfix "" is recognized as -1 """
-        postfixes = set( getPostfix(c) for c in self.colNames )
+        postfixes = set( getPostfix(c) for c in self._colNames )
         postfixes.discard(None) # internal cols starting witn __
         return [ -1 if p=="" else int(p[2:]) for p in postfixes ]
 
@@ -1220,13 +1271,13 @@ class Table(object):
         return  min(self._postfixValues())
 
     def findPostfixes(self):
-        postfixes = set( getPostfix(c) for c in self.colNames )
+        postfixes = set( getPostfix(c) for c in self._colNames )
         postfixes.discard(None) # internal cols starting with __
         return postfixes
 
     def incrementedPostfixes(self, by):
         newColNames = []
-        for c in self.colNames:
+        for c in self._colNames:
             pf = getPostfix(c)
             if pf is not None:
                 val = -1 if pf =="" else int(pf[2:])
@@ -1240,10 +1291,10 @@ class Table(object):
 
         incrementBy = self.maxPostfix()-t.minPostfix() + 1
 
-        colNames = self.colNames + list(t.incrementedPostfixes(incrementBy))
+        colNames = self._colNames + list(t.incrementedPostfixes(incrementBy))
 
-        colFormats = self.colFormats + t.colFormats
-        colTypes = self.colTypes + t.colTypes
+        colFormats = self._colFormats + t._colFormats
+        colTypes = self._colTypes + t._colTypes
         title = "%s vs %s" % (self.title, t.title)
         meta = {self: self.meta.copy(), t: t.meta.copy()}
         return Table(colNames, colTypes, colFormats, [], title, meta,
@@ -1260,11 +1311,11 @@ class Table(object):
         if out is None:
             out = sys.stdout
 
-        ix = [ i for i, f in enumerate(self.colFormats) if f is not None ]
+        ix = [ i for i, f in enumerate(self._colFormats) if f is not None ]
 
         colwidths = []
         for i in ix:
-            c = self.colNames[i]
+            c = self._colNames[i]
             f = self.colFormatters[i]
             values = set(map(f, self.getColumn(c).values))
             values.discard(None)
@@ -1291,9 +1342,9 @@ class Table(object):
             print >> out
 
 
-        _p([self.colNames[i] for i in ix])
+        _p([self._colNames[i] for i in ix])
         print >> out
-        ct = [ self.colTypes[i] for i in ix]
+        ct = [ self._colTypes[i] for i in ix]
 
         _p(re.match("<(type|class) '((\w|[.])+)'>|(\w+)", str(n)).groups()[1]  or str(n)
                                                    for n in ct)
@@ -1311,7 +1362,7 @@ class Table(object):
     def renamePostfixes(self, **kw):
         collected = dict()
         for postfix_old, postfix_new in kw.items():
-            for c in self.colNames:
+            for c in self._colNames:
                 if c.endswith(postfix_old):
                     c_new = c[:-len(postfix_old)]+postfix_new
                     collected[c]= c_new
@@ -1347,9 +1398,9 @@ def toOpenMSFeatureMap(table):
     table.requireColumn("mz")
     table.requireColumn("rt")
 
-    if "into" in table.colNames:
+    if "into" in table._colNames:
         areas = table.into.values
-    elif "area" in table.colNames:
+    elif "area" in table._colNames:
         areas = table.area.values
     else:
         print "features not integrated. I assume constant intensity"

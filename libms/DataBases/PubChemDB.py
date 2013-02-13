@@ -1,3 +1,4 @@
+import pdb
 import urllib, urllib2, httplib
 import time, os, sys
 import xml.etree.ElementTree  as etree
@@ -147,8 +148,8 @@ class PubChemDB(object):
             self.table = self._emptyTable()
 
     def _emptyTable(self):
-        return Table(self.colNames, self.colTypes, self.colFormats,[],
-                          "PubChem")
+        return Table(PubChemDB.colNames, PubChemDB.colTypes,
+                     PubChemDB.colFormats, [], "PubChem")
 
     def __len__(self):
         return len(self.table)
@@ -195,7 +196,7 @@ class PubChemDB(object):
         print "FETCH", len(newIds), "ITEMS"
         if newIds:
             for mw, dd in PubChemDB._download(newIds, keggids, hmdbids):
-                row = [ dd.get(n) for n in self.colNames ]
+                row = [ dd.get(n) for n in self._colNames ]
                 self.table.rows.append(row)
         try:
             self.table.dropColumns("url")

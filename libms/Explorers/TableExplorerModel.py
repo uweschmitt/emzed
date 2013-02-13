@@ -107,7 +107,7 @@ class SortTableAction(TableAction):
     def do(self):
         table = self.model.table
         ascending = self.order == Qt.AscendingOrder
-        colName = table.colNames[self.dataColIdx]
+        colName = table._colNames[self.dataColIdx]
         # 'memory' is the permutation which sorted the table rows
         # sortBy returns this permutation:
         self.memory = table.sortBy(colName, ascending)
@@ -243,7 +243,7 @@ class TableModel(QAbstractTableModel):
         super(TableModel, self).__init__(parent)
         self.table = table
         self.parent = parent
-        nc = len(self.table.colNames)
+        nc = len(self.table._colNames)
         indizesOfVisibleCols = (j for j in range(nc)
                                   if self.table.colFormats[j] is not None)
         self.widgetColToDataCol = dict(enumerate(indizesOfVisibleCols))
@@ -303,7 +303,7 @@ class TableModel(QAbstractTableModel):
             return QVariant()
         if orientation == Qt.Horizontal:
             dataIdx = self.widgetColToDataCol[section]
-            return self.table.colNames[dataIdx]
+            return self.table._colNames[dataIdx]
         # vertical header:
         return QString("   ")
 

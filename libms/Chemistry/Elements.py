@@ -101,9 +101,9 @@ class MonoIsotopicElements(Table):
                 t0   = tsub.filter(tsub.massnumber == min(massnumber))
                 self.rows.append(t0.rows[0][:])
 
-            self.colNames = elements.colNames[:]
-            self.colTypes = elements.colTypes[:]
-            self.colFormats = elements.colFormats[:]
+            self._colNames = elements.getColNames()
+            self._colTypes = elements.getColTypes()
+            self._colFormats = elements.getColFormats()
             self.title = "Monoisotopic Elements"
             self.meta  = dict()
 

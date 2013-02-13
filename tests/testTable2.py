@@ -12,20 +12,20 @@ def testJoinNameGeneration():
     t = ms.toTable("a",[])
     t2 = t.copy()
     t = t.join(t2, False)
-    assert t.colNames== ["a", "a__0"]
+    assert t.getColNames()== ["a", "a__0"]
     t = t.join(t2, False)
-    assert t.colNames== ["a", "a__0", "a__1"]
+    assert t.getColNames()== ["a", "a__0", "a__1"]
     t = t.join(t.copy(), False)
-    assert t.colNames== ["a", "a__0", "a__1", "a__2", "a__3", "a__4"]
+    assert t.getColNames()== ["a", "a__0", "a__1", "a__2", "a__3", "a__4"]
     t.dropColumns("a")
     t = t.join(t.copy(), False)
-    assert t.colNames== ["a__%d" % i for i in range(10)]
+    assert t.getColNames()== ["a__%d" % i for i in range(10)]
 
 def testEmptyApply():
     t = ms.toTable("a", [])
     t.addColumn("b", t.a.apply(len))
     assert len(t) == 0
-    assert t.colTypes == [object, object]
+    assert t.getColTypes() == [object, object]
 
 def testRound():
     # failed in ealrier versions, as np.vectorize does not like round !
@@ -71,14 +71,14 @@ def testApply():
 
     sub.addColumn("m0s", sub.m0.apply(str))
     sub.print_()
-    assert sub.colTypes == [ str, float, str], sub.colTypes
+    assert sub.getColTypes() == [ str, float, str], sub.getColTypes()
 
     # apply without None values:
     sub = sub.filter(sub.m0 != None)
     assert len(sub) == 2
     sub.addColumn("m02", sub.mf.apply(mass.of))
     sub.addColumn("m0s2", sub.m0.apply(str))
-    assert sub.colTypes == [ str, float, str, float, str]
+    assert sub.getColTypes() == [ str, float, str, float, str]
 
 
 
@@ -86,30 +86,30 @@ def testNumpyTypeCoercion():
     import numpy as np
     t = ms.toTable("a", [np.int32(1)])
     t.info()
-    assert t.colTypes == [int], t.colTypes
+    assert t.getColTypes() == [int], t.getColTypes()
     t = ms.toTable("a", [None, np.int32(1)])
     t.info()
-    assert t.colTypes == [int], t.colTypes
+    assert t.getColTypes() == [int], t.getColTypes()
 
     t.addColumn("b", np.int32(1))
-    assert t.colTypes == [int, int], t.colTypes
+    assert t.getColTypes() == [int, int], t.getColTypes()
     t.replaceColumn("b", [None, np.int32(1)])
-    assert t.colTypes == [int, int], t.colTypes
+    assert t.getColTypes() == [int, int], t.getColTypes()
 
     t.replaceColumn("b", np.int64(1))
-    assert t.colTypes == [int, int], t.colTypes
+    assert t.getColTypes() == [int, int], t.getColTypes()
     t.replaceColumn("b", [None, np.int64(1)])
-    assert t.colTypes == [int, int], t.colTypes
+    assert t.getColTypes() == [int, int], t.getColTypes()
 
     t.replaceColumn("b", np.float32(1.0))
-    assert t.colTypes == [int, float], t.colTypes
+    assert t.getColTypes() == [int, float], t.getColTypes()
     t.replaceColumn("b", [None, np.float32(1.0)])
-    assert t.colTypes == [int, float], t.colTypes
+    assert t.getColTypes() == [int, float], t.getColTypes()
 
     t.replaceColumn("b", np.float64(2.0))
-    assert t.colTypes == [int, float], t.colTypes
+    assert t.getColTypes() == [int, float], t.getColTypes()
     t.replaceColumn("b", [None, np.float64(2.0)])
-    assert t.colTypes == [int, float], t.colTypes
+    assert t.getColTypes() == [int, float], t.getColTypes()
 
 def testApplyUfun():
     import numpy
@@ -117,7 +117,7 @@ def testApplyUfun():
 
     print numpy.log
     t.addColumn("log", t.a.apply(numpy.log))
-    assert t.colTypes == [ float, float], t.colTypes
+    assert t.getColTypes() == [ float, float], t.getColTypes()
 
 
 def testNonBoolean():
@@ -244,8 +244,8 @@ def testColumnAggFunctions():
     assert (t.a+t.c).values == [None, None , 4]
     assert (t.a+t.c).sum() == 4
     apc = (t.a+t.c).toTable("a_plus_c")
-    assert apc.colNames == ["a_plus_c"]
-    assert apc.colTypes == [int]
+    assert apc.getColNames() == ["a_plus_c"]
+    assert apc.getColTypes() == [int]
     assert apc.a_plus_c.values == [ None, None , 4]
 
     assert (apc.a_plus_c - t.a).values == [None, None, 1]
@@ -265,7 +265,7 @@ def testAggregateOperation():
 
     t2 = t.aggregate(t.a.mean, "an", groupBy="a")
     assert len(t2) == 0
-    assert t2.colTypes == [int, object]
+    assert t2.getColTypes() == [int, object], t2.getColTypes()
 
     t = ms.toTable("a", [ 1, 2, 2, 3, 3, 3, 3])
     t.addColumn("b", [None, None, 2, 0, 3, 4, 9])
@@ -294,7 +294,7 @@ def testUniqeRows():
     u = t.uniqueRows()
     assert u.a.values == [1,2,2,3]
     assert u.b.values == [1,1,2,3]
-    assert len(u.colNames) == 2
+    assert len(u.getColNames()) == 2
     u.info()
 
 def testInplaceColumnmodification():
@@ -401,7 +401,7 @@ def testLogics():
     t.addColumn("true", t.a | True)
     t.addColumn("false", t.a & False)
 
-    assert t.colTypes == 4* [bool]
+    assert t.getColTypes() == 4* [bool]
 
     assert len(t.filter(t.a & t.nota)) == 0
     assert len(t.filter(t.a | t.true)) == 2
@@ -427,9 +427,9 @@ def testRenamePostfixes():
     t = ms.toTable("a", [1,2])
     t.addColumn("b", t.a+1)
     t = t.join(t)
-    assert t.colNames == [ "a", "b", "a__0", "b__0"], t.colNames
+    assert t.getColNames() == [ "a", "b", "a__0", "b__0"], t.getColNames()
     t.renamePostfixes(__0 = "_new")
-    assert t.colNames == [ "a", "b", "a_new", "b_new"], t.colNames
+    assert t.getColNames() == [ "a", "b", "a_new", "b_new"], t.getColNames()
 
 
 def testToOpenMSFeatureMap():

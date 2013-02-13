@@ -66,7 +66,7 @@ def _topo_sort_with_in_order(orderings):
 def _build_starttable(tables, force_merge):
     colname_orders = []
     for table in tables:
-        colname_orders.append(table.colNames)
+        colname_orders.append(table._colNames)
 
     colum_names = _topo_sort_with_in_order(colname_orders)
     if colum_names is None:
@@ -75,7 +75,7 @@ def _build_starttable(tables, force_merge):
 
     types = dict()
     for table in tables:
-        for name in table.colNames:
+        for name in table._colNames:
             type_ = table.getType(name)
             if types.get(name, type_) != type_:
                 if not force_merge:
@@ -84,7 +84,7 @@ def _build_starttable(tables, force_merge):
 
     formats = dict()
     for table in tables:
-        for name in table.colNames:
+        for name in table._colNames:
             format_ = table.getFormat(name)
             if formats.get(name, format_) != format_:
                 if not force_merge:
@@ -120,14 +120,14 @@ def mergeTables(tables, reference_table=None, force_merge=False):
 
     """
     if reference_table is not None:
-        final_colnames = reference_table.colNames
+        final_colnames = reference_table._colNames
         start_with = reference_table.buildEmptyClone()
     else:
         start_with, final_colnames  = _build_starttable(tables, force_merge)
 
     extended_tables = []
     for table in tables:
-        missing_names = [c for c in final_colnames if c not in table.colNames]
+        missing_names = [c for c in final_colnames if c not in table._colNames]
         for name in missing_names:
             type_ = start_with.getType(name)
             format_ = start_with.getFormat(name)
@@ -184,7 +184,7 @@ def recalculateMzPeaks(table):
     """Adds mz value for peaks not detected with centwaves algorithm based on
        rt and mz window: needed are columns mzmin, mzmax, rtmin, rtmax and
        peakmap mz, postfixes are automaticaly taken into account"""
-    postfixes = [ "" ] + [ "__%d" % i for i in range(len(table.colNames))]
+    postfixes = [ "" ] + [ "__%d" % i for i in range(len(table._colNames))]
     for postfix in postfixes:
         if _hasRangeColumns(table, postfix):
             mz_col = "mz" + postfix
