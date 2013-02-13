@@ -14,10 +14,11 @@ standardFormats = { int: "%d", long: "%d", float : "%.2f", str: "%s" }
 fms = "'%.2fm' % (o/60.0)"  # format seconds to floating point minutes
 
 def guessFormatFor(name, type_):
-    if type_ == float and name.startswith("m"):
-        return  "%.5f"
-    if type_ == float and name.startswith("rt"):
-        return fms
+    if type_ in (float, int):
+        if name.startswith("mz"):
+            return  "%.5f"
+        if name.startswith("rt"):
+            return fms
     return standardFormats.get(type_)
 
 def computekey(o):
