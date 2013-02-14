@@ -118,7 +118,7 @@ Then install
   unpack it and run
    * ``python setup.py install``
 
-* Open-MS 1.8: Download 
+* Open-MS 1.9: Download 
    * http://downloads.sourceforge.net/project/open-ms/OpenMS/OpenMS-1.9/OpenMS-1.9.0-Linux_64bit.deb
 
   and run 

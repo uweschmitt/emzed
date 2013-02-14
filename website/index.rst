@@ -16,7 +16,6 @@ Website Navigation
    getting_started
    tour
    explorers
-   cookbook
    faq
    license
    contact
