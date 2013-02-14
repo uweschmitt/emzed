@@ -20,7 +20,7 @@ def run(integrator, areatobe, rmsetobe):
     mzmin = ds.spectra[0].peaks[10,0]
     mzmax = ds.spectra[0].peaks[-10,0]
 
-    result = integrator.integrate(mzmin, mzmax, rtmin, rtmax)
+    result = integrator.integrate(mzmin, mzmax, rtmin, rtmax, 1)
     area=result.get("area")
     rmse=result.get("rmse")
 
@@ -49,7 +49,7 @@ def testNoIntegration():
 
     integrator = dict(configs.peakIntegrators)["no_integration"]
     integrator.setPeakMap(PeakMap([]))
-    result = integrator.integrate(0.0, 100.0, 0, 300)
+    result = integrator.integrate(0.0, 100.0, 0, 300, 1)
     assert result.get("area") == None
     assert result.get("rmse") == None
     assert result.get("params") == None
@@ -113,13 +113,17 @@ def testTrapezIntegrationSimple():
     pm = PeakMap([s0,s1,s2,s3])
     integrator.setPeakMap(pm)
 
-    assert integrator.integrate(1.4, 2.5, 0, 3)["area"] == 5.0
-    assert integrator.integrate(1.4, 2.5, 0, 2)["area"] == 4.0
+    assert integrator.integrate(1.4, 2.5, 0, 3, msLevel=1)["area"] == 5.0
+    assert integrator.integrate(1.4, 2.5, 0, 2, msLevel=1)["area"] == 4.0
 
-    assert integrator.integrate(0.4, 2.5, 0, 3)["area"] == 7.5
-    assert integrator.integrate(0.4, 2.5, 0, 2)["area"] == 6.0
+    assert integrator.integrate(0.4, 2.5, 0, 3, msLevel=1)["area"] == 7.5
+    assert integrator.integrate(0.4, 2.5, 0, 2, msLevel=1)["area"] == 6.0
 
-    assert integrator.integrate(0.4, 3.0, 0, 3)["area"] == 13.5
+    assert integrator.integrate(0.4, 3.0, 0, 3, msLevel=1)["area"] == 13.5
+
+    # multiple levels shall rise exception:
+    ex(lambda: integrator.integrate(0.4, 3.0, 0, 3))
+
 
 def ex(f):
     e0 = None

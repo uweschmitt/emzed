@@ -43,7 +43,7 @@ class Spectrum(object):
 
         # level=1 -> no precursors
         if msLevel == 1:
-            assert not precursors, "level 1 spec has no precursors"
+            assert not precursors, "conflict: level 1 spec has precursors"
 
         self.rt = rt
         self.msLevel = msLevel
@@ -184,7 +184,8 @@ class PeakMap(object):
         else:
             self.polarity = None
 
-    def extract(self, rtmin=None, rtmax=None, mzmin=None, mzmax=None):
+    def extract(self, rtmin=None, rtmax=None, mzmin=None, mzmax=None,
+                      mslevelmin=None, mslevelmax=None):
         """ returns restricted Peakmap with given limits.
         Parameters with *None* value are not considered.
 
@@ -198,7 +199,14 @@ class PeakMap(object):
 
         \
         """
+
         spectra = copy.deepcopy(self.spectra)
+
+        if mslevelmin is not None:
+            spectra = [s for s in spectra if s.msLevel >= mslevelmin]
+        if mslevelmax is not None:
+            spectra = [s for s in spectra if s.msLevel <= mslevelmax]
+
         if rtmin:
             spectra = [ s for s in spectra if rtmin <= s.rt ]
         if rtmax:
@@ -266,7 +274,7 @@ class PeakMap(object):
                                                             <= rtmax+1e-2
                                              and spec.msLevel == n]
 
-    def chromatogram(self, mzmin, mzmax, rtmin=None, rtmax=None):
+    def chromatogram(self, mzmin, mzmax, rtmin=None, rtmax=None, msLevel=None):
         """
         extracts chromatogram in given rt- and mz-window.
         returns a tuple ``(rts, intensities)`` where ``rts`` is a list of
@@ -281,14 +289,10 @@ class PeakMap(object):
         if rtmax is None:
             rtmax = self.spectra[-1].rt
 
-        levels = self.getMsLevels()
-        if 1 in levels:
-            specs = self.levelNSpecsInRange(1, rtmin, rtmax)
-        else:
-            assert len(levels) == 1
-            level = levels[0]
-            specs = [s for s in self.spectra if s.msLevel == level and\
-                                              rtmin <= s.rt <= rtmax]
+        if msLevel is None:
+            msLevel = min(self.getMsLevels())
+
+        specs = self.levelNSpecsInRange(msLevel, rtmin, rtmax)
 
         rts = [s.rt for s in specs]
         intensities = [s.intensityInRange(mzmin, mzmax) for s in specs]

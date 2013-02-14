@@ -104,7 +104,7 @@ def integrate_matching_fragments(tables, transitions, delta_mz):
 
     # now we have columns mzmin, mzmax, rtmin, rtmax and peakmap which we
     # need for fitting EMG model with ms.integrate:
-    identified = ms.integrate(identified, "emg_exact")
+    identified = ms.integrate(identified, "emg_exact", msLevel=2)
     return identified.splitBy("name")
 
 def integrate_fragments(measured_transitions):
@@ -123,7 +123,7 @@ def integrate_fragments(measured_transitions):
 
         # Now table has columns rtmin/rtmax, mzmin/mzmax and peakmap. These are
         # mandatory for fitting EMG model with ms.integrate:
-        table = ms.integrate(table, "emg_exact")
+        table = ms.integrate(table, "emg_exact", msLevel=2)
         result.append(table)
 
     return result
