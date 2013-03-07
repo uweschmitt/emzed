@@ -76,23 +76,23 @@ def integrate_matching_fragments(tables, transitions, delta_mz):
     trans = transitions
     t = table
 
+    # table has columns
+    #
+    #    precursor  fragment  peakmap  mzmin  mzmax
+    #
+    # and transitions:
+    #
+    #   name  precursor  fragment  rtmin  rtmax
+
     # find candidates defined in parameter table transitions
     identified = t.join(trans,
                         trans.precursor.approxEqual(t.precursor, delta_mz)\
                         & trans.fragment.approxEqual(t.fragment, delta_mz))
 
-    # identified.info() would show now:
-    #
-    # 0  [3 diff vals, 0 Nones]    name='precursor' ..
-    # 1  [9 diff vals, 0 Nones]    name='fragment'  ..
-    # 2  [3 diff vals, 0 Nones]    name='peakmap'  ..
-    # 3  [9 diff vals, 0 Nones]    name='mzmin'  ..
-    # 4  [9 diff vals, 0 Nones]    name='mzmax' ..
-    # 5  [9 diff vals, 0 Nones]    name='name__0'  ..
-    # 6  [9 diff vals, 0 Nones]    name='precursor__0'  ..
-    # 7  [9 diff vals, 0 Nones]    name='fragment__0'  ..
-    # 8  [9 diff vals, 0 Nones]    name='rtmin__0'  ..
-    # 9  [9 diff vals, 0 Nones]    name='rtmax__0'  ..
+    # identified has columns:
+
+    #   precursor  fragment  peakman  mzmin  mzmax  name__0  precursor__0
+    #   ...  fragment__0  rtmin__0 rtmax__0
 
     identified.renameColumns(name__0="name",
                              rtmin__0="rtmin",

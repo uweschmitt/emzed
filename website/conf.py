@@ -28,7 +28,11 @@ import sys, os
 sys.path.insert(0, "..")
 sys.path.insert(0, ".")
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest',
-'sphinx.ext.viewcode', 'pycon', 'sphinxcontrib.spelling'][:-1]
+'sphinx.ext.viewcode', 'pycon', 'sphinxcontrib.googleanalytics', 'sphinxcontrib.spelling'][:-1]
+
+
+googleanalytics_id = 'UA-38620590-1'
+googleanalytics_enables = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

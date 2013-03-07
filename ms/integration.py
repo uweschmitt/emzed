@@ -2,7 +2,7 @@
 
 
 
-def integrate(ftable, integratorid="std", msLevel=1, showProgress = True):
+def integrate(ftable, integratorid="std", msLevel=None, showProgress = True):
     """ integrates features  in ftable.
         returns processed table. ``ftable`` is not changed inplace.
 
@@ -12,10 +12,8 @@ def integrate(ftable, integratorid="std", msLevel=1, showProgress = True):
     """
     from configs import peakIntegrators
     from libms.DataStructures.Table import Table
-    from libms.DataStructures.MSTypes import PeakMap
     import sys
     import time
-    import copy
 
     assert isinstance(ftable, Table)
 
