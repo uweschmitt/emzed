@@ -24,7 +24,7 @@ import emzedPatches
 emzedPatches.patch_spyder()
 
 
-from version import version as emzed_version
+from version import version_string as emzed_version
 
 if os.environ.get('QT_API') == 'pyside':
     print
@@ -1357,7 +1357,7 @@ class MainWindow(QMainWindow):
             _("About %s") % "eMZed",
             """<b>eMZed %s</b>
             <br>Workspace for Analysing LCMS Data
-            <p>Copyright &copy; 2012
+            <p>Copyright &copy; 2012-2013
      <br>- Institute of Microbiology, Department of Biology, ETH Zurich
      <br>- Patrick Kiefer
      <br>- Uwe Schmitt, <a href="http://www.mineway.de">mineway GmbH</a>
