@@ -1,8 +1,7 @@
+import pdb
 import ms
 
 def testOne():
-    assert True, "metlin test diabled as metlin changed ws interface format"
-    return
     t = ms.toTable("m0",[582.22282, 482.93332])
     t.addColumn("polarity", ["-", "-"])
     tn = ms.matchMetlin(t, "m0", 30)
