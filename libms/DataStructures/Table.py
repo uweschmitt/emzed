@@ -314,7 +314,6 @@ class Table(object):
 
                 t[:] == t.copy()
 
-
         """
         if not isinstance(ix, slice):
             ix = slice(ix, ix+1)

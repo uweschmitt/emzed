@@ -95,7 +95,7 @@ class PubChemDB(object):
     def _parse_data(data, keggIds=None, humanMBdbIds=None):
         doc = etree.fromstring(data)
         items = []
-        for summary in doc[0]:
+        for summary in doc[0].findall("DocumentSummary"):
             if len(summary.findall("error")):
                 print "RETRIEVAL FOR ID=%s FAILED" % (summary.attrib.get("uid"))
                 continue
@@ -167,6 +167,7 @@ class PubChemDB(object):
                     missing = list(known_uis-uis)
             return unknown, missing
         except Exception, e:
+            import traceback; traceback.print_exc()
             logging.error(e)
             return [], [] # failed
 
@@ -182,6 +183,7 @@ class PubChemDB(object):
         try:
             self._update(maxIds)
         except Exception, e:
+            import traceback; traceback.print_exc()
             logging.error(e)
 
 
