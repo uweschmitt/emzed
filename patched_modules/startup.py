@@ -121,6 +121,8 @@ on Windows platforms (only IPython v0.10 is fully supported).
         del banner2
     except ImportError:
         # IPython v0.10
+        import IPython
+        print "IPYTHON.__version__ =", IPython.__version__
         import IPython.Shell
         # third modification eMZed: user_ns arg ###########################
         __ipythonshell__ = IPython.Shell.start(user_ns=user_ns)

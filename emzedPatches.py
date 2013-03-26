@@ -1,5 +1,6 @@
 # encoding: utf-8
 import inspect, sys
+import os
 
 from config_logger import do_config
 do_config()
@@ -113,9 +114,7 @@ def patch_userconfig():
 
     @replace(get_home_dir, verbose=True)
     def patch():
-        import os
-        appRoot = userConfig.getAppDataFolder()
-        emzedFolder = os.path.join(appRoot, "emzed")
+        emzedFolder = userConfig.getEmzedFolder()
         if not os.path.exists(emzedFolder):
             os.makedirs(emzedFolder)
         return emzedFolder
