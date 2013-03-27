@@ -11,7 +11,7 @@ toTable.__doc__ = Table.toTable.__doc__
 def _topo_sort_with_in_order(orderings):
 
     for ordering in orderings:
-        assert isinstance(ordering, (list, tuple, str))
+        assert isinstance(ordering, (list, tuple, str, unicode))
 
     # give nodes some rank according to first appearance
     # in orderings:

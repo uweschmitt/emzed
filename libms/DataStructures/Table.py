@@ -799,8 +799,7 @@ class Table(object):
         integer index (negative values allowed !).
 
         """
-        assert isinstance(name, str) or isinstance(name, unicode),\
-               "colum name is not a  string"
+        assert isinstance(name, (str, unicode)), "colum name is not a  string"
 
         import types
 

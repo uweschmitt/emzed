@@ -17,6 +17,8 @@ class MolecularFormula(object):
             self.stringForm = FormulaParser.joinFormula(form)
             # cleanup zero counts:
             self.dictForm = dict( (e,c) for (e,c) in form.items() if c)
+        else:
+            raise Excepction("can not handle arguemnt %s" % form)
 
     def asDict(self):
         # maybe dictForm is a Counter, so in order to provide too much

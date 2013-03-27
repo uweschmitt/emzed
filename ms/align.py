@@ -39,7 +39,7 @@ def rtAlign(tables, refTable = None, destination = None, nPeaks=-1,
     import custom_dialogs
 
     assert refTable is None or isinstance(refTable, Table)
-    assert destination is None or isinstance(destination, str)
+    assert destination is None or isinstance(destination, basestring)
 
     for table in tables:
         # collect all maps
