@@ -825,6 +825,10 @@ class Table(object):
 
     def _addColumnByExpression(self, name, expr, type_, format, insertBefore):
         values, _, type2_ = expr._eval(None)
+        # TODO: automatic table check for numpy values via decorator ?
+        # switchable !?
+        if type2_ in _basic_num_types:
+             values = values.tolist()
         return self._addColumn(name, values, type_ or type2_, format, insertBefore)
 
     def _addColumnByCallback(self, name, callback, type_, format, insertBefore):
@@ -1055,7 +1059,6 @@ class Table(object):
                                    "a column which has lists or numpy "\
                                    "arrays as entries"
 
-            print repr(value), type_
             if type_ in _basic_num_types:
                 value = value.tolist()
             collectedValues.extend(value*len(t))

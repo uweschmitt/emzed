@@ -516,4 +516,13 @@ def testMerge():
     assert tn.d.values == [None, 1, 4]
 
 
+def testApply():
+
+    t = ms.toTable("a", [0.01, 0.1, 0.1, 0.015, 0.2,1.0 ])
+
+    t.addColumn("a_bin", t.a.apply(lambda v: int(v*100)))
+    # this returned numpy-ints due to an fault in addColumn and so
+    # we got 6 tables instead of 4:
+    ts = t.splitBy("a_bin")
+    assert len(ts) == 4
 
