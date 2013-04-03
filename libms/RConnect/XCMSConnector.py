@@ -5,7 +5,7 @@ from ..DataStructures import PeakMap, XCMSFeatureParser
 import os, sys
 
 from ..intern_utils import TemporaryDirectoryWithBackup
-from pyOpenMS import FileHandler
+from pyopenms import FileHandler
 
 from userConfig import getExchangeFolder, getRLibsFolder
 

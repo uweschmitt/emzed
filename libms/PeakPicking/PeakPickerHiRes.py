@@ -1,29 +1,25 @@
-import pyOpenMS
+import pyopenms
 from ..DataStructures import PeakMap
 
 class PeakPickerHiRes(object):
 
-    standardConfig = dict(ms1_only=False, signal_to_noise = 1.0)
+    standardConfig = dict(ms1_only="false", signal_to_noise = 1.0)
 
     def __init__(self, **modified_config):
-        self.pp = pyOpenMS.PeakPickerHiRes()
+        self.pp = pyopenms.PeakPickerHiRes()
         params = self.pp.getParameters()
         config = self.standardConfig
         config.update(modified_config)
-        for k, v in config.items():
-            if type(v) not in [int, float]:
-                v = str(v)
-            value = pyOpenMS.DataValue(v)
-            params.setValue(pyOpenMS.String(k), value, pyOpenMS.String(), 
-                            pyOpenMS.StringList())
+        params.updateFrom(config)
+        self.pp.setParameters(params)
 
     def pickPeakMap(self, pm, showProgress=False):
         assert isinstance(pm, PeakMap)
-        eout = pyOpenMS.MSExperiment()
+        eout = pyopenms.MSExperiment()
         if showProgress:
-            self.pp.setLogType(pyOpenMS.LogType.CMD)
+            self.pp.setLogType(pyopenms.LogType.CMD)
         else:
-            self.pp.setLogType(pyOpenMS.LogType.NONE)
+            self.pp.setLogType(pyopenms.LogType.NONE)
         self.pp.pickExperiment(pm.toMSExperiment(), eout)
         return PeakMap.fromMSExperiment(eout)
 

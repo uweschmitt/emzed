@@ -20,7 +20,7 @@ def rtAlign(tables, refTable = None, destination = None, nPeaks=-1,
             - *maxMzDifference*: max allowed difference in mz values for
               super imposer.
 
-            - *maxMzDifferencePairfinder*: max allowed difference in mz values 
+            - *maxMzDifferencePairfinder*: max allowed difference in mz values
               for pair finding.
 
             - *numBreakpoints*: number of break points of fitted spline.
@@ -33,7 +33,7 @@ def rtAlign(tables, refTable = None, destination = None, nPeaks=-1,
     """
 
     import os.path
-    import pyOpenMS as P
+    import pyopenms
     import copy
     from  libms.DataStructures.Table import toOpenMSFeatureMap, Table
     import custom_dialogs
@@ -76,30 +76,21 @@ def rtAlign(tables, refTable = None, destination = None, nPeaks=-1,
     assert os.path.isdir(os.path.abspath(destination)), "target is no directory"
 
     # setup algorithm
-    ma = P.MapAlignmentAlgorithmPoseClustering()
-    ma.setLogType(P.LogType.CMD)
-    pp = ma.getDefaults()
-    pp.setValue(P.String("superimposer:num_used_points"),
-                P.DataValue(nPeaks),
-                P.String(),
-                P.StringList())
-    pp.setValue(P.String("superimposer:mz_pair_max_distance"),
-                P.DataValue(float(maxMzDifference)),
-                P.String(),
-                P.StringList())
-    pp.setValue(P.String("pairfinder:distance_RT:max_difference"),
-                P.DataValue(float(maxRtDifference)),
-                P.String(),
-                P.StringList())
-    pp.setValue(P.String("pairfinder:distance_MZ:max_difference"),
-                P.DataValue(float(maxMzDifferencePairfinder)), # in dalton resp u. 
-                P.String(),
-                P.StringList())
-    pp.setValue(P.String("pairfinder:distance_MZ:unit"),
-                P.DataValue("Da"), # masssunits->dalton
-                P.String(),
-                P.StringList())
-    ma.setParameters(pp)
+    algo = pyopenms.MapAlignmentAlgorithmPoseClustering()
+    algo.setLogType(pyopenms.LogType.CMD)
+
+    algo_params = algo.getDefaults()
+    pd = algo_params.asDict()
+    pd["superimposer:num_used_points"] = nPeaks
+    pd["superimposer:mz_pair_max_distance"] = float(maxMzDifference)
+    pd["pairfinder:distance_RT:max_difference"] = float(maxRtDifference)
+    pd["pairfinder:distance_MZ:max_difference"] = float(maxMzDifferencePairfinder)
+    pd["pairfinder:distance_MZ:unit"] = "Da"
+    algo_params.updateFrom(pd)
+    algo.setParameters(algo_params)
+
+
+
 
     # convert to pyOpenMS types and find map with max num features which
     # is taken as refamp:
@@ -119,7 +110,7 @@ def rtAlign(tables, refTable = None, destination = None, nPeaks=-1,
     for fm, table in fms:
         # we do not modify existing table inkl. peakmaps: (rt-values
         # might change below in _transformTable) !
-        table = copy.deepcopy(table) 
+        table = copy.deepcopy(table)
         if fm is refMap:
             results.append(table)
             continue
@@ -130,7 +121,7 @@ def rtAlign(tables, refTable = None, destination = None, nPeaks=-1,
         print
         print "ALIGN FEATURES FROM ", filename
         print
-        transformation = _computeTransformation(ma, refMap, fm, numBreakpoints)
+        transformation = _computeTransformation(algo, refMap, fm, numBreakpoints)
         _plot_and_save(transformation, filename, destination)
         _transformTable(table, transformation)
         results.append(table)
@@ -138,26 +129,29 @@ def rtAlign(tables, refTable = None, destination = None, nPeaks=-1,
         t.meta["rt_aligned"] = True
     return results
 
-def _computeTransformation(ma, refMap, fm, numBreakpoints):
+def _computeTransformation(algo, refMap, fm, numBreakpoints):
     # be careful: alignFeatureMaps modifies second arg,
     # so you MUST NOT put the arg as [] into this
     # function ! in this case you have no access to the calculated
     # transformations.
-    import pyOpenMS as P
-    ts = []
+    import pyopenms
+    #ts = []
     # index is 1-based, so 1 refers to refMap when calling
     # alignFeatureMaps below:
-    ma.setReference(1, P.String(""))
-    ma.alignFeatureMaps([refMap, fm], ts)
-    assert len(ts) == 2 # ts is now filled !!!!
+    algo.setReference(refMap)
+    trafo = pyopenms.TransformationDescription()
+    if (refMap == fm):
+        trafo.fitModel("identity")
+    else:
+        algo.align(fm, trafo)
+        model_params = pyopenms.Param()
+        pyopenms.TransformationModelBSpline.getDefaultParameters(model_params)
 
-    # fit transformations with a spline
-    bps = numBreakpoints
-    pp = P.Param()
-    pp.setValue(P.String("num_breakpoints"), P.DataValue(bps), P.String(),
-                                             P.StringList())
-    ma.fitModel(P.String("b_spline"), pp, ts)
-    return ts[1]
+        model_params.setValue("num_breakpoints", numBreakpoints, "", [])
+        trafo.fitModel("b_spline", model_params)
+        trafo.getModelParameters(model_params)
+
+    return trafo
 
 def _plot_and_save(transformation, filename, destination):
     import numpy as np
@@ -178,7 +172,7 @@ def _plot_and_save(transformation, filename, destination):
     filename = os.path.splitext(filename)[0]+"_aligned.png"
     target_path = os.path.join(destination, filename)
     print
-    print "SAVE", filename
+    print "SAVE", os.path.abspath(target_path)
     print
     pylab.savefig(target_path)
 

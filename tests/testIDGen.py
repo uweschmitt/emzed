@@ -1,7 +1,7 @@
 import ms
 import numpy
 
-def testIdGen():
+def testIDGen():
     t = ms.isotopeDistributionTable("S4C4", R=50000)
     assert len(t) == 4
     t = ms.isotopeDistributionTable("S4C4", R=10000)
@@ -13,7 +13,8 @@ def testIdGen():
     t.abundance /= t.abundance.sum()
 
     assert numpy.max(numpy.array(t.abundance.values)-[0.8, 0.06, 0.14]) <= 5e-3
-    assert numpy.max(numpy.array(t.mass.values)-[175.888283, 176.889972, 177.884079]) < 5e-7
+    assert numpy.max(numpy.array(t.mass.values)-[175.888283, 176.889972,
+        177.884081]) < 5e-7
 
     t = ms.isotopeDistributionTable("S4C4", R=10000, fullC13=True)
     t.abundance /= t.abundance.sum()
@@ -21,7 +22,8 @@ def testIdGen():
     assert len(t) == 3
     assert t.mf.values == ["S4C4"] * 3
     assert numpy.max(numpy.array(t.abundance.values)-[0.82, 0.03, 0.15]) <= 5e-3
-    assert numpy.max(numpy.array(t.mass.values)-[179.901703, 180.901090, 181.897499]) < 5e-7
+    assert numpy.max(numpy.array(t.mass.values)-[179.901703, 180.901091,
+        181.897501]) < 5e-7
 
     t = ms.isotopeDistributionTable("C4", R=10000, C=dict(C12=0.5, C13=0.5))
     t.abundance /= t.abundance.sum()

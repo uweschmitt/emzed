@@ -1,4 +1,4 @@
-import pyOpenMS as P
+import pyopenms
 import copy, os, itertools, re, numpy, cPickle, sys, inspect
 from   Expressions import BaseExpression, ColumnExpression, Value, _basic_num_types, common_type_for
 import numpy as np
@@ -1410,10 +1410,10 @@ def toOpenMSFeatureMap(table):
 
     mzs = table.mz.values
     rts = table.rt.values
-    fm = P.FeatureMap()
+    fm = pyopenms.FeatureMap()
 
     for (mz, rt, area) in zip(mzs, rts, areas):
-        f = P.Feature()
+        f = pyopenms.Feature()
         f.setMZ(mz)
         f.setRT(rt)
         f.setIntensity(area if area is not None else 1000.0)

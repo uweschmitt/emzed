@@ -12,7 +12,7 @@ def storePeakMap(pm, path=None):
     # local import in order to keep namespaces clean
     import ms
     import sys
-    from pyOpenMS import FileHandler
+    from pyopenms import FileHandler
 
     if isinstance(path, unicode):
         path = path.encode(sys.getfilesystemencoding())
