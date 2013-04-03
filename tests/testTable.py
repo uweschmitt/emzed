@@ -60,7 +60,7 @@ def run(t, colnames, rows):
     assert content[2] == "1.000"
     assert content[3] == "hi"
     assert content[4] == repr({1:1})
-    assert content[5] == "array((3,))", content[5]
+    assert content[5] in ("array((3,))", "array((3L,))"), content[5]
 
     assert set(t.getVisibleCols()) == { 'int', 'long', 'float', 'str',
                                         'object', 'array' }

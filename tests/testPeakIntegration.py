@@ -63,7 +63,7 @@ def testNoIntegration():
 def testPeakIntegration():
 
     integrator = dict(configs.peakIntegrators)["asym_gauss"]
-    _, _, params = run(integrator, 1.1826e5, 7.2891e3)
+    _, _, params = run(integrator, 1.19e5, 7.2891e3)
 
     #assert abs(params[0]- 12182.07) < 1.0, params
     #assert abs(params[1]- 136.9405) < 0.01, params
