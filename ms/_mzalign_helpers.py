@@ -133,6 +133,8 @@ def _calculateParameters(real, tobe, p=1.01):
     return transform, r, imax, fitted, resid
 
 def _plotAndSaveMatch(tobe, real, used, transform, path):
+    import matplotlib
+    matplotlib.use("Qt4Agg")
     import pylab
     fitted = transform(real)
     pylab.subplot(2,1,1)

@@ -155,6 +155,8 @@ def _computeTransformation(algo, refMap, fm, numBreakpoints):
 
 def _plot_and_save(transformation, filename, destination):
     import numpy as np
+    import matplotlib
+    matplotlib.use("Qt4Agg")
     import pylab
     import os.path
     dtp = transformation.getDataPoints()

@@ -151,6 +151,8 @@ class IsotopeDistributionGenerator(object):
         return normalized(allCentroids)
 
     def plot(self, plotGauss=None):
+        import matplotlib
+        matplotlib.use("Qt4Agg")
         import pylab as pl
         minMass = self.centroids[0][0]
         maxMass = self.centroids[-1][0]
