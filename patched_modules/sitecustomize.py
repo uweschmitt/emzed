@@ -9,15 +9,19 @@ import bdb
 import __builtin__
 
 
+############ EMZED ADDDONS BEGIN ##############################
+
 print "run patched sitecustomize"
 sys.path.insert(0, os.environ.get("EMZED_HOME",""))
-
-
 try:
-    import emzedPatches
-    emzedPatches.patch_external_shell()
+    import external_shell_patches
+    external_shell_patches.patch_external_shell()
 except Exception, e:
     print e
+print "patches applied"
+
+############ EMZED ADDDONS END ################################
+
 
 # Colorization of sys.stderr (standard Python interpreter)
 if os.environ.get("COLORIZE_SYS_STDERR", "").lower() == "true"\
@@ -54,17 +58,24 @@ if os.environ.get("COLORIZE_SYS_STDERR", "").lower() == "true"\
 
 # Prepending this spyderlib package's path to sys.path to be sure 
 # that another version of spyderlib won't be imported instead:
-spyderlib_path = osp.dirname(__file__)
-while not osp.isdir(osp.join(spyderlib_path, 'spyderlib')):
-    spyderlib_path = osp.abspath(osp.join(spyderlib_path, os.pardir))
-if not spyderlib_path.startswith(sys.prefix):
-    # Spyder is not installed: moving its parent directory to the top of 
-    # sys.path to be sure that this spyderlib package will be imported in 
-    # the remote process (instead of another installed version of Spyder)
-    while spyderlib_path in sys.path:
-        sys.path.remove(spyderlib_path)
-    sys.path.insert(0, spyderlib_path)
-os.environ['SPYDER_PARENT_DIR'] = spyderlib_path
+
+if os.environ.get("SPYDER_PARENT_DIR") is None:
+    spyderlib_path = osp.dirname(__file__)
+    while not osp.isdir(osp.join(spyderlib_path, 'spyder')):
+        print spyderlib_path
+        spyderlib_path = osp.abspath(osp.join(spyderlib_path, os.pardir))
+    if not spyderlib_path.startswith(sys.prefix):
+        # Spyder is not installed: moving its parent directory to the top of 
+        # sys.path to be sure that this spyderlib package will be imported in 
+        # the remote process (instead of another installed version of Spyder)
+        while spyderlib_path in sys.path:
+            sys.path.remove(spyderlib_path)
+        sys.path.insert(0, spyderlib_path)
+    print os.environ["EMZED_HOME"]
+    os.environ['SPYDER_PARENT_DIR'] = spyderlib_path
+
+else:
+    spyderlib_path = os.environ.get("SPYDER_PARENT_DIR")
 
 
 # Set PyQt4 API to #1 or #2
