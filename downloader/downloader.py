@@ -1,28 +1,3 @@
-'''Michael Lange <klappnase (at) freakmail (dot) de>
-The Meter class provides a simple progress bar widget for Tkinter.
-
-INITIALIZATION OPTIONS:
-The widget accepts all options of a Tkinter.Frame plus the following:
-
-    fillcolor -- the color that is used to indicate the progress of the
-                 corresponding process; default is "orchid1".
-    value -- a float value between 0.0 and 1.0 (corresponding to 0% - 100%)
-             that represents the current status of the process; values higher
-             than 1.0 (lower than 0.0) are automagically set to 1.0 (0.0); default is 0.0 .
-    text -- the text that is displayed inside the widget; if set to None the widget
-            displays its value as percentage; if you don't want any text, use text="";
-            default is None.
-    font -- the font to use for the widget's text; the default is system specific.
-    textcolor -- the color to use for the widget's text; default is "black".
-
-WIDGET METHODS:
-All methods of a Tkinter.Frame can be used; additionally there are two widget specific methods:
-
-    get() -- returns a tuple of the form (value, text)
-    set(value, text) -- updates the widget's value and the displayed text;
-                        if value is omitted it defaults to 0.0 , text defaults to None .
-'''
-
 import Tkinter
 import tkFileDialog
 import tkMessageBox
@@ -30,6 +5,34 @@ import Queue
 
 
 class ThreadsafeMeter(Tkinter.Frame):
+
+    '''Based on:
+
+    Michael Lange <klappnase (at) freakmail (dot) de>
+    The Meter class provides a simple progress bar widget for Tkinter.
+
+    INITIALIZATION OPTIONS:
+    The widget accepts all options of a Tkinter.Frame plus the following:
+
+        fillcolor -- the color that is used to indicate the progress of the
+                     corresponding process; default is "orchid1".
+        value -- a float value between 0.0 and 1.0 (corresponding to 0% - 100%)
+                 that represents the current status of the process; values higher
+                 than 1.0 (lower than 0.0) are automagically set to 1.0 (0.0); default is 0.0 .
+        text -- the text that is displayed inside the widget; if set to None the widget
+                displays its value as percentage; if you don't want any text, use text="";
+                default is None.
+        font -- the font to use for the widget's text; the default is system specific.
+        textcolor -- the color to use for the widget's text; default is "black".
+
+    WIDGET METHODS:
+    All methods of a Tkinter.Frame can be used; additionally there are two widget specific methods:
+
+        get() -- returns a tuple of the form (value, text)
+        set(value, text) -- updates the widget's value and the displayed text;
+                            if value is omitted it defaults to 0.0 , text defaults to None .
+    '''
+
     def __init__(self, master, width=300, height=20, bg='white',
             fillcolor='lightblue',\
                  value=0.0, text=None, font=None, textcolor='black', *args, **kw):
@@ -103,38 +106,53 @@ import threading
 import random
 import time
 import urllib2
+import urlparse
 
 class Downloader(threading.Thread):
 
-    def __init__(self, url, txt, widget):
+    def __init__(self, url, txt, widget, path):
         threading.Thread.__init__(self)
         self.url = url
         self.widget = widget
         self.txt = txt
         self.done = False
+        self.path = path
 
     def run(self):
         value = 0.0
         self.widget.set(value, "wait for " + self.url)
 
-        handler = urllib2.urlopen(self.url)
+        try:
+            r = urllib2.Request(self.url)
+            r.add_header("User-Agent", "Mozilla")
+            opener = urllib2.build_opener()
+            handler = opener.open(r)
+            #handler = urllib2.urlopen(self.url, data)
+        except Exception, e:
+            print "opening "+self.url+" failed"
+            raise e
         n = int(handler.headers["content-length"])
-        content = ""
-        while True:
-            self.widget.set(1.0 * len(content)/n, "loading " + self.txt)
-            data = handler.read(1000)
-            if not data:
-                break
-            content += data
-        self.widget.set(1.0, "finished download of " + self.txt)
-        self.done = True
+        count = 0 
+        fp = open(self.path, "wb")
+        try:
+            while True:
+                self.widget.set(1.0 * count/n, "loading " + self.txt)
+                data = handler.read(1024*16)
+                if not data:
+                    break
+                fp.write(data)
+                count += len(data)
+            self.widget.set(1.0, "finished download of " + self.txt)
+            self.done = True
+        finally:
+            fp.close()
 
 
 class Dialog(object):
 
     def __init__(self, urls):
 
-        root = Tk(className='meter demo')
+        root = Tk(className='eMZed downloader')
         self.root = root
 
         l = Label(root, text="""
@@ -151,18 +169,19 @@ class Dialog(object):
         """).grid(row=0, columnspan=3)
 
         l = Label(root, text="Target path for downloads:").grid(row=1,
-                column=0)
+                column=0, padx=10)
 
         home = os.environ.get("HOME") or os.environ.get("HOMEPATH")
         self.targetdir = os.path.join(home, "Downloads")
         target = StringVar(value=self.targetdir)
-        self.e = Entry(root, textvariable=target)
-        self.e.grid(row=1, column=1)
-        self.choose = Button(root, text="Choose Directory", command=self.file_dialog)
-        self.choose.grid(row=1, column=2, pady=2)
+        self.e = Entry(root, textvariable=target, width=80)
+        self.e.grid(row=1, column=1, padx=0)
 
-        self.go = Button(root, text="Go!", command=self.download)
-        self.go.grid(row=2, column=0, columnspan=3, pady=10, sticky=N+S+E+W)
+        self.choose = Button(root, text="Choose Directory", command=self.file_dialog)
+        self.choose.grid(row=1, column=2, pady=2, padx=10)
+
+        self.go = Button(root, text="GO!", command=self.download)
+        self.go.grid(row=2, column=0, columnspan=3, padx=10, pady=10, sticky=N+S+E+W)
 
         self.bars = []
         self.urls = urls
@@ -172,7 +191,7 @@ class Dialog(object):
             self.bars.append(bar)
 
         self.done = Button(root, text = "Close Dialog", command=self.quit)
-        self.done.grid(row=5, pady = 5, columnspan = 3, sticky=N+S+E+W)
+        self.done.grid(row=3+len(urls), pady = 5, columnspan = 3, padx=10, sticky=N+S+E+W)
         self.done.config(state=DISABLED)
 
     def file_dialog(self):
@@ -196,8 +215,10 @@ class Dialog(object):
         self.choose["state"] = DISABLED
         self.root.update_idletasks()
         downloaders = []
-        for ((url, txt), bar) in zip(self.urls, self.bars):
-            d = Downloader(url, txt, bar)
+        for i, ((url, txt), bar) in enumerate(zip(self.urls, self.bars)):
+            fname = urlparse.urlsplit(url).path.split("/")[-1]
+            path = os.path.join(targetdir, "%03d_%s" % (i+1, fname))
+            d = Downloader(url, txt, bar, path)
             downloaders.append(d)
         for d in downloaders:
             d.start()
@@ -221,8 +242,10 @@ class Dialog(object):
         self.root.quit()
 
 
-
-r=Dialog([("http://www.python.org/index.html", "Python 2.7.4"),
-          ("http://emzed.ethz.ch/index.html", "pyopenms"),
+r=Dialog([("http://cran.r-project.org/bin/windows/base/R-3.0.0-win.exe", "R 3.0.0"),
+          ("http://www.lfd.uci.edu/~gohlke/pythonlibs/tjapr7w8/numpy-MKL-1.7.1.win-amd64-py2.7.exe", "numpy 1.7.1"),
+          ("http://www.lfd.uci.edu/~gohlke/pythonlibs/tjapr7w8/scipy-0.12.0.win-amd64-py2.7.exe", "scipy 0.12.0"),
+          ("http://www.lfd.uci.edu/~gohlke/pythonlibs/tjapr7w8/matplotlib-1.2.1.win-amd64-py2.7.exe", "matplotlib 1.2.1"),
+          #("http://emzed.ethz.ch/index.html", "pyopenms"),
           ])
 r.root.mainloop()
