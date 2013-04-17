@@ -261,11 +261,12 @@ class Dialog(object):
 
 handler = urllib2.urlopen("http://emzed.ethz.ch/downloads/urls.txt")
 urls = [ url.strip() for url in handler]
+fp = open("urls.txt", "w")
 for url in urls:
     print url
+    print >> fp, url
+fp.close()
 
-r = Dialog([u for u in urls if u.startswith("http://")])
-r.root.mainloop()
 
 here = os.path.dirname(sys.argv[0])
 
@@ -286,6 +287,9 @@ try:
             print >> fp, ee, args
 
     tkMessageBox.showinfo(message="install.bat written")
+
+    r = Dialog([u for u in urls if u.startswith("http://")])
+    r.root.mainloop()
 
 except:
     raise
