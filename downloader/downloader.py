@@ -2,6 +2,9 @@ import Tkinter
 import tkFileDialog
 import tkMessageBox
 import Queue
+import glob
+import os
+import sys
 
 
 class ThreadsafeMeter(Tkinter.Frame):
@@ -117,20 +120,24 @@ class Downloader(threading.Thread):
         self.txt = txt
         self.done = False
         self.path = path
+        self.msg = None
 
     def run(self):
         value = 0.0
         self.widget.set(value, "wait for " + self.url)
 
         try:
-            r = urllib2.Request(self.url)
-            r.add_header("User-Agent", "Mozilla")
-            opener = urllib2.build_opener()
-            handler = opener.open(r)
-            #handler = urllib2.urlopen(self.url, data)
+            handler = urllib2.urlopen(self.url)
         except Exception, e:
-            print "opening "+self.url+" failed"
-            raise e
+            import traceback
+            msg = "opening %s failed" % self.url
+            msg += "\n\n"
+            msg += "-" * 60
+            msg += "\n\n"
+            msg += traceback.format_exc()
+            #tkMessageBox.showerror(msg)
+            self.msg = msg
+            return
         n = int(handler.headers["content-length"])
         count = 0 
         fp = open(self.path, "wb")
@@ -146,6 +153,7 @@ class Downloader(threading.Thread):
             self.done = True
         finally:
             fp.close()
+        self.msg = None
 
 
 class Dialog(object):
@@ -158,13 +166,13 @@ class Dialog(object):
         l = Label(root, text="""
         This is the eMZed download helper.
 
-        Please choose a target directory below for storing the downloaded
-        packages, we recommend to create a new empty folder for this.
+        Files will be downloaded to a temporary directory. You may
+        change this below.
 
-        To start the downloads pess "GO!".
+        To start the downloads press "GO!".
 
         You can close the dialog if all downloads are finished. For completing
-        the installlation of eMZed open the target folder and run the
+        the installation of eMZed open the target folder and run the
         downloaded files in numbered order.
         """).grid(row=0, columnspan=3)
 
@@ -172,7 +180,12 @@ class Dialog(object):
                 column=0, padx=10)
 
         home = os.environ.get("HOME") or os.environ.get("HOMEPATH")
-        self.targetdir = os.path.join(home, "Downloads")
+
+
+        import datetime, hashlib
+        randomized = hashlib.md5(str(datetime.datetime.now())).hexdigest()
+
+        self.targetdir = os.path.join(home, "tmp", "emzed_files_"+randomized)
         target = StringVar(value=self.targetdir)
         self.e = Entry(root, textvariable=target, width=80)
         self.e.grid(row=1, column=1, padx=0)
@@ -185,12 +198,12 @@ class Dialog(object):
 
         self.bars = []
         self.urls = urls
-        for i, (url, txt) in enumerate(urls):
-            bar = ThreadsafeMeter(root, width=500, value=0, text=txt)
+        for i, url in enumerate(urls):
+            bar = ThreadsafeMeter(root, width=500, value=0, text=url)
             bar.grid(row=i+3, columnspan=3, pady=2)
             self.bars.append(bar)
 
-        self.done = Button(root, text = "Close Dialog", command=self.quit)
+        self.done = Button(root, text = "Done", command=self.quit)
         self.done.grid(row=3+len(urls), pady = 5, columnspan = 3, padx=10, sticky=N+S+E+W)
         self.done.config(state=DISABLED)
 
@@ -215,10 +228,10 @@ class Dialog(object):
         self.choose["state"] = DISABLED
         self.root.update_idletasks()
         downloaders = []
-        for i, ((url, txt), bar) in enumerate(zip(self.urls, self.bars)):
+        for i, (url, bar) in enumerate(zip(self.urls, self.bars)):
             fname = urlparse.urlsplit(url).path.split("/")[-1]
             path = os.path.join(targetdir, "%03d_%s" % (i+1, fname))
-            d = Downloader(url, txt, bar, path)
+            d = Downloader(url, fname, bar, path)
             downloaders.append(d)
         for d in downloaders:
             d.start()
@@ -227,6 +240,11 @@ class Dialog(object):
         self.root.after(200, self.check_finished)
 
     def check_finished(self):
+
+        for d in self.downloaders:
+            if d.msg is not None:
+                tkMessageBox.showerror(message=d.msg)
+                d.msg = None
 
         if any(d.isAlive() for d in self.downloaders):
             self.root.after(200, self.check_finished)
@@ -241,11 +259,36 @@ class Dialog(object):
     def quit(self):
         self.root.quit()
 
+handler = urllib2.urlopen("http://emzed.ethz.ch/downloads/urls.txt")
+urls = [ url.strip() for url in handler]
+for url in urls:
+    print url
 
-r=Dialog([("http://cran.r-project.org/bin/windows/base/R-3.0.0-win.exe", "R 3.0.0"),
-          ("http://www.lfd.uci.edu/~gohlke/pythonlibs/tjapr7w8/numpy-MKL-1.7.1.win-amd64-py2.7.exe", "numpy 1.7.1"),
-          ("http://www.lfd.uci.edu/~gohlke/pythonlibs/tjapr7w8/scipy-0.12.0.win-amd64-py2.7.exe", "scipy 0.12.0"),
-          ("http://www.lfd.uci.edu/~gohlke/pythonlibs/tjapr7w8/matplotlib-1.2.1.win-amd64-py2.7.exe", "matplotlib 1.2.1"),
-          #("http://emzed.ethz.ch/index.html", "pyopenms"),
-          ])
+r = Dialog([u for u in urls if u.startswith("http://")])
 r.root.mainloop()
+
+here = os.path.dirname(sys.argv[0])
+
+fp = open(os.path.join(here, "install.bat"), "w")
+try:
+    for u in glob.glob(r.targetdir+"/*"):
+        print >> fp, u
+
+    ee = os.path.join(os.path.dirname(sys.executable), "Scripts", "easy_install.exe")
+    pip = os.path.join(os.path.dirname(sys.executable), "Scripts", "pip.exe")
+
+    for url in urls:
+        if url.startswith("pip"):
+            cmd , __, args = url.partition(" ")
+            print >> fp, pip, args
+        elif url.startswith("easy_install"):
+            cmd , __, args = url.partition(" ")
+            print >> fp, ee, args
+
+    tkMessageBox.showinfo(message="install.bat written")
+
+except:
+    raise
+finally:
+    fp.close()
+
