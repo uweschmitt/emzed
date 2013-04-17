@@ -114,7 +114,6 @@ For the current version of *eMZed* you need run the following instructions with
 * ``apt-get install libqt4-core libqt4-gui``
 * ``pip install guiqwt`` (tested with version 2.2.0)
 * ``pip install guidata`` (tested with version 1.5.0)
-* ``pip install guidata`` (tested with version 1.5.0)
 * ``pip install spyder==2.1.13`` 
 * ``pip install pyflakes``
 * ``pip install ipython``
