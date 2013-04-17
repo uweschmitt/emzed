@@ -116,7 +116,10 @@ For the current version of *eMZed* you need run the following instructions with
 * ``pip install guidata`` (tested with version 1.5.0)
 * ``pip install spyder==2.1.13`` 
 * ``pip install pyflakes``
-* ``pip install ipython``
+* ``pip uninstall ipython``
+* ``easy_install -m ipython==0.10``
+* ``easy_install -m ipython==0.13``
+
 
 * Open-MS 1.9: Download 
    * http://downloads.sourceforge.net/project/open-ms/OpenMS/OpenMS-1.9/OpenMS-1.9.0-Linux_64bit.deb
