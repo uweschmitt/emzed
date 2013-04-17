@@ -69,20 +69,6 @@ see :ref:`statistics_example` for example usage
 .. autofunction:: ms.kruskalWallisOnTables
 
 
-Online Feature Matching
-~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autofunction:: ms.matchMetlin
-
-   *table* needs ``polarity`` column. Example:
-
-.. pycon::
-   t = ms.toTable("mz", [291.1064, 583.22282])
-   t.addColumn("polarity", "-")
-   matched = ms.matchMetlin(t, "mz", 30)
-   matched.print_()
-
-
 Helpers
 ~~~~~~~
 

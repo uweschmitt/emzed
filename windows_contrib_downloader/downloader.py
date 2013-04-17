@@ -259,40 +259,51 @@ class Dialog(object):
     def quit(self):
         self.root.quit()
 
-handler = urllib2.urlopen("http://emzed.ethz.ch/downloads/urls.txt")
-urls = [ url.strip() for url in handler]
-fp = open("urls.txt", "w")
-for url in urls:
-    print url
-    print >> fp, url
-fp.close()
 
+def main():
 
-here = os.path.dirname(sys.argv[0])
-
-fp = open(os.path.join(here, "install.bat"), "w")
-try:
-    for u in glob.glob(r.targetdir+"/*"):
-        print >> fp, u
-
-    ee = os.path.join(os.path.dirname(sys.executable), "Scripts", "easy_install.exe")
-    pip = os.path.join(os.path.dirname(sys.executable), "Scripts", "pip.exe")
-
+    handler = urllib2.urlopen("http://emzed.ethz.ch/downloads/urls.txt")
+    urls = [ url.strip() for url in handler]
+    fp = open("urls.txt", "w")
     for url in urls:
-        if url.startswith("pip"):
-            cmd , __, args = url.partition(" ")
-            print >> fp, pip, args
-        elif url.startswith("easy_install"):
-            cmd , __, args = url.partition(" ")
-            print >> fp, ee, args
+        print url
+        print >> fp, url
+    fp.close()
 
-    tkMessageBox.showinfo(message="install.bat written")
+    here = os.path.dirname(sys.argv[0])
 
     r = Dialog([u for u in urls if u.startswith("http://")])
     r.root.mainloop()
 
+    fp = open(os.path.join(here, "install.bat"), "w")
+    try:
+        for u in glob.glob(r.targetdir+"/*"):
+            print >> fp, u
+
+        ee = os.path.join(os.path.dirname(sys.executable), "Scripts", "easy_install.exe")
+        pip = os.path.join(os.path.dirname(sys.executable), "Scripts", "pip.exe")
+
+        for url in urls:
+            if url.startswith("pip"):
+                cmd , __, args = url.partition(" ")
+                print >> fp, pip, args
+            elif url.startswith("easy_install"):
+                cmd , __, args = url.partition(" ")
+                print >> fp, ee, args
+
+        tkMessageBox.showinfo(message="install.bat written")
+
+
+    except:
+        raise
+    finally:
+        fp.close()
+#
+try:
+    main()
 except:
-    raise
-finally:
-    fp.close()
+    import traceback
+    traceback.print_exc()
+    print
+    raw_input("press ENTER to close window")
 

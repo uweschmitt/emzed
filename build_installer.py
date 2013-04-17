@@ -17,7 +17,7 @@ files="""
     config_logger.py configs.py convert_universals.py emzed_files/
     installConstants.py mass.py splash.png  userConfig.py
     version.py
-    tables spyderlib/ """.split()
+    tables""".split()
 
 
 def split(path):
@@ -82,6 +82,4 @@ except:
     pass
 
 shutil.copyfile("version.py", "installer_files/version.py")
-buildZipFile(emzedzip, ["README", "installer.py", "install.bat", "License.txt", emzed_files, "version.py"], prefixpath="emzed_"+version, relocate_path="installer_files")
-
-
+buildZipFile(emzedzip, ["README", "installer.py", "License.txt", emzed_files, "version.py"], prefixpath="emzed_"+version, relocate_path="installer_files")

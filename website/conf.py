@@ -27,8 +27,13 @@ import sys, os
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 sys.path.insert(0, "..")
 sys.path.insert(0, ".")
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest',
-'sphinx.ext.viewcode', 'pycon', 'sphinxcontrib.googleanalytics', 'sphinxcontrib.spelling'][:-1]
+extensions = ['sphinx.ext.autodoc',
+              'sphinx.ext.doctest',
+              'sphinx.ext.viewcode',
+              'pycon',
+              'sphinxcontrib.googleanalytics',
+              #'sphinxcontrib.spelling'
+              ]
 
 
 googleanalytics_id = 'UA-38620590-1'

@@ -2,10 +2,16 @@ from Tkinter import *
 import tkFileDialog, tkMessageBox
 import _winreg
 import os
-
-from win32com.client import Dispatch
-
+import traceback
 from version import version
+
+
+try:
+    from win32com.client import Dispatch
+
+except:
+    tkMessageBox.showwarning(message=traceback.format_exc())
+    raise
 
 def getLocalUserShellFolders():
     return _winreg.OpenKey(_winreg.HKEY_CURRENT_USER,
@@ -177,27 +183,31 @@ to this folder and not to a capsulated subfolder:"""
         self.path.config(state=state)
 
 
-import sys
-assert sys.platform.startswith("win")
+try:
+    import sys
+    assert sys.platform.startswith("win")
 
-root = Tk()
-app = App(root)
-root.mainloop()
+    root = Tk()
+    app = App(root)
+    root.mainloop()
 
-if app.targetDir is None:
-    exit()
+    if app.targetDir is None:
+        exit()
 
-import zipfile
-from version import version
+    import zipfile
+    from version import version
 
-emzed_files="emzed_files_%s.zip" % version
-f = zipfile.ZipFile(emzed_files)
-print "extract to", app.targetDir
-f.extractall(app.targetDir)
+    emzed_files="emzed_files_%s.zip" % version
+    f = zipfile.ZipFile(emzed_files)
+    print "extract to", app.targetDir
+    f.extractall(app.targetDir)
 
-import compileall
-compileall.compile_dir(app.targetDir)
+    import compileall
+    compileall.compile_dir(app.targetDir)
 
+except:
+    tkMessageBox.showwarning(message=traceback.format_exc())
+    raise
 
 def createLink(path, name):
     shell = Dispatch("WScript.Shell")
@@ -216,10 +226,9 @@ try:
     createLink(getCommonDesktop(), "emzed %s.lnk" % version)
     createLink(getCommonPrograms(), "emzed %s.lnk" % version)
 except:
-    createLink(getPersonalDesktop(), "emzed %s.lnk" % version)
-    createLink(getPersonalPrograms(), "emzed %s.lnk" % version)
-
-
-
-
-
+    try:
+        createLink(getPersonalDesktop(), "emzed %s.lnk" % version)
+        createLink(getPersonalPrograms(), "emzed %s.lnk" % version)
+    except:
+        tkMessageBox.showwarning(message=traceback.format_exc())
+        raise
