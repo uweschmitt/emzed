@@ -49,8 +49,8 @@ def install_emzed(user_ns=None):
     for python_file in sorted(glob.glob(pattern)):
 
         #####################################
-        print "SKIP LOADING STARTUP"
-        break
+        #print "SKIP LOADING STARTUP"
+        #break
         #####################################
 
         print "STARTUP, EXE", python_file

@@ -17,7 +17,7 @@ def _multitryread(req):
             import traceback
             traceback.print_exc()
             print
-            print "REQUEST FAILED:"
+            print "TRIAL", trial+1, "OUT OF FOUR. REQUEST FAILED:"
             print "full url:   ", req.get_full_url()
             print "headers :   ", req.headers
             print "data    :   ", req.get_data()
