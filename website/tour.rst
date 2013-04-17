@@ -370,18 +370,6 @@ an index is done by sorting the corresponding column:
     ms.inspect(matched)  !noexec
 
 
-Another way to identify compounds is to use the *Metlin* web page which
-provides a form for running queries against the database. This access is
-automated:
-
-
-.. pycon::
-
-    common.addColumn("polarity", "-") # metlin needs this
-    matched2 = ms.matchMetlin(common, "m0", ppm=15)
-    matched2.print_()
-    ms.inspect(matched2) !noexec
-
 
 .. _chemistry_example:
 
