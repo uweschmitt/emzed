@@ -25,7 +25,7 @@ import re
 ORIGINAL_SYS_EXIT = sys.exit
 
 import pkg_resources
-pkg_resources.require("spyder>=0.2.13")
+pkg_resources.require("spyder==2.1.13")
 
 if sys.platform == "win32":
     # on windows spyder only unses all features of variable explorer
