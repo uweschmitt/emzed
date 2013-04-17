@@ -113,7 +113,9 @@ from spyderlib.qt.compat import (from_qvariant, getopenfilename,
 # when PySide is selected by the QT_API environment variable and when PyQt4 
 # is also installed (or any other Qt-based application prepending a directory
 # containing incompatible Qt DLLs versions in PATH):
-from spyderlib.qt import QtSvg  # analysis:ignore
+
+if sys.platform == "win32":
+    from spyderlib.qt import QtSvg  # analysis:ignore
 
 # Local imports
 from spyderlib import __version__, __project_url__, __forum_url__
