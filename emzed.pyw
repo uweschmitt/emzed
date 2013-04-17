@@ -69,7 +69,10 @@ spyder_app_patches.patch_spyder()
 # any butch, but only set the workingdirectory directly.
 # at later startup spyder chooses last used working dir.
 import userConfig
-os.chdir(userConfig.getDataHome())
+home = userConfig.getDataHome()
+if not os.path.exists(home):
+    os.makedirs(home)
+os.chdir(home)
 from version import version as emzed_version
 try:
     import pyopenms
@@ -980,7 +983,6 @@ class MainWindow(QMainWindow):
         import time
         while (time.time()-self.splash_started) < 2.0:
             time.sleep(0.1)
-            self.debug_print("wait..")
         self.splash.hide()
         
         # Enabling tear off for all menus except help menu
