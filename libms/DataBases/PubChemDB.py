@@ -1,34 +1,14 @@
-import pdb
-import urllib, urllib2, httplib
+import requests
 import time, os, sys
 import xml.etree.ElementTree  as etree
 from ..DataStructures.Table import Table
 from ..Chemistry.Tools import monoisotopicMass
 
-import logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-
-
-def _multitryread(req):
-    for trial in range(4):
-        try:
-            return urllib2.urlopen(req).read()
-        except (urllib2.URLError, httplib.IncompleteRead) as e:
-            import traceback
-            traceback.print_exc()
-            print
-            print "TRIAL", trial+1, "OUT OF FOUR. REQUEST FAILED:"
-            print "full url:   ", req.get_full_url()
-            print "headers :   ", req.headers
-            print "data    :   ", req.get_data()
-            print
-    return None
-
 
 class PubChemDB(object):
 
-    colNames = ["m0", "mw", "cid", "mf", "iupac", "synonyms", "url", "is_in_kegg",
-                "is_in_hmdb"]
+    colNames = ["m0", "mw", "cid", "mf", "iupac", "synonyms", "url",
+            "is_in_kegg", "is_in_hmdb"]
     colTypes = [float, float, int, str, str, str, str, int, int ]
     colFormats=["%.6f", "%.6f", "%s", "%s", "%s", None, "%s", "%d", "%d" ]
 
@@ -41,12 +21,10 @@ class PubChemDB(object):
                     tool="emzed",
                     email="tools@emzed.ethz.ch",
                     )
-        req = urllib2.Request(url, urllib.urlencode(data))
-        data = _multitryread(req)
-        if data is None:
-            print "FAILED TO CONNECT"
-            return 0
-        doc = etree.fromstring(data)
+        r = requests.get(url, params=data)
+        if r.status_code != 200:
+            raise Exception("request %s failed.\nanswer : %s" % (r.url, r.text))
+        doc = etree.fromstring(r.text)
         counts = doc.findall("Count")
         assert len(counts)==1
         count = int(counts[0].text)
@@ -68,12 +46,10 @@ class PubChemDB(object):
                     usehistory="Y"
                     )
         url="http://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
-        req = urllib2.Request(url, urllib.urlencode(data))
-        data = _multitryread(req)
-        if data is None:
-            print "FAILED TO CONNECT"
-            return []
-        doc = etree.fromstring(data)
+        r = requests.get(url, params=data)
+        if r.status_code != 20200:
+            raise Exception("request %s failed.\nanswer : %s" % (r.url, r.text))
+        doc = etree.fromstring(r.text)
         if not doc.findall("IdList"):
             raise Exception("Pubchem returned data in unknown format")
         idlist = [int(id_.text) for id_ in  doc.findall("IdList")[0].findall("Id")]
@@ -88,8 +64,10 @@ class PubChemDB(object):
                     version="2.0"
                     )
         url="http://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi"
-        req = urllib2.Request(url, urllib.urlencode(data))
-        return _multitryread(req)
+        r = requests.get(url, params=data)
+        if r.status_code != 200:
+            raise Exception("request %s failed.\nanswer : %s" % (r.url, r.text))
+        return r.text
 
     @staticmethod
     def _parse_data(data, keggIds=None, humanMBdbIds=None):
@@ -110,15 +88,8 @@ class PubChemDB(object):
                 value = type_(text)
                 dd[colName] = value
 
-            #cid_element = summary.find("CID")
-            #cid_text = cid_element.
-            #cid = int(summary.find("CID").text)
-            #mw = float(summary.find("MolecularWeight").text)
-            #mf = summary.find("MolecularFormula").text
-            #iupac = summary.find("IUPACName").text
             synonyms = ";".join(t.text for t in summary.find("SynonymList"))
             dd["synonyms"] = synonyms
-            #d = dict(cid=cid, mw=mw, mf=mf, iupac=iupac, synonyms=synonyms)
             dd["is_in_kegg"]=dd["cid"] in (keggIds or [])
             dd["is_in_hmdb"]=dd["cid"] in (humanMBdbIds or [])
             items.append(dd)
@@ -182,7 +153,6 @@ class PubChemDB(object):
             return unknown, missing
         except Exception, e:
             import traceback; traceback.print_exc()
-            logging.error(e)
             return [], [] # failed
 
     def reset(self):
@@ -198,7 +168,6 @@ class PubChemDB(object):
             self._update(maxIds)
         except Exception, e:
             import traceback; traceback.print_exc()
-            logging.error(e)
 
 
     def _update(self, maxIds):
