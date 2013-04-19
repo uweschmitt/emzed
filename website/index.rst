@@ -6,6 +6,16 @@
 Welcome to eMZed
 ----------------
 
+Latest news
+~~~~~~~~~~~
+
+* 19. April 2013: simplified installation on Linux.
+
+* 17. April 2013: released *eMZed* 1.3.0 
+
+* 14. April 2013: *eMZed* runs now on 64 bit Windows 7
+
+
 Website Navigation
 ~~~~~~~~~~~~~~~~~~
 
