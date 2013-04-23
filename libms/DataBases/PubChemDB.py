@@ -47,7 +47,7 @@ class PubChemDB(object):
                     )
         url="http://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
         r = requests.get(url, params=data)
-        if r.status_code != 20200:
+        if r.status_code != 200:
             raise Exception("request %s failed.\nanswer : %s" % (r.url, r.text))
         doc = etree.fromstring(r.text)
         if not doc.findall("IdList"):
