@@ -4,3 +4,4 @@
 */*.mz* -crlf
 *.png -crlf
 */*.png -crlf
+*/*.txt -crlf
