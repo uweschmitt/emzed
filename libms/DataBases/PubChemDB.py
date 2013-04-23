@@ -164,11 +164,7 @@ class PubChemDB(object):
         return monoisotopicMass(table.get(row, "mf"))
 
     def update(self, maxIds=None):
-        try:
             self._update(maxIds)
-        except Exception, e:
-            import traceback; traceback.print_exc()
-
 
     def _update(self, maxIds):
 

@@ -199,11 +199,20 @@ on Windows platforms (only IPython v0.10 is fully supported).
             pass
 
     if ip:
+        
+        try:
+            ip.magic('config PromptManager.in_template = "EMZED_DEVELOP\\nIn [\\#]:"')
+        except:
+            pass
         for name in ["e", "pi", "path"]:
             try:
                 ip.ex("del %s" % name)
             except:
                 pass
+    try:
+        __ipythonshell__.magic('config PromptManager.in_template = "EMZED_DEVELOP\\nIn [\\#]:"')    
+    except:
+        pass
     __ipythonshell__.mainloop()
 
     ###########################################################################
