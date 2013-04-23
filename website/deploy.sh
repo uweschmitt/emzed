@@ -13,6 +13,6 @@ if [ $platform = 'linux2' ]; then
         echo;
     fi;
 else
-    echo "not implmented, need  test for mounted drive on cygwin"
-    #cp -v -R . //mickey.ethz.ch/mz$
+    #echo "not implmented, need  test for mounted drive on cygwin"
+    cp -v -R . //mickey.ethz.ch/mz$
 fi;

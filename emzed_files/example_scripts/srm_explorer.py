@@ -19,7 +19,7 @@ def process_srm_data(peakmap, n_digits):
     # a specific row.
     flattened_tables = [flatten(t) for t in tables]
 
-    # Concatenate all theses one row table to one big result table:
+    # Concatenate all these one row table to one big result table:
     merged =  ms.mergeTables(flattened_tables)
 
     # For later visual inspection with the table explorer a title is helpful.
@@ -37,16 +37,16 @@ def split_srm_peakmap_to_tables(peakmap, n_digits=2):
     n_digits is the precision of the precursor m/z values.
 
     Detecting the peaks does not use a peak detector as centWave, but uses
-    known rt and mz ranges to fit a chromatogram to the underlying raw peaks.
-    This avoids cumbersome parameter optimization of a peak detector and
-    returns all peaks irrespective of filtering according to some heuristic
-    criterion for peak quality.
+    mz ranges to fit a EMG model to the underlying raw peaks m/z traces. This avoids
+    cumbersome parameter optimization of a peak detector and returns all peaks
+    irrespective of filtering according to some heuristic criterion for peak
+    quality.
     """
 
     result = []
     ms2_maps = peakmap.splitLevelN(2, n_digits)
 
-    # resolution according to n_digits:
+    # half resolution according to n_digits:
     delta_mz = 0.5 * (0.1)**n_digits
 
     for pre_mz, ms2_map in ms2_maps:
