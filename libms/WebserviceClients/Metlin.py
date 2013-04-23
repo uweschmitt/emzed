@@ -1,74 +1,84 @@
 #encoding:latin-1
-import urllib, urllib2
-import re
-import csv
-import cStringIO
+import requests
+import urllib2
+import userConfig
+from collections import OrderedDict
 
 from ..DataStructures.Table import Table
 
-rootUrl = "http://metlin.scripps.edu/"
-batchUrl = "http://metlin.scripps.edu/metabo_batch_list.php"
-batchSize = 200
-
-# inputmass is str ! so we can match later without floating
-# points accuracy issues.
-_defaultTypes  = dict(inputmass = str, mass=float, dppm=float)
-_defaultFormats = dict(molid = "%s", inputmass="%s", adduct="%s",
-                       mass = "%.6f", dppm="%f")
 
 class MetlinMatcher(object):
 
-    @staticmethod
-    def _query(masses, ppm, polarity):
-        for m in masses:
-            assert isinstance(m, str), "masses must be passed as strings"
-        dd = dict()
-        dd["masses"] =  ",".join(masses)
-        dd["ppm"] = ppm
-        dd["modes"] = 1
-        sign = { "+": " ", "-": "-" }[polarity]
-        adducts =  ["M%sH" % sign, "M%s2H" % sign]
-        dd["formVar"]=",".join(adducts)
-        data = dd.items()
-        for add in adducts:
-            data.append(("adducts", add))
-        resp = urllib2.urlopen(batchUrl, urllib.urlencode(data))
-        urlMatcher=re.search("temp/csv/batch\d+.csv", resp.read())
-        assert urlMatcher is not None
-        pathToCsv = urlMatcher.group()
-        result = urllib.urlopen(rootUrl+pathToCsv)
-        reader = csv.reader(cStringIO.StringIO(result.read()).readlines())
-        header = reader.next()
-        rows = list(reader)
-        return header, rows
+    col_names = [ "formula", "mass", "name", "molid"]
+    col_types = [ str, float, str, int]
+    col_formats = [ "%s", "%.5f", "%s", "%d" ]
+
+    batch_size = 90 # should be 500 as metlin promises, but this is false
+
+    # the REST webserive of METLIN returns a result set which does not explain
+    # which combination of theoretical mass and adduct results in a match,
+    # which is not what we want.  eg one gets the same result set for
+    # masses=[195.0877, 194.07904], adducts=["M"] and for masses=[195.0877],
+    # adducts = ["M", "M+H"]
+    # so we start a separate query for mass and each adduct !
 
     @staticmethod
-    def query(masses, ppm, polarity):
-        raise NotImplementedError("metlin webservie changed interface")
-        allRows = []
-        header = None
-        for startIdx in range(0, len(masses), batchSize):
-            massSlice = masses[startIdx:startIdx+batchSize]
-            h, rows = MetlinMatcher._query(massSlice, ppm, polarity)
-            if len(h) and len(h[0]):
-                header = h
-            allRows.extend(rows)
+    def _query(masses, adduct, ppm):
 
-        if header is None:
-            return None
+        token = userConfig.getMetlinToken()
 
-        colNames = [re.sub(" +", "_", h) for h in  header]
-        colNames = [re.sub("_+", "_", h) for h in  colNames]
-        colTypes = [ _defaultTypes.get(n, str) for n in colNames ]
-        colFormats = [ _defaultFormats.get(n, "%s") for n in colNames ]
-        transformedRows = []
-        for row in allRows:
-            if len(row) >0 :
-                row = [ t(v) for t,v in zip(colTypes, row) ]
-                transformedRows.append(row)
-        return Table(colNames, colTypes, colFormats, transformedRows,
-                     title="metlin")
+        url = "http://metlin.scripps.edu/REST/search/index.php"
+        params = OrderedDict()
+        params["token"] = token # "DqeN7qBNEAzVNm9n"
+        params["mass[]"] = masses
+        params["adduct[]"] = [adduct]
+        params["tolunits"] = "ppm"
+        params["tolerance"] = ppm
 
+        #r = requests.post(url, data=params)
+        r = requests.get(url, params=params)
+        #print r
+        #print urllib2.unquote(r.url)
+        #print r.status_code
+        if r.status_code != 200:
+            raise Exception("matlin query %s failed: %s" %
+                                              (urllib2.unquote(r.url), r.text))
+
+        j = r.json()
+        # TODO: token via config + fehlermeldung falls nicht vorhanden
+        # TODO: requests module in setup !?
+
+        # TODO: aksFor... udn DialogBUilder: pathes nach latin-1 encoden ?
+        # oder: fuer unicode tabellenspaltentyp kein "type=None" ?
+
+        col_names = MetlinMatcher.col_names
+        col_types = MetlinMatcher.col_types
+        col_formats = MetlinMatcher.col_formats
+        tables = []
+        for m_z, ji in zip(masses, j):
+            rows = []
+            for jii in ji:
+                rows.append([t(jii[n]) for t, n in zip(col_types, col_names)])
+
+            if rows:
+                ti = Table(col_names, col_types, col_formats, rows[:])
+                ti.addColumn("m_z", m_z, insertBefore=0)
+                ti.addColumn("adduct", adduct, insertBefore=1)
+                tables.append(ti)
+        return tables
+
+    @staticmethod
+    def query(masses, adducts, ppm):
+        all_tables = []
+        for adduct in adducts:
+            for i0 in range(0, len(masses), MetlinMatcher.batch_size):
+                mass_slice = masses[i0:i0 + MetlinMatcher.batch_size]
+                tables = MetlinMatcher._query(mass_slice, adduct, ppm)
+                all_tables.extend(tables)
+        result_table = all_tables[0]
+        result_table.append(all_tables[1:])
+
+        return result_table
 
 
 

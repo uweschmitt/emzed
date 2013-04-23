@@ -11,15 +11,24 @@ class _GlobalConfig(object):
             os.makedirs(emzedFolder)
         self.configFilePath=os.path.join(emzedFolder, "global.ini")
         if not os.path.exists(self.configFilePath):
+            self.exchangeFolder = None
+            self.metlinToken = None
             self.editConfig()
-            self.saveConfig()
         else:
             p = ConfigParser.ConfigParser()
             p.readfp(open(self.configFilePath))
             self.exchangeFolder = p.get("DEFAULT", "exchange_folder")
+            self.metlinToken = p.get("DEFAULT", "metlin_token")
 
     def getExchangeFolder(self):
         return self.exchangeFolder
+
+    def getMetlinToken(self):
+        return self.metlinToken
+
+    def setMetlinToken(self, token):
+        self.metlinToken = token
+        self.saveConfig()
 
     def editConfig(self):
         import guidata
@@ -44,18 +53,38 @@ class _GlobalConfig(object):
                 Please provide a global exchange folder for databases,
                 scripts and configs shared among your lab.
 
-                If you do not have such an exchange folder, just click 'Ok'.
+                If you do not have such an exchange folder, leave the
+                field empty.
+
+                You need a metlin token for accessing the metlin
+                web service. To register for this token go to
+
+                    http://metlin.scripps.edu/soap/register.php
+
+                You can leave this field empty.
+
+                If you want to modify these values later, enter
+
+                >>> import userConfig
+                >>> userConfig.setMetlinToken("....")
+
             """
-            exchangeFolder = di.DirectoryItem("Global exchange folder:", notempty=False)
+            exchangeFolder = di.DirectoryItem("Global exchange folder:",
+                    notempty=False, default=self.exchangeFolder or "")
+            metlinToken = di.StringItem("Metlin token:",
+                    default = self.metlinToken or "")
 
         dlg = ConfigEditor()
         dlg.edit()
         self.exchangeFolder = dlg.exchangeFolder
+        self.metlinToken = dlg.metlinToken
         di.DirectoryItem.check_value = di.DirectoryItem._check_value
+        self.saveConfig()
 
     def saveConfig(self):
         p = ConfigParser.ConfigParser()
         p.set("DEFAULT", "exchange_folder", self.exchangeFolder or "")
+        p.set("DEFAULT", "metlin_token", self.metlinToken or "")
         p.write(open(self.configFilePath, "w"))
 
 
@@ -122,6 +151,12 @@ def getExchangeFolder():
     if not os.path.exists(exchangeFolder):
         os.makedirs(exchangeFolder)
     return exchangeFolder
+
+def getMetlinToken():
+    return _GlobalConfig().getMetlinToken()
+
+def setMetlinToken(token):
+    return _GlobalConfig().setMetlinToken(token)
 
 def getRLibsFolder():
     root = getExchangeFolder()
