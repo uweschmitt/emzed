@@ -14,8 +14,8 @@ def testIntegration():
     # in None values for ms.integrate generated columns
     ftr = ms.integrate(ft, "trapez")
     assert len(ftr) == len(ft)
-    assert "area" in ftr.colNames
-    assert "rmse" in ftr.colNames
+    assert "area" in ftr.getColNames()
+    assert "rmse" in ftr.getColNames()
     assert ftr.area.values[0] > 0, ftr.area.values[0]
     assert ftr.rmse.values[0] >= 0, ftr.rmse.values[0]
     assert ftr.params.values[0] is not None
@@ -38,12 +38,12 @@ def testIntegration():
     ftr = ms.integrate(ft, "trapez")
     ftr.info()
     assert len(ftr) == len(ft)
-    assert "area" in ftr.colNames
-    assert "rmse" in ftr.colNames
-    assert "area__0" in ftr.colNames
-    assert "rmse__0" in ftr.colNames
-    assert "areaX" in ftr.colNames
-    assert "rmseX" in ftr.colNames
+    assert "area" in ftr.getColNames()
+    assert "rmse" in ftr.getColNames()
+    assert "area__0" in ftr.getColNames()
+    assert "rmse__0" in ftr.getColNames()
+    assert "areaX" in ftr.getColNames()
+    assert "rmseX" in ftr.getColNames()
 
     assert ftr.area.values[0] is None
     assert ftr.rmse.values[0] is None

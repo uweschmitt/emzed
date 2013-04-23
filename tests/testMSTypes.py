@@ -1,5 +1,6 @@
-from libms.DataStructures.MSTypes import *
-from pyOpenMS import *
+from libms.DataStructures.MSTypes import PeakMap, Spectrum
+from pyopenms import (FileHandler, Precursor, MSExperiment,
+                      InstrumentSettings, Polarity)
 import numpy as np
 import os.path
 def exceptionwrapper(fun):
@@ -24,6 +25,7 @@ class TestMSTypes(object):
         pc.setIntensity(100)
         s0 = exp[0]
         s0.setPrecursors([pc])
+        s0.setMSLevel(2)
         spec = Spectrum.fromMSSpectrum(s0)
         settings = InstrumentSettings()
         settings.setPolarity(Polarity.POSITIVE)
@@ -39,13 +41,13 @@ class TestMSTypes(object):
         assert os.path.basename(pm.meta["source"]) ==  basename
 
         rtmin, rtmax = pm.rtRange()
-        ms1s = pm.ms1Peaks(rtmin, rtmax)
+        ms1s = pm.msNPeaks(1, rtmin, rtmax)
         assert ms1s.shape == (1797, 2), ms1s.shape
 
-        ms1s2 = pm.ms1Peaks(rtmax=rtmax)
+        ms1s2 = pm.msNPeaks(1, rtmax=rtmax)
         assert np.all(ms1s == ms1s2)
 
-        ms1s3 = pm.ms1Peaks(rtmin=0)
+        ms1s3 = pm.msNPeaks(1, rtmin=0)
         assert np.all(ms1s == ms1s3)
 
         spec = pm.spectra[0]
@@ -124,7 +126,7 @@ class TestMSTypes(object):
         pm.spectra[0].polarity = "+"
         pm.spectra[1].polarity = "-"
 
-        pm = PeakMap(pm.spectra) 
+        pm = PeakMap(pm.spectra)
         mz = pm.representingMzPeak(0, 99999, 0, 99999)
         assert abs(mz-831.86538) < 0.00001
 
@@ -134,10 +136,10 @@ class TestMSTypes(object):
         assert pm.extract(0, 9999, 0, 10000).spectra == []
         assert pm.filter(lambda t: True).spectra == []
         assert pm.specsInRange(0, 10e6) == []
-        assert pm.levelOneSpecsInRange(0, 10e6) == []
+        assert pm.levelNSpecsInRange(1, 0, 10e6) == []
         assert pm.chromatogram(0, 10e6, 0, 10e6) == ([], [])
         assert pm.chromatogram(0, 10e6) == ([], [])
-        assert pm.ms1Peaks(0, 10e6).tolist() == []
+        assert pm.msNPeaks(1, 0, 10e6).tolist() == []
         assert pm.allRts() == []
         assert pm.levelOneRts() == []
         assert pm.levelNSpecs(1,2) == []
@@ -158,7 +160,7 @@ class TestMSTypes(object):
         assert spec.precursors == [ (1.0, 100) ], spec.precursors
         assert spec.polarity == "+"
 
-        assert len(spec) == s0.size() 
+        assert len(spec) == s0.size()
 
 
     def testIntensityInRange(self):

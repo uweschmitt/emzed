@@ -12,6 +12,6 @@ def setup():
 
 def teardown():
     print "package teardown"
-    shutil.rmtree("temp_output", ignore_errors=True)
+    #shutil.rmtree("temp_output", ignore_errors=True)
 
 

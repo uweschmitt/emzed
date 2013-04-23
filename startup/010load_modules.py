@@ -1,8 +1,8 @@
-print "LOAD NAMESPACE libms"
+print "LOAD libms"
 import libms
-print "LOAD NAMESPACE ms"
+print "LOAD ms"
 import ms
-print "LOAD NAMESPACE batches"
+print "LOAD batches"
 import batches
 print
 import db

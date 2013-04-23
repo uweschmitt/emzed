@@ -12,7 +12,7 @@ def testPoseClustering():
     def shift(t, col):
         ix = t.getIndex(col)
         for r in t.rows:
-            r[ix] += 2.0
+            r[ix] += 2.0 + 0.1 * r[ix] - 0.005 * r[ix]*r[ix]
 
     shift(ft2, "rt")
     shift(ft2, "rtmin")
@@ -24,23 +24,23 @@ def testPoseClustering():
     for pm in pms:
         for spec in pm.spectra:
             pmrtsbefore.append(spec.rt)
-            spec.rt += 2.0
+            spec.rt += 2.0 + 0.1 * spec.rt - 0.005 * spec.rt * spec.rt
 
     # delete one row, so ft should become reference map !
     del ft2.rows[-1]
 
     ftneu, ft2neu = ms.rtAlign([ft,ft2], refTable=ft, destination="temp_output", nPeaks=9999,
-                                          numBreakpoints=2)
+                                          numBreakpoints=5)
 
     check(ft, ft2, ftneu, ft2neu)
 
     ft2neu, ftneu = ms.rtAlign([ft2,ft], refTable=ft, destination="temp_output", nPeaks=9999,
-                                          numBreakpoints=2)
+                                          numBreakpoints=5)
 
     check(ft, ft2, ftneu, ft2neu)
 
     ftneu, ft2neu = ms.rtAlign([ft,ft2], destination="temp_output", nPeaks=9999,
-                                          numBreakpoints=2)
+                                          numBreakpoints=5)
 
     check(ft, ft2, ftneu, ft2neu)
 
@@ -62,9 +62,11 @@ def check(ft, ft2, ftneu, ft2neu):
 
     # now ftneu and ft2neu should be very near.
     # remenber: ft2 has not as much rows as ft, so:
-    assert np.linalg.norm(getrt(ft2neu, "rt") - getrt(ftneu, "rt")[:-1]) < 1e-6
-    assert np.linalg.norm(getrt(ft2neu, "rtmin") - getrt(ftneu, "rtmin")[:-1]) < 1e-6
-    assert np.linalg.norm(getrt(ft2neu, "rtmax") - getrt(ftneu, "rtmax")[:-1]) < 1e-6
+    assert np.linalg.norm(getrt(ft2neu, "rt") - getrt(ftneu, "rt")[:-1]) < 1e-4
+
+    assert  max(abs(getrt(ft2neu, "rtmin")- getrt(ftneu, "rtmin")[:-1])) < 0.2
+
+    assert  max(abs(getrt(ft2neu, "rtmax")[:-1] - getrt(ftneu, "rtmax")[:-2])) < 1e-3
 
     def getrtsfrompeakmap(table):
         pms = set(table.get(row, "peakmap") for row in table.rows)
@@ -72,7 +74,7 @@ def check(ft, ft2, ftneu, ft2neu):
         pm = pms.pop()
         return np.array([ spec.rt for spec in pm.spectra])
 
-    assert np.linalg.norm(getrtsfrompeakmap(ft2neu)-getrtsfrompeakmap(ftneu))<1e-4
+    assert max(abs(getrtsfrompeakmap(ft2neu)- getrtsfrompeakmap(ftneu))) < 1
 
     ex = None
     try:

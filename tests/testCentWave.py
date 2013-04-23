@@ -10,6 +10,6 @@ def testCentwaveFeatureDetector():
     assert det.__doc__ != None
     table = det.process(ds)
     assert len(table) == 17, len(table)
-    assert len(table.colNames) ==  16, len(table.colNames)
-    assert len(table.colTypes) ==  16, len(table.colTypes)
-    assert "polarity" in table.colNames
+    assert len(table.getColNames()) ==  16, len(table.getColNames())
+    assert len(table.getColTypes()) ==  16, len(table.getColTypes())
+    assert "polarity" in table.getColNames()

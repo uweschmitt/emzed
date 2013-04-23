@@ -6,8 +6,7 @@ import functools
 class _GlobalConfig(object):
 
     def __init__(self):
-        appRoot = getAppDataFolder()
-        emzedFolder = os.path.join(appRoot, "emzed")
+        emzedFolder = getEmzedFolder()
         if not os.path.exists(emzedFolder):
             os.makedirs(emzedFolder)
         self.configFilePath=os.path.join(emzedFolder, "global.ini")
@@ -97,6 +96,12 @@ def getAppDataFolder():
 def getLocalAppDataFolder():
     key = userShellFolderKey()
     return _query(key, "Local AppData")
+
+def getEmzedFolder():
+    if sys.platform == "win32":
+        return os.path.join(getAppDataFolder(), "emzed")
+    else:
+        return os.path.join(getAppDataFolder(), ".emzed")
 
 
 def getDataHome():

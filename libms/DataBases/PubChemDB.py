@@ -1,3 +1,4 @@
+import pdb
 import urllib, urllib2, httplib
 import time, os, sys
 import xml.etree.ElementTree  as etree
@@ -16,7 +17,7 @@ def _multitryread(req):
             import traceback
             traceback.print_exc()
             print
-            print "REQUEST FAILED:"
+            print "TRIAL", trial+1, "OUT OF FOUR. REQUEST FAILED:"
             print "full url:   ", req.get_full_url()
             print "headers :   ", req.headers
             print "data    :   ", req.get_data()
@@ -94,19 +95,33 @@ class PubChemDB(object):
     def _parse_data(data, keggIds=None, humanMBdbIds=None):
         doc = etree.fromstring(data)
         items = []
-        for summary in doc[0]:
+        for summary in doc[0].findall("DocumentSummary"):
             if len(summary.findall("error")):
                 print "RETRIEVAL FOR ID=%s FAILED" % (summary.attrib.get("uid"))
                 continue
-            cid = int(summary.findall("CID")[0].text)
-            mw = float(summary.findall("MolecularWeight")[0].text)
-            mf = summary.findall("MolecularFormula")[0].text
-            iupac = summary.findall("IUPACName")[0].text
-            synonyms = ";".join(t.text for t in summary.findall("SynonymList")[0])
-            d = dict(cid=cid, mw=mw, mf=mf, iupac=iupac, synonyms=synonyms)
-            d["is_in_kegg"]=cid in (keggIds or [])
-            d["is_in_hmdb"]=cid in (humanMBdbIds or [])
-            items.append((mw, d))
+
+            dd = dict()
+            for name, type_, colName in [ ("CID", int, "cid"),
+                                          ("MolecularWeight", float, "mw"),
+                                          ("MolecularFormula", str, "mf"),
+                                          ("IUPACName", str, "iupac")]:
+                element = summary.find(name)
+                text = element.text
+                value = type_(text)
+                dd[colName] = value
+
+            #cid_element = summary.find("CID")
+            #cid_text = cid_element.
+            #cid = int(summary.find("CID").text)
+            #mw = float(summary.find("MolecularWeight").text)
+            #mf = summary.find("MolecularFormula").text
+            #iupac = summary.find("IUPACName").text
+            synonyms = ";".join(t.text for t in summary.find("SynonymList"))
+            dd["synonyms"] = synonyms
+            #d = dict(cid=cid, mw=mw, mf=mf, iupac=iupac, synonyms=synonyms)
+            dd["is_in_kegg"]=dd["cid"] in (keggIds or [])
+            dd["is_in_hmdb"]=dd["cid"] in (humanMBdbIds or [])
+            items.append(dd)
         return items
 
 
@@ -147,8 +162,8 @@ class PubChemDB(object):
             self.table = self._emptyTable()
 
     def _emptyTable(self):
-        return Table(self.colNames, self.colTypes, self.colFormats,[],
-                          "PubChem")
+        return Table(PubChemDB.colNames, PubChemDB.colTypes,
+                     PubChemDB.colFormats, [], "PubChem")
 
     def __len__(self):
         return len(self.table)
@@ -166,6 +181,7 @@ class PubChemDB(object):
                     missing = list(known_uis-uis)
             return unknown, missing
         except Exception, e:
+            import traceback; traceback.print_exc()
             logging.error(e)
             return [], [] # failed
 
@@ -178,10 +194,7 @@ class PubChemDB(object):
         return monoisotopicMass(table.get(row, "mf"))
 
     def update(self, maxIds=None):
-        #try:
             self._update(maxIds)
-        #except Exception, e:
-         #   logging.error(e)
 
 
     def _update(self, maxIds):
@@ -189,13 +202,14 @@ class PubChemDB(object):
         newIds, missingIds = self.getDiff()
         if maxIds is not None:
             newIds = newIds[:maxIds] # for testing
+
         keggids = set(PubChemDB._get_uilist(source="KEGG"))
         hmdbids = set(PubChemDB._get_uilist(source="Human Metabolome Database"))
 
         print "FETCH", len(newIds), "ITEMS"
         if newIds:
-            for mw, dd in PubChemDB._download(newIds, keggids, hmdbids):
-                row = [ dd.get(n) for n in self.colNames ]
+            for dd in PubChemDB._download(newIds, keggids, hmdbids):
+                row = [ dd.get(n) for n in self._colNames ]
                 self.table.rows.append(row)
         try:
             self.table.dropColumns("url")

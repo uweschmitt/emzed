@@ -12,8 +12,8 @@ def testParser():
 def testFormulaOperations():
     import libms.Chemistry.MolecularFormula as MF
 
-    assert (MF("H2O")+MF("NaCl")).asString() == "H2ONaCl"
-    assert (MF("H2ONaCl")-MF("NaCl")).asString() == "H2O"
+    assert (MF("H2O")+MF("NaCl")) == MF("H2ONaCl")
+    assert (MF("H2ONaCl")-MF("NaCl")) == MF("H2O")
 
     assert abs(MF("H2O").mass()-18.010565) <=1e-5, MF("H2O").mass()
     assert abs(MF("[13]C").mass()-13.003355) <= 1e-6

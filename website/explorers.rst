@@ -23,8 +23,8 @@ Exploring Peak Maps and Tables
 |                   |              | left / right                         |
 +-------------------+--------------+--------------------------------------+
 | mass traces       | extract      | 1. enter                             |
-|                   | chromatogram |    ``mz``                            |
-|                   |              |    value and                         |
+| (only for peakmap | chromatogram |    ``mz``                            |
+| explorer)         |              |    value and                         |
 |                   |              |    half mass window width ``w/2``,   |
 |                   |              |    press ``select`` button           |
 |                   |              | 2. or:  press ``c`` to copy value to |

@@ -8,19 +8,35 @@ class PeakIntegrator(object):
 
     def setPeakMap(self, peakMap):
         self.peakMap = peakMap
-        spectra = [spec for spec in self.peakMap.spectra if spec.msLevel == 1]
+
+    def integrate(self, mzmin, mzmax, rtmin, rtmax, msLevel=None):
+
+        assert self.peakMap is not None, "call setPeakMap() before integrate()"
+
+        if msLevel is None:
+            msLevels = self.peakMap.getMsLevels()
+            if len(msLevels) > 1:
+                raise Exception("multiple ms levels, you must specify the "\
+                                "level")
+            msLevel = msLevels[0]
+
+        spectra = [s for s in self.peakMap.spectra if s.msLevel == msLevel]
         self.allrts  = sorted([ spec.rt for spec in spectra])
 
-    def integrate(self, mzmin, mzmax, rtmin, rtmax):
-
-        assert self.peakMap is not None
-
-        rts, chromatogram = self.peakMap.chromatogram(mzmin, mzmax, rtmin,\
-                                                      rtmax)
+        rts, chromatogram = self.peakMap.chromatogram(mzmin,
+                                                      mzmax,
+                                                      rtmin,
+                                                      rtmax,
+                                                      msLevel)
         if len(rts)==0:
             return dict(area=0, rmse=0, params=None)
 
-        allrts, fullchrom = self.peakMap.chromatogram(mzmin, mzmax)
+        allrts, fullchrom = self.peakMap.chromatogram(mzmin,
+                                                      mzmax,
+                                                      None,
+                                                      None,
+                                                      msLevel)
+
         area, rmse, params = self.integrator(allrts, fullchrom, rts,
                                              chromatogram)
 

@@ -1,4 +1,4 @@
-import pyOpenMS
+import pyopenms
 import numpy as np
 import os.path
 import copy
@@ -43,7 +43,7 @@ class Spectrum(object):
 
         # level=1 -> no precursors
         if msLevel == 1:
-            assert not precursors, "level 1 spec has no precursors"
+            assert not precursors, "conflict: level 1 spec has precursors"
 
         self.rt = rt
         self.msLevel = msLevel
@@ -56,12 +56,12 @@ class Spectrum(object):
 
     @classmethod
     def fromMSSpectrum(clz, mspec):
-        """creates Spectrum from pyOpenMS.MSSpectrum"""
-        assert type(mspec) == pyOpenMS.MSSpectrum, type(mspec)
+        """creates Spectrum from pyopenms.MSSpectrum"""
+        assert type(mspec) == pyopenms.MSSpectrum, type(mspec)
         pcs = [ (p.getMZ(), p.getIntensity()) for p in mspec.getPrecursors()]
-        pol = { pyOpenMS.Polarity.POLNULL: '0',
-                pyOpenMS.Polarity.POSITIVE: '+',
-                pyOpenMS.Polarity.NEGATIVE: '-'
+        pol = { pyopenms.Polarity.POLNULL: '0',
+                pyopenms.Polarity.POSITIVE: '+',
+                pyopenms.Polarity.NEGATIVE: '-'
               }.get(mspec.getInstrumentSettings().getPolarity())
         res = clz(mspec.get_peaks(), mspec.getRT(),
                   mspec.getMSLevel(), pol, pcs)
@@ -125,19 +125,19 @@ class Spectrum(object):
         return float(self.peak[:,1].max())
 
     def toMSSpectrum(self):
-        """converts to pyOpenMS.MSSpectrum"""
-        spec = pyOpenMS.MSSpectrum()
+        """converts to pyopenms.MSSpectrum"""
+        spec = pyopenms.MSSpectrum()
         spec.setRT(self.rt)
         spec.setMSLevel(self.msLevel)
         ins = spec.getInstrumentSettings()
-        pol = { '0' : pyOpenMS.Polarity.POLNULL,
-                '+' : pyOpenMS.Polarity.POSITIVE,
-                '-' : pyOpenMS.Polarity.NEGATIVE}[self.polarity]
+        pol = { '0' : pyopenms.Polarity.POLNULL,
+                '+' : pyopenms.Polarity.POSITIVE,
+                '-' : pyopenms.Polarity.NEGATIVE}[self.polarity]
         ins.setPolarity(pol)
         spec.setInstrumentSettings(ins)
         oms_pcs = []
         for mz, I in self.precursors:
-            p=pyOpenMS.Precursor()
+            p = pyopenms.Precursor()
             p.setMZ(mz)
             p.setIntensity(I)
             oms_pcs.append(p)
@@ -184,7 +184,8 @@ class PeakMap(object):
         else:
             self.polarity = None
 
-    def extract(self, rtmin=None, rtmax=None, mzmin=None, mzmax=None):
+    def extract(self, rtmin=None, rtmax=None, mzmin=None, mzmax=None,
+                      mslevelmin=None, mslevelmax=None):
         """ returns restricted Peakmap with given limits.
         Parameters with *None* value are not considered.
 
@@ -198,7 +199,14 @@ class PeakMap(object):
 
         \
         """
+
         spectra = copy.deepcopy(self.spectra)
+
+        if mslevelmin is not None:
+            spectra = [s for s in spectra if s.msLevel >= mslevelmin]
+        if mslevelmax is not None:
+            spectra = [s for s in spectra if s.msLevel <= mslevelmax]
+
         if rtmin:
             spectra = [ s for s in spectra if rtmin <= s.rt ]
         if rtmax:
@@ -251,8 +259,8 @@ class PeakMap(object):
         """
         returns lists level one spectra in peakmap
         """
-        print "\nWARNING: this method is depreciated, please use "\
-              "PeakMap.msNPeaks instead\n"
+        print "\nWARNING: method is levelOneSpecsInRange is depreciated, "\
+              "please use PeakMap.levelNSpecsInRange instead\n"
         return self.levelNSpecsInRange(1, rtmin, rtmax)
 
     def levelNSpecsInRange(self, n, rtmin, rtmax):
@@ -266,7 +274,7 @@ class PeakMap(object):
                                                             <= rtmax+1e-2
                                              and spec.msLevel == n]
 
-    def chromatogram(self, mzmin, mzmax, rtmin=None, rtmax=None):
+    def chromatogram(self, mzmin, mzmax, rtmin=None, rtmax=None, msLevel=None):
         """
         extracts chromatogram in given rt- and mz-window.
         returns a tuple ``(rts, intensities)`` where ``rts`` is a list of
@@ -281,14 +289,10 @@ class PeakMap(object):
         if rtmax is None:
             rtmax = self.spectra[-1].rt
 
-        levels = self.getMsLevels()
-        if 1 in levels:
-            specs = self.levelNSpecsInRange(1, rtmin, rtmax)
-        else:
-            assert len(levels) == 1
-            level = levels[0]
-            specs = [s for s in self.spectra if s.msLevel == level and\
-                                              rtmin <= s.rt <= rtmax]
+        if msLevel is None:
+            msLevel = min(self.getMsLevels())
+
+        specs = self.levelNSpecsInRange(msLevel, rtmin, rtmax)
 
         rts = [s.rt for s in specs]
         intensities = [s.intensityInRange(mzmin, mzmax) for s in specs]
@@ -300,7 +304,7 @@ class PeakMap(object):
         return sorted(set(spec.msLevel for spec in self.spectra))
 
     def ms1Peaks(self, rtmin=None, rtmax=None):
-        print "\nWARNING: this method is depreciated, please use "\
+        print "\nWARNING: ms1Peaks method is depreciated, please use "\
               "PeakMap.msNPeaks instead\n"
         return self.msNPeaks(1, rtmin, rtmax)
 
@@ -355,11 +359,11 @@ class PeakMap(object):
 
     @classmethod
     def fromMSExperiment(clz, mse):
-        """creates Spectrum from pyOpenMS.MSExperiment"""
-        assert type(mse) ==pyOpenMS.MSExperiment
+        """creates Spectrum from pyopenms.MSExperiment"""
+        assert type(mse) == pyopenms.MSExperiment
         specs = [ Spectrum.fromMSSpectrum(mse[i]) for i in range(mse.size()) ]
         meta = dict()
-        meta["full_source"] = mse.getLoadedFilePath().c_str()
+        meta["full_source"] = mse.getLoadedFilePath()
         meta["source"] = os.path.basename(meta.get("full_source"))
         return clz(specs, meta)
 
@@ -368,12 +372,12 @@ class PeakMap(object):
         return len(self.spectra)
 
     def toMSExperiment(self):
-        """converts peakmap to pyOpenMS.MSExperiment"""
-        exp = pyOpenMS.MSExperiment()
+        """converts peakmap to pyopenms.MSExperiment"""
+        exp = pyopenms.MSExperiment()
         for spec in self.spectra:
             exp.push_back(spec.toMSSpectrum())
         exp.updateRanges()
-        exp.setLoadedFilePath(pyOpenMS.String(self.meta.get("source","")))
+        exp.setLoadedFilePath(self.meta.get("source",""))
         return exp
 
     def splitLevelN(self, msLevel, significant_digits_precursor=2):

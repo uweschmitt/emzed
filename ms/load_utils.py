@@ -13,7 +13,7 @@ def loadPeakMap(path=None):
     import ms
     import os.path
     import sys
-    from   pyOpenMS import MSExperiment, FileHandler
+    from   pyopenms import MSExperiment, FileHandler
     from   libms.DataStructures import PeakMap
 
     if isinstance(path, unicode):

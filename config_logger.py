@@ -32,9 +32,7 @@ def do_config():
         pass
 
 
-    appRoot = userConfig.getLocalAppDataFolder()
-
-    logPath = os.path.join(appRoot, "emzed")
+    logPath = userConfig.getEmzedFolder()
     if not os.path.exists(logPath):
         os.makedirs(logPath)
 

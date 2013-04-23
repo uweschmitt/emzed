@@ -84,7 +84,7 @@ def testAdducts():
 
     t = adducts.positive.toTable()
     assert len(t) == 14
-    assert len(t.colNames) == 4
+    assert len(t.getColNames()) == 4
 
 def testfoumulaadd():
     import ms

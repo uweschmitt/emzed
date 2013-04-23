@@ -15,8 +15,8 @@ def testPubChemUpdate():
     db.update(100)
     assert len(db.table) == 100
     assert db.table.rows[0][-1].startswith("http")
-    assert len(db.table.rows[0]) == len(db.colNames)
-    assert db.table.colNames[0] == "m0"
+    assert len(db.table.rows[0]) == len(db.getColNames())
+    assert db.table.getColNames()[0] == "m0"
 
     row = db.table.rows[0]
     assert db.table.get(row, "is_in_kegg") in [0,1]
@@ -31,5 +31,5 @@ def testPubChemUpdate():
     db = PubChemDB(dbPath)
     assert len(db.table) == 100
     assert db.table.rows[0][-1].startswith("http")
-    assert len(db.table.rows[0]) == len(db.colNames)
+    assert len(db.table.rows[0]) == len(db.getColNames())
 

@@ -44,6 +44,7 @@ class MetlinMatcher(object):
 
     @staticmethod
     def query(masses, ppm, polarity):
+        raise NotImplementedError("metlin webservie changed interface")
         allRows = []
         header = None
         for startIdx in range(0, len(masses), batchSize):

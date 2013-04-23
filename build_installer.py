@@ -10,11 +10,14 @@ files="""
     emzed.ico
     ms libms batches/ startup/ patched_modules/ emzed.pyw
     adducts.py
-    emzedPatches.py tab.py db.py elements.py abundance.py
+    patch_utils.py
+    external_shell_patches.py
+    spyder_app_patches.py
+    tab.py db.py elements.py abundance.py
     config_logger.py configs.py convert_universals.py emzed_files/
     installConstants.py mass.py splash.png  userConfig.py
     version.py
-    tables spyderlib/ """.split()
+    tables""".split()
 
 
 def split(path):
@@ -79,6 +82,4 @@ except:
     pass
 
 shutil.copyfile("version.py", "installer_files/version.py")
-buildZipFile(emzedzip, ["README", "installer.py", "install.bat", "License.txt", emzed_files, "version.py"], prefixpath="emzed_"+version, relocate_path="installer_files")
-
-
+buildZipFile(emzedzip, ["README", "installer.py", "License.txt", emzed_files, "version.py"], prefixpath="emzed_"+version, relocate_path="installer_files")

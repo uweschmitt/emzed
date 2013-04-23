@@ -29,110 +29,93 @@ If you have problems installing *eMZed*, please use the discussion group
 at http://groups.google.com/group/emzed-users
 
 
+Updating on Windows
+~~~~~~~~~~~~~~~~~~~
+
+If you update from an older *eMZed* version based on *PythonXY*, the
+recommeded way is to uninstall *PythonXY* and *pyOpenMS* first and to
+install from scratch as described below.
 
 Installing on Windows
 ~~~~~~~~~~~~~~~~~~~~~
 
-For installing *eMZed* on Windows please follow **carefully** the stepwise instructions:
+We changed the installing instructions for the 64 bit Windows version of 
+*eMZed* and do not rely on *Python XY* any more.
+Further we updated *eMZed* to the newest version of *pyopenms*.
 
-1. Install *Python XY* (http://www.pythonxy.com). 
+For installing *eMZed* on Windows please follow **carefully** the stepwise
+instructions. **version numbers and file names matter**.
 
-   *Python XY* is a Python distribution targeting scientific computing with
-   Python. It contains the right versions of Python and the some needed
-   libraries.  If you use other distributions as *Enthought Python* the
-   following instructions are not complete anymore.
+1. Install 64 bit Python 2.7 for Windows from http://www.python.org/download/
 
-   *eMZed* requires the latest  *2.7.2.x* version.
+2. Download and run *numpy-MKL-1.7.X.win-amd64-py2.7.exe* from
+   http://www.lfd.uci.edu/~gohlke/pythonlibs#numpy 
 
-   Finding distinct versions at the *Python XY* website is difficult and
-   downloads may be **mistaken** with the *Python XY* **update intstallers**,
-   which do not provide the full Python distribution.
+3. If you do not have *R* installed on your system, download and run 
+    http://cran.r-project.org/bin/windows/base/R-3.0.0-win.exe
+   **Please install R with administration rights, else you might get problems
+   using  R functionalities from eMZed.**
 
-   You can find full installers of recent *Python XY* versions at:
+4. In order to install all other needed Python packages 
+   download and unpack 
 
-    * http://ftp.ntua.gr/pub/devel/pythonxy/
-    * http://pythonxy.connectmv.com/
-    * http://www.mirrorservice.org/sites/pythonxy.com
+       http://emzed.ethz.ch/downloads/windows_contrib_downloader.zip. 
 
+   This archive contains a *README* file, which you should read carefully !
 
-   
+5. Download and install the latest version of *eMZed* from 
 
-2. Install *R* from http://www.r-project.org. 
-
-   Please install *R* with administration rights, else you might get problems
-   using  *R* functionalities from *eMZed*.
-
-3. Download and install the latest version of *pyOpenMS* and *eMZed* from http://emzed.ethz.ch/downloads.
+       http://emzed.ethz.ch/downloads/emzed_1.3.0_for_windows.zip
 
    Now you should have a start icon on your Desktop.
 
-4. Start *eMZed*.
+6. Start *eMZed*.
 
-5. At the first start you are asked for the *global exchange folder*. 
+7. At the first start you are asked for the *global exchange folder*. 
    See :ref:`before_you_start`.
 
    **If you do not want to use an global exchange folder, you can leave the input field empty.**
 
-6. *eMZed* will now retrieve or update a metabolomics related subset of the *PubChem* database 
+8. *eMZed* will now retrieve or update a metabolomics related subset of the *PubChem* database 
    from the web.
    If you have a global exchange folder the full download will be stored there.
    Checking for update is done each time you start *eMZed*.
 
    **If you provided a global exchange folder and have no write permissions to it, this step wil be skipped**.
 
+   **eMZed might freeze for some minutes during download. This is a known problem
+   which we will fix with the next version**
 
-7. *eMZed* will install or update the *XMCS*-code if needed. If you have a global exchange folder
+
+9. *eMZed* will install or update the *XMCS*-code if needed. If you have a global exchange folder
    an *XCMS* [xcms]_ related code will be stored there, so further starts of *eMZed*  by local users
    will be much faster.
 
    **If you provided a global exchange folder and have no write permissions to it, this step wil be skipped**.
 
 
-Installing on Ubuntu 12.04
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+Installing on Ubuntu or Debian
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-An more comfortable installation package is work in progress. 
+To get all needed packages for running *eMZed* download
 
-For the current version of *eMZed* you need run the following instructions with
-``sudo`` or you have to login as an administrator:
+     http://emzed.ethz.ch/downloads/install_contrib_linux.sh
 
-* ``apt-get install python2.7``
-* ``apt-get install python-numpy``
-* ``apt-get install python-scipy``
-* ``apt-get install python-matplotlib``
-* ``apt-get install python-pip``
-* ``apt-get install python-qt4``
-* ``apt-get install python-qwt5-qt4``
-* ``apt-get install r-base``
-* ``apt-get install netcdf-bin``
-* ``apt-get install libnetcdf-dev``
-* ``apt-get install libqt4-core libqt4-gui``
+Depending on your systems current setup you should look into this file
+and adapt it for your needs.
 
-* ``sudo pip install guiqwt`` (tested with version 2.2.0)
-* ``sudo pip install guidata`` (tested with version 1.5.0)
+Executing this script with ``sudo`` will download and install 
+everything that is needed, including the *eMZed* files
+in ``emzed_files_1.X.Y.zip``.  Start ``python emzed.py`` in the extracted
+folder and follow the windows instruction above, beginning at item no. 7.
 
-Then install
+Getting the latest development version of eMZed
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* IPython 0.10. 
-   * Download archive http://archive.ipython.org/release/0.10.2/ipython-0.10.2.tar.gz 
-  unpack it and run
-   * ``python setup.py install``
+*eMZed* is hosted on http://github.com/uweschmitt/emzed, after installing
+``git`` you can check out the latest version using::
 
-* Open-MS 1.8: Download 
-   * http://downloads.sourceforge.net/project/open-ms/OpenMS/OpenMS-1.9/OpenMS-1.9.0-Linux_64bit.deb
+    git clone git://github.com/uweschmitt/emzed.git
 
-  and run 
-   * ``sudo dpkg --install OpenMS-1.9.0-Linux_64.deb`` from the directory containing this download.
-
-* Download pyOpenMS (see http://emzed.ethz.ch/downloads), unzip it and 
-   * run ``install.sh``, choose "global install to".
-
-* Download latest *eMZed* (see http://emzed.ethz.ch/downloads/emzed_files_1.x.y.zip)
-  and unzip it. Creates folder ``emzed/``
-
-Start ``python emzed.pyw`` in the extracted folder and follow the windows instruction above, beginning at item no. 5.
-  
-
- 
 
 

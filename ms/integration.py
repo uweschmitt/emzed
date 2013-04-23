@@ -2,7 +2,7 @@
 
 
 
-def integrate(ftable, integratorid="std", msLevel=1, showProgress = True):
+def integrate(ftable, integratorid="std", msLevel=None, showProgress = True):
     """ integrates features  in ftable.
         returns processed table. ``ftable`` is not changed inplace.
 
@@ -12,10 +12,8 @@ def integrate(ftable, integratorid="std", msLevel=1, showProgress = True):
     """
     from configs import peakIntegrators
     from libms.DataStructures.Table import Table
-    from libms.DataStructures.MSTypes import PeakMap
     import sys
     import time
-    import copy
 
     assert isinstance(ftable, Table)
 
@@ -55,16 +53,9 @@ def integrate(ftable, integratorid="std", msLevel=1, showProgress = True):
             else:
                 # this is a hack ! ms level n handling should first be
                 # improved and gerenalized in MSTypes.py
-                if msLevel > 1:
-                    spectra = []
-                    for spec in peakmap.spectra:
-                        if spec.msLevel == msLevel:
-                            spec=copy.copy(spec)
-                            spec.msLevel = 1
-                            spectra.append(spec)
-                    peakmap = PeakMap(spectra)
                 integrator.setPeakMap(peakmap)
-                result = integrator.integrate(mzmin, mzmax, rtmin, rtmax)
+                result = integrator.integrate(mzmin, mzmax, rtmin, rtmax,
+                                             msLevel)
                 # take existing values which are not integration realated:
                 area, rmse, params = result["area"], result["rmse"],\
                                      result["params"]

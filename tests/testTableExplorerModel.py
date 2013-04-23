@@ -102,7 +102,7 @@ def testSimpleTable():
 
     for j in range(6):
         is_ = model.headerData(j, Qt.Horizontal)
-        tobe = t.colNames[j]
+        tobe = t.getColNames()[j]
         assert is_ == tobe, (is_, tobe)
 
     for j in range(6):

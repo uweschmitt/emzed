@@ -60,7 +60,7 @@ def run(t, colnames, rows):
     assert content[2] == "1.000"
     assert content[3] == "hi"
     assert content[4] == repr({1:1})
-    assert content[5] == "array((3,))", content[5]
+    assert content[5] in ("array((3,))", "array((3L,))"), content[5]
 
     assert set(t.getVisibleCols()) == { 'int', 'long', 'float', 'str',
                                         'object', 'array' }
@@ -96,9 +96,9 @@ def run(t, colnames, rows):
 
     # restrct cols
     tn = t.extractColumns("int", "long")
-    assert len(tn.colNames) == 2, len(t.colNames)
-    assert len(tn.colTypes) == 2
-    assert len(tn.colFormats) == 2
+    assert len(tn.getColNames()) == 2, len(t.getColNames())
+    assert len(tn.getColTypes()) == 2
+    assert len(tn.getColFormats()) == 2
 
     assert len(tn) == len(t)
 
@@ -107,7 +107,7 @@ def run(t, colnames, rows):
 
     tn.addEnumeration()
     assert set(tn.getVisibleCols()) == { 'int', 'long', 'id' }
-    assert tn.colNames[0]=="id"
+    assert tn.getColNames()[0]=="id"
     assert list(tn.id) == range(len(t))
 
     tn.renameColumns(int='iii')
@@ -115,7 +115,7 @@ def run(t, colnames, rows):
 
     tn.addColumn('x', 'hi', str, '%s')
     assert set(tn.getVisibleCols()) == { 'iii', 'long', 'id', 'x' }
-    assert tn.colNames[-1]=="x"
+    assert tn.getColNames()[-1]=="x"
 
     assert list(tn.x) == ["hi"]*len(tn)
 
@@ -124,7 +124,7 @@ def run(t, colnames, rows):
 
     tnre  = ms.loadCSV("temp_output/x.csv")
     assert len(tnre) == len(tn)
-    assert tnre.colNames == tn.colNames
+    assert tnre.getColNames() == tn.getColNames()
     assert tnre.id.values == tn.id.values
     assert tnre.iii.values == tn.iii.values
     assert tnre.long.values == tn.long.values
@@ -164,15 +164,15 @@ def run(t, colnames, rows):
 
     tn.replaceColumn("squared", tn.squared+1)
     assert list(tn.getColumn("squared").values ) == [10, 5, 2]
-    assert len(tn.colNames)  == 6
+    assert len(tn.getColNames())  == 6
 
     tx  = tn.copy()
     tx.dropColumns("squared", "computed")
-    assert tx.colNames == ["id", "iii", "long", "x"]
+    assert tx.getColNames() == ["id", "iii", "long", "x"]
     assert len(tx) == 3
 
     tn.dropColumns("computed", "squared")
-    assert tn.colNames == ["id", "iii", "long", "x"]
+    assert tn.getColNames() == ["id", "iii", "long", "x"]
     assert len(tn) == 3
 
     tn.dropColumns("id", "x")
@@ -200,8 +200,8 @@ def run(t, colnames, rows):
     
     tn.addColumn("li", [1,2,3])
     assert len(tn) == 3
-    assert len(tn.colNames) == 3
-    assert "li" in tn.colNames
+    assert len(tn.getColNames()) == 3
+    assert "li" in tn.getColNames()
     
     tn.addRow([1, 1, 1])
     assert len(tn) == 4
@@ -279,41 +279,41 @@ def testWithEmtpyTablesAndTestColnameGeneration():
     assert len(e.filter(e.x == 0)) == 0
     t1 = e.join(f, f.y == e.x)
     assert len(t1) == 0
-    assert t1.colNames == ["x", "y__0"], t1.colNames
+    assert t1.getColNames() == ["x", "y__0"], t1.getColNames()
     t1 = e.join(f, e.x == f.y)
     assert len(t1) == 0
-    assert t1.colNames == ["x", "y__0"], t1.colNames
+    assert t1.getColNames() == ["x", "y__0"], t1.getColNames()
 
     t1 = e.join(g, g.z == e.x)
     assert len(t1) == 0
-    assert t1.colNames == ["x", "z__0"], t1.colNames
+    assert t1.getColNames() == ["x", "z__0"], t1.getColNames()
     t1 = e.join(g, e.x == g.z)
     assert len(t1) == 0
-    assert t1.colNames == ["x", "z__0"], t1.colNames
+    assert t1.getColNames() == ["x", "z__0"], t1.getColNames()
 
 
     t1 = g.join(e, e.x == g.z)
     assert len(t1) == 0
-    assert t1.colNames == ["z", "x__0"], t1.colNames
+    assert t1.getColNames() == ["z", "x__0"], t1.getColNames()
     t1 = g.join(e, g.z == e.x)
     assert len(t1) == 0
-    assert t1.colNames == ["z", "x__0"], t1.colNames
+    assert t1.getColNames() == ["z", "x__0"], t1.getColNames()
 
     t1 = e.leftJoin(f, f.y == e.x)
     assert len(t1) == 0
-    assert t1.colNames == ["x", "y__0"], t1.colNames
+    assert t1.getColNames() == ["x", "y__0"], t1.getColNames()
     t1 = e.leftJoin(g, g.z == e.x)
     assert len(t1) == 0
-    assert t1.colNames == ["x", "z__0"], t1.colNames
+    assert t1.getColNames() == ["x", "z__0"], t1.getColNames()
     t1 = g.leftJoin(e, e.x == g.z)
     assert len(t1) == 1
-    assert t1.colNames == ["z", "x__0"], t1.colNames
+    assert t1.getColNames() == ["z", "x__0"], t1.getColNames()
     assert t1.rows[0] ==  [1, None]
 
     t1.print_()
     f.print_()
     t2 = t1.leftJoin(f, f.y == t1.x__0)
-    assert t2.colNames ==["z", "x__0", "y__1"], t2.colNames
+    assert t2.getColNames() ==["z", "x__0", "y__1"], t2.getColNames()
     assert len(t2) == 1
 
 
@@ -374,10 +374,10 @@ def testWithNoneValues():
     assert len(t.filter(t.i != None)) == 2
 
     t.addColumn("b", [2,3,None])
-    assert t.colNames == ["i", "b"]
+    assert t.getColNames() == ["i", "b"]
     t.replaceColumn("b", t.b+1)
 
-    assert t.colNames == ["i", "b"]
+    assert t.getColNames() == ["i", "b"]
 
     t.addRow([None, None])
     t.addRow([3, None])
@@ -386,7 +386,7 @@ def testWithNoneValues():
 
     # check order
     t.replaceColumn("i", t.i)
-    assert t.colNames == ["i", "b"]
+    assert t.getColNames() == ["i", "b"]
 
     s = ms.toTable("b",[])
     x = t.join(s, t.b == s.b)
@@ -408,7 +408,7 @@ def testIfThenElse():
     t.rows.append([None, 2, 1])
     t._print()
     t.addColumn("x", (t.a != None).thenElse(t.b, t.c))
-    assert t.colNames==["a", "b", "c", "x"]
+    assert t.getColNames()==["a", "b", "c", "x"]
     print
     t._print()
     t.addColumn("y", (t.a != None).thenElse("ok", "not ok"))
@@ -426,8 +426,8 @@ def testDynamicColumnAttributes():
     assert len(t.c.values) == 0
 
     t.renameColumns(dict(a="aa"))
-    assert "a" not in t.colNames
-    assert "aa"  in t.colNames
+    assert "a" not in t.getColNames()
+    assert "aa"  in t.getColNames()
     t.aa
     try:
         t.a
@@ -439,7 +439,7 @@ def testDynamicColumnAttributes():
     assert len(col.values) == 0
 
     t.dropColumns("aa")
-    assert "aa" not in t.colNames
+    assert "aa" not in t.getColNames()
     try:
         t.aa
         raise Exception("t.aa should be deteted")
@@ -463,7 +463,7 @@ def testRename():
         t.renameColumns(dict(a="f"), a="d")
 
     t.renameColumns(dict(a="x"), dict(c="z"), b="y")
-    assert tuple(t.colNames) == ("x", "y", "z")
+    assert tuple(t.getColNames()) == ("x", "y", "z")
 
 def testSplitBy():
     t = ms.toTable("a", [1,1,3,4])
@@ -516,4 +516,13 @@ def testMerge():
     assert tn.d.values == [None, 1, 4]
 
 
+def testApply():
+
+    t = ms.toTable("a", [0.01, 0.1, 0.1, 0.015, 0.2,1.0 ])
+
+    t.addColumn("a_bin", t.a.apply(lambda v: int(v*100)))
+    # this returned numpy-ints due to an fault in addColumn and so
+    # we got 6 tables instead of 4:
+    ts = t.splitBy("a_bin")
+    assert len(ts) == 4
 

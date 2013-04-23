@@ -14,6 +14,68 @@ import os.path as osp
 print "run patched startup"
 
 
+###########################################################################
+#
+# modification emzed
+#
+# on win only ipython 0.10 supports all features of the variable
+# explorer, so we have to utilize easy_install to install 0.10
+# at least. In order to get the right version in case of other
+# other intstalled ipytho versions we have to:
+###########################################################################
+if sys.platform == "win32":
+    import pkg_resources
+    pkg_resources.require("ipython==0.10")
+###########################################################################
+
+
+
+def install_emzed(user_ns=None):
+
+    print "INSTALL EMZED"
+
+    import traceback
+    import os, sys
+
+    # execute all files in startup #########################################
+
+    # find startup folder
+    sys.path.insert(0, os.environ.get("EMZED_HOME"))
+    import startup # startup folder / package, not startup.py
+
+    # load all files
+    import glob
+    pattern = os.path.join(startup.__path__[0], "*.py")
+    for python_file in sorted(glob.glob(pattern)):
+
+        #####################################
+        #print "SKIP LOADING STARTUP"
+        #break
+        #####################################
+
+        print "STARTUP, EXE", python_file
+        execfile(python_file, user_ns)
+
+    # import ms, libms.DataStructures is needed so that monitor
+    # can open explorers:
+    exec "import ms, libms.DataStructures" in user_ns
+
+    # inject one simple example which makes testing easier
+    exec "a = ms.toTable('a', [1,2,3])" in user_ns
+
+    try:
+        from configs import repositoryPathes
+        from string import Template
+
+        for p in reversed(repositoryPathes):
+            sys.path.insert(0, Template(p).substitute(os.environ))
+
+    except ImportError, e:
+        traceback.print_exc(file=sys.stdout)
+
+    print "emzed installed"
+
+
 # Remove this module's path from sys.path:
 try:
     sys.path.remove(osp.dirname(__file__))
@@ -29,10 +91,20 @@ __name__ = '__main__'
 if os.environ.get('IPYTHON_KERNEL', False):
 
     # IPython >=v0.11 Kernel
+    
+    # Fire up the kernel instance.
     from IPython.zmq.ipkernel import IPKernelApp
-    __ipythonkernel__ = IPKernelApp().instance()
-    __ipythonkernel__.initialize(sys.argv[1:])
-    __ipythonshell__ = __ipythonkernel__.shell
+    ipk_temp = IPKernelApp.instance()
+    ipk_temp.initialize(sys.argv[1:])
+    __ipythonshell__ = ipk_temp.shell
+    
+    # Issue 977: Since kernel.initialize() has completed execution, 
+    # we can now allow the monitor to communicate the availablility of 
+    # the kernel to accept front end connections.
+    __ipythonkernel__ = ipk_temp
+    del ipk_temp
+    
+    # Start the (infinite) kernel event loop.
     __ipythonkernel__.start()
 
 elif os.environ.get('IPYTHON', False):
@@ -54,36 +126,19 @@ elif os.environ.get('IPYTHON', False):
         import pyreadline
         pyreadline.GetOutputFile = lambda: None
 
-    # first modification eMZed # ##############################################
+
+       
     ###########################################################################
-
-    import traceback
+    #       modification eMZed # ##############################################
+    ###########################################################################
     user_ns = dict()
-
-    import startup # startup folder / package, not startup.py
-    import glob
-    pattern = os.path.join(os.path.abspath(startup.__path__[0]),"*.py")
-    # execute all files in startup
-    for python_file in sorted(glob.glob(pattern)):
-        user_ns["__file__"] = os.path.abspath(python_file)
-        print "STARTUP, EXE", python_file
-        execfile(python_file, user_ns)
-
-    try:
-        from configs import repositoryPathes
-        from string import Template
-
-        for p in reversed(repositoryPathes):
-            sys.path.insert(0, Template(p).substitute(os.environ))
-
-    except ImportError, e:
-        traceback.print_exc(file=sys.stdout)
-
+    install_emzed(user_ns)
     # ipython does not like __builtins__ in namespace:
     if "__builtins__" in user_ns:
         del user_ns["__builtins__"]
 
-    # end of first modification ###############################################
+    ###########################################################################
+    # end of       modification ###############################################
     ###########################################################################
 
     try:
@@ -110,38 +165,31 @@ on Windows platforms (only IPython v0.10 is fully supported).
 """
         # second modification eMZed: user_ns arg ##########################
         __ipythonshell__ = InteractiveShellEmbed(banner2=banner2,
-                                                 user_ns=user_ns)#,
-#                                                 display_banner=False)
-#        __ipythonshell__.shell.show_banner()
-#        __ipythonshell__.enable_pylab(gui='qt')
-        #TODO: parse command line options using the two lines commented
-        #      above (banner has to be shown afterwards)
-        #FIXME: Windows platforms: pylab/GUI loop support is not working
+                                                 user_ns=user_ns)
         __ipythonshell__.stdin_encoding = os.environ['SPYDER_ENCODING']
         del banner2
     except ImportError:
         # IPython v0.10
+    
+        #######################################################################
+        # modification eMZEd, somehow it is important that the fix for
+        # path happens here:
+        # (path exception due to regression of python 2.7.4, which was not
+        # fixed in IPython 0.10)
+        #######################################################################
+        import IPython.external.path
+        IPython.external.path.path.isdir = lambda self: osp.isdir(self)
         import IPython.Shell
-        # third modification eMZed: user_ns arg ###########################
         __ipythonshell__ = IPython.Shell.start(user_ns=user_ns)
+        # modification eMZEd end ##############################################
+
         __ipythonshell__.IP.stdin_encoding = os.environ['SPYDER_ENCODING']
         __ipythonshell__.IP.autoindent = 0
 
-    # Workaround #2 to make the HDF5 I/O variable explorer plugin work:
-    # we import h5py only after initializing IPython in order to avoid
-    # a premature import of IPython *and* to enable the h5py/IPython
-    # completer (which wouldn't be enabled if we used the same approach
-    # as workaround #1)
-    # (see sitecustomize.py for the Workaround #1)
-    try:
-        import h5py  #analysis:ignore
-    except ImportError:
-        pass
 
-    # fourth modification eMZed # #
-    ############################################
     ###########################################################################
-    ip = None
+    # modification eMZed # #
+    ###########################################################################
     try:
         ip = IPython.ipapi.get()
     except:
@@ -161,12 +209,19 @@ on Windows platforms (only IPython v0.10 is fully supported).
                 ip.ex("del %s" % name)
             except:
                 pass
-
     try:
         __ipythonshell__.magic('config PromptManager.in_template = "EMZED_DEVELOP\\nIn [\\#]:"')    
     except:
         pass
     __ipythonshell__.mainloop()
 
-    # end of fourth modification ##############################################
     ###########################################################################
+    # end of  modification       ##############################################
+    ###########################################################################
+
+
+else: # standard shell
+    ###########################################################################
+    install_emzed(locals())
+    ###########################################################################
+

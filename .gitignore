@@ -9,3 +9,8 @@ spyder_crash.log
 docs/
 logs
 */logs
+.RData
+.Rhistory
+build/
+dist/
+./emzed2.egg-info

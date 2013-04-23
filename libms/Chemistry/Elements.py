@@ -1,5 +1,6 @@
+import pdb
 import os
-import pyOpenMS
+import pyopenms
 
 from ..DataStructures import Table
 
@@ -22,31 +23,32 @@ class Elements(Table):
 
         if not hasattr(self, "rows"):
             path = os.path.dirname(os.path.abspath(__file__))
-            param = pyOpenMS.Param()
-            param.load(os.path.join(path, "Elements.xml"))
+            param = pyopenms.Param()
+            ph = pyopenms.ParamXMLFile()
+            ph.load(os.path.join(path, "Elements.xml"), param)
 
             getters = {
-                    pyOpenMS.DataType.STRING_VALUE: "toString",
-                    pyOpenMS.DataType.INT_VALUE: "toInt",
-                    pyOpenMS.DataType.DOUBLE_VALUE: "toDouble",
+                    pyopenms.DataType.STRING_VALUE: "toString",
+                    pyopenms.DataType.INT_VALUE: "toInt",
+                    pyopenms.DataType.DOUBLE_VALUE: "toDouble",
             }
 
 
             data = NestedBunchDict()
-            for k in param.getKeys():
+            for k, value in param.asDict().items():
                 fields = k.split(":")
                 element = fields[1]
                 kind = fields[2]
                 if kind in ["Name", "Symbol", "AtomicNumber"]:
-                    entry = param.getValue(pyOpenMS.String(k))
-                    value = getattr(entry, getters[entry.valueType()])()
+                    #entry = param.getValue(pyopenms.String(k))
+                    #value = getattr(entry, getters[entry.valueType()])()
                     data[element][kind] =  value
                 if kind == "Isotopes":
                     massnumber = int(fields[3])
                     kind = fields[4]
-                    if kind in ["RelativeAbundance", "AtomicMass"]:
-                        entry = param.getValue(pyOpenMS.String(k))
-                        value = getattr(entry, getters[entry.valueType()])()
+                    #if kind in ["RelativeAbundance", "AtomicMass"]:
+                        #entry = param.getValue(pyopenms.String(k))
+                        #value = getattr(entry, getters[entry.valueType()])()
                     data[element]["Isotopes"][massnumber][kind]=value
 
             colNames = ["number", "symbol", "name", "massnumber", "mass", "abundance"]
@@ -101,9 +103,9 @@ class MonoIsotopicElements(Table):
                 t0   = tsub.filter(tsub.massnumber == min(massnumber))
                 self.rows.append(t0.rows[0][:])
 
-            self.colNames = elements.colNames[:]
-            self.colTypes = elements.colTypes[:]
-            self.colFormats = elements.colFormats[:]
+            self._colNames = elements.getColNames()
+            self._colTypes = elements.getColTypes()
+            self._colFormats = elements.getColFormats()
             self.title = "Monoisotopic Elements"
             self.meta  = dict()
 

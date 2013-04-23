@@ -5,7 +5,7 @@ from ..DataStructures import PeakMap, XCMSFeatureParser
 import os, sys
 
 from ..intern_utils import TemporaryDirectoryWithBackup
-from pyOpenMS import FileHandler
+from pyopenms import FileHandler
 
 from userConfig import getExchangeFolder, getRLibsFolder
 
@@ -24,6 +24,7 @@ def install_xmcs_if_needed_statements():
             """ % (r_libs, r_libs)
 
     return script
+
 
 def installXcmsIfNeeded():
 
@@ -53,6 +54,7 @@ def lookForXcmsUpgrades():
     else:
         print num, "updates found"
 
+
 def doXcmsUpgrade():
 
     if not exchangeFolderAvailable:
@@ -68,6 +70,20 @@ def doXcmsUpgrade():
     """ % (r_libs, r_libs)
 
     return RExecutor().run_command(script)
+
+
+def _get_temp_peakmap(msLevel, peakMap):
+    if msLevel is None:
+        msLevels = peakMap.getMsLevels()
+        if len(msLevels) > 1:
+            raise Exception("multiple msLevels in peakmap "\
+                            "please specify msLevel in config")
+        msLevel = msLevels[0]
+
+    temp_peakmap =  peakMap.extract(mslevelmin=msLevel, mslevelmax=msLevel)
+    temp_peakmap.spectra.sort(key = lambda s: s.rt)
+    return temp_peakmap
+
 
 class CentwaveFeatureDetector(object):
 
@@ -99,6 +115,7 @@ class CentwaveFeatureDetector(object):
                              noise=0,
                              mzCenterFun="wMean",
                              fitgauss=False,
+                             msLevel=None,
                              verbose_columns = False )
 
     def __init__(self, **kw):
@@ -113,7 +130,7 @@ class CentwaveFeatureDetector(object):
         if len(peakMap) == 0:
             raise Exception("empty peakmap")
 
-        peakMap.spectra.sort(key = lambda s: s.rt)
+        temp_peakmap = _get_temp_peakmap(self.config.get("msLevel"), peakMap)
 
         with TemporaryDirectoryWithBackup() as td:
 
@@ -124,7 +141,7 @@ class CentwaveFeatureDetector(object):
             if sys.platform == "win32":
                 temp_input = temp_input.replace("/","\\")
 
-            FileHandler().storeExperiment(temp_input, peakMap.toMSExperiment())
+            FileHandler().storeExperiment(temp_input, temp_peakmap.toMSExperiment())
 
             dd = self.config.copy()
             dd["temp_input"] = temp_input
@@ -162,7 +179,7 @@ class CentwaveFeatureDetector(object):
             table = XCMSFeatureParser.parse(file(temp_output).readlines())
             table.addConstantColumn("centwave_config", dd, dict, None)
             table.meta["generator"] = "xcms.centwave"
-            decorate(table, peakMap)
+            decorate(table, temp_peakmap)
             return table
 
 class MatchedFilterFeatureDetector(object):
@@ -193,6 +210,7 @@ class MatchedFilterFeatureDetector(object):
                              step = 0.1,
                              steps = 2,
                              mzdiff = 0.8 - 2*2,
+                             msLevel = None,
                              index = False )
 
     def __init__(self, **kw):
@@ -205,7 +223,7 @@ class MatchedFilterFeatureDetector(object):
         if len(peakMap) == 0:
             raise Exception("empty peakmap")
 
-        peakMap.spectra.sort(key = lambda s: s.rt)
+        temp_peakmap = _get_temp_peakmap(self.config.get("msLevel"), peakMap)
         minRt = peakMap.spectra[0].rt
         # xcms does not like rt <= 0, so we shift that rt starts with 1.0:
         # we have to undo this shift later when parsing the output of xcms
@@ -253,7 +271,7 @@ class MatchedFilterFeatureDetector(object):
             table = XCMSFeatureParser.parse(file(temp_output).readlines())
             table.addConstantColumn("matchedfilter_config", dd, dict, None)
             table.meta["generator"] = "xcms.matchedfilter"
-            decorate(table, peakMap)
+            decorate(table, temp_peakmap)
             return table
 
 def decorate(table, peakMap):

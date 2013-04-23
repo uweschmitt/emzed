@@ -15,7 +15,19 @@ def testElements():
     m0H = monoisotopicMass("H2")
     assert abs(m0H-2*el.m0.values[0])<1e-12
 
-    assert abs(monoisotopicMass("NaCl")-57.9586219609)<1e-9, monoisotopicMass("NaCl")
+    assert abs(monoisotopicMass("NaCl")-57.9586219788)<1e-9, monoisotopicMass("NaCl")
+
+    el3 = Elements()
+    assert len(el3) == 111
+
+    assert len(el3.colNames) == 6
+    assert len(el3.number.values)
+    assert len(el3.symbol.values)
+    assert len(el3.name.values)
+    assert len(el3.massnumber.values)
+    assert len(el3.mass.values)
+    assert len(el3.abundance.values)
+
 
 
 

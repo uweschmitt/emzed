@@ -52,13 +52,15 @@ class AsymmetricGaussIntegrator(PeakIntegrator):
         if self.gtol is None:
             (A, s1, s2, mu), ok = opt.leastsq(AsymmetricGaussIntegrator.__err,
                                               (A, s1, s2, mu),
+                                              maxfev = 0,
                                               args=(rts, chromatogram))
         else:
             (A, s1, s2, mu), ok = opt.leastsq(AsymmetricGaussIntegrator.__err,
-                                              (A, s1, s2, mu), gtol = self.gtol,
+                                              (A, s1, s2, mu),
+                                              gtol = self.gtol,
                                               args=(rts, chromatogram))
 
-        if ok not in [1,2,3,4] or s1<0 or s2<0 : # failed
+        if ok not in [1,2,3,4, 5] or s1<0 or s2<0 : # failed
             area = np.nan
             rmse = np.nan
         else:

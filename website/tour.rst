@@ -123,7 +123,7 @@ files are saved.
 
 We continue with an example of *centWave* algorithm for high resolution LC-MS
 MS-1-data. Analysing MS-n for *n=2* data is possible too, please look at the
-recipe discussed at :ref:`cookbook`:
+SRM/MRM example workflow mentioned at :ref:`faq`:
 
 You can start the *centWave* feature detector by typing
 
@@ -370,18 +370,6 @@ an index is done by sorting the corresponding column:
     ms.inspect(matched)  !noexec
 
 
-Another way to identify compounds is to use the *Metlin* web page which
-provides a form for running queries against the database. This access is
-automated:
-
-
-.. pycon::
-
-    common.addColumn("polarity", "-") # metlin needs this
-    matched2 = ms.matchMetlin(common, "m0", ppm=15)
-    matched2.print_()
-    ms.inspect(matched2) !noexec
-
 
 .. _chemistry_example:
 
@@ -540,5 +528,11 @@ The following dialog is created by the simple commands below:
     (10, 1.02, 'C:/Dokumente und Einstellungen/e001.mzML') !asoutput
 
 
+What's next ?
+-------------
+
+*eMZed* installs example scripts in the ``emzed_files/example_scripts``
+folder in your home directory. We recommend to study these scripts to
+get an understanding how the inididual *eMZed* modules play together.
 
 
