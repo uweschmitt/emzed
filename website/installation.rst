@@ -46,15 +46,20 @@ Further we updated *eMZed* to the newest version of *pyopenms*.
 For installing *eMZed* on Windows please follow **carefully** the stepwise
 instructions. **version numbers and file names matter**.
 
-1. Install 64 bit Python 2.7 for Windows from http://www.python.org/download/
+1. Download and install  64 bit Python 2.7 for Windows from
+   http://python.org/ftp/python/2.7.4/python-2.7.4.amd64.msi
 
-2. Download and run *numpy-MKL-1.7.X.win-amd64-py2.7.exe* from
+2. Download and install *numpy-MKL-1.7.X.win-amd64-py2.7.exe* from
    http://www.lfd.uci.edu/~gohlke/pythonlibs#numpy 
 
-3. If you do not have *R* installed on your system, download and run 
+   Be carefull to select the **64 bit** version for Python **2.7** !
+
+3. If you do not have *R* installed on your system, first **download**
+
     http://cran.r-project.org/bin/windows/base/R-3.0.0-win.exe
-   **Please install R with administration rights, else you might get problems
-   using  R functionalities from eMZed.**
+
+    and **run it with administration rights**, else you might get problems
+    using R functionalities from eMZed.
 
 4. In order to install all other needed Python packages 
    download and unpack 
