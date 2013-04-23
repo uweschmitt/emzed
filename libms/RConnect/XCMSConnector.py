@@ -7,9 +7,9 @@ import os, sys
 from ..intern_utils import TemporaryDirectoryWithBackup
 from pyopenms import FileHandler
 
-from userConfig import getExchangeFolder, getRLibsFolder
+from userConfig import getVersionedExchangeFolder, getRLibsFolder
 
-exchangeFolderAvailable = getExchangeFolder() is not None
+exchangeFolderAvailable = getVersionedExchangeFolder() is not None
 
 
 def install_xmcs_if_needed_statements():

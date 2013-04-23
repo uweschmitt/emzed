@@ -46,7 +46,7 @@ from string import Template
 # configs are read in this order, so local configs overrun global configs
 
 import userConfig
-exchangeFolder = userConfig.getExchangeFolder()
+exchangeFolder = userConfig.getVersionedExchangeFolder()
 repositoryPathes = []
 if exchangeFolder is not None:
     repositoryPathes.append(exchangeFolder)

@@ -1,6 +1,7 @@
 import os, sys
 import ConfigParser
 import functools
+import version
 
 
 class _GlobalConfig(object):
@@ -142,8 +143,15 @@ def getDataHome():
     return dataHome
 
 def getExchangeFolder():
+    import warnings
+    warnings.warn("getExchangeFolder is depreciated. Please use"\
+    " getVersionedExchangeFolder() instead")
+    return getVersionedExchangeFolder()
+
+def getVersionedExchangeFolder():
     folder = _GlobalConfig().getExchangeFolder()
     if folder:
+        folder = os.path.join(folder, version.version)
         try:
             os.stat(folder)
         except:
@@ -151,10 +159,11 @@ def getExchangeFolder():
             return None
         return folder
     # no global exchange folder set, use local folder instead:
-    exchangeFolder = os.path.join(getDataHome(), "shared")
-    if not os.path.exists(exchangeFolder):
-        os.makedirs(exchangeFolder)
-    return exchangeFolder
+    folder = os.path.join(getDataHome(), "shared")
+    folder = os.path.join(folder, version.version)
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+    return folder
 
 def getMetlinToken():
     return _GlobalConfig().getMetlinToken()
@@ -163,7 +172,7 @@ def setMetlinToken(token):
     return _GlobalConfig().setMetlinToken(token)
 
 def getRLibsFolder():
-    root = getExchangeFolder()
+    root = getVersionedExchangeFolder()
     if root is None:
         return None
     return os.path.join(root, "r_libs")
