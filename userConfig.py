@@ -18,7 +18,11 @@ class _GlobalConfig(object):
             p = ConfigParser.ConfigParser()
             p.readfp(open(self.configFilePath))
             self.exchangeFolder = p.get("DEFAULT", "exchange_folder")
-            self.metlinToken = p.get("DEFAULT", "metlin_token")
+            if p.has_option("DEFAULT", "metlin_token"):
+                self.metlinToken = p.get("DEFAULT", "metlin_token")
+            else:
+                self.metlinToken = None
+                self.editConfig()
 
     def getExchangeFolder(self):
         return self.exchangeFolder
