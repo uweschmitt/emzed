@@ -504,6 +504,24 @@ analysis.  These methods work on tables like this
 
 .. _dialogbuilder_example:
 
+
+Quering METLIN web service
+--------------------------
+
+.. pycon::
+
+    t = ms.toTable("m0",[195.0877, 194.07904])
+    t.print_()
+    matched = ms.matchMetlin(t, "m0", ["M"], ppm=30)
+    matched.print_()
+
+.. pycon::
+
+    t = ms.toTable("m0",[194.07904])
+    t.print_()
+    matched = ms.matchMetlin(t, "m0", ["M+H", "M+2H"], ppm=30)
+    matched.print_()
+
 Building graphical interfaces
 -----------------------------
 
