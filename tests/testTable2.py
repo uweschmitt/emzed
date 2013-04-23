@@ -1,3 +1,4 @@
+import pdb
 import ms, mass
 
 from libms.DataStructures.Table import Table, toOpenMSFeatureMap
@@ -444,3 +445,22 @@ def testToOpenMSFeatureMap():
     f = fm[0]
     assert f.getMZ() == 1.0 # == ok, as no digits after decimal point
     assert f.getRT() == 2.0 # dito
+
+def test_removePostfixes():
+    t = Table(["abb__0", "bcb__0"], [str]*2, ["%s"] *2)
+    assert t.colNames == ["abb__0", "bcb__0"]
+    t.removePostfixes()
+    assert t.colNames == ["abb", "bcb"]
+    t.removePostfixes("bb", "cb")
+    assert t.colNames == ["a", "b"]
+    try:
+        t.print_()
+        t.removePostfixes("a", "b")
+        t.print_()
+
+    except:
+        pass
+    else:
+        assert False, "expected exception"
+
+

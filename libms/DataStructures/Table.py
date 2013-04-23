@@ -131,7 +131,7 @@ class Table(object):
             message = "multiple columns: " + ", ".join(multiples)
             raise Exception(message)
 
-        if not circumventNameCheck:
+        if 0 and not circumventNameCheck:
             assert all("__" not in name  for name in colNames), \
                        "illegal column name(s), double underscores not allowed"
 
@@ -1096,6 +1096,36 @@ class Table(object):
             filteredTable.rows =\
                     [self.rows[n][:] for n, i in enumerate(flags) if i]
         return filteredTable
+
+    def removePostfixes(self, *postfixes):
+        """
+        removes postfixes.
+        throws exception if this process produces duplicate column names.
+
+        if you ommit postfixes parameter, all "__xyz" postfixes are removed.
+        else the given postfixes are stripped from the column names
+        """
+        new_column_names = list()
+        for column_name in self.colNames:
+            if not postfixes:
+                new_column_name, __, __ = column_name.partition("__")
+            else:
+                for pf in postfixes:
+                    if column_name.endswith(pf):
+                        new_column_name = column_name[:-len(pf)]
+                        break
+                else:
+                    new_column_name = column_name
+            new_column_names.append(new_column_name)
+
+        if len(set(new_column_names))  != len(new_column_names):
+            raise Exception("removing postfix(es) %r results in ambiguous"\
+                            "column_names %s" % (postfixes, new_column_names))
+
+        self._colNames = new_column_names
+        self.resetInternals()
+
+
 
     def supportedPostfixes(self, colNamesToSupport):
         """
