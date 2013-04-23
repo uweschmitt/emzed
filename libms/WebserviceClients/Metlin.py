@@ -9,9 +9,12 @@ from ..DataStructures.Table import Table
 
 class MetlinMatcher(object):
 
-    col_names = [ "formula", "mass", "name", "molid"]
-    col_types = [ str, float, str, int]
-    col_formats = [ "%s", "%.5f", "%s", "%d" ]
+    ws_col_names = [ "formula", "mass", "name", "molid"]
+    ws_col_types = [ str, float, str, int]
+    ws_col_formats = [ "%s", "%.5f", "%s", "%d" ]
+
+    url = "http://metlin.scripps.edu/REST/search/index.php"
+    info_url = "http://metlin.scripps.edu/metabo_info.php?molid=%d"
 
     batch_size = 90 # should be 500 as metlin promises, but this is false
 
@@ -27,7 +30,6 @@ class MetlinMatcher(object):
 
         token = userConfig.getMetlinToken()
 
-        url = "http://metlin.scripps.edu/REST/search/index.php"
         params = OrderedDict()
         params["token"] = token # "DqeN7qBNEAzVNm9n"
         params["mass[]"] = masses
@@ -36,7 +38,7 @@ class MetlinMatcher(object):
         params["tolerance"] = ppm
 
         #r = requests.post(url, data=params)
-        r = requests.get(url, params=params)
+        r = requests.get(MetlinMatcher.url, params=params)
         #print r
         #print urllib2.unquote(r.url)
         #print r.status_code
@@ -45,25 +47,28 @@ class MetlinMatcher(object):
                                               (urllib2.unquote(r.url), r.text))
 
         j = r.json()
-        # TODO: token via config + fehlermeldung falls nicht vorhanden
         # TODO: requests module in setup !?
 
         # TODO: aksFor... udn DialogBUilder: pathes nach latin-1 encoden ?
         # oder: fuer unicode tabellenspaltentyp kein "type=None" ?
 
-        col_names = MetlinMatcher.col_names
-        col_types = MetlinMatcher.col_types
-        col_formats = MetlinMatcher.col_formats
+        ws_col_names = MetlinMatcher.ws_col_names
+        ws_col_types = MetlinMatcher.ws_col_types
+        ws_col_formats = MetlinMatcher.ws_col_formats
+        info_url = MetlinMatcher.info_url
+
         tables = []
         for m_z, ji in zip(masses, j):
             rows = []
             for jii in ji:
-                rows.append([t(jii[n]) for t, n in zip(col_types, col_names)])
+                rows.append([t(jii[n])\
+                                  for t, n in zip(ws_col_types, ws_col_names)])
 
             if rows:
-                ti = Table(col_names, col_types, col_formats, rows[:])
+                ti = Table(ws_col_names, ws_col_types, ws_col_formats, rows[:])
                 ti.addColumn("m_z", m_z, insertBefore=0)
                 ti.addColumn("adduct", adduct, insertBefore=1)
+                ti.addColumn("link", ti.molid.apply(lambda d: info_url % d))
                 tables.append(ti)
         return tables
 
