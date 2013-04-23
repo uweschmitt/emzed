@@ -255,6 +255,7 @@ class Dialog(object):
             self.choose["state"] = NORMAL
             self.done["state"] = NORMAL
             self.root.update_idletasks()
+            tkMessageBox.showinfo(message="Download finished, you can close the downloader")
 
     def quit(self):
         self.root.quit()
@@ -264,11 +265,6 @@ def main():
 
     handler = urllib2.urlopen("http://emzed.ethz.ch/downloads/urls.txt")
     urls = [ url.strip() for url in handler]
-    fp = open("urls.txt", "w")
-    for url in urls:
-        print url
-        print >> fp, url
-    fp.close()
 
     here = os.path.dirname(sys.argv[0])
 
@@ -303,7 +299,5 @@ try:
     main()
 except:
     import traceback
-    traceback.print_exc()
-    print
-    raw_input("press ENTER to close window")
+    tkMessageBox.showerror(message=traceback.format_exc())
 
