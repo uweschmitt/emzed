@@ -291,7 +291,8 @@ def main():
 
 
     except:
-        raise
+        import traceback
+        tkMessageBox.showerror(message=traceback.format_exc())
     finally:
         fp.close()
 #
