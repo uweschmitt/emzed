@@ -153,6 +153,8 @@ def getVersionedExchangeFolder():
     if folder:
         folder = os.path.join(folder, version.version)
         try:
+            if not os.path.exists(folder):
+                os.makedirs(folder)
             os.stat(folder)
         except:
             # not reachable, may happen for network folders
