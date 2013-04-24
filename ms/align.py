@@ -1,9 +1,8 @@
 #encoding:utf-8
 
 def rtAlign(tables, refTable = None, destination = None, nPeaks=-1,
-            numBreakpoints=5, maxRtDifference = 100, maxMzDifference = 0.01,
-            maxMzDifferencePairfinder = 0.01,
-            forceAlign=False):
+            numBreakpoints=5, maxRtDifference = 100, maxMzDifference = 0.3,
+            maxMzDifferencePairfinder = 0.5, forceAlign=False):
 
     """ aligns feature tables in respect to retention times.
         the algorithm produces new tables with aligned data.
@@ -81,10 +80,11 @@ def rtAlign(tables, refTable = None, destination = None, nPeaks=-1,
 
     algo_params = algo.getDefaults()
     pd = algo_params.asDict()
+    pd["max_num_peaks_considered"] = nPeaks
     pd["superimposer:num_used_points"] = nPeaks
-    pd["superimposer:mz_pair_max_distance"] = float(maxMzDifference)
+    pd["superimposer:mz_pair_max_distance"] = float(maxMzDifferencePairfinder)
     pd["pairfinder:distance_RT:max_difference"] = float(maxRtDifference)
-    pd["pairfinder:distance_MZ:max_difference"] = float(maxMzDifferencePairfinder)
+    pd["pairfinder:distance_MZ:max_difference"] = float(maxMzDifference)
     pd["pairfinder:distance_MZ:unit"] = "Da"
     algo_params.updateFrom(pd)
     algo.setParameters(algo_params)
@@ -100,7 +100,6 @@ def rtAlign(tables, refTable = None, destination = None, nPeaks=-1,
         print
         print "REFMAP IS",
         print os.path.basename(refTable.meta.get("source","<noname>"))
-        print
     else:
         if refTable in tables:
             refMap = fms[tables.index(refTable)][0]
@@ -160,6 +159,7 @@ def _plot_and_save(transformation, filename, destination):
     import pylab
     import os.path
     dtp = transformation.getDataPoints()
+    print len(dtp), "matching data points"
     if len(dtp) == 0:
         raise Exception("no matches found.")
 
