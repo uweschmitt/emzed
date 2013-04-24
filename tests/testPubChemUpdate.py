@@ -33,3 +33,11 @@ def testPubChemUpdate():
     assert db.table.rows[0][-1].startswith("http")
     assert len(db.table.rows[0]) == len(db.getColNames())
 
+def unicodeWorkaround():
+    # this request failed after some update of pubchen as the delivered
+    # document contains french latin-1 characters but is declared as utf-8
+    from libms.DataBases.PubChemDB import PubChemDB
+    data = PubChemDB._get_summary_data([247])
+    PubChemDB._parse_data(data)
+
+

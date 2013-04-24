@@ -5,6 +5,16 @@ from ..DataStructures.Table import Table
 from ..Chemistry.Tools import monoisotopicMass
 
 
+def etree_fromstring(data):
+    try:
+        doc = etree.fromstring(data)
+    except UnicodeEncodeError:
+        # fix pubchem encoding bug, eg doc for id 247 is declared as 
+        # utf-8 but contains french umlauts:
+        data = data.encode("latin-1").replace("UTF-8", "LATIN-1")
+        doc = etree.fromstring(data)
+    return doc
+
 class PubChemDB(object):
 
     colNames = ["m0", "mw", "cid", "mf", "iupac", "synonyms", "url",
@@ -24,7 +34,7 @@ class PubChemDB(object):
         r = requests.get(url, params=data)
         if r.status_code != 200:
             raise Exception("request %s failed.\nanswer : %s" % (r.url, r.text))
-        doc = etree.fromstring(r.text)
+        doc = etree_fromstring(r.text)
         counts = doc.findall("Count")
         assert len(counts)==1
         count = int(counts[0].text)
@@ -49,7 +59,7 @@ class PubChemDB(object):
         r = requests.get(url, params=data)
         if r.status_code != 200:
             raise Exception("request %s failed.\nanswer : %s" % (r.url, r.text))
-        doc = etree.fromstring(r.text)
+        doc = etree_fromstring(r.text)
         if not doc.findall("IdList"):
             raise Exception("Pubchem returned data in unknown format")
         idlist = [int(id_.text) for id_ in  doc.findall("IdList")[0].findall("Id")]
@@ -71,7 +81,7 @@ class PubChemDB(object):
 
     @staticmethod
     def _parse_data(data, keggIds=None, humanMBdbIds=None):
-        doc = etree.fromstring(data)
+        doc = etree_fromstring(data)
         items = []
         for summary in doc[0].findall("DocumentSummary"):
             if len(summary.findall("error")):
@@ -102,7 +112,7 @@ class PubChemDB(object):
         print "START DOWNLOAD OF", len(idlist), "ITEMS"
         sys.stdout.flush()
         started = time.time()
-        batchsize = 1000
+        batchsize = 500
         jobs = [idlist[i:i+batchsize] for i in range(0, len(idlist), batchsize)]
         items = []
         for i, j in enumerate(jobs):
