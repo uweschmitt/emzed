@@ -190,6 +190,7 @@ on Windows platforms (only IPython v0.10 is fully supported).
     ###########################################################################
     # modification eMZed # #
     ###########################################################################
+    ip = None    
     try:
         ip = IPython.ipapi.get()
     except:
@@ -198,10 +199,10 @@ on Windows platforms (only IPython v0.10 is fully supported).
         except:
             pass
 
-    if ip:
+    if ip is not None:
         
         try:
-            ip.magic('config PromptManager.in_template = "EMZED_DEVELOP\\nIn [\\#]:"')
+            ip.magic('config PromptManager.in_template = "EMZED_DEVELOP\\nIn [\\#]: "')
         except:
             pass
         for name in ["e", "pi", "path"]:
@@ -210,7 +211,7 @@ on Windows platforms (only IPython v0.10 is fully supported).
             except:
                 pass
     try:
-        __ipythonshell__.magic('config PromptManager.in_template = "EMZED_DEVELOP\\nIn [\\#]:"')    
+        __ipythonshell__.magic('config PromptManager.in_template = "EMZED_DEVELOP\\nIn [\\#]: "')    
     except:
         pass
     __ipythonshell__.mainloop()
