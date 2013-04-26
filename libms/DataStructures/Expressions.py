@@ -463,7 +463,8 @@ class BaseExpression(object):
             if len(diff) == 0:
                 raise Exception("only None values in %s" % self)
             if len(diff) > 1:
-                raise Exception("more than one None value in %s" % self)
+                raise Exception("more than one not-None value in %s: %s"\
+	                   	% (self, sorted(diff)))
             return diff.pop()
         return AggregateExpression(self, select, "uniqueNotNone(%s)",\
                                    None, ignoreNone=False)
