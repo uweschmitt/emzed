@@ -10,7 +10,7 @@ class PeakPickerHiRes(object):
         params = self.pp.getParameters()
         config = self.standardConfig
         config.update(modified_config)
-        params.updateFrom(config)
+        params.update(config)
         self.pp.setParameters(params)
 
     def pickPeakMap(self, pm, showProgress=False):
