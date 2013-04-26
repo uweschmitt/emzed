@@ -526,3 +526,24 @@ def testApply():
     ts = t.splitBy("a_bin")
     assert len(ts) == 4
 
+
+def testCompress():
+    t = ms.toTable("a", [])
+    from libms.DataStructures.Table import compressPeakMaps
+    from libms.DataStructures.MSTypes import PeakMap, Spectrum
+    import numpy
+    compressPeakMaps(t)
+
+    s = Spectrum(numpy.arange(12).reshape(-1,2), 1.0, 1, "+")
+    pm = PeakMap([s])
+    s = Spectrum(numpy.arange(12).reshape(-1,2), 1.0, 1, "+")
+    pm2 = PeakMap([s])
+
+    t = ms.toTable("pm", [pm, pm2])
+    assert len(set(map(id, t.pm.values))) == 2
+    compressPeakMaps(t)
+    assert len(set(map(id, t.pm.values))) == 1
+
+
+
+

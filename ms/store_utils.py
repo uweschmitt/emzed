@@ -40,9 +40,9 @@ def storeTable(tab, path=None, forceOverwrite=False):
     # local import in order to keep namespaces clean
     import ms
     import sys
-    import tools
+    from libms.DataStructures.Table import compressPeakMaps
 
-    tools.compressPeakMaps(tab)
+    compressPeakMaps(tab)
 
     if isinstance(path, unicode):
         path = path.encode(sys.getfilesystemencoding())

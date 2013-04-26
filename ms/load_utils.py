@@ -1,8 +1,5 @@
 #encoding: utf-8
 
-
-
-
 def loadPeakMap(path=None):
     """ loads mzXML, mzML and mzData files
 
@@ -40,7 +37,6 @@ def loadPeakMap(path=None):
     return PeakMap.fromMSExperiment(experiment)
 
 
-
 def loadTable(path=None):
     """ load pickled table
 
@@ -51,8 +47,7 @@ def loadTable(path=None):
     # local import in order to keep namespaces clean
     import ms
     import sys
-    import tools
-    from   libms.DataStructures.Table import Table
+    from   libms.DataStructures.Table import Table, compressPeakMaps
 
     if isinstance(path, unicode):
         path = path.encode(sys.getfilesystemencoding())
@@ -62,7 +57,7 @@ def loadTable(path=None):
             return None
 
     result = Table.load(path)
-    tools.compressPeakMaps(result)
+    compressPeakMaps(result)
     return result
 
 def loadCSV(path=None, sep=";", keepNone = False, **specialFormats):

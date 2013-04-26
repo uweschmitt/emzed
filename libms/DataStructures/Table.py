@@ -1450,3 +1450,41 @@ def toOpenMSFeatureMap(table):
         f.setIntensity(area if area is not None else 1000.0)
         fm.push_back(f)
     return fm
+
+
+def compressPeakMaps(table):
+    """
+    sometimes duplicate peakmaps occur as different objects in a table,
+    that is: different id() but same content.
+    this function removes duplicates and replaces different instances
+    of the same data by one particular instance.
+    """
+    import hashlib
+
+    def _compute_digest(pm):
+        h = hashlib.sha512()
+        for spec in pm.spectra:
+            # peaks.data is binary representation of numpy array peaks:
+            h.update(str(spec.peaks.data))
+        return h.digest()
+
+    from   libms.DataStructures import PeakMap
+    peak_maps = dict()
+    digests = dict()
+    for row in table.rows:
+        for cell in row:
+            if isinstance(cell, PeakMap):
+                if not hasattr(cell, "_digest"):
+                    d = digests.get(id(cell))
+                    if d is None:
+                        d = _compute_digest(cell)
+                        digests[id(cell)] = d
+                    cell._digest = d
+                peak_maps[cell._digest] = cell
+    for row in table.rows:
+        for i, cell in enumerate(row):
+            if isinstance(cell, PeakMap):
+                row[i] = peak_maps[cell._digest]
+                del cell._digest
+    table.resetInternals()
+
