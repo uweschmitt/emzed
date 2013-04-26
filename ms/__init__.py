@@ -35,25 +35,11 @@ __builtins__["MASS_N"] = 1.00866491600
 # del fails in case of reload(ms) from shell, so we put them into try
 # statements:
 
-for mod in [load_utils, store_utils, custom_dialogs, integration,
-        align, mzalign, formula_generator, isotope_calculator,
-        tools, statistics, metlin, metabo]:
-    del mod
-
-try:
-    del tools
-except:
-    pass
-try:
-    del statistics
-except:
-    pass
-
-try:
-    del metlin
-except:
-    pass
-try:
-    del metlin
-except:
-    pass
+for mod in ["load_utils", "store_utils", "custom_dialogs", "integration",
+        "align", "mzalign", "formula_generator", "isotope_calculator",
+        "tools", "statistics", "metlin", "metabo",
+        ]:
+    try:
+        exec "del %s" % mod
+    except:
+        pass
