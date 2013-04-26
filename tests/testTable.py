@@ -526,3 +526,10 @@ def testApply():
     ts = t.splitBy("a_bin")
     assert len(ts) == 4
 
+
+def testUpdateColumn():   
+    t = ms.toTable("a", [1, 2])
+    t.updateColumn("a", t.a + 1)
+    assert t.a.values == [2, 3]
+    t.updateColumn("b", t.a + 1)
+    assert t.b.values == [3, 4]
