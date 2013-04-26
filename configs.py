@@ -35,6 +35,20 @@ peakIntegrators = [ ( "std",  SGIntegrator(window_size=11, order=2) ) ,
                     ( "no_integration", NoIntegration() ) ,
                    ]
 
+metaboff_defaults = dict(epdet_width_filtering="auto")
+
+std_config = metaboff_defaults.copy()
+std_config.update({"common_chrom_fwhm": 25.0,
+                    "mtd_min_trace_length" : 3.0,
+                    "ffm_local_mz_range" : 15.0,
+                    "ffm_disable_isotope_filtering" : "true"
+                   })
+
+
+metaboff_configs = {
+        None : metaboff_defaults,
+        "std" : std_config,
+        }
 
 
 
