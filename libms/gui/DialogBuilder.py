@@ -14,6 +14,39 @@ di.ChoiceItem.check_value = lambda *a, **kw: True
 di.MultipleChoiceItem.check_value = lambda *a, **kw: True
 di.ButtonItem.check_value = lambda *a, **kw: True
 
+def _patched_get(self, instance, klass):
+    if instance is not None:
+         value = getattr(instance, "_" + self._name, self._default)
+         if isinstance(value, unicode):
+             return value.encode("utf-8")
+         return value
+    return self
+
+di.StringItem.__get__ = _patched_get
+di.TextItem.__get__ = _patched_get
+
+import sys
+
+if sys.platform=="win32":
+
+    def _patched_get_for_pathes(self, instance, klass):
+        if instance is not None:
+            value = getattr(instance, "_" + self._name, self._default)
+            if isinstance(value, unicode):
+                # replace needed for network pathes like "//gram/omics/...."
+                return value.encode("utf-8").replace("/", "\\")
+            return value
+        return self
+
+else:
+    _patched_get_for_pathes = _patched_get
+
+
+di.FilesOpenItem.__get__ = _patched_get_for_pathes
+di.FileSaveItem.__get__ = _patched_get_for_pathes
+di.FileOpenItem.__get__ = _patched_get_for_pathes
+di.DirectoryItem.__get__ = _patched_get_for_pathes
+
 
 def _translateLabelToFieldname(label):
     # translate label strings to python vairable names
@@ -209,12 +242,13 @@ class DialogBuilder(object):
             raise Exception("dialog aborted by user")
         # return the values a tuple according to the order of the
         # declared input widgets:
-        result = tuple(getattr(instance, name) for name in self.fieldNames)
+        result = [getattr(instance, name) for name in self.fieldNames]
+        result = tuple(result)
         if len(result) == 1:
             result = result[0]
         return result
 
-
+# import guidata DataItems into current namespace
 for _itemName, _item in di.__dict__.items():
     if _itemName.endswith("Item"):
         exec ("%s = di.%s" % (_itemName, _itemName))
@@ -229,7 +263,6 @@ def RunJobButton(label, method_name=None):
 
 from guidata.dataset.qtwidgets import DataSetEditDialog
 DataSetEditDialog.check = lambda self: True
-
 
 class WorkflowFrontend(dt.DataSet):
 

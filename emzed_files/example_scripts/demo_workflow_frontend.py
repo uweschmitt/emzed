@@ -16,17 +16,17 @@ class TestFrontend(gui.WorkflowFrontend):
     method_two = gui.RunJobButton("uwes method", method_name="uwe")
 
     def run_method_one(self):
-        self.name = "patrick"
-        self.parameter = "42"
         print "you called method one"
-        print "self.name=", self.name
+        print "repr(self.name)=", repr(self.name)
+        print "str(self.name)=", str(self.name)
+
         print "self.parameter=", self.parameter
         print
+        self.name = "patrick"
+        self.parameter = "42"
 
 
     def uwe(self):
-        self.name = "uwe"
-        self.parameter = "23"
         print "you called method two"
         print "self.name=", self.name
         print "self.parameter=", self.parameter
