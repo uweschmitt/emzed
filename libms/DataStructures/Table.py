@@ -782,10 +782,10 @@ class Table(object):
 
         For the parameters see :py:meth:`~.addColumn`
         """
-        if table.hasColumn(colName):
-             table.replaceColumn(colName, expr, format=format)
+        if self.hasColumn(name):
+            self.replaceColumn(name, what, format=format)
         else:
-            table.addColumn(colName, expr, format=format,
+            self.addColumn(name, what, format=format,
                                  insertBefore = insertBefore)
 
     def addColumn(self, name, what, type_=None, format="", insertBefore=None):

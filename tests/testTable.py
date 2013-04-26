@@ -65,7 +65,7 @@ def run(t, colnames, rows):
     assert set(t.getVisibleCols()) == { 'int', 'long', 'float', 'str',
                                         'object', 'array' }
 
-    
+
     expr = t.str.contains("hi")
     tn = t.filter(expr)
     assert len(tn) == 3
@@ -138,7 +138,7 @@ def run(t, colnames, rows):
     assert len(after-before) == 2
     for n in after-before:
         # maybe we have some x.csv.? from previous run of this
-        #function so we can not assume that we find x.csv and 
+        #function so we can not assume that we find x.csv and
         #x.csv.1
         assert re.match("x.csv(.\d+)?", n)
 
@@ -157,7 +157,7 @@ def run(t, colnames, rows):
     # computed by callback:
     tn.addColumn("squared", lambda t,r,n: t.get(r, "iii")**2)
 
-    
+
     assert list(tn.getColumn("computed").values ) == [8080, 7441, 6161], tn.computed.values
     assert list(tn.getColumn("squared").values ) == [9, 4, 1]
 
@@ -197,12 +197,12 @@ def run(t, colnames, rows):
     tx._print()
     assert len(tx) == 1
     assert tx.iii.values == [1]
-    
+
     tn.addColumn("li", [1,2,3])
     assert len(tn) == 3
     assert len(tn.getColNames()) == 3
     assert "li" in tn.getColNames()
-    
+
     tn.addRow([1, 1, 1])
     assert len(tn) == 4
 
@@ -545,5 +545,9 @@ def testCompress():
     assert len(set(map(id, t.pm.values))) == 1
 
 
-
-
+def testUpdateColumn():
+    t = ms.toTable("a", [1, 2])
+    t.updateColumn("a", t.a + 1)
+    assert t.a.values == [2, 3]
+    t.updateColumn("b", t.a + 1)
+    assert t.b.values == [3, 4]
