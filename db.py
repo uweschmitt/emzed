@@ -29,13 +29,15 @@ if exchangeFolder is not None:
                 else:
                     print
                     print "*"*65
-                    print "YOU ARE NOT ALLOW TO UPDATE GLOBAL DB"
+                    print "YOU ARE NOT ALLOWED TO UPDATE GLOBAL DB"
                     print "PLEASE INFORM YOUR ADMINISTRATOR"
                     print "*"*65
                     print
             # cleanup namespace
             del newIds, missingIds
         except:
+            import traceback
+            traceback.format_exc()
             print "PUBCHEM NOT AVAILABLE"
 
     # cleanup namespace
