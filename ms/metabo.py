@@ -193,20 +193,23 @@ def metaboFeatureFinder(peak_map, config_id=None, **kw):
             quality = feature.getOverallQuality()
             width   = feature.getWidth()
             charge  = feature.getCharge()
+            mz = feature.getMZ()
+            rt = feature.getRT()
             for convex_hull in convex_hulls:
                 bb = convex_hull.getBoundingBox()
                 rtmin, mzmin = bb.minPosition()
                 rtmax, mzmax = bb.maxPosition()
-                row = [i, mzmin, mzmax, rtmin, rtmax, quality, width, charge,
+                row = [i, mz, mzmin, mzmax, rt, rtmin, rtmax, quality, width, charge,
                         peak_map]
                 rows.append(row)
 
-    tab = Table(["feature_id", "mzmin", "mzmax", "rtmin", "rtmax",
+    tab = Table(["feature_id", "mz", "mzmin", "mzmax", "rt", "rtmin", "rtmax",
                     "quality", "fwhm", "charge", "peakmap"],
-                [int, float, float, float, float, float, float, int,
+                [int, float, float, float, float, float, float, float, float, int,
                     object],
-                ["%d", "%10.5f", "%10.5f", formatSeconds, formatSeconds,
-                    "%.2e", formatSeconds, "%d", None], rows)
+                ["%d", "%10.5f", "%10.5f", "%10.5f", formatSeconds, formatSeconds,
+                    formatSeconds, "%.2e", formatSeconds, "%d", None],
+                rows)
 
     tab.addEnumeration()
 
