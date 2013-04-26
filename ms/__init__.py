@@ -23,7 +23,12 @@ from libms.gui.DialogBuilder import (DialogBuilder,
                                      showWarning,
                                      showInformation)
 
-
+def startfile(path):
+    import sys, os
+    if sys.platform=="win32":
+        # needed for network pathes like "//gram/omics/...."
+        path = path.replace("/","\\")
+    return os.startfile(path)
 
 
 __builtins__["MMU"] = 0.001
