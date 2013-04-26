@@ -113,7 +113,7 @@ def metaboFeatureFinder(peak_map, config_id=None, **kw):
 
     from configs import metaboff_configs
 
-    config_params = metaboff_configs[config_id]
+    config_params = metaboff_configs[config_id].copy()
     config_params.update(kw)
 
     assert isinstance(peak_map, PeakMap)
