@@ -1,6 +1,6 @@
 #encoding: utf-8
 
-import hashlib
+
 
 
 def loadPeakMap(path=None):
@@ -39,31 +39,6 @@ def loadPeakMap(path=None):
 
     return PeakMap.fromMSExperiment(experiment)
 
-def _compute_digest(pm):
-    h = hashlib.sha512()
-    for spec in pm.spectra:
-          h.update(str(spec.peaks.data))
-    return h.digest()
-
-def _compressPeakMaps(table):
-    from   libms.DataStructures import PeakMap
-    peak_maps = dict()
-    digests = dict()
-    for row in table.rows:
-        for cell in row:
-            if isinstance(cell, PeakMap):
-                if not hasattr(cell, "_digest"):
-                    d = digests.get(id(cell))
-                    if d is None:
-                        d = _compute_digest(cell)
-                        digests[id(cell)] = d
-                    cell._digest = d
-                peak_maps[cell._digest] = cell
-    for row in table.rows:
-        for i, cell in enumerate(row):
-            if isinstance(cell, PeakMap):
-                row[i] = peak_maps[cell._digest]
-    table.resetInternals()
 
 
 def loadTable(path=None):
@@ -76,6 +51,7 @@ def loadTable(path=None):
     # local import in order to keep namespaces clean
     import ms
     import sys
+    import tools
     from   libms.DataStructures.Table import Table
 
     if isinstance(path, unicode):
@@ -86,7 +62,7 @@ def loadTable(path=None):
             return None
 
     result = Table.load(path)
-    _compressPeakMaps(result)
+    tools.compressPeakMaps(result)
     return result
 
 def loadCSV(path=None, sep=";", keepNone = False, **specialFormats):

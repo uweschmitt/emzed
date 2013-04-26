@@ -198,3 +198,32 @@ def recalculateMzPeaks(table):
                 table.addColumn(mz_col, _recalculateMzPeakFor(postfix),
                                 format="%.5f", type_=float)
 
+
+def compressPeakMaps(table):
+    import hashlib
+
+    def _compute_digest(pm):
+        h = hashlib.sha512()
+        for spec in pm.spectra:
+            h.update(str(spec.peaks.data))
+        return h.digest()
+
+    from   libms.DataStructures import PeakMap
+    peak_maps = dict()
+    digests = dict()
+    for row in table.rows:
+        for cell in row:
+            if isinstance(cell, PeakMap):
+                if not hasattr(cell, "_digest"):
+                    d = digests.get(id(cell))
+                    if d is None:
+                        d = _compute_digest(cell)
+                        digests[id(cell)] = d
+                    cell._digest = d
+                peak_maps[cell._digest] = cell
+    for row in table.rows:
+        for i, cell in enumerate(row):
+            if isinstance(cell, PeakMap):
+                row[i] = peak_maps[cell._digest]
+    table.resetInternals()
+
