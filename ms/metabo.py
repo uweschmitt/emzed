@@ -1,4 +1,5 @@
 import pyopenms
+import os
 from libms.DataStructures import PeakMap, Table
 from libms.DataStructures import fms as formatSeconds
 
@@ -200,18 +201,24 @@ def metaboFeatureFinder(peak_map, config_id=None, **kw):
                 rtmin, mzmin = bb.minPosition()
                 rtmax, mzmax = bb.maxPosition()
                 row = [i, mz, mzmin, mzmax, rt, rtmin, rtmax, quality, width, charge,
-                        peak_map]
+                      ]
                 rows.append(row)
 
     tab = Table(["feature_id", "mz", "mzmin", "mzmax", "rt", "rtmin", "rtmax",
-                    "quality", "fwhm", "charge", "peakmap"],
-                [int, float, float, float, float, float, float, float, float, int,
-                    object],
+                    "quality", "fwhm", "charge", ],
+                [int, float, float, float, float, float, float, float, float, int,],
                 ["%d", "%10.5f", "%10.5f", "%10.5f", formatSeconds, formatSeconds,
-                    formatSeconds, "%.2e", formatSeconds, "%d", None],
+                    formatSeconds, "%.2e", formatSeconds, "%d",],
                 rows)
 
+    tab.addConstantColumn("peakmap", peak_map)
+    src = peak_map.meta.get("source", "")
+    tab.addConstantColumn("source", src)
     tab.addEnumeration()
+    if src:
+        tab.title = "metabo features from %s" % os.path.basename(src)
+    else:
+        tab.title = "metabo features"
 
     needed = time.time() - start_at
 
