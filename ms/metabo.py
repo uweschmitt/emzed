@@ -81,7 +81,8 @@ class _ParamHandler(object):
                 elif isinstance(v, float):
                     allowed = "%e..%e" % (e.min_float, e.max_float)
                 elif isinstance(v, str):
-                    allowed = ", ".join(e.valid_strings)
+                    allowed = ", ".join("'%s'" % vs for vs in e.valid_strings)
+                    v = "'%s'" % v
                 else:
                     allowed = "unknown"
                 d = e.description
