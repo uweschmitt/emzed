@@ -225,8 +225,9 @@ class MatchedFilterFeatureDetector(object):
 
         temp_peakmap = _get_temp_peakmap(self.config.get("msLevel"), peakMap)
         minRt = peakMap.spectra[0].rt
-        # xcms does not like rt <= 0, so we shift that rt starts with 1.0:
-        # we have to undo this shift later when parsing the output of xcms
+        # matched filter  does not like rt <= 0, so we shift that rt starts
+        # with 1.0: we have to undo this shift later when parsing the output of
+        # xcms
         shift = minRt-1.0
         peakMap.shiftRt(-shift)
 
@@ -272,6 +273,10 @@ class MatchedFilterFeatureDetector(object):
             table.addConstantColumn("matchedfilter_config", dd, dict, None)
             table.meta["generator"] = "xcms.matchedfilter"
             decorate(table, temp_peakmap)
+            # undo shiftRt done above:
+            table.rtmin += shift
+            table.rtmax += shift
+            table.rt += shift
             return table
 
 def decorate(table, peakMap):
