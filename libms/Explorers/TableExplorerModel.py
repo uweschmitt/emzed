@@ -245,7 +245,7 @@ class TableModel(QAbstractTableModel):
         self.parent = parent
         nc = len(self.table._colNames)
         indizesOfVisibleCols = (j for j in range(nc)
-                                  if self.table.colFormats[j] is not None)
+                                  if self.table._colFormats[j] is not None)
         self.widgetColToDataCol = dict(enumerate(indizesOfVisibleCols))
         self.emptyActionStack()
 
@@ -277,7 +277,7 @@ class TableModel(QAbstractTableModel):
         if role == Qt.DisplayRole:
             return shown
         if role == Qt.EditRole:
-            colType = self.table.colTypes[cidx]
+            colType = self.table._colTypes[cidx]
             if colType in [int, float, str]:
                 if shown.strip().endswith("m"):
                     return shown
@@ -322,7 +322,7 @@ class TableModel(QAbstractTableModel):
         assert isinstance(value, QVariant)
         if index.isValid() and 0 <= index.row() < len(self.table):
             dataIdx = self.widgetColToDataCol[index.column()]
-            expectedType = self.table.colTypes[dataIdx]
+            expectedType = self.table._colTypes[dataIdx]
             if value.toString().trimmed()=="-":
                 value = None
             elif expectedType != object:

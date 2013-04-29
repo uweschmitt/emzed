@@ -11,7 +11,7 @@ __doc__ = """
 """
 
 def deprecation(message):
-    warnings.warn(message, UserWarning, stacklevel=2)
+    warnings.warn(message, UserWarning, stacklevel=3)
 
 standardFormats = { int: "%d", long: "%d", float : "%.2f", str: "%s" }
 fms = "'%.2fm' % (o/60.0)"  # format seconds to floating point minutes
@@ -169,7 +169,11 @@ class Table(object):
         # as we provide  access to columns via __getattr__, colNames must
         # not be in objects __dict__ and must not be name of member
         # functions:
-        memberNames = [name for name, obj in inspect.getmembers(self)]
+
+        with warnings.catch_warnings(): # supress warning accessing .colFormats,
+            #etc:
+            memberNames = [name for name, obj in inspect.getmembers(self)]
+
         for name in colNames:
             if name in self.__dict__ or name in memberNames:
                 raise Exception("colName '%s' not allowed" % name)
@@ -408,10 +412,10 @@ class Table(object):
 
             Example::
 
-                types = table.get(table.colTypes)
+                types = table.get(table.getColTypes())
                 print types["mz"]
 
-                formats = table.get(table.colFormats)
+                formats = table.get(table.getColFormats())
                 print formats["mz"]
 
         """
