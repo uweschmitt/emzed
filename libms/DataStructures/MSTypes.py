@@ -3,7 +3,10 @@ import numpy as np
 import os.path
 import copy
 from   collections import defaultdict
+import warnings
 
+def deprecation(message):
+    warnings.warn(message, UserWarning, stacklevel=2)
 
 class Spectrum(object):
 
@@ -259,8 +262,8 @@ class PeakMap(object):
         """
         returns lists level one spectra in peakmap
         """
-        print "\nWARNING: method is levelOneSpecsInRange is depreciated, "\
-              "please use PeakMap.levelNSpecsInRange instead\n"
+        deprecation("WARNING: method is levelOneSpecsInRange is depreciated, "\
+              "please use PeakMap.levelNSpecsInRange instead")
         return self.levelNSpecsInRange(1, rtmin, rtmax)
 
     def levelNSpecsInRange(self, n, rtmin, rtmax):
@@ -304,8 +307,8 @@ class PeakMap(object):
         return sorted(set(spec.msLevel for spec in self.spectra))
 
     def ms1Peaks(self, rtmin=None, rtmax=None):
-        print "\nWARNING: ms1Peaks method is depreciated, please use "\
-              "PeakMap.msNPeaks instead\n"
+        deprecation("WARNING: ms1Peaks method is depreciated, please use "\
+              "PeakMap.msNPeaks instead")
         return self.msNPeaks(1, rtmin, rtmax)
 
     def msNPeaks(self, n, rtmin=None, rtmax=None):
