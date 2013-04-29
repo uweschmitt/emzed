@@ -1485,6 +1485,6 @@ def compressPeakMaps(table):
         for i, cell in enumerate(row):
             if isinstance(cell, PeakMap):
                 row[i] = peak_maps[cell._digest]
-                del cell._digest
+                # del cell._digest
     table.resetInternals()
 
