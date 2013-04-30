@@ -16,6 +16,11 @@ def deprecation(message):
 standardFormats = { int: "%d", long: "%d", float : "%.2f", str: "%s" }
 fms = "'%.2fm' % (o/60.0)"  # format seconds to floating point minutes
 
+formatSeconds = fms
+formatHexId   = "'%x' % id(o)"
+
+
+
 def guessFormatFor(name, type_):
     if type_ in (float, int):
         if name.startswith("m"):
@@ -1434,12 +1439,25 @@ def toOpenMSFeatureMap(table):
     table.requireColumn("mz")
     table.requireColumn("rt")
 
+    if "feature" in table._colNames:
+        tt = table.getType("feature")
+        if tt == pyopenms.Feature:
+            fm = pyopenms.FeatureMap()
+            done = set()
+            for f in table.feature.values:
+                # multiple features as we have masstraces # in table, id as f
+                # is not hashable
+                if id(f) not in done: 
+                    fm.push_back(f)
+                done.add(id(f))
+            return fm
+
     if "into" in table._colNames:
         areas = table.into.values
     elif "area" in table._colNames:
         areas = table.area.values
     else:
-        print "features not integrated. I assume constant intensity"
+        print "features have no area/intensity, we assume constant intensity"
         areas = [None] * len(table)
 
 
