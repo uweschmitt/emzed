@@ -212,11 +212,11 @@ def metaboFeatureFinder(peak_map, config_id=None, **kw):
                 [int, float, float, float, float, float, float, float, float,
                     int, pyopenms.Feature],
                 ["%d", "%10.5f", "%10.5f", "%10.5f", formatSeconds, formatSeconds,
-                    formatSeconds, "%.2e", formatSeconds, "%d", formatHexId,
+                    formatSeconds, "%.2e", formatSeconds, "%d", None,
                   ],
                 rows)
 
-    tab.addConstantColumn("peakmap", peak_map, PeakMap, formatHexId)
+    tab.addConstantColumn("peakmap", peak_map, PeakMap, None)
     src = peak_map.meta.get("source", "")
     tab.addConstantColumn("source", src)
     tab.addEnumeration()

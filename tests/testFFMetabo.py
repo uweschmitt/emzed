@@ -13,5 +13,3 @@ def test_ffm():
     al1, al2 = ms.rtAlign([ftab2, ftab2], refTable=ftab2, destination=".")
 
 
-
-
