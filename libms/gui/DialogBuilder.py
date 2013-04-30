@@ -40,7 +40,13 @@ if sys.platform=="win32":
         return self
 
 else:
-    _patched_get_for_pathes = _patched_get
+    def _patched_get_for_pathes(self, instance, klass):
+        if instance is not None:
+            value = getattr(instance, "_" + self._name, self._default)
+            if isinstance(value, unicode):
+                return value.encode(sys.getfilesystemencoding())
+            return value
+        return self
 
 
 di.FilesOpenItem.__get__ = _patched_get_for_pathes
