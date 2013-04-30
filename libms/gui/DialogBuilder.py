@@ -6,6 +6,7 @@ import guidata.dataset.dataitems as di
 from guidata.qt.QtGui import QMessageBox
 
 import string
+import locale
 
 # monkey patch following Items, else dt.DataSet.check() raises
 # exceptions. They are assumed to be valid in any case:
@@ -18,7 +19,7 @@ def _patched_get(self, instance, klass):
     if instance is not None:
          value = getattr(instance, "_" + self._name, self._default)
          if isinstance(value, unicode):
-             return value.encode("utf-8")
+             return value.encode(locale.getdefaultlocale()[1])
          return value
     return self
 
@@ -34,7 +35,7 @@ if sys.platform=="win32":
             value = getattr(instance, "_" + self._name, self._default)
             if isinstance(value, unicode):
                 # replace needed for network pathes like "//gram/omics/...."
-                return value.encode("utf-8").replace("/", "\\")
+                return value.encode(sys.getfilesystemencoding()).replace("/", "\\")
             return value
         return self
 
