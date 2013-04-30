@@ -11,6 +11,7 @@ class TestFrontend(gui.WorkflowFrontend):
     parameter = gui.FloatItem("parameter")
     name = gui.StringItem("name", notempty=True)
     optional = gui.StringItem("optional")
+    path = gui.FileOpenItem("path")
 
     method_one = gui.RunJobButton("patricks method")
     method_two = gui.RunJobButton("uwes method", method_name="uwe")
@@ -19,6 +20,8 @@ class TestFrontend(gui.WorkflowFrontend):
         print "you called method one"
         print "repr(self.name)=", repr(self.name)
         print "str(self.name)=", str(self.name)
+
+        print "path", self.path
 
         print "self.parameter=", self.parameter
         print
