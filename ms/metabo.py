@@ -158,6 +158,8 @@ def metaboFeatureFinder(peak_map, config_id=None, **kw):
     mtd = pyopenms.MassTraceDetection()
     mtd.setParameters(mtd_params)
     mass_traces = []
+    peak_map = peak_map.extract(mslevelmin=1, mslevelmax=1)
+    info("%d SPECS OF LEVEL %d", len(peak_map), 1)
     mtd.run(peak_map.toMSExperiment(), mass_traces)
     info("FOUND %d MASS TRACES", len(mass_traces))
 
