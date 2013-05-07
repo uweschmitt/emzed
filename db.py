@@ -7,9 +7,11 @@ exchangeFolder = userConfig.getVersionedExchangeFolder()
 if exchangeFolder is not None:
     dbPath = os.path.join(exchangeFolder, "pubchem.db")
     pubChemDB = PubChemDB(dbPath)
+    print "LOADED PUBCHEM DB"
 
     if not os.environ.get("NO_PUBCHEM_UPDATE"):
         try:
+            print "LOOK FOR UPDATES"
             newIds, missingIds = pubChemDB.getDiff()
             if newIds or missingIds:
                 print "PUBCHEM NOT UP TO DATE"
@@ -26,6 +28,7 @@ if exchangeFolder is not None:
                     pubChemDB.update()
                     print "WRITE CURRENT DB"
                     pubChemDB.store()
+                    print "DB WRITTEN"
                 else:
                     print
                     print "*"*65
