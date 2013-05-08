@@ -82,4 +82,11 @@ except:
     pass
 
 shutil.copyfile("version.py", "installer_files/version.py")
-buildZipFile(emzedzip, ["README", "installer.py", "License.txt", emzed_files, "version.py"], prefixpath="emzed_"+version, relocate_path="installer_files")
+buildZipFile(emzedzip, ["README",
+                        "run_installer.py",
+                        "run_installer_as_admin.py",
+                        "_installer.py",
+                        "License.txt",
+                        emzed_files,
+                        "version.py"],
+            prefixpath="emzed_"+version, relocate_path="installer_files")

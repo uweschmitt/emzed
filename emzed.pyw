@@ -785,7 +785,7 @@ class MainWindow(QMainWindow):
             
             # ? menu
             about_action = create_action(self,
-                                    _("About %s...") % "Spyder",
+                                    _("About %s...") % "eMZed",
                                     icon=get_std_icon('MessageBoxInformation'),
                                     triggered=self.about)
             #report_action = create_action(self,
@@ -1452,7 +1452,7 @@ class MainWindow(QMainWindow):
             except AttributeError:
                 pass
         QMessageBox.about(self,
-            _("About %s") % "Spyder",
+            _("About %s") % "eMZed",
             """<b>%s %s</b>
             <br>Scientific PYthon Development EnviRonment
             <p>Copyright &copy; 2009-2012 Pierre Raybaut

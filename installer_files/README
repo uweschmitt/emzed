@@ -14,10 +14,10 @@
     Unzip this archive to a local folder.
 
     If your Python installation works correctly, clicking
-    at installer.py should start installation.
+    at run_installer.py should start installation.
 
     If you get error message concerning "Access denied" you have
-    to start install.py with administrator rights, or you
+    to start run_installer.py with administrator rights, or you
     have to install to a local folder where you are allowed
     to create sub folders and files.
 
