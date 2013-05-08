@@ -78,15 +78,14 @@ def rtAlign(tables, refTable = None, destination = None, nPeaks=-1,
     algo = pyopenms.MapAlignmentAlgorithmPoseClustering()
     algo.setLogType(pyopenms.LogType.CMD)
 
-    algo_params = algo.getDefaults()
-    algo_params["max_num_peaks_considered"] = nPeaks
-    algo_params["superimposer:num_used_points"] = nPeaks
-    algo_params["superimposer:mz_pair_max_distance"] = float(maxMzDifferencePairfinder)
-    algo_params["pairfinder:distance_RT:max_difference"] = float(maxRtDifference)
-    algo_params["pairfinder:distance_MZ:max_difference"] = float(maxMzDifference)
-    algo_params["pairfinder:distance_MZ:unit"] = "Da"
-    algo.setParameters(algo_params)
-
+    ap = algo.getDefaults()
+    ap["max_num_peaks_considered"] = nPeaks
+    ap["superimposer:num_used_points"] = nPeaks
+    ap["superimposer:mz_pair_max_distance"] = float(maxMzDifferencePairfinder)
+    ap["pairfinder:distance_RT:max_difference"] = float(maxRtDifference)
+    ap["pairfinder:distance_MZ:max_difference"] = float(maxMzDifference)
+    ap["pairfinder:distance_MZ:unit"] = "Da"
+    algo.setParameters(ap)
 
     # convert to pyOpenMS types and find map with max num features which
     # is taken as refamp:
