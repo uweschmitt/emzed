@@ -636,9 +636,11 @@ class Table(object):
                 version_str, pickle_data = data.split("\n", 1)
                 assert version_str.startswith("version="), version_str # "wrong format"
                 v_number_str = version_str[8:]
+                v_number = tuple(map(int, v_number_str.split(".")))
                 if v_number_str != version.version:
-                    raise Exception("can not load table of version %s" %
-                            v_number_str)
+                    if v_number != (1,3,2):
+                        raise Exception("can not load table of version %s" %
+                                v_number_str)
                 try:
                     tab = cPickle.loads(pickle_data)
                     tab.version = v_number_str
