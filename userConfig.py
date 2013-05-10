@@ -173,6 +173,9 @@ def getTablesExchangeFolder():
 def getVersionedExchangeFolder():
     return getExchangeSubFolder(version.version)
 
+def getScriptsExchangeFolder():
+    return getExchangeSubFolder("scripts_%s" % version.version)
+
 def getMetlinToken():
     return _GlobalConfig().getMetlinToken()
 

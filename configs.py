@@ -60,9 +60,11 @@ from string import Template
 # configs are read in this order, so local configs overrun global configs
 
 import userConfig
-exchangeFolder = userConfig.getVersionedExchangeFolder()
+exchangeFolder = userConfig.getScriptsExchangeFolder()
 repositoryPathes = []
 if exchangeFolder is not None:
+    if not os.path.exists(exchangeFolder):
+        os.makedirs(exchangeFolder)
     repositoryPathes.append(exchangeFolder)
 repositoryPathes.extend([ userConfig.getDataHome() ])
 
