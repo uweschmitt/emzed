@@ -199,21 +199,21 @@ def metaboFeatureFinder(peak_map, config_id=None, **kw):
             z  = feature.getCharge()
             mz = feature.getMZ()
             rt = feature.getRT()
+            I  = feature.getIntensity()
             for convex_hull in convex_hulls:
                 bb = convex_hull.getBoundingBox()
                 rtmin, mzmin = bb.minPosition()
                 rtmax, mzmax = bb.maxPosition()
-                row = [i, mz, mzmin, mzmax, rt, rtmin, rtmax, quality, width,
-                       z, feature]
+                row = [i, mz, mzmin, mzmax, rt, rtmin, rtmax, I, quality,
+                       width, z]
                 rows.append(row)
 
     tab = Table(["feature_id", "mz", "mzmin", "mzmax", "rt", "rtmin", "rtmax",
-                    "quality", "fwhm", "z", "feature"],
+                    "intensity", "quality", "fwhm", "z"],
                 [int, float, float, float, float, float, float, float, float,
-                    int, pyopenms.Feature],
+                    float, int],
                 ["%d", "%10.5f", "%10.5f", "%10.5f", formatSeconds, formatSeconds,
-                    formatSeconds, "%.2e", formatSeconds, "%d", None,
-                  ],
+                    formatSeconds, "%.2e", "%.2e", formatSeconds, "%d" ],
                 rows)
 
     tab.addConstantColumn("peakmap", peak_map, PeakMap, None)

@@ -4,7 +4,7 @@ def test_ffm():
     pm = ms.loadPeakMap("data/test.mzXML")
     pm = pm.extract(rtmin=6, rtmax=12, mzmin=350, mzmax=400)
     ftab = ms.metaboFeatureFinder(pm)
-    assert len(ftab) == 19
+    assert len(ftab) == 19, len(ftab)
     ftab.print_()
     ftab2 = ms.metaboFeatureFinder(pm, "std")
     assert len(ftab2) == 30, len(ftab2)

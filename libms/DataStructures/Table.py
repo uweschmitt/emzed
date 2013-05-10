@@ -1460,33 +1460,29 @@ class Table(object):
         return Table([colName], [type_], [format], rows, meta=meta)
 
 def toOpenMSFeatureMap(table):
+
     table.requireColumn("mz")
     table.requireColumn("rt")
 
-    if "feature" in table._colNames:
-        tt = table.getType("feature")
-        if tt == pyopenms.Feature:
-            fm = pyopenms.FeatureMap()
-            done = set()
-            for f in table.feature.values:
-                # multiple features as we have masstraces # in table, id as f
-                # is not hashable
-                if id(f) not in done: 
-                    fm.push_back(f)
-                done.add(id(f))
-            return fm
-
-    if "into" in table._colNames:
-        areas = table.into.values
-    elif "area" in table._colNames:
-        areas = table.area.values
+    if "feature_id" in table._colNames:
+        # feature table from openms
+        ti = table.splitBy("feature_id")
+        # intensity, rt, mz should be the same value for each feature table:
+        areas = [ t0.intensity.values[0] for t0 in ti]
+        rts = [ t0.rt.values[0] for t0 in ti]
+        mzs = [ t0.mz.values[0] for t0 in ti]
     else:
-        print "features have no area/intensity, we assume constant intensity"
-        areas = [None] * len(table)
+        # chromatographic peak table from XCMS
+        if "into" in table._colNames:
+            areas = table.into.values
+        elif "area" in table._colNames:
+            areas = table.area.values
+        else:
+            print "features have no area/intensity, we assume constant intensity"
+            areas = [None] * len(table)
+        mzs = table.mz.values
+        rts = table.rt.values
 
-
-    mzs = table.mz.values
-    rts = table.rt.values
     fm = pyopenms.FeatureMap()
 
     for (mz, rt, area) in zip(mzs, rts, areas):
