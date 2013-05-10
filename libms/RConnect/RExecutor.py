@@ -108,22 +108,21 @@ class RExecutor(object):
 
     def get_r_version(self):
         if sys.platform == "win32":
-            proc = subprocess.Popen(['%s' % self.rExe, '--version'],
-                                    stdout = subprocess.PIPE,
+            proc = subprocess.Popen(['%s' % self.rExe, '--version', '--vanilla', '--silent'],
+                                    stderr=subprocess.PIPE,
                                     bufsize=0, shell=True)
+            out, err = proc.communicate()
+	    answer = err
         else:
             proc = subprocess.Popen(['%s --version' % self.rExe],
                                     stdout = subprocess.PIPE,
                                     bufsize=0, shell=True)
-        out, err = proc.communicate()
-        if err is not None:
-            print err
-            return None
-        else:
-            match = re.search("version\s+(\d+\.\d+\.\d+)", out)
-            if not match:
-                return None
-            return match.groups(0)[0]
+            out, err = proc.communicate()
+	    answer = out
+        match = re.search("version\s+(\d+\.\d+\.\d+)", answer)
+        if not match:
+	    return None
+        return match.groups(0)[0]
 
 
     def run_command(self, command, dir_=None):
