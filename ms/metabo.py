@@ -1,3 +1,4 @@
+import pdb
 import pyopenms
 import os
 from libms.DataStructures import PeakMap, Table
@@ -111,7 +112,7 @@ class _ParamHandler(object):
         return "\n".join(ll)
 
 
-def metaboFeatureFinder(peak_map, config_id=None, **kw):
+def metaboFeatureFinder(peak_map, config_id=None, ms_level=None, **kw):
 
     from configs import metaboff_configs
 
@@ -159,7 +160,12 @@ def metaboFeatureFinder(peak_map, config_id=None, **kw):
     mtd = pyopenms.MassTraceDetection()
     mtd.setParameters(mtd_params)
     mass_traces = []
-    peak_map = peak_map.extract(mslevelmin=1, mslevelmax=1)
+    if ms_level is None:
+        peak_map = peak_map.getDominatingPeakmap()
+    else:
+        peak_map = peak_map.extract(mslevelmin=ms_level, mslevelmax=ms_level)
+        for spec in peak_map.spectra:
+            spec.msLevel = 1
     info("%d SPECS OF LEVEL %d", len(peak_map), 1)
     mtd.run(peak_map.toMSExperiment(), mass_traces)
     info("FOUND %d MASS TRACES", len(mass_traces))
