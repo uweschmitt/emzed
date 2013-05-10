@@ -38,3 +38,17 @@ def testMatchedFilter():
     assert len(table) == 340, len(table)
     assert len(table.getColNames()) ==  18, len(table.getColNames())
     assert len(table.getColTypes()) ==  18
+
+def testMetaboFF():
+
+    try:
+        os.remove("temp_output/test.csv")
+    except:
+        pass
+    tables = batches.runMetaboFeatureFinder("data/test.mzXML",
+            destination="temp_output", configid="_test")
+    assert len(glob.glob("temp_output/test.csv")) == 1
+    table, = tables
+    assert len(table) == 1, len(table)
+    assert len(table.getColNames()) ==  14, len(table.getColNames())
+    assert len(table.getColTypes()) ==  14

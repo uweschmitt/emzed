@@ -12,7 +12,7 @@ from statistics import *
 from mzalign import mzAlign
 from metlin import matchMetlin
 
-from metabo import metaboFeatureFinder
+#from metabo import metaboFeatureFinder
 
 from feature_detectors import *
 

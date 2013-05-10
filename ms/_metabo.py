@@ -1,8 +1,7 @@
-import pdb
 import pyopenms
 import os
 from libms.DataStructures import PeakMap, Table
-from libms.DataStructures import formatSeconds, formatHexId
+from libms.DataStructures import formatSeconds
 
 
 class _ParamHandler(object):
@@ -114,9 +113,14 @@ class _ParamHandler(object):
 
 def metaboFeatureFinder(peak_map, config_id=None, ms_level=None, **kw):
 
-    from configs import metaboff_configs
+    from configs import metaboFFConfigs
 
-    config_params = metaboff_configs[config_id].copy()
+    config_params = dict()
+
+    for key, __, params in metaboFFConfigs:
+        if key == config_id:
+            config_params = params.copy()
+            break
     config_params.update(kw)
 
     assert isinstance(peak_map, PeakMap)

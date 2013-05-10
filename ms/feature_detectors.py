@@ -3,6 +3,8 @@
 from libms.RConnect import CentwaveFeatureDetector as _Centwave
 from libms.RConnect import MatchedFilterFeatureDetector as _MatchedFilters
 
+from _metabo import metaboFeatureFinder
+
 
 def runCentwave(pm, **kws):
     det = _Centwave(**kws)
@@ -11,3 +13,6 @@ def runCentwave(pm, **kws):
 def runMatchedFilters(pm, **kws):
     det = _MatchedFilters(**kws)
     return det.process(pm)
+
+def runMetaboFeatureFinder(pm,**kws):
+    return metaboFeatureFinder(pm, **kws)

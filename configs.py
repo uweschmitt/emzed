@@ -44,11 +44,15 @@ std_config.update({"common_chrom_fwhm": 25.0,
                     "ffm_disable_isotope_filtering" : "true"
                    })
 
+_fast_for_test = metaboff_defaults.copy()
+_fast_for_test.update({"common_noise_threshold_int": 10000.0,
+                        "common_chrom_peak_snr": 10000.0,
+                   })
 
-metaboff_configs = {
-        None : metaboff_defaults,
-        "std" : std_config,
-        }
+metaboFFConfigs = [ (None, "no params set", metaboff_defaults),
+                    ("std", "std params",  std_config),
+                    ("_test", "params for fast test",  _fast_for_test),
+                    ]
 
 
 
