@@ -13,3 +13,7 @@ def test_1_3_2():
     t = ms.loadTable("feature_table_1.3.2.table")
     assert t.version == "1.3.2", "PLEASE READ cocepts/konzept_table_versions"
 
+def test_1_3_4():
+    print >> sys.stderr, "TEST LOADING OF TABLE FROM EMZED 1.3.4"
+    t = ms.loadTable("feature_table_1.3.4.table")
+    assert t.version == "1.3.4", "PLEASE READ cocepts/konzept_table_versions"

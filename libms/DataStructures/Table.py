@@ -638,7 +638,7 @@ class Table(object):
                 v_number_str = version_str[8:]
                 v_number = tuple(map(int, v_number_str.split(".")))
                 if v_number_str != version.version:
-                    if v_number != (1,3,2):
+                    if v_number < (1,3,2):
                         raise Exception("can not load table of version %s" %
                                 v_number_str)
                 try:
