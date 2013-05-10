@@ -1,16 +1,8 @@
 
-import os, glob, subprocess, sys
+import os, glob, subprocess, sys, re
 
 import userConfig
 
-r_libs_folder = userConfig.getRLibsFolder()
-if r_libs_folder is not None:
-    r_libs=[path for path in os.environ.get("R_LIBS", "").split(":") if path]
-    if r_libs_folder not in r_libs:
-        if not os.path.exists(r_libs_folder):
-            os.makedirs(r_libs_folder)
-        r_libs.insert(0, r_libs_folder)
-        os.environ["R_LIBS"] = ":".join(r_libs)
 
 from ..intern_utils import TemporaryDirectoryWithBackup
 
@@ -114,6 +106,26 @@ class RExecutor(object):
 
         return proc.returncode
 
+    def get_r_version(self):
+        if sys.platform == "win32":
+            proc = subprocess.Popen(['%s' % self.rExe, '--version'],
+                                    stdout = subprocess.PIPE,
+                                    bufsize=0, shell=True)
+        else:
+            proc = subprocess.Popen(['%s --version' % self.rExe],
+                                    stdout = subprocess.PIPE,
+                                    bufsize=0, shell=True)
+        out, err = proc.communicate()
+        if err is not None:
+            print err
+            return None
+        else:
+            match = re.search("version\s+(\d+\.\d+\.\d+)", out)
+            if not match:
+                return None
+            return match.groups(0)[0]
+
+
     def run_command(self, command, dir_=None):
 
         def run(dir_, command):
@@ -132,3 +144,15 @@ class RExecutor(object):
             with TemporaryDirectoryWithBackup() as dir_:
                 return run(dir_, command)
 
+r_version = RExecutor().get_r_version()
+userConfig.setRVersion(r_version)
+
+r_libs_folder = userConfig.getRLibsFolder()
+print "SET R_LIBS ENVIRONMENT VARIABLE TO", r_libs_folder
+if r_libs_folder is not None:
+    r_libs=[path for path in os.environ.get("R_LIBS", "").split(":") if path]
+    if r_libs_folder not in r_libs:
+        if not os.path.exists(r_libs_folder):
+            os.makedirs(r_libs_folder)
+        r_libs.insert(0, r_libs_folder)
+        os.environ["R_LIBS"] = ":".join(r_libs)

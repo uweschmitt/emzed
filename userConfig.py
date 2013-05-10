@@ -142,16 +142,16 @@ def getDataHome():
     dataHome = os.path.join(getDocumentFolder(), "emzed_files")
     return dataHome
 
-def getExchangeFolder():
-    import warnings
-    warnings.warn("getExchangeFolder is depreciated. Please use"\
-    " getVersionedExchangeFolder() instead")
-    return getVersionedExchangeFolder()
+#def getExchangeFolder():
+#    import warnings
+#    warnings.warn("getExchangeFolder is depreciated. Please use"\
+#    " getVersionedExchangeFolder() instead")
+#    return getVersionedExchangeFolder()
 
-def getVersionedExchangeFolder():
+def getExchangeSubFolder(subfolder):
     folder = _GlobalConfig().getExchangeFolder()
     if folder:
-        folder = os.path.join(folder, version.version)
+        folder = os.path.join(folder, subfolder)
         try:
             if not os.path.exists(folder):
                 os.makedirs(folder)
@@ -162,10 +162,16 @@ def getVersionedExchangeFolder():
         return folder
     # no global exchange folder set, use local folder instead:
     folder = os.path.join(getDataHome(), "shared")
-    folder = os.path.join(folder, version.version)
+    folder = os.path.join(folder, subfolder)
     if not os.path.exists(folder):
         os.makedirs(folder)
     return folder
+
+def getTablesExchangeFolder():
+    return getExchangeSubFolder("tables_1.3.2_or_newer")
+
+def getVersionedExchangeFolder():
+    return getExchangeSubFolder(version.version)
 
 def getMetlinToken():
     return _GlobalConfig().getMetlinToken()
@@ -173,7 +179,19 @@ def getMetlinToken():
 def setMetlinToken(token):
     return _GlobalConfig().setMetlinToken(token)
 
-def getRLibsFolder():
+# maintains state between setRVersion and getRVersion:"
+_pseudo_globals = dict()
+
+def setRVersion(r_version, g=_pseudo_globals):
+    g["R_VERSION"] = r_version
+
+def getRLibsFolder(g=_pseudo_globals):
+    r_version = g.get("R_VERSION")
+    if r_version is None:
+        return getExchangeSubFolder("r_libs")
+
+    return getExchangeSubFolder("r_libs_%s" % r_version)
+    #return getExchangeFolder("r_libs_3")
     root = getVersionedExchangeFolder()
     if root is None:
         return None

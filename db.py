@@ -3,11 +3,12 @@ import userConfig
 from libms.DataBases import PubChemDB
 import os
 
-exchangeFolder = userConfig.getVersionedExchangeFolder()
+exchangeFolder = userConfig.getTablesExchangeFolder()
 if exchangeFolder is not None:
     dbPath = os.path.join(exchangeFolder, "pubchem.db")
+    print "LOAD FROM", dbPath
     pubChemDB = PubChemDB(dbPath)
-    print "LOADED PUBCHEM DB"
+    print "LOADED PUBCHEM"
 
     if not os.environ.get("NO_PUBCHEM_UPDATE"):
         try:

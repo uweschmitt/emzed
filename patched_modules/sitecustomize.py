@@ -27,17 +27,17 @@ print "patches applied"
 if os.environ.get("COLORIZE_SYS_STDERR", "").lower() == "true"\
    and not os.environ.get('IPYTHON', False):
     class StderrProxy(object):
-        """Proxy to sys.stderr file object overriding only the `write` method 
-        to provide red colorization for the whole stream, and blue-underlined 
-        for traceback file links""" 
+        """Proxy to sys.stderr file object overriding only the `write` method
+        to provide red colorization for the whole stream, and blue-underlined
+        for traceback file links"""
         def __init__(self):
             self.old_stderr = sys.stderr
             self.__buffer = ''
             sys.stderr = self
-        
+
         def __getattr__(self, name):
             return getattr(self.old_stderr, name)
-            
+
         def write(self, text):
             if os.name == 'nt' and '\n' not in text:
                 self.__buffer += text
@@ -52,11 +52,11 @@ if os.environ.get("COLORIZE_SYS_STDERR", "").lower() == "true"\
                     colored_text = '\x1b[31m'+text+'\x1b[0m'
                 self.old_stderr.write(colored_text)
             self.__buffer = ''
-    
+
     stderrproxy = StderrProxy()
 
 
-# Prepending this spyderlib package's path to sys.path to be sure 
+# Prepending this spyderlib package's path to sys.path to be sure
 # that another version of spyderlib won't be imported instead:
 
 if os.environ.get("SPYDER_PARENT_DIR") is None:
@@ -65,8 +65,8 @@ if os.environ.get("SPYDER_PARENT_DIR") is None:
         print spyderlib_path
         spyderlib_path = osp.abspath(osp.join(spyderlib_path, os.pardir))
     if not spyderlib_path.startswith(sys.prefix):
-        # Spyder is not installed: moving its parent directory to the top of 
-        # sys.path to be sure that this spyderlib package will be imported in 
+        # Spyder is not installed: moving its parent directory to the top of
+        # sys.path to be sure that this spyderlib package will be imported in
         # the remote process (instead of another installed version of Spyder)
         while spyderlib_path in sys.path:
             sys.path.remove(spyderlib_path)
@@ -111,7 +111,7 @@ if os.environ.get("MATPLOTLIB_PATCH", "").lower() == "true":
 
 
 if os.name == 'nt': # Windows platforms
-            
+
     # Setting console encoding (otherwise Python does not recognize encoding)
     try:
         import locale, ctypes
@@ -125,7 +125,7 @@ if os.name == 'nt': # Windows platforms
             pass
     except ImportError:
         pass
-        
+
     # Workaround for IPython thread issues with win32 comdlg32
     if os.environ.get('IPYTHON', False):
         try:
@@ -157,7 +157,7 @@ if encoding is None:
 
 sys.setdefaultencoding(encoding)
 os.environ['SPYDER_ENCODING'] = encoding
-    
+
 try:
     import sitecustomize  #analysis:ignore
 except ImportError:
@@ -179,7 +179,7 @@ else:
                       float(os.environ['SPYDER_AR_TIMEOUT']),
                       os.environ["SPYDER_AR_STATE"].lower() == "true")
     monitor.start()
-    
+
     def open_in_spyder(source, lineno=1):
         """Open in Spyder's editor the source file
 (may be a filename or a Python module/package)"""
@@ -193,14 +193,14 @@ else:
             source = source[:-1]
         monitor.notify_open_file(source, lineno=lineno)
     __builtin__.open_in_spyder = open_in_spyder
-    
+
     # * PyQt4:
-    #   * Removing PyQt4 input hook which is not working well on Windows since 
+    #   * Removing PyQt4 input hook which is not working well on Windows since
     #     opening a subprocess do not attach a real console to it
     #     (with keyboard events...)
     #   * Replacing it with our own input hook
     # * PySide:
-    #   * Installing an input hook: this feature is not yet supported 
+    #   * Installing an input hook: this feature is not yet supported
     #     natively by PySide
     if os.environ.get("INSTALL_QT_INPUTHOOK", "").lower() == "true"\
        and not os.environ.get('IPYTHON', False):
@@ -215,14 +215,14 @@ else:
             QtCore.pyqtRemoveInputHook()
         elif os.environ["QT_API"] == 'pyside':
             from PySide import QtCore
-            # XXX: when PySide will implement an input hook, we will have to 
+            # XXX: when PySide will implement an input hook, we will have to
             # remove it here
         else:
             assert False
 
         def qt_inputhook():
             """Qt input hook for Spyder's console
-            
+
             This input hook wait for available stdin data (notified by
             ExternalPythonShell through the monitor's inputhook_flag
             attribute), and in the meantime it processes Qt events."""
@@ -273,7 +273,7 @@ else:
         def displayhook(obj):
             sys.__displayhook__(obj)
             monitor.refresh()
-    
+
         sys.displayhook = displayhook
 
 
@@ -301,7 +301,7 @@ class SpyderPdb(pdb.Pdb):
                     i += 1
                     self.set_break(self.canonic(fname), linenumber,
                                    cond=condition)
-                    
+
     def notify_spyder(self, frame):
         if not frame:
             return
@@ -320,10 +320,10 @@ def monkeypatch_method(cls, patch_name):
     # (Tue Jan 15 19:13:25 CET 2008)
     """
     Add the decorated method to the given class; replace as needed.
-    
+
     If the named method already exists on the given class, it will
-    be replaced, and a reference to the old method is created as 
-    cls._old<patch_name><name>. If the "_old_<patch_name>_<name>" attribute 
+    be replaced, and a reference to the old method is created as
+    cls._old<patch_name><name>. If the "_old_<patch_name>_<name>" attribute
     already exists, KeyError is raised.
     """
     def decorator(func):
@@ -354,7 +354,7 @@ def user_return(self, frame, return_value):
             return
         self._wait_for_mainpyfile = 0
     self._old_Pdb_user_return(frame, return_value)
-        
+
 @monkeypatch_method(pdb.Pdb, 'Pdb')
 def interaction(self, frame, traceback):
     self.setup(frame, traceback)
@@ -370,7 +370,7 @@ def reset(self):
         monitor.register_pdb_session(self)
     self.set_spyder_breakpoints()
 
-#XXX: notify spyder on any pdb command (is that good or too lazy? i.e. is more 
+#XXX: notify spyder on any pdb command (is that good or too lazy? i.e. is more
 #     specific behaviour desired?)
 @monkeypatch_method(pdb.Pdb, 'Pdb')
 def postcmd(self, stop, line):
@@ -380,7 +380,7 @@ def postcmd(self, stop, line):
 
 # Restoring (almost) original sys.path:
 # (Note: do not remove spyderlib_path from sys.path because if Spyder has been
-#  installed using python setup.py install, then this could remove the 
+#  installed using python setup.py install, then this could remove the
 #  'site-packages' directory from sys.path!)
 try:
     sys.path.remove(osp.join(spyderlib_path,
@@ -405,7 +405,7 @@ if os.environ.get("IGNORE_SIP_SETAPI_ERRORS", "").lower() == "true":
 
 
 # Workaround #1 to make the HDF5 I/O variable explorer plugin work:
-# we import h5py without IPython support (otherwise, Spyder will crash 
+# we import h5py without IPython support (otherwise, Spyder will crash
 # when initializing IPython in startup.py).
 # (see startup.py for the Workaround #2)
 if monitor and not os.environ.get('IPYTHON', False):
@@ -418,13 +418,13 @@ if monitor and not os.environ.get('IPYTHON', False):
 
 
 
-# The following classes and functions are mainly intended to be used from 
+# The following classes and functions are mainly intended to be used from
 # an interactive Python/IPython session
 class UserModuleDeleter(object):
     """
-    User Module Deleter (UMD) aims at deleting user modules 
+    User Module Deleter (UMD) aims at deleting user modules
     to force Python to deeply reload them during import
-    
+
     pathlist [list]: blacklist in terms of module path
     namelist [list]: blacklist in terms of module name
     """
@@ -443,12 +443,12 @@ class UserModuleDeleter(object):
                 return True
         else:
             return set(modname.split('.')) & set(self.namelist)
-        
+
     def run(self, verbose=False):
         """
         Del user modules to force Python to deeply reload them
-        
-        Do not del modules which are considered as system modules, i.e. 
+
+        Do not del modules which are considered as system modules, i.e.
         modules installed in subdirectories of Python interpreter's binary
         Do not del C modules
         """
@@ -457,8 +457,8 @@ class UserModuleDeleter(object):
             if modname not in self.previous_modules:
                 modpath = getattr(module, '__file__', None)
                 if modpath is None:
-                    # *module* is a C module that is statically linked into the 
-                    # interpreter. There is no way to know its path, so we 
+                    # *module* is a C module that is statically linked into the
+                    # interpreter. There is no way to know its path, so we
                     # choose to ignore it.
                     continue
                 if not self.is_module_blacklisted(modname, modpath):
@@ -517,7 +517,7 @@ def runfile(filename, args=None, wdir=None, namespace=None):
     execfile(filename, namespace)
     sys.argv = ['']
     namespace.pop('__file__')
-    
+
 __builtin__.runfile = runfile
 
 

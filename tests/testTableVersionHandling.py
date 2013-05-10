@@ -1,0 +1,15 @@
+import ms
+import sys
+
+def test_old():
+    print >> sys.stderr, "TEST LOADING OF TABLE FROM EMZED BEFORE 1.3.2"
+    t = ms.loadTable("feature_table_before_1.3.2.table")
+    assert not hasattr(t, "version"),\
+                                   "PLEASE READ cocepts/konzept_table_versions"
+
+
+def test_1_3_2():
+    print >> sys.stderr, "TEST LOADING OF TABLE FROM EMZED 1.3.2"
+    t = ms.loadTable("feature_table_1.3.2.table")
+    assert t.version == "1.3.2", "PLEASE READ cocepts/konzept_table_versions"
+

@@ -1,0 +1,26 @@
+1) erste zeile Table pickle hat versionsinfo
+2) bim laden wird dies gecheckt, dann entweider konvertiert oder fehler
+   gemeldet
+
+3) es liegen für alle alten tabellenversionen binärbeispiele im testfolder
+   diese werden darauf getestet ob sie geladen werden können.
+
+TEST SCHLÄGT FEHL:
+
+    entweder: nur version nummer --> Table.load anpassen
+              interne änderung  : entweder adapter oder laden verweigern
+        
+    neues testbeispiel erzeugen, tests anpassen.
+
+    KEIN ADAPTER: neuer subfolder im austauschordner für datenbanken und tabellen
+                  fix im code anlegen !
+
+                  --> userConfig getTablesExchangeFolder()
+
+
+UMSTELLUNG MAI 2013:
+---------------------
+
+austauschordner fix mit postfix 1.3.1_or_newer (!!!)
+
+-> patrick beschedi sagen

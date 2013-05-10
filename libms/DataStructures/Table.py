@@ -5,6 +5,7 @@ import numpy as np
 from   collections import Counter, OrderedDict, defaultdict
 import warnings
 
+import version
 
 __doc__ = """
 
@@ -612,6 +613,7 @@ class Table(object):
         if not forceOverwrite and os.path.exists(path):
             raise Exception("%s exists. You may use forceOverwrite=True" % path)
         with open(path, "w+b") as fp:
+            fp.write("version=%s\n" % version.version)
             cPickle.dump(self, fp, protocol=2)
 
     @staticmethod
@@ -623,9 +625,30 @@ class Table(object):
 
         """
         with open(path, "rb") as fp:
-            tab = cPickle.load(fp)
-            tab.meta["loaded_from"]=os.path.abspath(path)
-            return tab
+            try:
+                # old format without version information
+                tab = cPickle.load(fp)
+                tab.meta["loaded_from"]=os.path.abspath(path)
+                return tab
+            except:
+                fp.seek(0)
+                data = fp.read()
+                version_str, pickle_data = data.split("\n", 1)
+                assert version_str.startswith("version="), version_str # "wrong format"
+                v_number_str = version_str[8:]
+                if v_number_str != version.version:
+                    raise Exception("can not load table of version %s" %
+                            v_number_str)
+                try:
+                    tab = cPickle.loads(pickle_data)
+                    tab.version = v_number_str
+                except:
+                    raise Exception("%s has invalid format" % path)
+                else:
+                    tab.meta["loaded_from"]=os.path.abspath(path)
+                    return tab
+
+
 
 
     def buildEmptyClone(self):
