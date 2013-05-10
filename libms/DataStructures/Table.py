@@ -1258,7 +1258,7 @@ class Table(object):
         table.rows = rows
         return table
 
-    def leftJoin(self, t, expr=True, debug=False, progress=False):
+    def leftJoin(self, t, expr=True, debug=False):
         """performs an *left join* also known as *outer join* of two tables.
 
            It works similar to :py:meth:`~.join`
@@ -1313,7 +1313,6 @@ class Table(object):
                 rows.extend([r1[:] + t.rows[n][:] for (n,i) in enumerate(flags) if i])
             else:
                 rows.extend([r1[:] + filler[:]])
-        if progress:
             cmdlineProgress.progress(ii)
 
         table.rows = rows
