@@ -1,3 +1,4 @@
+import pdb
 #encoding: utf-8
 
 from libms.DataStructures.Table import Table
@@ -360,18 +361,35 @@ def testUniqeNotNone():
         t.aggregate(t2.x.mean, "neu")
 
 def testWithNoneValues():
-    t = ms.toTable("i", [1,2,None])
-    with ExceptionTester():
-        t.filter(t.i >=1)._print()
-    with ExceptionTester():
-        t.filter(t.i <=1)._print()
-    with ExceptionTester():
-        t.filter(t.i >1)._print()
-    with ExceptionTester():
-        t.filter(t.i <1)._print()
 
-    assert len(t.filter(t.i == None)) == 1
-    assert len(t.filter(t.i != None)) == 2
+    t = ms.toTable("a", [None, 2])
+    t.print_()
+    assert len(t.filter(t.a < 3)) == 1
+
+    t2 = t.copy()
+    assert len(t.join(t2, t.a==t2.a)) == 1
+    assert len(t.leftJoin(t2, t.a==t2.a)) == 2
+
+    assert len(t.join(t2, t.a<=t2.a)) == 1
+    assert len(t.leftJoin(t2, t.a<=t2.a)) == 2
+
+    assert len(t.join(t2, t.a<t2.a)) == 0
+    assert len(t.leftJoin(t2, t.a<t2.a)) == 2
+
+
+    t.join(t2, t.a!=t2.a).print_()
+    assert len(t.join(t2, t.a!=t2.a)) == 0
+    assert len(t.leftJoin(t2, t.a!=t2.a)) == 2
+
+    assert len(t.join(t2, t.a>=t2.a)) == 1
+    assert len(t.leftJoin(t2, t.a<=t2.a)) == 2
+
+    assert len(t.join(t2, t.a>t2.a)) == 0
+    assert len(t.leftJoin(t2, t.a<t2.a)) == 2
+
+    t = ms.toTable("i", [1,2,None])
+    assert len(t.filter(t.i.isNone())) == 1
+    assert len(t.filter(t.i.isNotNone())) == 2
 
     t.addColumn("b", [2,3,None])
     assert t.getColNames() == ["i", "b"]
@@ -407,11 +425,11 @@ def testIfThenElse():
     t.rows.append(["0", 1, 2])
     t.rows.append([None, 2, 1])
     t._print()
-    t.addColumn("x", (t.a != None).thenElse(t.b, t.c))
+    t.addColumn("x", (t.a.isNotNone()).thenElse(t.b, t.c))
     assert t.getColNames()==["a", "b", "c", "x"]
     print
     t._print()
-    t.addColumn("y", (t.a != None).thenElse("ok", "not ok"))
+    t.addColumn("y", (t.a.isNotNone()).thenElse("ok", "not ok"))
     t._print()
     assert t.y.values == ["ok", "not ok"]
 
@@ -551,3 +569,4 @@ def testUpdateColumn():
     assert t.a.values == [2, 3]
     t.updateColumn("b", t.a + 1)
     assert t.b.values == [3, 4]
+

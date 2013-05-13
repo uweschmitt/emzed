@@ -47,8 +47,12 @@ def testFullJoin():
 
 def testIfNotNoneElse():
     t = ms.toTable("a", [None, 2, 3])
+    t.print_()
     t.addColumn("b", t.a.ifNotNoneElse(3))
+    t.print_()
     t.addColumn("c", t.a.ifNotNoneElse(t.b+1))
+
+    t.print_()
 
     assert t.b.values == [ 3,2,3]
     assert t.c.values == [ 4,2,3]
@@ -75,7 +79,7 @@ def testApply():
     assert sub.getColTypes() == [ str, float, str], sub.getColTypes()
 
     # apply without None values:
-    sub = sub.filter(sub.m0 != None)
+    sub = sub.filter(sub.m0.isNotNone())
     assert len(sub) == 2
     sub.addColumn("m02", sub.mf.apply(mass.of))
     sub.addColumn("m0s2", sub.m0.apply(str))

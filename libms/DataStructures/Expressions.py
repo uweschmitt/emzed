@@ -326,7 +326,13 @@ class BaseExpression(object):
         Example: ``t.rt.replaceColumn("rt", rt.ifNotNoneElse(t.rt_default))``
 
         """
-        return (self==None).thenElse(other, self)
+        return (self.isNotNone()).thenElse(self, othert )
+
+    def isNotNone(self):
+        return IsNotNoneExpression(self)
+
+    def isNone(self):
+        return IsNoneExpression(self)
 
     def pow(self, exp):
         """
@@ -524,7 +530,6 @@ class CompExpression(BaseExpression):
     # subclasses,
     # as eg  None <= x or None >=x give hard to predict results  and  is
     # very error prone:
-    allowNone = True
 
     def _eval(self, ctx=None):
         lhs, ixl, tl = saveeval(self.left, ctx)
@@ -552,22 +557,35 @@ class CompExpression(BaseExpression):
 
         if len(lhs) == 1:
             l = lhs[0]
-            values = [ self.comparator(l,r) for r in  rhs]
+            if l is None:
+                values = [None] * len(rhs)
+            else:
+                values = [ None if r is None else self.comparator(l,r) for r in  rhs]
 
         elif len(rhs) == 1:
             r = rhs[0]
-            values = [ self.comparator(l,r) for l in  lhs]
+            if r is None:
+                values = [None] * len(lhs)
+            else:
+                values = [ None if r is None else self.comparator(l,r) for l in  lhs]
         else:
-            values = [ self.comparator(l,r) for (l,r) in zip(lhs, rhs)]
+            values = [ None if l is None or r is None else self.comparator(l,r) for (l,r) in zip(lhs, rhs)]
         return np.array(values, dtype=np.bool), None, bool
 
     def numericcomp(self, lvals, rvals):
         assert len(lvals) == len(rvals)
         # default impl: comparing to None is not poissble:
-        if hasNone(lvals) or hasNone(rvals):
-            raise Exception("Comparing None with %s is not possible"\
-                            % self.symbol)
-        return self.comparator(lvals, rvals).astype(bool)
+        l_nones, r_nones = None, None
+        if hasNone(lvals):
+            l_nones = lvals <= None  # trick !
+        if hasNone(rvals):
+            r_nones = rvals <= None  # trick !
+        result = self.comparator(lvals, rvals).astype(object)
+        if l_nones is not None:
+            result[l_nones] = None
+        if r_nones is not None:
+            result[r_nones] = None
+        return result # .astype(bool)
 
 def Range(start, end, len):
     rv = np.zeros((len,), dtype=np.bool)
@@ -578,7 +596,6 @@ class LtExpression(CompExpression):
 
     symbol = "<"
     comparator = lambda self, a, b: a < b
-    allowNone = False
 
     def fastcomp(self, vec, refval):
         i0 = lt(vec, refval)
@@ -593,7 +610,6 @@ class GtExpression(CompExpression):
 
     symbol = ">"
     comparator = lambda self, a, b: a > b
-    allowNone = False
 
     def fastcomp(self, vec, refval):
         # ix not used, we know that vec is sorted
@@ -609,7 +625,6 @@ class LeExpression(CompExpression):
 
     symbol = "<="
     comparator = lambda self, a, b: a <= b
-    allowNone = False
 
     def fastcomp(self, vec, refval):
         # ix not used, we know that vec is sorted
@@ -625,7 +640,6 @@ class GeExpression(CompExpression):
 
     symbol = ">="
     comparator = lambda self, a, b: a >= b
-    allowNone = False
 
     def fastcomp(self, vec, refval):
         i0 = ge(vec, refval)
@@ -651,9 +665,6 @@ class NeExpression(CompExpression):
         i1 = ge(vec, refval)
         return ~Range(i1, i0+1, len(vec))
 
-    def numericcomp(self, lhs, rhs):
-        return lhs != rhs
-
 
 class EqExpression(CompExpression):
 
@@ -670,9 +681,6 @@ class EqExpression(CompExpression):
         i0 = le(vec, refval)
         i1 = ge(vec, refval)
         return Range(i1, i0+1, len(vec))
-
-    def numericcomp(self, lhs, rhs):
-        return lhs == rhs
 
 
 class BinaryExpression(BaseExpression):
@@ -851,6 +859,50 @@ class Value(BaseExpression):
     def _neededColumns(self):
         return []
 
+
+class IsNotNoneExpression(BaseExpression):
+
+    def __init__(self, child):
+        if not isinstance(child, BaseExpression):
+            child = Value(child)
+        self.child = child
+
+    def _eval(self, ctx=None):
+        values, index, type_ = saveeval(self.child, ctx)
+        # the second expressions is true if values contains no Nones,
+        # so we can apply ufucns/vecorized funs
+        return np.array([v is not None for v in values]), None , bool
+
+    def __str__(self):
+        return "IsNotNone(%s)" %  self.child
+
+    def _evalsize(self, ctx=None):
+        return self.child._evalsize(ctx)
+
+    def _neededColumns(self):
+        return self.child._neededColumns()
+
+class IsNoneExpression(BaseExpression):
+
+    def __init__(self, child):
+        if not isinstance(child, BaseExpression):
+            child = Value(child)
+        self.child = child
+
+    def _eval(self, ctx=None):
+        values, index, type_ = saveeval(self.child, ctx)
+        # the second expressions is true if values contains no Nones,
+        # so we can apply ufucns/vecorized funs
+        return np.array([v is None for v in values]), None , bool
+
+    def __str__(self):
+        return "IsNone(%s)" %  self.child
+
+    def _evalsize(self, ctx=None):
+        return self.child._evalsize(ctx)
+
+    def _neededColumns(self):
+        return self.child._neededColumns()
 
 
 class FunctionExpression(BaseExpression):
