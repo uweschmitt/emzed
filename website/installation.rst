@@ -36,52 +36,53 @@ If you update from an older *eMZed* version based on *PythonXY*, the
 recommeded way is to uninstall *PythonXY* and *pyOpenMS* first and to
 install from scratch as described below.
 
-Installing on Windows
-~~~~~~~~~~~~~~~~~~~~~
+Installing on 64 bit Windows
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 We changed the installing instructions for the 64 bit Windows version of 
 *eMZed* and do not rely on *Python XY* any more.
 Further we updated *eMZed* to the newest version of *pyopenms*.
 
+The current version of *eMZed* is not available for 32 bit Windows.
+
 For installing *eMZed* on Windows please follow **carefully** the stepwise
 instructions. **version numbers and file names matter**.
 
-1. Download and install  64 bit Python 2.7 for Windows from
-   http://python.org/ftp/python/2.7.4/python-2.7.4.amd64.msi
+1. Download *WinPython* 2.7.X 64 bit from https://code.google.com/p/winpython/
 
-2. Download and install *numpy-MKL-1.7.X.win-amd64-py2.7.exe* from
-   http://www.lfd.uci.edu/~gohlke/pythonlibs#numpy 
+2. Run the installer. We propose to run the installer with administator rights
+   and to choose a target directory. We recommend **C:\\WinPython-64bit-2.7.4.0** 
+   as installation target, but you can use a sub folder of **C:\\Programmm Files** 
+   or something similar.
 
-   Be carefull to select the **64 bit** version for Python **2.7** !
+3. Start *WinPython Control Panel* in the chosen installation directory.
 
-3. If you do not have *R* installed on your system, first **download**
+4. Register *WinPython* by choosing the menu item *"Advanced->Register Distribution"*
 
-    http://cran.r-project.org/bin/windows/base/R-3.0.0-win.exe
+5. Now you should be able to run *"All Programs -> WinPython -> WinPython Commmand Prompt"*
+   from your Windows Start Button. Run this prompt with administration rights.
 
-    and **run it with administration rights**, else you might get problems
-    using R functionalities from eMZed.
+6. Run the command::
 
-4. In order to install all other needed Python packages 
-   download and unpack 
+    pip install http://emzed.ethz.ch/downloads/setup_python_packages.zip
 
-       http://emzed.ethz.ch/downloads/windows_contrib_downloader.zip. 
+7. If you do not have *R* installed on your system, first **download**
+   http://cran.r-project.org/bin/windows/base/R-3.0.0-win.exe
+   and **run it with administration rights**, else you might get problems
+   using R functionalities from eMZed.
 
-   This archive contains a *README* file, which you should read carefully !
-
-5. Download and install the latest version of *eMZed* from 
-
-       http://emzed.ethz.ch/downloads/emzed_1.3.0_for_windows.zip
-
+8. Download, unzip and install the latest version of *eMZed* from 
+   http://emzed.ethz.ch/downloads/emzed_1.3.5_for_windows.zip
    Now you should have a start icon on your Desktop.
 
-6. Start *eMZed*.
+9. Start *eMZed*.
 
-7. At the first start you are asked for the *global exchange folder*. 
+10. At the first start you are asked for the *global exchange folder*. 
    See :ref:`before_you_start`.
 
    **If you do not want to use an global exchange folder, you can leave the input field empty.**
 
-8. *eMZed* will now retrieve or update a metabolomics related subset of the *PubChem* database 
+11. *eMZed* will now retrieve or update a metabolomics related subset of the *PubChem* database 
    from the web.
    If you have a global exchange folder the full download will be stored there.
    Checking for update is done each time you start *eMZed*.
@@ -92,7 +93,7 @@ instructions. **version numbers and file names matter**.
    which we will fix with the next version**
 
 
-9. *eMZed* will install or update the *XMCS*-code if needed. If you have a global exchange folder
+12. *eMZed* will install or update the *XMCS*-code if needed. If you have a global exchange folder
    an *XCMS* [xcms]_ related code will be stored there, so further starts of *eMZed*  by local users
    will be much faster.
 
@@ -112,7 +113,7 @@ and adapt it for your needs.
 Executing this script with ``sudo`` will download and install 
 everything that is needed, including the *eMZed* files
 in ``emzed_files_1.X.Y.zip``.  Start ``python emzed.py`` in the extracted
-folder and follow the windows instruction above, beginning at item no. 7.
+folder and follow the windows instruction above, beginning at item no. 10.
 
 Getting the latest development version of eMZed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
