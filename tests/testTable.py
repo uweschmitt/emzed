@@ -1,4 +1,3 @@
-import pdb
 #encoding: utf-8
 
 from libms.DataStructures.Table import Table
@@ -362,8 +361,75 @@ def testUniqeNotNone():
 
 def testWithNoneValues():
 
+    # simple int compare ###################################
     t = ms.toTable("a", [None, 2])
     t.print_()
+    assert len(t.filter(t.a < 3)) == 1
+
+    t2 = t.copy()
+    assert len(t.join(t2, t.a==t2.a)) == 1
+    assert len(t.leftJoin(t2, t.a==t2.a)) == 2
+
+    assert len(t.join(t2, t.a<=t2.a)) == 1
+    assert len(t.leftJoin(t2, t.a<=t2.a)) == 2
+
+    assert len(t.join(t2, t.a<t2.a)) == 0
+    assert len(t.leftJoin(t2, t.a<t2.a)) == 2
+
+    assert len(t.join(t2, t.a!=t2.a)) == 0
+    assert len(t.leftJoin(t2, t.a!=t2.a)) == 2
+
+    assert len(t.join(t2, t.a>=t2.a)) == 1
+    assert len(t.leftJoin(t2, t.a<=t2.a)) == 2
+
+    assert len(t.join(t2, t.a>t2.a)) == 0
+    assert len(t.leftJoin(t2, t.a<t2.a)) == 2
+
+    t.sortBy("a")
+
+    assert len(t.join(t2, t.a==t2.a)) == 1
+    assert len(t.leftJoin(t2, t.a==t2.a)) == 2
+
+    assert len(t.join(t2, t.a<=t2.a)) == 1
+    assert len(t.leftJoin(t2, t.a<=t2.a)) == 2
+
+    assert len(t.join(t2, t.a<t2.a)) == 0
+    assert len(t.leftJoin(t2, t.a<t2.a)) == 2
+
+    assert len(t.join(t2, t.a!=t2.a)) == 0
+    assert len(t.leftJoin(t2, t.a!=t2.a)) == 2
+
+    assert len(t.join(t2, t.a>=t2.a)) == 1
+    assert len(t.leftJoin(t2, t.a<=t2.a)) == 2
+
+    assert len(t.join(t2, t.a>t2.a)) == 0
+    assert len(t.leftJoin(t2, t.a<t2.a)) == 2
+
+    t.sortBy("a", ascending=False)
+
+    assert len(t.join(t2, t.a==t2.a)) == 1
+    assert len(t.leftJoin(t2, t.a==t2.a)) == 2
+
+    assert len(t.join(t2, t.a<=t2.a)) == 1
+    assert len(t.leftJoin(t2, t.a<=t2.a)) == 2
+
+    assert len(t.join(t2, t.a<t2.a)) == 0
+    assert len(t.leftJoin(t2, t.a<t2.a)) == 2
+
+    assert len(t.join(t2, t.a!=t2.a)) == 0
+    assert len(t.leftJoin(t2, t.a!=t2.a)) == 2
+
+    assert len(t.join(t2, t.a>=t2.a)) == 1
+    assert len(t.leftJoin(t2, t.a<=t2.a)) == 2
+
+    assert len(t.join(t2, t.a>t2.a)) == 0
+    assert len(t.leftJoin(t2, t.a<t2.a)) == 2
+
+
+    # simple float compare ##################################
+    t = ms.toTable("a", [None, 2.0])
+    t.print_()
+
     assert len(t.filter(t.a < 3)) == 1
 
     t2 = t.copy()
@@ -386,6 +452,243 @@ def testWithNoneValues():
 
     assert len(t.join(t2, t.a>t2.a)) == 0
     assert len(t.leftJoin(t2, t.a<t2.a)) == 2
+
+
+    t.sortBy("a", ascending=True)
+
+    assert len(t.join(t2, t.a==t2.a)) == 1
+    assert len(t.leftJoin(t2, t.a==t2.a)) == 2
+
+    assert len(t.join(t2, t.a<=t2.a)) == 1
+    assert len(t.leftJoin(t2, t.a<=t2.a)) == 2
+
+    assert len(t.join(t2, t.a<t2.a)) == 0
+    assert len(t.leftJoin(t2, t.a<t2.a)) == 2
+
+
+    t.join(t2, t.a!=t2.a).print_()
+    assert len(t.join(t2, t.a!=t2.a)) == 0
+    assert len(t.leftJoin(t2, t.a!=t2.a)) == 2
+
+    assert len(t.join(t2, t.a>=t2.a)) == 1
+    assert len(t.leftJoin(t2, t.a<=t2.a)) == 2
+
+    assert len(t.join(t2, t.a>t2.a)) == 0
+    assert len(t.leftJoin(t2, t.a<t2.a)) == 2
+
+    t.sortBy("a", ascending=False)
+
+    assert len(t.join(t2, t.a==t2.a)) == 1
+    assert len(t.leftJoin(t2, t.a==t2.a)) == 2
+
+    assert len(t.join(t2, t.a<=t2.a)) == 1
+    assert len(t.leftJoin(t2, t.a<=t2.a)) == 2
+
+    assert len(t.join(t2, t.a<t2.a)) == 0
+    assert len(t.leftJoin(t2, t.a<t2.a)) == 2
+
+
+    t.join(t2, t.a!=t2.a).print_()
+    assert len(t.join(t2, t.a!=t2.a)) == 0
+    assert len(t.leftJoin(t2, t.a!=t2.a)) == 2
+
+    assert len(t.join(t2, t.a>=t2.a)) == 1
+    assert len(t.leftJoin(t2, t.a<=t2.a)) == 2
+
+    assert len(t.join(t2, t.a>t2.a)) == 0
+    assert len(t.leftJoin(t2, t.a<t2.a)) == 2
+
+    # simple str compare ###################################
+    t = ms.toTable("a", [None, "2"])
+    t.filter(t.a < "3").print_()
+
+    assert len(t.filter(t.a < "3")) == 1
+
+    t2 = t.copy()
+    assert len(t.join(t2, t.a==t2.a)) == 1
+    assert len(t.leftJoin(t2, t.a==t2.a)) == 2
+
+    assert len(t.join(t2, t.a<=t2.a)) == 1
+    assert len(t.leftJoin(t2, t.a<=t2.a)) == 2
+
+    assert len(t.join(t2, t.a<t2.a)) == 0
+    assert len(t.leftJoin(t2, t.a<t2.a)) == 2
+
+
+    t.join(t2, t.a!=t2.a).print_()
+    assert len(t.join(t2, t.a!=t2.a)) == 0
+    assert len(t.leftJoin(t2, t.a!=t2.a)) == 2
+
+    assert len(t.join(t2, t.a>=t2.a)) == 1
+    assert len(t.leftJoin(t2, t.a<=t2.a)) == 2
+
+    assert len(t.join(t2, t.a>t2.a)) == 0
+    assert len(t.leftJoin(t2, t.a<t2.a)) == 2
+
+    t.sortBy("a", ascending=True)
+    assert len(t.join(t2, t.a==t2.a)) == 1
+    assert len(t.leftJoin(t2, t.a==t2.a)) == 2
+
+    assert len(t.join(t2, t.a<=t2.a)) == 1
+    assert len(t.leftJoin(t2, t.a<=t2.a)) == 2
+
+    assert len(t.join(t2, t.a<t2.a)) == 0
+    assert len(t.leftJoin(t2, t.a<t2.a)) == 2
+
+
+    t.join(t2, t.a!=t2.a).print_()
+    assert len(t.join(t2, t.a!=t2.a)) == 0
+    assert len(t.leftJoin(t2, t.a!=t2.a)) == 2
+
+    assert len(t.join(t2, t.a>=t2.a)) == 1
+    assert len(t.leftJoin(t2, t.a<=t2.a)) == 2
+
+    assert len(t.join(t2, t.a>t2.a)) == 0
+    assert len(t.leftJoin(t2, t.a<t2.a)) == 2
+
+    t.sortBy("a", ascending=False)
+    assert len(t.join(t2, t.a==t2.a)) == 1
+    assert len(t.leftJoin(t2, t.a==t2.a)) == 2
+
+    assert len(t.join(t2, t.a<=t2.a)) == 1
+    assert len(t.leftJoin(t2, t.a<=t2.a)) == 2
+
+    assert len(t.join(t2, t.a<t2.a)) == 0
+    assert len(t.leftJoin(t2, t.a<t2.a)) == 2
+
+
+    t.join(t2, t.a!=t2.a).print_()
+    assert len(t.join(t2, t.a!=t2.a)) == 0
+    assert len(t.leftJoin(t2, t.a!=t2.a)) == 2
+
+    assert len(t.join(t2, t.a>=t2.a)) == 1
+    assert len(t.leftJoin(t2, t.a<=t2.a)) == 2
+
+    assert len(t.join(t2, t.a>t2.a)) == 0
+    assert len(t.leftJoin(t2, t.a<t2.a)) == 2
+
+
+    # simple float compare reversed #########################
+    t = ms.toTable("a", [None, 2.0])
+    t.print_()
+
+    assert len(t.filter(3.0 > t.a)) == 1
+    assert len(t.filter(3.0 >= t.a)) == 1
+    assert len(t.filter(3.0 == t.a)) == 0
+    assert len(t.filter(3.0 < t.a)) == 0
+    assert len(t.filter(3.0 <= t.a)) == 0
+    assert len(t.filter(3.0 != t.a)) == 1
+    assert len(t.filter(3 > t.a)) == 1
+    assert len(t.filter(3 >= t.a)) == 1
+    assert len(t.filter(3 == t.a)) == 0
+    assert len(t.filter(3 < t.a)) == 0
+    assert len(t.filter(3 <= t.a)) == 0
+    assert len(t.filter(3 != t.a)) == 1
+
+    t.sortBy("a")
+    assert len(t.filter(3 > t.a)) == 1
+    assert len(t.filter(3 >= t.a)) == 1
+    assert len(t.filter(3 == t.a)) == 0
+    assert len(t.filter(3 < t.a)) == 0
+    assert len(t.filter(3 <= t.a)) == 0
+    assert len(t.filter(3 != t.a)) == 1
+    assert len(t.filter(3.0 > t.a)) == 1
+    assert len(t.filter(3.0 >= t.a)) == 1
+    assert len(t.filter(3.0 == t.a)) == 0
+    assert len(t.filter(3.0 < t.a)) == 0
+    assert len(t.filter(3.0 <= t.a)) == 0
+    assert len(t.filter(3.0 != t.a)) == 1
+
+    t.sortBy("a", ascending=False)
+    assert len(t.filter(3 > t.a)) == 1
+    assert len(t.filter(3 >= t.a)) == 1
+    assert len(t.filter(3 == t.a)) == 0
+    assert len(t.filter(3 < t.a)) == 0
+    assert len(t.filter(3 <= t.a)) == 0
+    assert len(t.filter(3 != t.a)) == 1
+    assert len(t.filter(3.0 > t.a)) == 1
+    assert len(t.filter(3.0 >= t.a)) == 1
+    assert len(t.filter(3.0 == t.a)) == 0
+    assert len(t.filter(3.0 < t.a)) == 0
+    assert len(t.filter(3.0 <= t.a)) == 0
+    assert len(t.filter(3.0 != t.a)) == 1
+
+    # simple int   compare reversed #########################
+    t = ms.toTable("a", [None, 2])
+    t.print_()
+
+    assert len(t.filter(3 > t.a)) == 1
+    assert len(t.filter(3 >= t.a)) == 1
+    assert len(t.filter(3 == t.a)) == 0
+    assert len(t.filter(3 < t.a)) == 0
+    assert len(t.filter(3 <= t.a)) == 0
+    assert len(t.filter(3 != t.a)) == 1
+
+    assert len(t.filter(3.0 > t.a)) == 1
+    assert len(t.filter(3.0 >= t.a)) == 1
+    assert len(t.filter(3.0 == t.a)) == 0
+    assert len(t.filter(3.0 < t.a)) == 0
+    assert len(t.filter(3.0 <= t.a)) == 0
+    assert len(t.filter(3.0 != t.a)) == 1
+
+    t.sortBy("a")
+    assert len(t.filter(3 > t.a)) == 1
+    assert len(t.filter(3 >= t.a)) == 1
+    assert len(t.filter(3 == t.a)) == 0
+    assert len(t.filter(3 < t.a)) == 0
+    assert len(t.filter(3 <= t.a)) == 0
+    assert len(t.filter(3 != t.a)) == 1
+
+    assert len(t.filter(3.0 > t.a)) == 1
+    assert len(t.filter(3.0 >= t.a)) == 1
+    assert len(t.filter(3.0 == t.a)) == 0
+    assert len(t.filter(3.0 < t.a)) == 0
+    assert len(t.filter(3.0 <= t.a)) == 0
+    assert len(t.filter(3.0 != t.a)) == 1
+
+    t.sortBy("a", ascending=False)
+    assert len(t.filter(3 > t.a)) == 1
+    assert len(t.filter(3 >= t.a)) == 1
+    assert len(t.filter(3 == t.a)) == 0
+    assert len(t.filter(3 < t.a)) == 0
+    assert len(t.filter(3 <= t.a)) == 0
+    assert len(t.filter(3 != t.a)) == 1
+
+    assert len(t.filter(3.0 > t.a)) == 1
+    assert len(t.filter(3.0 >= t.a)) == 1
+    assert len(t.filter(3.0 == t.a)) == 0
+    assert len(t.filter(3.0 < t.a)) == 0
+    assert len(t.filter(3.0 <= t.a)) == 0
+    assert len(t.filter(3.0 != t.a)) == 1
+
+    # simple str   compare reversed #########################
+    t = ms.toTable("a", [None, "2"])
+    t.print_()
+
+    assert len(t.filter("3" > t.a)) == 1
+    assert len(t.filter("3" >= t.a)) == 1
+    assert len(t.filter("3" == t.a)) == 0
+    assert len(t.filter("3" < t.a)) == 0
+    assert len(t.filter("3" <= t.a)) == 0
+    assert len(t.filter("3" != t.a)) == 1
+
+    t.sortBy("a")
+    assert len(t.filter("3" > t.a)) == 1
+    assert len(t.filter("3" >= t.a)) == 1
+    assert len(t.filter("3" == t.a)) == 0
+    assert len(t.filter("3" < t.a)) == 0
+    assert len(t.filter("3" <= t.a)) == 0
+    assert len(t.filter("3" != t.a)) == 1
+
+    t.sortBy("a", ascending=False)
+    assert len(t.filter("3" > t.a)) == 1
+    assert len(t.filter("3" >= t.a)) == 1
+    assert len(t.filter("3" == t.a)) == 0
+    assert len(t.filter("3" < t.a)) == 0
+    assert len(t.filter("3" <= t.a)) == 0
+    assert len(t.filter("3" != t.a)) == 1
+
+    ##########################################################
 
     t = ms.toTable("i", [1,2,None])
     assert len(t.filter(t.i.isNone())) == 1

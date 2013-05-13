@@ -176,9 +176,9 @@ class Table(object):
         # not be in objects __dict__ and must not be name of member
         # functions:
 
-        with warnings.catch_warnings(): # supress warning accessing .colFormats,
-            #etc:
-            memberNames = [name for name, obj in inspect.getmembers(self)]
+        warnings.simplefilter("ignore", UserWarning)
+        memberNames = [name for name, obj in inspect.getmembers(self)]
+        warnings.simplefilter("always", UserWarning)
 
         for name in colNames:
             if name in self.__dict__ or name in memberNames:
@@ -1141,7 +1141,7 @@ class Table(object):
         else the given postfixes are stripped from the column names
         """
         new_column_names = list()
-        for column_name in self.colNames:
+        for column_name in self._colNames:
             if not postfixes:
                 new_column_name, __, __ = column_name.partition("__")
             else:

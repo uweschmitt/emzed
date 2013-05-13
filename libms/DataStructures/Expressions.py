@@ -1,3 +1,4 @@
+import pdb
 import numpy as np
 import re
 
@@ -326,7 +327,7 @@ class BaseExpression(object):
         Example: ``t.rt.replaceColumn("rt", rt.ifNotNoneElse(t.rt_default))``
 
         """
-        return (self.isNotNone()).thenElse(self, othert )
+        return (self.isNotNone()).thenElse(self, other)
 
     def isNotNone(self):
         return IsNotNoneExpression(self)
@@ -546,9 +547,15 @@ class CompExpression(BaseExpression):
 
         if tl in _basic_num_types and tr in _basic_num_types:
             if ixl != None  and len(rhs) == 1:
-                return self.fastcomp(lhs, rhs[0]), None, bool
+                result = self.fastcomp(lhs, rhs[0])
+                mask = lhs <= None # trick !
+                result[mask] = None
+                return result, None, bool
             if ixr != None  and len(lhs) == 1:
-                return self.rfastcomp(lhs[0], rhs), None, bool
+                result = self.rfastcomp(lhs, rhs[0])
+                mask = lhs <= None # trick !
+                result[mask] = None
+                return result, None, bool
             if len(lhs) == 1:
                 lhs = np.tile(lhs, len(rhs))
             elif len(rhs) == 1:
@@ -567,7 +574,7 @@ class CompExpression(BaseExpression):
             if r is None:
                 values = [None] * len(lhs)
             else:
-                values = [ None if r is None else self.comparator(l,r) for l in  lhs]
+                values = [ None if l is None else self.comparator(l,r) for l in  lhs]
         else:
             values = [ None if l is None or r is None else self.comparator(l,r) for (l,r) in zip(lhs, rhs)]
         return np.array(values, dtype=np.bool), None, bool
