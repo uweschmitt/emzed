@@ -8,7 +8,7 @@ License
 .. parsed-literal::
 
 
-    eMZed  -- Copyright (c) 2012:
+    eMZed  -- Copyright (c) 2012 - 2013:
 
      *  Institute of Microbiology, Department of Biology, ETH Zurich
      *  Patrick Kiefer
