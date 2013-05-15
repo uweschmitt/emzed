@@ -133,6 +133,30 @@ def patch_userconfig():
     # them immediately. 
 
     # this works:
+    import spyderlib.userconfig
+    @replace(spyderlib.userconfig.get_home_dir)
+    def patched():
+        """
+        Return user home directory
+        """
+        import os.path as osp
+        from spyderlib.utils import encoding
+        for env_var in ('APPDATA', 'USERPROFILE', 'TMP'):
+            # os.environ.get() returns a raw byte string which needs to be
+            # decoded with the codec that the OS is using to represent environment
+            # variables.
+            path = encoding.to_unicode_from_fs(os.environ.get(env_var, ''))
+            if osp.isdir(path):
+                break
+        if path:
+            return path
+        try:
+            # expanduser() returns a raw byte string which needs to be
+            # decoded with the codec that the OS is using to represent file paths.
+            path = encoding.to_unicode_from_fs(osp.expanduser('~'))
+        except:
+            raise RuntimeError('Please define environment variable $HOME')
+
 
     from spyderlib.userconfig import UserConfig
 
