@@ -141,7 +141,7 @@ def patch_userconfig():
         """
         import os.path as osp
         from spyderlib.utils import encoding
-        for env_var in ('APPDATA', 'USERPROFILE', 'TMP'):
+        for env_var in ('APPDATA', 'USERPROFILE', 'HOME', 'TMP'):
             # os.environ.get() returns a raw byte string which needs to be
             # decoded with the codec that the OS is using to represent environment
             # variables.
@@ -154,6 +154,7 @@ def patch_userconfig():
             # expanduser() returns a raw byte string which needs to be
             # decoded with the codec that the OS is using to represent file paths.
             path = encoding.to_unicode_from_fs(osp.expanduser('~'))
+            return path
         except:
             raise RuntimeError('Please define environment variable $HOME')
 
