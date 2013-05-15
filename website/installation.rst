@@ -48,10 +48,10 @@ The current version of *eMZed* is not available for 32 bit Windows.
 For installing *eMZed* on Windows please follow **carefully** the stepwise
 instructions. **version numbers and file names matter**.
 
-1. Download *WinPython* 2.7.X 64 bit from https://code.google.com/p/winpython/
+1. Download *WinPython* 2.7.4.X 64 bit from https://code.google.com/p/winpython/
 
 2. Run the installer. We propose to run the installer with administator rights
-   and to choose a target directory. We recommend **C:\\WinPython-64bit-2.7.4.0** 
+   and to choose a target directory. We recommend **C:\\WinPython-64bit-2.7.4.X** 
    as installation target, but you can use a sub folder of **C:\\Programmm Files** 
    or something similar.
 
@@ -72,7 +72,7 @@ instructions. **version numbers and file names matter**.
    using R functionalities from eMZed.
 
 8. Download, unzip and install the latest version of *eMZed* from 
-   http://emzed.ethz.ch/downloads/emzed_1.3.5_for_windows.zip
+   http://emzed.ethz.ch/downloads/emzed_1.3.6_for_windows.zip
    Now you should have a start icon on your Desktop.
 
 9. Start *eMZed*.

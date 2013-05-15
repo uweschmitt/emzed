@@ -9,7 +9,7 @@ Welcome to eMZed
 Latest news
 ~~~~~~~~~~~
 
- * \  10. May 2013: released *eMZed* 1.3.5 with simplified installation of
+ * \  15. May 2013: released *eMZed* 1.3.6 with simplified installation of
    emzed 64 bit on windows, update to current pyopenms and bugfixes 
 
 
