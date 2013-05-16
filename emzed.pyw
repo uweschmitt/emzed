@@ -904,7 +904,7 @@ class MainWindow(QMainWindow):
                     #self.thirdparty_plugins.append(plugin)
                     #plugin.register_plugin()
                 #except AttributeError, error:
-                    print >>STDERR, "%s: %s" % (mod, str(error))
+                    #print >>STDERR, "%s: %s" % (mod, str(error))
 
             # View menu
             self.windows_toolbars_menu = QMenu(_("Windows and toolbars"), self)
