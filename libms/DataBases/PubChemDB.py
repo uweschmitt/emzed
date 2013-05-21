@@ -6,6 +6,8 @@ from ..Chemistry.Tools import monoisotopicMass
 
 
 def dom_tree_from_bytes(data):
+    if isinstance(data, unicode):
+        return etree.fromstring(data.encode("utf-8"))
     return etree.fromstring(data)
 
 
