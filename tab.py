@@ -59,7 +59,7 @@ if not os.environ.get("WITHOUT_PUBCHEM"):
     import db
     if db.pubChemDB is not None:
         pc_full = db.pubChemDB.table
-        pc_full = pc_full.filter(pc_full.m0 != None)
+        pc_full = pc_full.filter(pc_full.m0.isNotNone())
 
         # older versions have camel case colulmnname
         if pc_full.hasColumn("isInKEGG"):
