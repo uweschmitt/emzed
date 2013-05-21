@@ -49,20 +49,12 @@ class RExecutor(object):
     @staticmethod
     def findRExe(rHome):
 
-        found = glob.glob("%s/bin/R.exe" % rHome)
-        if found:
-            return found[0]
-        else:
-            found = glob.glob("%s/bin/*/R.exe" % rHome)
+        found = glob.glob("%s/bin/x64/R.exe" % rHome)
+        if not found:
+            found = glob.glob("%s/bin/R.exe" % rHome)
             if not found:
                 raise Exception("could not find R.exe")
-            if len(found)>1:
-                print "found multiple R.exe !"
-                for p in found:
-                    print "    ", p
-                print "I will take the first one !"
-
-            return found[0]
+        return found[0]
 
     @staticmethod
     def parse_path_variable():
