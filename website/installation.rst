@@ -71,8 +71,10 @@ instructions. **version numbers and file names matter**.
    and **run it with administration rights**, else you might get problems
    using R functionalities from eMZed.
 
+   R with latest major version 2.X.Y should work too.
+
 8. Download, unzip and install the latest version of *eMZed* from 
-   http://emzed.ethz.ch/downloads/emzed_1.3.6_for_windows.zip
+   http://emzed.ethz.ch/downloads/emzed_1.3.7_for_windows.zip
    Now you should have a start icon on your Desktop.
 
 9. Start *eMZed*.
