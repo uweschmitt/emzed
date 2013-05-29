@@ -62,9 +62,9 @@ class Spectrum(object):
         """creates Spectrum from pyopenms.MSSpectrum"""
         assert type(mspec) == pyopenms.MSSpectrum, type(mspec)
         pcs = [ (p.getMZ(), p.getIntensity()) for p in mspec.getPrecursors()]
-        pol = { pyopenms.Polarity.POLNULL: '0',
-                pyopenms.Polarity.POSITIVE: '+',
-                pyopenms.Polarity.NEGATIVE: '-'
+        pol = { pyopenms.IonSource.Polarity.POLNULL: '0',
+                pyopenms.IonSource.Polarity.POSITIVE: '+',
+                pyopenms.IonSource.Polarity.NEGATIVE: '-'
               }.get(mspec.getInstrumentSettings().getPolarity())
         res = clz(mspec.get_peaks(), mspec.getRT(),
                   mspec.getMSLevel(), pol, pcs)
@@ -133,9 +133,9 @@ class Spectrum(object):
         spec.setRT(self.rt)
         spec.setMSLevel(self.msLevel)
         ins = spec.getInstrumentSettings()
-        pol = { '0' : pyopenms.Polarity.POLNULL,
-                '+' : pyopenms.Polarity.POSITIVE,
-                '-' : pyopenms.Polarity.NEGATIVE}[self.polarity]
+        pol = { '0' : pyopenms.IonSource.Polarity.POLNULL,
+                '+' : pyopenms.IonSource.Polarity.POSITIVE,
+                '-' : pyopenms.IonSource.Polarity.NEGATIVE}[self.polarity]
         ins.setPolarity(pol)
         spec.setInstrumentSettings(ins)
         oms_pcs = []

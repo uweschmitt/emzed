@@ -1,6 +1,6 @@
 from libms.DataStructures.MSTypes import PeakMap, Spectrum
 from pyopenms import (FileHandler, Precursor, MSExperiment,
-                      InstrumentSettings, Polarity)
+                      InstrumentSettings, IonSource)
 import numpy as np
 import os.path
 def exceptionwrapper(fun):
@@ -28,7 +28,7 @@ class TestMSTypes(object):
         s0.setMSLevel(2)
         spec = Spectrum.fromMSSpectrum(s0)
         settings = InstrumentSettings()
-        settings.setPolarity(Polarity.POSITIVE)
+        settings.setPolarity(IonSource.Polarity.POSITIVE)
         s0.setInstrumentSettings(settings)
 
         self.compare_specs(spec, s0)
