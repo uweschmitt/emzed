@@ -29,6 +29,8 @@ class MetlinMatcher(object):
     def _query(masses, adduct, ppm):
 
         token = userConfig.getMetlinToken()
+        if not token:
+            raise Exception("need metlin token in user config file")
 
         params = OrderedDict()
         params["token"] = token # "DqeN7qBNEAzVNm9n"
@@ -37,21 +39,12 @@ class MetlinMatcher(object):
         params["tolunits"] = "ppm"
         params["tolerance"] = ppm
 
-        #r = requests.post(url, data=params)
         r = requests.get(MetlinMatcher.url, params=params)
-        #print r
-        #print urllib2.unquote(r.url)
-        #print r.status_code
         if r.status_code != 200:
             raise Exception("matlin query %s failed: %s" %
                                               (urllib2.unquote(r.url), r.text))
 
         j = r.json()
-        # TODO: requests module in setup !?
-
-        # TODO: aksFor... udn DialogBUilder: pathes nach latin-1 encoden ?
-        # oder: fuer unicode tabellenspaltentyp kein "type=None" ?
-
         ws_col_names = MetlinMatcher.ws_col_names
         ws_col_types = MetlinMatcher.ws_col_types
         ws_col_formats = MetlinMatcher.ws_col_formats
