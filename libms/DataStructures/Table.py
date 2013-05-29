@@ -186,11 +186,6 @@ class Table(object):
 
         self.resetInternals()
 
-    @property
-    def colNames(self):
-        deprecation("please use getColNames() in future versions instead "\
-                "of accessing .colNames")
-        return self._colNames[:]
 
     def getColNames(self):
         """ returns a copied list of column names, one can operator on this
@@ -198,11 +193,6 @@ class Table(object):
         """
         return self._colNames[:]
 
-    @property
-    def colTypes(self):
-        deprecation("please use getColTypes() in future versions instead "\
-                "of accessing .colTypes")
-        return self._colTypes[:]
 
     def getColTypes(self):
         """ returns a copied list of column names, one can operator on this
@@ -210,17 +200,33 @@ class Table(object):
         """
         return self._colTypes[:]
 
-    @property
-    def colFormats(self):
-        deprecation("please use getColFormats() in future versions instead "\
-                "of accessing .colFormats")
-        return self._colFormats[:]
+    def getColType(self, name):
+        """ returns type of column ``name`` """
+        return self._colTypes[self.getIndex(name)]
+
+    def setColType(self, name, type_):
+        """
+        sets type of column ``name`` to type ``type_``.
+        """
+        self._colTypes[self.getIndex(name)] = type_
+        self.resetInternals()
 
     def getColFormats(self):
         """ returns a copied list of column formats, one can operator on this
             list without corrupting the underlying table.
         """
         return self._colFormats[:]
+
+    def getColFormat(self, name):
+        """ returns format of column ``name`` """
+        return self._colFormats[self.getIndex(name)]
+
+    def setColFormat(self, name, format_):
+        """
+        sets format of column ``name`` to type ``format_``.
+        """
+        self._colFormats[self.getIndex(name)] = format_
+        self.resetInternals()
 
     def info(self):
         """
@@ -386,47 +392,38 @@ class Table(object):
             raise Exception("column with name %r not in table" % colName)
         return idx
 
-    def set(self, row, colName, value):
+    def setValue(self, row, colName, value, slow_but_checked=True):
         """ sets ``value`` of column ``colName`` in a given ``row``.
 
             Example: ``table.set(table.rows[0], "mz", 252.83332)``
         """
+        if slow_but_checked:
+            assert row in self.rows
         ix = self.getIndex(colName)
         if type(value) in [np.float32, np.float64]:
             value = float(value)
         row[ix] = value
         self.resetInternals()
 
-    def get(self, row, colName=None):
-        """ returns value of column ``colName`` in a given ``row``
-
-            Example: ``table.get(table.rows[0], "mz")``
-
+    def getValues(self, row):
+        """
             if ``colName`` is not provided, one gets the content of
             the ``row`` as a dictionary mapping column names to values.
+        """
+        return Bunch( (n, self.getValue(row, n)) for n in self._colNames )
+
+    def getValue(self, row, colName):
+        """ returns value of column ``colName`` in a given ``row``
+
+            Example: ``table.getValue(table.rows[0], "mz")``
+
 
             Example::
 
-                row = table.get(table.rows[0])
+                row = table.getValue(table.rows[0])
                 print row["mz"]
 
-            **Note**: you can use this for other lists according
-            to column data as
-
-            ``table.get(table.colTypes)`` gives you a dictionary for
-            which maps column names to the corresponding column types.
-
-            Example::
-
-                types = table.get(table.getColTypes())
-                print types["mz"]
-
-                formats = table.get(table.getColFormats())
-                print formats["mz"]
-
         """
-        if colName is None:
-            return Bunch( (n, self.get(row, n)) for n in self._colNames )
         return row[self.getIndex(colName)]
 
     def _getColumnCtx(self, needed):
@@ -598,7 +595,7 @@ class Table(object):
                         colNames = self._colNames
                     print >> fp, "; ".join(colNames)
                     for row in self.rows:
-                        data = [self.get(row, v) for v in colNames]
+                        data = [self.getValue(row, v) for v in colNames]
                         print >> fp, "; ".join(map(str, data))
                 break
 
@@ -730,13 +727,13 @@ class Table(object):
 
         groups = set()
         for row in self.rows:
-            key = computekey([self.get(row, n) for n in colNames])
+            key = computekey([self.getValue(row, n) for n in colNames])
             groups.add(key)
 
         # preserve order of rows
         subTables = OrderedDict()
         for row in self.rows:
-            key = computekey([self.get(row, n) for n in colNames])
+            key = computekey([self.getValue(row, n) for n in colNames])
             if key not in subTables:
                 subTables[key] = self.buildEmptyClone()
             subTables[key].rows.append(row[:])

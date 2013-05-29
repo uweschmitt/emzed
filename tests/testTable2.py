@@ -413,7 +413,7 @@ def testLogics():
     assert len(t.filter(t.a ^ t.nota)) == 2
     assert len(t.filter(t.a ^ t.a)) == 0
 
-    bunch = t.get(t.rows[0])
+    bunch = t.getValues(t.rows[0])
     assert bunch.a == True
     assert bunch.nota == False
     assert bunch.true == True
@@ -467,4 +467,12 @@ def test_removePostfixes():
     else:
         assert False, "expected exception"
 
+def test_getters_and_setters():
+    t = ms.toTable("a", [1,2,3])
+    assert t.getColType("a") == int
+    assert t.getColFormat("a") == "%d"
 
+    t.setColType("a", float)
+    assert t.getColType("a") == float
+    t.setColFormat("a", "%.3f")
+    assert t.getColFormat("a") == "%.3f"

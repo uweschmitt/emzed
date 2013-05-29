@@ -167,7 +167,7 @@ class PubChemDB(object):
         self.store()
 
     def massCalculator(self, table, row, name):
-        return monoisotopicMass(table.get(row, "mf"))
+        return monoisotopicMass(table.getValue(row, "mf"))
 
     def update(self, maxIds=None):
             self._update(maxIds)

@@ -173,7 +173,7 @@ class IntegrateAction(TableAction):
         integrator = dict(configs.peakIntegrators).get(self.method)
         table = self.model.table
         # returns Bunch which sublcasses dict
-        args = table.get(table.rows[self.idx], None)
+        args = table.getValues(table.rows[self.idx])
         postfix = self.postfix
 
         if integrator and all(args[f+postfix]
@@ -211,7 +211,7 @@ class IntegrateAction(TableAction):
         table.set(row, "area"+postfix, area)
         table.set(row, "rmse"+postfix, rmse)
         table.set(row, "params"+postfix, params)
-        args = table.get(table.rows[self.idx], None)
+        #args = table.get(table.rows[self.idx], None)
         self.notifyGUI()
         return True
 
@@ -260,7 +260,7 @@ class TableModel(QAbstractTableModel):
         self.redoActions = []
 
     def getRow(self, idx):
-        return self.table.get(self.table.rows[idx], None)
+        return self.table.getValues(self.table.rows[idx])
 
     def rowCount(self, index=QModelIndex()):
         return len(self.table)
@@ -409,7 +409,7 @@ class TableModel(QAbstractTableModel):
         return ["area", "rmse", "method", "params"]
 
     def getIntegrationValues(self, rowIdx, p):
-        get = lambda nn: self.table.get(self.table.rows[rowIdx], nn+p)
+        get = lambda nn: self.table.getValue(self.table.rows[rowIdx], nn+p)
         return dict((nn+p, get(nn)) for nn in self.integrationColNames())
 
     def isIntegrated(self):
@@ -455,7 +455,7 @@ class TableModel(QAbstractTableModel):
     def getPeakmaps(self, rowIdx):
         peakMaps = []
         for p in self.table.supportedPostfixes(["peakmap"]):
-            pm = self.table.get(self.table.rows[rowIdx], "peakmap"+p)
+            pm = self.table.getValue(self.table.rows[rowIdx], "peakmap"+p)
             if pm is None:
                 pm = PeakMap([])
             peakMaps.append(pm)
@@ -465,7 +465,7 @@ class TableModel(QAbstractTableModel):
         spectra=[]
         postfixes = []
         for p in self.table.supportedPostfixes(self.eicColNames()):
-            values = self.table.get(self.table.rows[rowIdx], None)
+            values = self.table.getValues(self.table.rows[rowIdx])
             pm = values["peakmap"+p]
             rtmin = values["rtmin"+p]
             rtmax = values["rtmax"+p]
@@ -484,7 +484,7 @@ class TableModel(QAbstractTableModel):
         rtmaxs = []
         allrts = []
         for p in self.table.supportedPostfixes(self.eicColNames()):
-            values = self.table.get(self.table.rows[rowIdx], None)
+            values = self.table.getValues(self.table.rows[rowIdx])
             pm = values["peakmap"+p]
             mzmin = values["mzmin"+p]
             mzmax = values["mzmax"+p]

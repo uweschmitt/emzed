@@ -155,7 +155,7 @@ def run(t, colnames, rows):
     tn.print_()
     tn.addColumn("computed", tn.long / (tn.iii + 1))
     # computed by callback:
-    tn.addColumn("squared", lambda t,r,n: t.get(r, "iii")**2)
+    tn.addColumn("squared", lambda t,r,n: t.getValue(r, "iii")**2)
 
 
     assert list(tn.getColumn("computed").values ) == [8080, 7441, 6161], tn.computed.values
@@ -236,15 +236,15 @@ def testSomePredicates():
 
     tn = t.filter((t.int+t.float).inRange(-1, 2))
     assert len(tn) == 1
-    assert tn.get(tn.rows[0], "int") == 1
+    assert tn.getValue(tn.rows[0], "int") == 1
     tn = t.filter((t.float+t.int).inRange(-1, 2))
     assert len(tn) == 1
-    assert tn.get(tn.rows[0], "int") == 1
+    assert tn.getValue(tn.rows[0], "int") == 1
 
     tn = t.filter(t.float.approxEqual(1.0, t.int/10))
     tn._print()
     assert len(tn) == 1, len(tn)
-    assert tn.get(tn.rows[0], "int") == 1
+    assert tn.getValue(tn.rows[0], "int") == 1
 
 
 

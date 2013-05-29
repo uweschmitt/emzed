@@ -68,9 +68,9 @@ class Elements(Table):
 
             self.massDict = dict()
             for row in self.rows:
-                sym = self.get(row, "symbol")
-                massnum = self.get(row, "massnumber")
-                mass = self.get(row, "mass")
+                sym = self.getValue(row, "symbol")
+                massnum = self.getValue(row, "massnumber")
+                mass = self.getValue(row, "mass")
                 self.massDict[sym, massnum] = mass
             syms = set(s for s, _ in self.massDict.keys())
             for sym in syms:
@@ -115,8 +115,8 @@ class MonoIsotopicElements(Table):
             self.sortBy("number")
             self.massDict = dict()
             for row in self.rows:
-                sym = self.get(row, "symbol")
-                mass = self.get(row, "m0")
+                sym = self.getValue(row, "symbol")
+                mass = self.getValue(row, "m0")
                 self.massDict[sym] = mass
 
         # borg pattern is sh*t for columns which hold a reference to the
@@ -140,7 +140,7 @@ class MonoIsotopicElements(Table):
         if not symbol in self.symbolIndex:
             return None
         row = self.rows[self.symbolIndex.get(symbol)]
-        return self.get(row, name)
+        return self.getValue(row, name)
 
 
 

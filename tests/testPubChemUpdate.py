@@ -19,8 +19,8 @@ def testPubChemUpdate():
     assert db.table.getColNames()[0] == "m0"
 
     row = db.table.rows[0]
-    assert db.table.get(row, "is_in_kegg") in [0,1]
-    assert db.table.get(row, "is_in_hmdb") in [0,1]
+    assert db.table.getValue(row, "is_in_kegg") in [0,1]
+    assert db.table.getValue(row, "is_in_hmdb") in [0,1]
 
     unknown, missing = db.getDiff(100)
     assert len(unknown)==100, len(unknown)

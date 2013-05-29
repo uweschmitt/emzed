@@ -42,11 +42,11 @@ def integrate(ftable, integratorid="std", msLevel=None, showProgress = True):
                     print cent*5,
                     sys.stdout.flush()
                     lastcent = cent
-            rtmin = ftable.get(row, "rtmin"+postfix)
-            rtmax = ftable.get(row, "rtmax"+postfix)
-            mzmin = ftable.get(row, "mzmin"+postfix)
-            mzmax = ftable.get(row, "mzmax"+postfix)
-            peakmap = ftable.get(row, "peakmap"+postfix)
+            rtmin = ftable.getValue(row, "rtmin"+postfix)
+            rtmax = ftable.getValue(row, "rtmax"+postfix)
+            mzmin = ftable.getValue(row, "mzmin"+postfix)
+            mzmax = ftable.getValue(row, "mzmax"+postfix)
+            peakmap = ftable.getValue(row, "peakmap"+postfix)
             if rtmin is None or rtmax is None or mzmin is None or mzmax is None\
                      or peakmap is None:
                 area, rmse, params = (None, )* 3

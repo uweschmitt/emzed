@@ -1,5 +1,6 @@
 from libms.Chemistry.Elements import Elements, MonoIsotopicElements
 from libms.Chemistry.Tools import monoisotopicMass
+
 def testElements():
     el = MonoIsotopicElements()
     el2 = MonoIsotopicElements()
@@ -20,7 +21,7 @@ def testElements():
     el3 = Elements()
     assert len(el3) == 111
 
-    assert len(el3.colNames) == 6
+    assert len(el3.getColNames()) == 6
     assert len(el3.number.values)
     assert len(el3.symbol.values)
     assert len(el3.name.values)

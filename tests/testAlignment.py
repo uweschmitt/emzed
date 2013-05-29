@@ -18,7 +18,7 @@ def testPoseClustering():
     shift(ft2, "rtmin")
     shift(ft2, "rtmax")
 
-    pms = set(ft2.get(row, "peakmap") for row in ft2.rows)
+    pms = set(ft2.getValue(row, "peakmap") for row in ft2.rows)
     pmrtsbefore = []
     assert len(pms) == 1
     for pm in pms:
@@ -48,7 +48,7 @@ def testPoseClustering():
 
 def check(ft, ft2, ftneu, ft2neu):
     def getrt(t, what):
-        return  np.array([t.get(row, what) for row in t.rows])
+        return  np.array([t.getValue(row, what) for row in t.rows])
 
     # refmap ft should not be changed:
     assert np.all(getrt(ftneu, "rt") == getrt(ft, "rt"))
@@ -69,7 +69,7 @@ def check(ft, ft2, ftneu, ft2neu):
     assert  max(abs(getrt(ft2neu, "rtmax")[:-1] - getrt(ftneu, "rtmax")[:-2])) < 1e-3
 
     def getrtsfrompeakmap(table):
-        pms = set(table.get(row, "peakmap") for row in table.rows)
+        pms = set(table.getValue(row, "peakmap") for row in table.rows)
         assert len(pms) == 1
         pm = pms.pop()
         return np.array([ spec.rt for spec in pm.spectra])

@@ -21,7 +21,7 @@ def testIntegration():
     assert ftr.params.values[0] is not None
     assert ftr.method.values[0] is not None
 
-    ft.set(ft.rows[0], "mzmin", None)
+    ft.setValue(ft.rows[0], "mzmin", None)
 
     ft.addColumn("mzmin__0", ft.mzmin)
     ft.addColumn("mzmax__0", ft.mzmax)
