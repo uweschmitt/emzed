@@ -1,3 +1,4 @@
+import pdb
 #encoding: utf-8
 
 
@@ -21,8 +22,12 @@ def matchMetlin(table, massColumn, adducts, ppm):
 
         result = table.leftJoin(metlinMatch, table.getColumn(internalRefColumn)\
                                             == metlinMatch.m_z)
+        # duplicate column from joining input vs metlin answer:
+        for pf in sorted(result.findPostfixes(), reverse=True):
+            if "m_z" + pf in result.getColNames():
+                result.dropColumns("m_z" + pf)
+                break
         result.dropColumns(internalRefColumn)
-        result.dropColumns("m_z__0")
     finally:
         if table.hasColumn(internalRefColumn):
             table.dropColumns(internalRefColumn)

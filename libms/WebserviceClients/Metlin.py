@@ -1,3 +1,4 @@
+import pdb
 #encoding:latin-1
 import requests
 import urllib2
@@ -53,10 +54,12 @@ class MetlinMatcher(object):
         tables = []
         for m_z, ji in zip(masses, j):
             rows = []
+            if isinstance(ji, dict):
+                ji = ji.values()
             for jii in ji:
-                rows.append([t(jii[n])\
+                if jii:
+                    rows.append([t(jii[n])\
                                   for t, n in zip(ws_col_types, ws_col_names)])
-
             if rows:
                 ti = Table(ws_col_names, ws_col_types, ws_col_formats, rows[:])
                 ti.addColumn("m_z", m_z, insertBefore=0)
@@ -85,6 +88,3 @@ if 0:
     t.info()
 
     t._print()
-
-
-

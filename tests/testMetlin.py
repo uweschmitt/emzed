@@ -17,4 +17,12 @@ def test_large():
     t = ms.toTable("m0", mz_values)
     start = time.time()
     tn = ms.matchMetlin(t, "m0", ["M"], 30)
-    assert len(tn) >= 3057
+    assert len(tn) >= 2709, len(tn)
+
+def test_handling_of_wrong_answer_from_metlin():
+    t = ms.loadCSV("data/metlin_input.csv")
+    assert len(t) == 2, len(t)
+    tn = ms.matchMetlin(t, "mass__0", ["M"], 3)
+    assert len(tn) == 12, len(tn)
+    assert set(tn.formula__1.values) == set(["C7H14O6", "C13H10N2"])
+
