@@ -1,5 +1,6 @@
 import pyopenms
 import os
+import locale
 from libms.DataStructures import PeakMap, Table
 from libms.DataStructures import formatSeconds
 
@@ -160,6 +161,14 @@ def metaboFeatureFinder(peak_map, config_id=None, ms_level=None, **kw):
     print
     dump_param("ffm_")
     print
+
+    # Sometimes when we run nosetest, the locale settings are set to
+    # german. I can not explain why.
+    # This causes a problem for the Metabo feature finder from OpenMS,
+    # which fails to read some config files conatinng numercial values
+    # with a "." decimal point, which is not the decimal point for german
+    # noumbers. so we set:
+    locale.setlocale(locale.LC_NUMERIC, "C")
 
     mtd = pyopenms.MassTraceDetection()
     mtd.setParameters(mtd_params)
