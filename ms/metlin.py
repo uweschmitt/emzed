@@ -11,7 +11,7 @@ def matchMetlin(table, massColumn, adducts, ppm):
     internalRefColumn = "__metlin_massmatch"
     if table.hasColumn(internalRefColumn):
         table.dropColumns(internalRefColumn)
-    table.addColumn(internalRefColumn, masses)
+    table._addColumnWithoutNameCheck(internalRefColumn, masses)
 
     try:
         metlinMatch = MetlinMatcher.query(masses, adducts, ppm)

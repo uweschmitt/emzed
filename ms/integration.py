@@ -64,15 +64,17 @@ def integrate(ftable, integratorid="std", msLevel=None, showProgress = True):
             rmses.append(rmse)
             paramss.append(params)
 
-        resultTable.updateColumn("method"+postfix, integratorid, str, "%s",\
-                                  insertBefore="peakmap"+postfix)
-        resultTable.updateColumn("area"+postfix, areas, float, "%.2e",\
-                                  insertBefore="peakmap"+postfix)
-        resultTable.updateColumn("rmse"+postfix, rmses, float, "%.2e",\
-                                  insertBefore="peakmap"+postfix)
-        resultTable.updateColumn("params"+postfix, paramss, object, None,\
-                                  insertBefore="peakmap"+postfix)
+        resultTable._updateColumnWithoutNameCheck("method"+postfix,
+                integratorid, str, "%s", insertBefore="peakmap"+postfix)
 
+        resultTable._updateColumnWithoutNameCheck("area"+postfix, areas, float,
+                "%.2e", insertBefore="peakmap"+postfix)
+
+        resultTable._updateColumnWithoutNameCheck("rmse"+postfix, rmses, float,
+                "%.2e", insertBefore="peakmap"+postfix)
+
+        resultTable._updateColumnWithoutNameCheck("params"+postfix, paramss,
+                object, None, insertBefore="peakmap"+postfix)
 
     resultTable.meta["integrated"]=True
     resultTable.title = "integrated: "+ (resultTable.title or "")

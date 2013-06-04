@@ -23,11 +23,11 @@ def testIntegration():
 
     ft.setValue(ft.rows[0], "mzmin", None)
 
-    ft.addColumn("mzmin__0", ft.mzmin)
-    ft.addColumn("mzmax__0", ft.mzmax)
-    ft.addColumn("rtmin__0", ft.rtmin)
-    ft.addColumn("rtmax__0", ft.rtmax)
-    ft.addColumn("peakmap__0", ft.peakmap)
+    ft._addColumnWithoutNameCheck("mzmin__0", ft.mzmin)
+    ft._addColumnWithoutNameCheck("mzmax__0", ft.mzmax)
+    ft._addColumnWithoutNameCheck("rtmin__0", ft.rtmin)
+    ft._addColumnWithoutNameCheck("rtmax__0", ft.rtmax)
+    ft._addColumnWithoutNameCheck("peakmap__0", ft.peakmap)
 
     ft.addColumn("mzminX", ft.mzmin)
     ft.addColumn("mzmaxX", ft.mzmax)

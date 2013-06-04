@@ -199,7 +199,7 @@ class PubChemDB(object):
             self.table = self.table.filter(~self.table.cid.isIn(missingIds))
         url = "http://pubchem.ncbi.nlm.nih.gov/summary/summary.cgi?cid="
         self.table.addColumn("url", url+self.table.cid.apply(str), type_=str)
-        self.table.addColumn("m0", self.massCalculator, type_=float, format="%.7f", insertBefore="mw")
+        self.table.addColumn("m0", self.massCalculator, type_=float, format_="%.7f", insertBefore="mw")
         self.table.sortBy("m0")# build index
 
     def store(self, path=None):

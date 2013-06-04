@@ -97,8 +97,7 @@ def _build_starttable(tables, force_merge):
     final_types = [types.get(n) for n in colum_names]
     final_formats = [formats.get(n) for n in colum_names]
 
-    prototype = Table(colum_names, final_types, final_formats,
-                                                      circumventNameCheck=True)
+    prototype = Table._create(colum_names, final_types, final_formats)
     return prototype, colum_names
 
 def mergeTables(tables, reference_table=None, force_merge=False):

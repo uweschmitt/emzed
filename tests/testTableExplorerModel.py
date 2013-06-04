@@ -42,9 +42,9 @@ def buildTable2():
     t.addColumn("rtmax", t.rt+5.0)
 
     t.addColumn("peakmap", [ None, (1,2), None])
-    t.renameColumns(mz="mz__1",mzmin="mzmin__1", mzmax="mzmax__1",
-                   rt="rt__1", rtmin="rtmin__1", rtmax="rtmax__1",
-                   peakmap="peakmap__1")
+    t._renameColumnsUnchecked(mz="mz__1",mzmin="mzmin__1", mzmax="mzmax__1",
+                              rt="rt__1", rtmin="rtmin__1", rtmax="rtmax__1",
+                              peakmap="peakmap__1")
 
     return t
 
@@ -189,7 +189,7 @@ def testMixedRows():
 
     names = [n.strip() for n in names]
 
-    tab = Table(names, [float]*len(names), "%f" * len(names), circumventNameCheck=True)
+    tab = Table._create(names, [float]*len(names), "%f" * len(names))
 
     recorder = RecordingObject()
     model = TableModel(tab, recorder)

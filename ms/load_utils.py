@@ -99,5 +99,4 @@ def loadCSV(path=None, sep=";", keepNone = False, **specialFormats):
 
     title = os.path.basename(path)
     meta = dict(loaded_from=os.path.abspath(path))
-    return Table(colNames, types, formats, rows, title, meta,\
-                 circumventNameCheck=True)
+    return Table._create(colNames, types, formats, rows, title, meta)

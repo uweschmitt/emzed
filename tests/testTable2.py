@@ -1,4 +1,3 @@
-import pdb
 import ms, mass
 
 from libms.DataStructures.Table import Table, toOpenMSFeatureMap
@@ -26,7 +25,7 @@ def testEmptyApply():
     t = ms.toTable("a", [])
     t.addColumn("b", t.a.apply(len))
     assert len(t) == 0
-    assert t.getColTypes() == [object, object]
+    assert t.getColTypes() == [object, object], t.getColTypes()
 
 def testRound():
     # failed in ealrier versions, as np.vectorize does not like round !
@@ -198,7 +197,7 @@ def testSupportedPostfixes():
             "mzmax3 mz4 mzmin4".split()
 
 
-    t = Table(names, [float]*len(names), [], circumventNameCheck=True)
+    t = Table._create(names, [float]*len(names), [])
     assert len(t.supportedPostfixes(["mz"])) == len(names)
     assert t.supportedPostfixes(["mz", "mzmin"]) == [ "", "0", "4", "__0"]
     assert t.supportedPostfixes(["mz", "mzmin", "mzmax"]) == ["", "0", "__0"]
@@ -451,7 +450,7 @@ def testToOpenMSFeatureMap():
     assert f.getRT() == 2.0 # dito
 
 def test_removePostfixes():
-    t = Table(["abb__0", "bcb__0"], [str]*2, ["%s"] *2)
+    t = Table._create(["abb__0", "bcb__0"], [str]*2, ["%s"] *2)
     assert t.getColNames() == ["abb__0", "bcb__0"]
     t.removePostfixes()
     assert t.getColNames() == ["abb", "bcb"]

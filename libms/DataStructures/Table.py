@@ -129,17 +129,29 @@ class Table(object):
     """
 
     def __init__(self, colNames, colTypes, colFormats, rows=None, title=None,
-                       meta=None, circumventNameCheck=False):
+            meta=None):
+
+        assert all("__" not in name  for name in colNames), \
+                    "illegal column name(s), double underscores not allowed"
+        self._setup_without_namecheck(colNames, colTypes, colFormats,
+            rows, title, meta)
+
+    @classmethod
+    def _create(clz, colNames, colTypes, colFormats,
+            rows=None, title=None, meta=None):
+        inst = clz.__new__(Table)
+        inst._setup_without_namecheck(colNames, colTypes, colFormats,
+                rows, title, meta)
+        return inst
+
+    def _setup_without_namecheck(self, colNames, colTypes, colFormats,
+            rows=None, title=None, meta=None):
 
         if len(colNames) != len(set(colNames)):
             counts = Counter(colNames)
             multiples = [name for (name, count) in counts.items() if count>1]
             message = "multiple columns: " + ", ".join(multiples)
             raise Exception(message)
-
-        if 0 and not circumventNameCheck:
-            assert all("__" not in name  for name in colNames), \
-                       "illegal column name(s), double underscores not allowed"
 
         assert len(colNames) == len(colTypes)
         if rows is not None:
@@ -259,7 +271,7 @@ class Table(object):
             match to the numbers of columns of the table.
             """
 
-        assert len(row) == len(self._colNames)
+        assert len(row) == len(self._colNames), "length of row does not match"
         # check for conversion !
         for i, (v, t) in enumerate(zip(row, self._colTypes)):
             if v is not None and t in [int, float, long, str]:
@@ -508,8 +520,13 @@ class Table(object):
         types = [ self._colTypes[i] for i in indices ]
         formats = [self._colFormats[i] for i in indices]
         rows = [[row[i] for i in indices] for row in self.rows]
-        return Table(names, types, formats, rows, self.title,
-                     self.meta.copy(), circumventNameCheck=True)
+        return Table(names, types, formats, rows, self.title, self.meta.copy())
+
+    def _renameColumnsUnchecked(self, *dicts, **keyword_args):
+        for d in dicts:
+            keyword_args.update(d)
+        self._colNames = [ keyword_args.get(n,n) for n in self._colNames]
+        self.resetInternals()
 
     def renameColumns(self, *dicts, **keyword_args):
         """renames columns **in place**.
@@ -553,6 +570,9 @@ class Table(object):
                     raise Exception("name overlap in new column names")
                 if new_name in self._colNames:
                     raise Exception("column %s already exists" % new_name)
+                if "__" in new_name:
+                    raise Exception("double underscore in %r not allowed" %
+                            new_name)
                 new_names.add(new_name)
             return new_names
 
@@ -560,13 +580,7 @@ class Table(object):
         for d in dicts:
             new_names = check_new_names(d, new_names)
 
-        for d in dicts:
-            keyword_args.update(d)
-
-        for name in self._colNames:
-            delattr(self, name)
-        self._colNames = [ keyword_args.get(n,n) for n in self._colNames]
-        self.resetInternals()
+        self._renameColumnsUnchecked(*dicts, **keyword_args)
 
     def __len__(self):
         return len(self.rows)
@@ -647,14 +661,11 @@ class Table(object):
                     tab.meta["loaded_from"]=os.path.abspath(path)
                     return tab
 
-
-
-
     def buildEmptyClone(self):
         """ returns empty table with same names, types, formatters,
             title and meta data """
-        return Table(self._colNames, self._colTypes, self._colFormats, [],
-                     self.title, self.meta.copy(), circumventNameCheck=True)
+        return Table._create(self._colNames, self._colTypes, self._colFormats,
+                [], self.title, self.meta.copy())
 
     def dropColumns(self, *names):
         """ removes columns with given ``names`` from the table.
@@ -773,16 +784,16 @@ class Table(object):
             self.rows.extend(t.rows)
         self.resetInternals()
 
-    def replaceColumn(self, name, what, type_=None, format=""):
+    def replaceColumn(self, name, what, type_=None, format_=""):
         """
         replaces column ``name`` **in place**.
 
           - ``name`` is name of the new column
           - ``*type_`` is one of the valid types described above.
             If ``type_ == None`` the method tries to guess the type from ``what``.
-          - ``format`` is a format string as "%d" or ``None`` or an executable
+          - ``format_`` is a format string as "%d" or ``None`` or an executable
             string with python code.
-            If you use ``format=""`` the method will try to determine a
+            If you use ``format_=""`` the method will try to determine a
             default format for the type.
 
         For the values ``what`` you can use
@@ -800,13 +811,13 @@ class Table(object):
         #      add tempcol, then delete oldcol, then rename tempcol -> oldcol
         # this is easier to implement, has no code duplication, but maybe a
         # bit slower. but that does not matter at this point of time:
-        rv = self.addColumn(name+"__tmp", what, type_, format,\
+        rv = self._addColumnWithoutNameCheck(name+"__tmp", what, type_, format_,\
                             insertBefore=name)
         self.dropColumns(name)
         self.renameColumns(**{name+"__tmp": name})
         return rv
 
-    def updateColumn(self, name, what, type_=None, format="",
+    def _updateColumnWithoutNameCheck(self, name, what, type_=None, format_="",
                          insertBefore=None):
         """
         Replaces the column ``name`` if it exists. Else the column is added.
@@ -814,12 +825,20 @@ class Table(object):
         For the parameters see :py:meth:`~.addColumn`
         """
         if self.hasColumn(name):
-            self.replaceColumn(name, what, format=format)
+            self.replaceColumn(name, what, type_, format_)
         else:
-            self.addColumn(name, what, format=format,
-                                 insertBefore = insertBefore)
+            self._addColumnWithoutNameCheck(name, what, type_, format_,
+                    insertBefore)
 
-    def addColumn(self, name, what, type_=None, format="", insertBefore=None):
+    def updateColumn(self, name, what, type_=None, format_="",
+            insertBefore=None):
+        if self.hasColumn(name):
+            self.replaceColumn(name, what, type_, format_)
+        else:
+            self.addColumn(name, what, type_, format_, insertBefore)
+
+
+    def addColumn(self, name, what, type_=None, format_="", insertBefore=None):
         """
         adds a column **in place**.
 
@@ -831,9 +850,16 @@ class Table(object):
         integer index (negative values allowed !).
 
         """
-        assert isinstance(name, (str, unicode)), "colum name is not a  string"
+        if "__" in name:
+            raise Exception("double underscore in %r not allowed" % name)
 
+        self._addColumnWithoutNameCheck(name, what, type_, format_, insertBefore)
+
+    def _addColumnWithoutNameCheck(self, name, what, type_=None, format_="",
+            insertBefore=None):
         import types
+
+        assert isinstance(name, (str, unicode)), "colum name is not a  string"
 
         if type_ is not None:
             assert isinstance(type_, type), "type_ param is not a type"
@@ -841,36 +867,38 @@ class Table(object):
         if name in self._colNames:
             raise Exception("column with name %r already exists" % name)
 
+
         if isinstance(what, BaseExpression):
-            return self._addColumnByExpression(name, what, type_, format,
+            return self._addColumnByExpression(name, what, type_, format_,
                                                insertBefore)
         if callable(what):
-            return self._addColumnByCallback(name, what, type_, format,
+            return self._addColumnByCallback(name, what, type_, format_,
                                              insertBefore)
 
         if type(what) in [list, tuple, types.GeneratorType, np.array]:
-            return self._addColumFromIterable(name, what, type_, format,
+            return self._addColumFromIterable(name, what, type_, format_,
                                               insertBefore)
 
-        return self.addConstantColumn(name, what, type_, format, insertBefore)
+        return self._addConstantColumnWithoutNameCheck(name, what, type_,
+                                                       format_, insertBefore)
 
-    def _addColumnByExpression(self, name, expr, type_, format, insertBefore):
+    def _addColumnByExpression(self, name, expr, type_, format_, insertBefore):
         values, _, type2_ = expr._eval(None)
         # TODO: automatic table check for numpy values via decorator ?
         # switchable !?
         if type2_ in _basic_num_types:
              values = values.tolist()
-        return self._addColumn(name, values, type_ or type2_, format, insertBefore)
+        return self._addColumn(name, values, type_ or type2_, format_, insertBefore)
 
-    def _addColumnByCallback(self, name, callback, type_, format, insertBefore):
+    def _addColumnByCallback(self, name, callback, type_, format_, insertBefore):
         values = [callback(self, r, name) for r in self.rows]
-        return self._addColumn(name, values, type_, format, insertBefore)
+        return self._addColumn(name, values, type_, format_, insertBefore)
 
-    def _addColumFromIterable(self, name, iterable, type_, format, insertBefore):
+    def _addColumFromIterable(self, name, iterable, type_, format_, insertBefore):
         values = list(iterable)
-        return self._addColumn(name, values, type_, format, insertBefore)
+        return self._addColumn(name, values, type_, format_, insertBefore)
 
-    def _addColumn(self, name, values, type_, format, insertBefore):
+    def _addColumn(self, name, values, type_, format_, insertBefore):
         # works for lists, numbers, objects: converts inner numpy dtypes
         # to python types if present, else does nothing !!!!
 
@@ -884,8 +912,8 @@ class Table(object):
         # type_ may be None, so guess:
         type_ = type_ or  common_type_for(values)
 
-        if format == "":
-            format = guessFormatFor(name, type_)
+        if format_ == "":
+            format_ = guessFormatFor(name, type_)
 
         if insertBefore is None:
             # list.insert(len(list), ..) is the same as append(..) !
@@ -903,7 +931,7 @@ class Table(object):
                 insertBefore += len(self._colNames)
             self._colNames.insert(insertBefore, name)
             self._colTypes.insert(insertBefore, type_)
-            self._colFormats.insert(insertBefore, format)
+            self._colFormats.insert(insertBefore, format_)
             for row, v in zip(self.rows, values):
                 row.insert(insertBefore, v)
 
@@ -913,7 +941,7 @@ class Table(object):
 
         self.resetInternals()
 
-    def addConstantColumn(self, name, value, type_=None, format="",\
+    def addConstantColumn(self, name, value, type_=None, format_="",\
                           insertBefore=None):
         """
         see :py:meth:`~.addColumn`.
@@ -922,16 +950,20 @@ class Table(object):
         cases in py:meth:`~.addColumn` are not considered, which is useful,
         e.g. if you want to set all cells in a column to as ``list``.
         """
+        if "__" in name:
+            raise Exception("double underscore in %r not allowed" % name)
+        self._addConstantColumnWithoutNameCheck(name, value, type_, format_,
+                insertBefore)
+
+    def _addConstantColumnWithoutNameCheck(self, name, value, type_=None,
+            format_="", insertBefore=None):
 
         if type_ is not None:
             assert isinstance(type_, type), "type_ param is not a type"
-
         if name in self._colNames:
             raise Exception("column with name '%s' already exists" % name)
-
-        return self._addColumn(name, [value]*len(self), type_, format,
+        return self._addColumn(name, [value]*len(self), type_, format_,
                               insertBefore)
-
 
     def resetInternals(self):
         """  **internal method**
@@ -953,7 +985,7 @@ class Table(object):
         """
         extracts table with unique rows.
         Two rows are equal if all fields, including **invisible**
-        columns (those with ``format==None``) are equal.
+        columns (those with ``format_==None``) are equal.
         """
         result = self.buildEmptyClone()
         keysSeen = set()
@@ -1054,6 +1086,10 @@ class Table(object):
            ===    ======    =====  ===============
 
         """
+
+        if "__" in newName:
+            raise Exception("double underscore in %r not allowed" % newName)
+
         if isinstance(groupBy, str):
             groupBy = [groupBy]
         elif groupBy is None:
@@ -1156,7 +1192,6 @@ class Table(object):
 
         self._colNames = new_column_names
         self.resetInternals()
-
 
 
     def supportedPostfixes(self, colNamesToSupport):
@@ -1359,8 +1394,7 @@ class Table(object):
         colTypes = self._colTypes + t._colTypes
         title = "%s vs %s" % (self.title, t.title)
         meta = {self: self.meta.copy(), t: t.meta.copy()}
-        return Table(colNames, colTypes, colFormats, [], title, meta,
-                     circumventNameCheck=True)
+        return Table._create(colNames, colTypes, colFormats, [], title, meta)
 
     def print_(self, w=8, out=None, title=None):
         """
@@ -1427,16 +1461,18 @@ class Table(object):
             for c in self._colNames:
                 if c.endswith(postfix_old):
                     c_new = c[:-len(postfix_old)]+postfix_new
+                    if "__" in c_new:
+                        raise Exception("renaming %r results in double underscore in %r" % (c, c_new))
                     collected[c]= c_new
         self.renameColumns(**collected)
 
     @staticmethod
-    def toTable(colName, iterable,  format="", type_=None, title="", meta=None):
+    def toTable(colName, iterable,  format_="", type_=None, title="", meta=None):
         """ generates a one-column table from an iterable, e.g. from a list,
             colName is name for the column.
 
             - if ``type_`` is not given a common type for all values is determined,
-            - if ``format`` is not given, a default format for ``type_`` is used.
+            - if ``format_`` is not given, a default format for ``type_`` is used.
 
             further one can provide a title and meta data
         """
@@ -1447,14 +1483,14 @@ class Table(object):
         values = convert_list_to_overall_type(list(iterable))
         if type_ is None:
             type_ = common_type_for(values)
-        if format == "":
-            format = guessFormatFor(colName, type_) or "%r"
+        if format_ == "":
+            format_ = guessFormatFor(colName, type_) or "%r"
         if meta is None:
             meta = dict()
         else:
             meta = meta.copy()
         rows = [[v] for v in values]
-        return Table([colName], [type_], [format], rows, meta=meta)
+        return Table([colName], [type_], [format_], rows, meta=meta)
 
 def toOpenMSFeatureMap(table):
 
