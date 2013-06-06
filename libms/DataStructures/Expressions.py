@@ -23,6 +23,11 @@ def lt(a, x):
 def gt(a, x):
     return np.searchsorted(a, x, 'right')
 
+def none_in_array(v):
+    return v.dtype == object
+
+def find_nones(v):
+    return v <= None # trick !
 
 ##############################################################################
 #
@@ -66,10 +71,6 @@ def common_type_for(li):
         if any(t == type_ for t in types):
             return type_
     return object
-
-
-def hasNone(arr):
-    return arr.dtype.type == np.object_
 
 
 def saveeval(expr, ctx):
@@ -476,8 +477,6 @@ class BaseExpression(object):
         return AggregateExpression(self, select, "uniqueNotNone(%s)",\
                                    None, ignoreNone=False)
 
-
-
     @property
     def values(self):
         values, _, t = self._eval(None)
@@ -505,13 +504,11 @@ class BaseExpression(object):
             raise Exception("not one unique value in %s" % self)
         return values.pop()
 
-
     def value(self):
         values, _, t = self._eval(None)
         if t in _basic_num_types:
             return values.tolist()
         return values
-
 
     def toTable(self, colName, fmt=None, type_=None, title="", meta=None):
         """
@@ -522,7 +519,6 @@ class BaseExpression(object):
         """
         from Table import Table
         return Table.toTable(colName, self.values, fmt, type_, title, meta)
-
 
 
 class CompExpression(BaseExpression):
@@ -548,13 +544,14 @@ class CompExpression(BaseExpression):
         if tl in _basic_num_types and tr in _basic_num_types:
             if ixl != None  and len(rhs) == 1:
                 result = self.fastcomp(lhs, rhs[0])
-                mask = lhs <= None # trick !
-                result[mask] = None
+                # "None in lhs" does not work !
+                if none_in_array(lhs):
+                    result[lhs==None] = None
                 return result, None, bool
             if ixr != None  and len(lhs) == 1:
-                result = self.rfastcomp(lhs, rhs[0])
-                mask = lhs <= None # trick !
-                result[mask] = None
+                result = self.rfastcomp(lhs[0], rhs)
+                if none_in_array(lhs):
+                    result[rhs == None] = None
                 return result, None, bool
             if len(lhs) == 1:
                 lhs = np.tile(lhs, len(rhs))
@@ -583,10 +580,10 @@ class CompExpression(BaseExpression):
         assert len(lvals) == len(rvals)
         # default impl: comparing to None is not poissble:
         l_nones, r_nones = None, None
-        if hasNone(lvals):
-            l_nones = lvals <= None  # trick !
-        if hasNone(rvals):
-            r_nones = rvals <= None  # trick !
+        if none_in_array(lvals):
+            l_nones = find_nones(lvals)
+        if none_in_array(rvals):
+            r_nones = find_nones(rvals)
         result = self.comparator(lvals, rvals).astype(object)
         if l_nones is not None:
             result[l_nones] = None
@@ -726,8 +723,8 @@ class BinaryExpression(BaseExpression):
                 elif self.symbol in "*/" and rvals[0]>0:
                     idx = idxl
 
-            if hasNone(lvals) or hasNone(rvals):
-                nones = (lvals <= None)  | (rvals <= None)
+            if none_in_array(lvals) or none_in_array(rvals):
+                nones = find_nones(lvals) | find_nones(rvals)
                 lfilterd = np.where(nones, 1, lvals)
                 rfilterd = np.where(nones, 1, rvals)
                 res = self.efun(lfilterd, rfilterd)
@@ -928,7 +925,7 @@ class FunctionExpression(BaseExpression):
         # so we can apply ufucns/vecorized funs
         if len(values) == 0:
             return [], None, self.restype or object
-        if type(values) == np.ndarray and not hasNone(values):
+        if type(values) == np.ndarray and not none_in_array(values):
             if type(self.efun) == np.ufunc:
                 values = self.efun(values)
             else:
@@ -1006,8 +1003,8 @@ class IfThenElse(BaseExpression):
 
         ct = common_type(t2, t3)
         if type(values2) == type(values3) == np.ndarray:
-            if hasNone(values1):
-                nones = values1 <= None
+            if none_in_array(values1):
+                nones = find_nones(values1)
                 res = np.where(values1, values2, values3).astype(object)
                 res[nones] = None
                 return res, _, ct

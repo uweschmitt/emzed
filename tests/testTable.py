@@ -364,10 +364,13 @@ def testWithNoneValues():
     # simple int compare ###################################
     t = ms.toTable("a", [None, 2])
     t.print_()
+
     assert len(t.filter(t.a < 3)) == 1
 
     t2 = t.copy()
     assert len(t.join(t2, t.a==t2.a)) == 1
+    t.leftJoin(t2, t.a==t2.a).print_()
+
     assert len(t.leftJoin(t2, t.a==t2.a)) == 2
 
     assert len(t.join(t2, t.a<=t2.a)) == 1
@@ -426,7 +429,6 @@ def testWithNoneValues():
     assert len(t.leftJoin(t2, t.a<t2.a)) == 2
 
 
-    # simple float compare ##################################
     t = ms.toTable("a", [None, 2.0])
     t.print_()
 
@@ -440,6 +442,10 @@ def testWithNoneValues():
     assert len(t.leftJoin(t2, t.a<=t2.a)) == 2
 
     assert len(t.join(t2, t.a<t2.a)) == 0
+    # simple float compare ##################################
+    t.print_()
+    t2.print_()
+    t.leftJoin(t2, t.a<t2.a).print_()
     assert len(t.leftJoin(t2, t.a<t2.a)) == 2
 
 
@@ -586,6 +592,8 @@ def testWithNoneValues():
     assert len(t.filter(3 != t.a)) == 1
 
     t.sortBy("a")
+    t.print_()
+    t.filter(3 > t.a).print_()
     assert len(t.filter(3 > t.a)) == 1
     assert len(t.filter(3 >= t.a)) == 1
     assert len(t.filter(3 == t.a)) == 0
@@ -873,3 +881,58 @@ def testUpdateColumn():
     t.updateColumn("b", t.a + 1)
     assert t.b.values == [3, 4]
 
+
+def test_all_comps():
+    a = ms.toTable("a",[3,2,1])
+    b = ms.toTable("b",[1,2,3]) # must be sorted for tests below !
+
+    def _test(e, a=a, b=b):
+
+        a.join(b, e).print_()
+
+        t1 = a.join(b, a.a <= b.b).rows
+        t2 = a.join(b, b.b >= a.a).rows
+        t3 = b.join(a, a.a <= b.b).rows
+        t4 = b.join(a, b.b >= a.a).rows
+
+        b.sortBy("b")
+        a.join(b, e).print_()
+        s1 = a.join(b, a.a <= b.b).rows
+        s2 = a.join(b, b.b >= a.a).rows
+        s3 = b.join(a, a.a <= b.b).rows
+        s4 = b.join(a, b.b >= a.a).rows
+
+        assert t1 == t2
+        assert t3 == t4
+        assert t1 == s1
+        assert t2 == s2
+        assert t3 == s3
+        assert t4 == s4
+
+        b.join(a, e).print_()
+
+        t1 = a.join(b, a.a <= b.b).rows
+        t2 = a.join(b, b.b >= a.a).rows
+        t3 = b.join(a, a.a <= b.b).rows
+        t4 = b.join(a, b.b >= a.a).rows
+
+        b.sortBy("b")
+        b.join(a, e).print_()
+        s1 = a.join(b, a.a <= b.b).rows
+        s2 = a.join(b, b.b >= a.a).rows
+        s3 = b.join(a, a.a <= b.b).rows
+        s4 = b.join(a, b.b >= a.a).rows
+
+        assert t1 == t2
+        assert t3 == t4
+        assert t1 == s1
+        assert t2 == s2
+        assert t3 == s3
+        assert t4 == s4
+
+    _test(a.a <= b.b)
+    _test(a.a < b.b)
+    _test(a.a >= b.b)
+    _test(a.a > b.b)
+    _test(a.a == b.b)
+    _test(a.a != b.b)
