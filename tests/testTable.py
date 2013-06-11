@@ -936,3 +936,35 @@ def test_all_comps():
     _test(a.a > b.b)
     _test(a.a == b.b)
     _test(a.a != b.b)
+
+
+def test_numpy_comparison():
+    v = np.array((1,2,3))
+    t = ms.toTable("a",[v])
+    t2 = t.filter(t.a == t.a)
+    assert len(t2) == len(t)
+    t2 = t.filter(t.a <= t.a)
+    assert len(t2) == len(t)
+    t2 = t.filter(t.a >= t.a)
+    assert len(t2) == len(t)
+    t2 = t.filter(t.a != t.a)
+    assert len(t2) == 0
+    t2 = t.filter(t.a < t.a)
+    assert len(t2) == 0
+    t2 = t.filter(t.a > t.a)
+    assert len(t2) == 0
+
+    t2 = t.filter(t.a == 3)
+    assert len(t2) == 0
+    t2 = t.filter(t.a <= 3)
+    assert len(t2) == 1
+    t2 = t.filter(t.a >= 1)
+    assert len(t2) == 1
+    t2 = t.filter(t.a != 3)
+    assert len(t2) == 0
+    t2 = t.filter(t.a < 4)
+    assert len(t2) == 1
+    t2 = t.filter(t.a > 0)
+    assert len(t2) == 1
+
+

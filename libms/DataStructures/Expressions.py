@@ -1,4 +1,3 @@
-import pdb
 import numpy as np
 import re
 
@@ -56,14 +55,29 @@ def find_nones(v):
 _basic_num_types = [int, long, float, bool]
 
 
+def is_numpy_int_type(t):
+    return np.integer in t.__mro__
+
+def is_numpy_float_type(t):
+    return np.floating in t.__mro__
+
+def is_numpy_bool_type(t):
+    return np.bool_ in t.__mro__
+
+def is_numpy_number_type(t):
+    return is_numpy_int_type(t) or is_numpy_float_type(t) or is_numpy_bool_type(t)
+
+def is_numpy_number(v):
+    return is_numpy_number_type(type(v))
+
 def common_type_for(li):
 
     types = set(type(x) for x in li if x is not None)
-    if any(np.integer in t.__mro__ for t in types):
+    if any(is_numpy_int_type(t) for t in types):
         return int
-    if any(np.floating in t.__mro__ for t in types):
+    if any(is_numpy_float_type(t) for t in types):
         return float
-    if any(np.bool_ in t.__mro__ for t in types):
+    if any(is_numpy_bool_type(t) for t in types):
         return bool
 
     ordered_types = [ str, float, long, int, bool ]
@@ -574,6 +588,10 @@ class CompExpression(BaseExpression):
                 values = [ None if l is None else self.comparator(l,r) for l in  lhs]
         else:
             values = [ None if l is None or r is None else self.comparator(l,r) for (l,r) in zip(lhs, rhs)]
+
+        if tl is object or tr is object:
+            if any(isinstance(v, np.ndarray) for v in values):
+                values = [np.all(v) for v in values]
         return np.array(values, dtype=np.bool), None, bool
 
     def numericcomp(self, lvals, rvals):
