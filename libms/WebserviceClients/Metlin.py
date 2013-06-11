@@ -45,7 +45,10 @@ class MetlinMatcher(object):
             raise Exception("matlin query %s failed: %s" %
                                               (urllib2.unquote(r.url), r.text))
 
-        j = r.json()
+        try:
+            j = r.json()
+        except:
+            raise Exception("invalid answer from %s" % r.url)
         ws_col_names = MetlinMatcher.ws_col_names
         ws_col_types = MetlinMatcher.ws_col_types
         ws_col_formats = MetlinMatcher.ws_col_formats
