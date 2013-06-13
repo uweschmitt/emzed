@@ -48,7 +48,7 @@ class SimplifiedEMGIntegrator(PeakIntegrator):
         w = s = 5.0
         rts = np.array(rts)
 
-        param = h, z, w, s
+        param = (h, z, w, s)
         if self.xtol is None:
             param, ok = opt.leastsq(SimplifiedEMGIntegrator.__err, param,
                                     args=(rts, chromatogram))
@@ -58,9 +58,9 @@ class SimplifiedEMGIntegrator(PeakIntegrator):
         h, z, w, s = param
 
         if ok not in [1,2,3,4] or w<=0: # failed
-            area = 0
+            area = 0.0
             rmse = 1.0/math.sqrt(len(rts))*np.linalg.norm(chromatogram)
-            param = 0, 0, 0, 0 # these params generate area=0
+            param = np.array((0., 0., 0., 0.)) # these params generate area=0
         else:
             smoothed = SimplifiedEMGIntegrator.__fun_eval(param, allrts)
             isnan = np.isnan(smoothed)
