@@ -43,6 +43,13 @@ class PeakIntegrator(object):
         return dict(area=area, rmse=rmse, params=params)
 
     def getSmoothed(self, *a):
+        if hasattr(self, "_getSmoothed"):
+            try:
+                return self._getSmoothed(*a)
+            except:
+                # maybe overflow or something similar
+                return None
+
         raise Exception("not implemented")
 
     def trapez(self, x, y):

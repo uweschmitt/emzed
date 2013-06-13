@@ -78,6 +78,5 @@ class AsymmetricGaussIntegrator(PeakIntegrator):
 
         return area, rmse, (A, s1, s2, mu)
 
-
-    def getSmoothed(self, rtvalues, params):
+    def _getSmoothed(self, rtvalues, params):
         return rtvalues, AsymmetricGaussIntegrator.__fun_eval(params, np.array(rtvalues))

@@ -17,5 +17,5 @@ class TrapezIntegrator(PeakIntegrator):
         area = self.trapez(rts, chromatogram)
         return area, 0.0, (rts, chromatogram)
 
-    def getSmoothed(self, rtvalues, params):
+    def _getSmoothed(self, rtvalues, params):
         return params

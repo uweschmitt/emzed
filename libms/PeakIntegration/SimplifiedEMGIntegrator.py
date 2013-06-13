@@ -72,5 +72,5 @@ class SimplifiedEMGIntegrator(PeakIntegrator):
 
         return area, rmse, param
 
-    def getSmoothed(self, rtvalues, params):
+    def _getSmoothed(self, rtvalues, params):
         return rtvalues, SimplifiedEMGIntegrator.__fun_eval(params, np.array(rtvalues))

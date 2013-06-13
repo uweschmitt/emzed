@@ -466,8 +466,9 @@ class TableExplorer(QDialog):
         configs = configsForEics(eics)
         if self.isIntegrated:
             smootheds = self.model.getSmoothedEics(rowIdx, allrts)
-            curves += smootheds
-            configs += configsForSmootheds(smootheds)
+            if smootheds is not None:
+                curves += smootheds
+                configs += configsForSmootheds(smootheds)
 
         if not reset:
             rtmin, rtmax = self.rtPlotter.getRangeSelectionLimits()

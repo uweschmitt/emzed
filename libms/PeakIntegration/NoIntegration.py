@@ -1,5 +1,6 @@
+import PeakIntegrator
 
-class NoIntegration(object):
+class NoIntegration(PeakIntegrator.PeakIntegrator):
 
     def __init__(self, *a, **kw):
         pass
@@ -10,5 +11,5 @@ class NoIntegration(object):
     def integrate(self, *a, **kw):
         return dict(area=None, rmse=None, params=None)
 
-    def getSmoothed(self, *a, **kw):
+    def _getSmoothed(self, *a, **kw):
         return [], []
