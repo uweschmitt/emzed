@@ -33,20 +33,28 @@ class AsymmetricGaussIntegrator(PeakIntegrator):
 
         """
 
-        if len(rts)<4:
+        # estimate rt of max peak as first moment:
+        mu = sum( ci*ri for (ci,ri) in zip(chromatogram, rts))
+        mu /= sum( ci for ci in chromatogram)
+
+        area1 = sum(ci for (ci,ri) in zip(chromatogram, rts) if ri<=mu)
+        area2 = sum(ci for (ci,ri) in zip(chromatogram, rts) if ri>=mu)
+        # fit impossible: eithor less than three peaks or no area left
+        # or no area right to estimated max peak:
+        if len(rts)<4 or area1 == 0 or area2 == 0:
             rmse = 1.0/math.sqrt(len(rts))*np.linalg.norm(chromatogram)
             return 0.0, rmse, (0.0, 1.0, 1.0, 0.0)
 
         imax = np.argmax(chromatogram)
         A = chromatogram[imax]
-        # mu as first moment
-        mu = sum( ci*ri for (ci,ri) in zip(chromatogram, rts))
-        mu /= sum( ci for ci in chromatogram)
-        # second moment as a guess for sigma
+
+        # normalize second moment as a guess for sigma 1 (left side)
         var1 = sum( ci * (ri-mu)**2 for (ci,ri) in zip(chromatogram, rts) if ri<=mu)
-        var1 /= sum(ci for (ci,ri) in zip(chromatogram, rts) if ri<=mu)
+        var1 /= area1
+
+        # normalize second moment as a guess for sigma 2 (right side)
         var2 = sum( ci * (ri-mu)**2 for (ci,ri) in zip(chromatogram, rts) if ri>=mu)
-        var2 /= sum(ci for (ci,ri) in zip(chromatogram, rts) if ri>=mu)
+        var2 /= area2
         s1 = var1 if var1>0.5 else 0.5
         s2 = var2 if var2>0.5 else 0.5
         if self.gtol is None:
