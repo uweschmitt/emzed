@@ -1,3 +1,4 @@
+import pdb
 from libms.Explorers.TableExplorerModel import *
 from libms.DataStructures.Table import *
 import ms
@@ -201,4 +202,77 @@ def testMixedRows():
     assert model.table.supportedPostfixes(["mz","rt", "x"]) == []
 
 
+def testActions():
+
+    t = buildTable()
+    n = len(t)
+    recorder = RecordingObject()
+    model = TableModel(t, recorder)
+    t_orig = t.copy()
+
+
+    action = DeleteRowAction(model, 0)
+    action.do()
+    assert len(model.table) == len(t_orig)-1
+    assert model.table.rows[0] == t_orig.rows[1]
+    action.undo()
+    assert len(model.table) == len(t_orig)
+    assert model.table.rows[0] == t_orig.rows[0]
+
+
+    action = CloneRowAction(model, 0)
+    action.do()
+    assert model.table.rows[0] == t_orig.rows[0]
+    assert model.table.rows[1] == t_orig.rows[0]
+    assert model.table.rows[2] == t_orig.rows[1]
+    assert len(model.table) == n+1
+    action.undo()
+    assert len(model.table) == n
+    assert model.table.rows[0] == t_orig.rows[0]
+    assert model.table.rows[1] == t_orig.rows[1]
+
+
+    action = SortTableAction(model, 0, 0, Qt.AscendingOrder)
+    action.do()
+    assert model.table.mz.values == [ None, 1.0, 2.0]
+    action.undo()
+    assert model.table.mz.values == t_orig.mz.values
+
+
+    action = SortTableAction(model, 0, 0, Qt.DescendingOrder)
+    action.do()
+    assert model.table.mz.values == [ 2.0, 1.0, None]
+    action.undo()
+    assert model.table.mz.values == t_orig.mz.values
+
+    class Index(object):
+        def row(self):
+            return 0
+        def column(self):
+            return 0
+
+    action = ChangeValueAction(model, Index(), 0, 3.0)
+    action.do()
+    assert model.table.rows[0][0] == 3.0
+    action.undo()
+    assert model.table.rows[0][0] == 1.0
+
+    t= buildTable()
+    from libms.DataStructures.MSTypes import *
+    import numpy
+    peak = numpy.array(((1.0, 100.0),))
+    specs = [Spectrum(peak, rt, 1, "+") for rt in range(9, 15)]
+    pm = PeakMap(specs)
+
+    t.replaceColumn("peakmap", pm)
+
+
+    model.table = ms.integrate(t, "no_integration")
+
+    action = IntegrateAction(model, 0, "", "trapez", 0, 100)
+    action.do()
+    assert model.table.area.values[0] == 500.0
+    action.undo()
+
+    assert model.table.area.values[0] == None
 

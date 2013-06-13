@@ -1,3 +1,4 @@
+import pdb
 # -*- coding: utf-8 -*-
 
 from PyQt4.QtGui import  *
@@ -205,12 +206,12 @@ class IntegrateAction(TableAction):
 
         # write values to table
         row = table.rows[self.idx]
-        table.set(row, "method"+postfix, self.method)
-        table.set(row, "rtmin"+postfix, self.rtmin)
-        table.set(row, "rtmax"+postfix, self.rtmax)
-        table.set(row, "area"+postfix, area)
-        table.set(row, "rmse"+postfix, rmse)
-        table.set(row, "params"+postfix, params)
+        table.setValue(row, "method"+postfix, self.method)
+        table.setValue(row, "rtmin"+postfix, self.rtmin)
+        table.setValue(row, "rtmax"+postfix, self.rtmax)
+        table.setValue(row, "area"+postfix, area)
+        table.setValue(row, "rmse"+postfix, rmse)
+        table.setValue(row, "params"+postfix, params)
         #args = table.get(table.rows[self.idx], None)
         self.notifyGUI()
         return True
@@ -218,7 +219,8 @@ class IntegrateAction(TableAction):
     def undo(self):
         super(IntegrateAction, self).undo()
         table = self.model.table
-        table.rows[self.idx] = self.memory
+        table.setRow(self.idx, self.memory)
+        table.resetInternals()
         self.notifyGUI()
 
     def notifyGUI(self):
@@ -445,10 +447,13 @@ class TableModel(QAbstractTableModel):
             method = values["method"+p]
             params = values["params"+p]
             integrator = dict(configs.peakIntegrators).get(method)
+            data = ([], [])
             if method is not None:
-                data = integrator.getSmoothed(rts, params)
-            if method is None or data is None:
-                data = ([], [])
+                try:
+                    data = integrator.getSmoothed(rts, params)
+                except:
+                    # maybe overflow or something like this
+                    pass
             allsmoothed.append(data)
         return allsmoothed
 

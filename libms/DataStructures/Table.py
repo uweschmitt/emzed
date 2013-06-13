@@ -438,6 +438,13 @@ class Table(object):
         """
         return row[self.getIndex(colName)]
 
+    def setRow(self, idx, row):
+        assert 0<= idx < len(self)
+        assert len(row) == len(self._colNames),\
+                                           "row as wrong length %d" % len(row)
+        self.rows[idx] = row
+        self.resetInternals()
+
     def _getColumnCtx(self, needed):
         names = [ n for (t,n) in needed if t==self ]
         return dict((n, (self.getColumn(n).values,
