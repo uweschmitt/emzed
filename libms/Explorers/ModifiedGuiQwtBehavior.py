@@ -9,6 +9,7 @@ from guiqwt.tools import InteractiveTool
 from guiqwt.shapes import Marker, SegmentShape, XRangeSelection
 import numpy as np
 
+from ..gui.helpers import protect_signal_handler
 
 class ModifiedCurveItem(CurveItem):
     """ modification(s):
@@ -127,6 +128,7 @@ class ModifiedCurvePlot(CurvePlot):
         return super(ModifiedCurvePlot, self).do_pan_view(dx, dy)
 
 
+    @protect_signal_handler
     def do_backspace_pressed(self, filter, evt):
         """ reset axes of plot """
         self.reset_x_limits()
@@ -209,6 +211,8 @@ class RtPlot(ModifiedCurvePlot):
             - right crsr + left csrs + shift and alt modifiers move
               boundaries of selection tool
     """
+
+    @protect_signal_handler
     def do_space_pressed(self, filter, evt):
         """ zoom to limits of snapping selection tool """
 
@@ -218,6 +222,7 @@ class RtPlot(ModifiedCurvePlot):
             max_neu = max(item._min, item._max)
             self.update_plot_xlimits(min_neu, max_neu)
 
+    @protect_signal_handler
     def do_enter_pressed(self, filter, evt):
         """ set snapping selection tool to center of actual x-range """
 
@@ -229,6 +234,7 @@ class RtPlot(ModifiedCurvePlot):
         item.move_point_to(1, (mid, 0), None)
         filter.plot.replot()
 
+    @protect_signal_handler
     def do_move_marker(self, evt):
         marker = self.get_unique_item(Marker)
         if marker is not None:
@@ -255,9 +261,11 @@ class RtPlot(ModifiedCurvePlot):
 
         filter_.plot.replot()
 
+    @protect_signal_handler
     def do_left_pressed(self, filter_, evt):
         self.move_selection_bounds(evt, filter_, lambda (a, b): a)
 
+    @protect_signal_handler
     def do_right_pressed(self, filter_, evt):
         self.move_selection_bounds(evt, filter_, lambda (a, b): b)
 
@@ -265,6 +273,7 @@ class RtPlot(ModifiedCurvePlot):
         # label next to cursor turned off:
         return None
 
+    @protect_signal_handler
     def on_plot(self, x, y):
         """ callback for marker: determine marked point based on cursors coordinates """
         marker = self.get_unique_item(Marker)
@@ -288,6 +297,7 @@ class MzPlot(ModifiedCurvePlot):
         # label next to cursor turned off:
         return None
 
+    @protect_signal_handler
     def on_plot(self, x, y):
         """ callback for marker: determine marked point based on cursors coordinates """
         self.current_peak = self.next_peak_to(x, y)
@@ -308,12 +318,14 @@ class MzPlot(ModifiedCurvePlot):
         imin = np.argmin(distances)
         return self.all_peaks[imin]
 
+    @protect_signal_handler
     def do_move_marker(self, evt):
         marker = self.get_unique_item(Marker)
         marker.move_local_point_to(0, evt.pos())
         marker.setVisible(True)
         self.replot()
 
+    @protect_signal_handler
     def do_space_pressed(self, filter, evt):
         """ finds 10 next (distance in mz) peaks tu current marker
             and zooms to them
@@ -336,49 +348,35 @@ class MzPlot(ModifiedCurvePlot):
     def register_c_callback(self, cb):
         self.c_call_back = cb
 
+    @protect_signal_handler
     def do_c_pressed(self, filter, evt):
-        try:
-            self.current_peak
-            self.c_call_back
-        except:
-            import traceback
-            traceback.print_exc()
-            return
-
+        self.current_peak
+        self.c_call_back
         self.c_call_back(self.current_peak)
 
+    @protect_signal_handler
     def start_drag_mode(self, filter_, evt):
-        try:
-            mz = self.invTransform(self.xBottom, evt.x())
-            I = self.invTransform(self.yLeft, evt.y())
-            self.start_coord = self.next_peak_to(mz, I)
-        except:
-            import traceback
-            traceback.print_exc()
+        mz = self.invTransform(self.xBottom, evt.x())
+        I = self.invTransform(self.yLeft, evt.y())
+        self.start_coord = self.next_peak_to(mz, I)
 
+    @protect_signal_handler
     def move_in_drag_mode(self, filter_, evt):
-        try:
-            mz = self.invTransform(self.xBottom, evt.x())
-            I = self.invTransform(self.yLeft, evt.y())
-            current_coord = self.next_peak_to(mz, I)
+        mz = self.invTransform(self.xBottom, evt.x())
+        I = self.invTransform(self.yLeft, evt.y())
+        current_coord = self.next_peak_to(mz, I)
 
-            line = self.get_unique_item(SegmentShape)
-            line.set_rect(self.start_coord[0], self.start_coord[1], current_coord[0], current_coord[1])
-            line.setVisible(1)
+        line = self.get_unique_item(SegmentShape)
+        line.set_rect(self.start_coord[0], self.start_coord[1], current_coord[0], current_coord[1])
+        line.setVisible(1)
 
-            self.replot()
-        except:
-            import traceback
-            traceback.print_exc()
+        self.replot()
 
+    @protect_signal_handler
     def stop_drag_mode(self, filter_, evt):
-        try:
-            line = self.get_unique_item(SegmentShape)
-            line.setVisible(0)
-            self.replot()
-        except:
-            import traceback
-            traceback.print_exc()
+        line = self.get_unique_item(SegmentShape)
+        line.setVisible(0)
+        self.replot()
 
 
 

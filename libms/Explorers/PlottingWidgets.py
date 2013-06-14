@@ -13,6 +13,7 @@ from PyQt4.Qwt5 import QwtScaleDraw, QwtText
 import numpy as np
 import new
 
+from ..gui.helpers import protect_signal_handler
 
 def getColor(i):
     colors ="bgrkm"
@@ -199,16 +200,13 @@ class RtPlotter(PlotterBase):
         # calls self.rangeSelectionHandler !
         self.rangeSelectionCallback = saved
 
+    @protect_signal_handler
     def rangeSelectionHandler(self, obj, left, right):
-        try:
-            min_, max_ = sorted((left, right))
-            self.minRTRangeSelected = min_
-            self.maxRTRangeSelected = max_
-            if self.rangeSelectionCallback is not None:
-                self.rangeSelectionCallback()
-        except:
-            import traceback
-            traceback.print_exc()
+        min_, max_ = sorted((left, right))
+        self.minRTRangeSelected = min_
+        self.maxRTRangeSelected = max_
+        if self.rangeSelectionCallback is not None:
+            self.rangeSelectionCallback()
 
 class MzCursorInfo(ObjectInfo):
     def __init__(self, marker, line):

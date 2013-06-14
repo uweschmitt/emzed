@@ -31,15 +31,17 @@ class ConfigChooseDialog(QDialog):
         self.connect(self.tw.verticalHeader(), SIGNAL("sectionClicked(int)"), self.rowClicked)
 
 
+    @protect_signal_handler
     def rowClicked(self, row):
         self.result = self.configs[row][2]
         self.result.update(self.params)
         self.accept()
-        
+
+    @protect_signal_handler
     def clicked(self, row, col):
         self.rowClicked(row)
 
-       
+
     def setupLayout(self):
         vlayout = QVBoxLayout()
         self.setLayout(vlayout)
@@ -50,7 +52,7 @@ class ConfigChooseDialog(QDialog):
         self.tw.setSortingEnabled(False)
 
         self.tw.setRowCount(len(self.configs))
-    
+
         self.tw.horizontalHeader().setStretchLastSection(True)
         #self.tw.horizontalHeader().setResizeMode(QHeaderView.Stretch)
 
@@ -74,10 +76,10 @@ class ConfigChooseDialog(QDialog):
 
             for j, key in enumerate(paramnames):
                 self.tw.setItem(i, 2+j, QTableWidgetItem(str(fields.get(key))))
-                 
+
         self.tw.setSortingEnabled(True)
 
-   
+
 
 
 

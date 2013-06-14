@@ -11,6 +11,7 @@ from ..DataStructures.Table import Table
 
 from TableExplorerModel import *
 
+from ..gui.helpers import protect_signal_handler
 
 def getColors(i, light=False):
      colors = [(0, 0, 200), (70, 70, 70), (0,150,0),
@@ -102,6 +103,7 @@ class TableExplorer(QDialog):
     def setupTableViewFor(self, model):
         tableView = QTableView(self)
 
+        @protect_signal_handler
         def handler(evt, view=tableView, model=model, self=self):
             if not view.isSortingEnabled():
                 view.setSortingEnabled(True)
@@ -240,6 +242,7 @@ class TableExplorer(QDialog):
     def setIntegrationPanelVisiblity(self, doShow):
         self.integrationFrame.setVisible(doShow)
 
+    @protect_signal_handler
     def handleClick(self, index, model):
         content = model.data(index)
         if isUrl(content):
@@ -247,12 +250,9 @@ class TableExplorer(QDialog):
 
     def connectSignals(self):
         for i, action in enumerate(self.chooseTableActions):
-            def handler(i=i):
-                try:
-                    self.setupViewForTable(i)
-                except Exception:
-                    import traceback
-                    traceback.print_exc()
+
+            handler = lambda i=i: self.setupViewForTable(i)
+            handler = protect_signal_handler(handler)
             self.menubar.connect(action, SIGNAL("triggered()"), handler)
 
         for view in self.tableViews:
@@ -262,13 +262,11 @@ class TableExplorer(QDialog):
                          self.openContextMenu)
 
             self.connect(vh, SIGNAL("sectionClicked(int)"), self.rowClicked)
-            def handleClick(index, model=view.model()):
-                try:
-                    self.handleClick(index, model)
-                except:
-                    import traceback
-                    traceback.print_exc()
-            self.connect(view, SIGNAL("clicked(QModelIndex)"), handleClick)
+
+            model = view.model()
+            handler = lambda idx, model=model: self.handleClick(idx, model)
+            handler = protect_signal_handler(handler)
+            self.connect(view, SIGNAL("clicked(QModelIndex)"), handler)
 
         self.connect(self.reintegrateButton, SIGNAL("clicked()"),
                      self.doIntegrate)
@@ -285,18 +283,18 @@ class TableExplorer(QDialog):
                    SIGNAL("dataChanged(QModelIndex,QModelIndex,PyQt_PyObject)"),
                    self.dataChanged)
         self.menubar.disconnect(self.undoAction, SIGNAL("triggered()"),\
-                             self.model.undoLastAction)
+                             protect_signal_handler(self.model.undoLastAction))
         self.menubar.disconnect(self.redoAction, SIGNAL("triggered()"),\
-                             self.model.redoLastAction)
+                             protect_signal_handler(self.model.redoLastAction))
 
     def connectModelSignals(self):
         self.connect(self.model,
                    SIGNAL("dataChanged(QModelIndex,QModelIndex,PyQt_PyObject)"),
                    self.dataChanged)
         self.menubar.connect(self.undoAction, SIGNAL("triggered()"),\
-                             self.model.undoLastAction)
+                             protect_signal_handler(self.model.undoLastAction))
         self.menubar.connect(self.redoAction, SIGNAL("triggered()"),\
-                             self.model.redoLastAction)
+                             protect_signal_handler(self.model.redoLastAction))
 
     def updateMenubar(self):
         undoInfo = self.model.infoLastAction()
@@ -339,44 +337,29 @@ class TableExplorer(QDialog):
         self.connectModelSignals()
         self.updateMenubar()
 
+    @protect_signal_handler
     def dataChanged(self, ix1, ix2, src):
-        # updates plots
-        try:
-            if self.hasFeatures:
-                minr, maxr = sorted((ix1.row(), ix2.row()))
-                if minr <= self.currentRowIdx <= maxr:
-                    if isinstance(src, IntegrateAction):
-                        self.updatePlots(reset=False)
-                    else:
-                        self.updatePlots(reset=True)
-        except:
-            import traceback
-            traceback.print_exc()
+        if self.hasFeatures:
+            minr, maxr = sorted((ix1.row(), ix2.row()))
+            if minr <= self.currentRowIdx <= maxr:
+                if isinstance(src, IntegrateAction):
+                    self.updatePlots(reset=False)
+                else:
+                    self.updatePlots(reset=True)
 
+    @protect_signal_handler
     def abort(self):
-        try:
-            self.result = 1
-            self.close()
-        except:
-            import traceback
-            traceback.print_exc()
+        self.result = 1
+        self.close()
 
+    @protect_signal_handler
     def ok(self):
-        try:
-            self.result = 0
-            self.close()
-        except:
-            import traceback
-            traceback.print_exc()
+        self.result = 0
+        self.close()
 
+
+    @protect_signal_handler
     def openContextMenu(self, point):
-        try:
-            self._openContextMenu(point)
-        except:
-            import traceback
-            traceback.print_exc()
-
-    def _openContextMenu(self, point):
         idx = self.tableView.verticalHeader().logicalIndexAt(point)
         menu = QMenu()
         cloneAction = menu.addAction("Clone row")
@@ -399,34 +382,29 @@ class TableExplorer(QDialog):
         elif redoInfo is not None and choosenAction == redoAction:
             self.model.redoLastAction()
 
+    @protect_signal_handler
     def doIntegrate(self):
-        try:
-            if self.currentRowIdx < 0:
-                return # no row selected
+        if self.currentRowIdx < 0:
+            return # no row selected
 
-            # QString -> Python str:
-            method = str(self.chooseIntMethod.currentText())
-            # Again QString -> Python str.
-            # For better readibilty we put single quotes around the postfix
-            # entry in the QComboBox which we have to remove now:
-            postfix = str(self.choosePostfix.currentText()).strip("'")
-            rtmin, rtmax = self.rtPlotter.getRangeSelectionLimits()
-            self.model.integrate(postfix, self.currentRowIdx, method, rtmin, rtmax)
-        except:
-            import traceback
-            traceback.print_exc()
+        # QString -> Python str:
+        method = str(self.chooseIntMethod.currentText())
+        # Again QString -> Python str.
+        # For better readibilty we put single quotes around the postfix
+        # entry in the QComboBox which we have to remove now:
+        postfix = str(self.choosePostfix.currentText()).strip("'")
+        rtmin, rtmax = self.rtPlotter.getRangeSelectionLimits()
+        self.model.integrate(postfix, self.currentRowIdx, method, rtmin, rtmax)
 
+    @protect_signal_handler
     def rowClicked(self, rowIdx):
-        try:
-            if not self.hasFeatures: return
-            self.currentRowIdx = rowIdx
-            self.rtPlotter.setEnabled(True)
-            self.updatePlots(reset=True)
-            if self.hasFeatures:
-                self.setupSpectrumChooser()
-        except:
-            import traceback
-            traceback.print_exc()
+        if not self.hasFeatures:
+            return
+        self.currentRowIdx = rowIdx
+        self.rtPlotter.setEnabled(True)
+        self.updatePlots(reset=True)
+        if self.hasFeatures:
+            self.setupSpectrumChooser()
 
 
     def setupSpectrumChooser(self):
@@ -493,23 +471,20 @@ class TableExplorer(QDialog):
         limits = (mzmin, mzmax) if reset else None
         self.plotMz(resetLimits=limits)
 
+    @protect_signal_handler
     def spectrumChosen(self, idx):
-        try:
-            if idx==0:
-                self.rtPlotter.setEnabled(True)
-                self.chooseIntMethod.setEnabled(True)
-                self.reintegrateButton.setEnabled(True)
-                self.plotMz()
-            else:
-                self.rtPlotter.setEnabled(False)
-                self.chooseIntMethod.setEnabled(False)
-                self.reintegrateButton.setEnabled(False)
-                self.mzPlotter.plot([self.currentLevelNSpecs[idx-1].peaks])
-                self.mzPlotter.resetAxes()
-                self.mzPlotter.replot()
-        except:
-            import traceback
-            traceback.print_exc()
+        if idx==0:
+            self.rtPlotter.setEnabled(True)
+            self.chooseIntMethod.setEnabled(True)
+            self.reintegrateButton.setEnabled(True)
+            self.plotMz()
+        else:
+            self.rtPlotter.setEnabled(False)
+            self.chooseIntMethod.setEnabled(False)
+            self.reintegrateButton.setEnabled(False)
+            self.mzPlotter.plot([self.currentLevelNSpecs[idx-1].peaks])
+            self.mzPlotter.resetAxes()
+            self.mzPlotter.replot()
 
     def plotMz(self, resetLimits=None):
         """ this one is used from updatePlots and the rangeselectors

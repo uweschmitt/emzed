@@ -1,3 +1,4 @@
+import functools
 
 def widthOfTableWidget(tw):
 
@@ -9,4 +10,16 @@ def widthOfTableWidget(tw):
     width += tw.verticalScrollBar().sizeHint().width()
     width += tw.frameWidth()*2
     return width
+
+
+def protect_signal_handler(fun):
+    @functools.wraps(fun)
+    def wrapped(*a, **kw):
+        try:
+            return fun(*a, **kw)
+        except:
+            import traceback
+            traceback.print_exc()
+    return wrapped
+
 

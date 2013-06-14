@@ -12,6 +12,7 @@ import os
 from PlottingWidgets import RtPlotter, MzPlotter
 import numpy as np
 
+from ..gui.helpers import protect_signal_handler
 
 class MzExplorer(QDialog):
 
@@ -71,38 +72,29 @@ class MzExplorer(QDialog):
         if self.chooseLevelNSpec:
             self.connect(self.chooseLevelNSpec, SIGNAL("activated(int)"), self.levelNSpecChosen)
 
+    @protect_signal_handler
     def selectButtonPressed(self):
-        try:
-            mz  = float(self.inputMZ.text())
-            w2  = float(self.inputW2.text())
-            self.minMZ= mz-w2
-            self.maxMZ= mz+w2
-            self.updateChromatogram()
-            self.plotChromatogramm()
-        except Exception:
-            import traceback
-            traceback.print_exc()
+        mz  = float(self.inputMZ.text())
+        w2  = float(self.inputW2.text())
+        self.minMZ= mz-w2
+        self.maxMZ= mz+w2
+        self.updateChromatogram()
+        self.plotChromatogramm()
 
+    @protect_signal_handler
     def levelNSpecChosen(self, idx):
-        try:
-            if idx == 0:
-                self.plotMz()
-            else:
-                spec = self.levelNSpecs[idx-1]
-                self.mzPlotter.plot([spec.peaks])
-                self.mzPlotter.resetAxes()
-                self.mzPlotter.replot()
-            self.rtPlotter.setEnabled(idx==0)
-        except Exception:
-            import traceback
-            traceback.print_exc()
+        if idx == 0:
+            self.plotMz()
+        else:
+            spec = self.levelNSpecs[idx-1]
+            self.mzPlotter.plot([spec.peaks])
+            self.mzPlotter.resetAxes()
+            self.mzPlotter.replot()
+        self.rtPlotter.setEnabled(idx==0)
 
+    @protect_signal_handler
     def resetButtonPressed(self):
-        try:
-            self.resetMzLimits()
-        except Exception:
-            import traceback
-            traceback.print_exc()
+        self.resetMzLimits()
 
 
     def resetMzLimits(self):
@@ -155,22 +147,17 @@ class MzExplorer(QDialog):
         else:
             self.chooseLevelNSpec = None
 
+    @protect_signal_handler
     def w2Updated(self, txt):
-        try:
-            self.mzPlotter.setHalfWindowWidth(float(txt))
-        except Exception:
-            import traceback
-            traceback.print_exc()
+        self.mzPlotter.setHalfWindowWidth(float(txt))
+
+    @protect_signal_handler
     def mzUpdated(self, txt):
-        try:
-            txt = str(txt)
-            if txt.strip()=="":
-                self.mzPlotter.setCentralMz(None)
-                return
-            self.mzPlotter.setCentralMz(float(txt))
-        except Exception:
-            import traceback
-            traceback.print_exc()
+        txt = str(txt)
+        if txt.strip()=="":
+            self.mzPlotter.setCentralMz(None)
+            return
+        self.mzPlotter.setCentralMz(float(txt))
 
     def handleCPressed(self, (mz, I)):
         self.inputMZ.setText("%.6f" % mz)

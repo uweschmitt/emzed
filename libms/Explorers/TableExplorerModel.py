@@ -13,6 +13,8 @@ import re
 
 import configs
 
+from ..gui.helpers import protect_signal_handler
+
 def isUrl(what):
     return what.startswith("http://")
 
@@ -362,29 +364,20 @@ class TableModel(QAbstractTableModel):
         return None
 
     def undoLastAction(self):
-        try:
-            if len(self.actions):
-                action = self.actions.pop()
-                action.undo()
-                self.redoActions.append(action)
-                self.parent.updateMenubar()
-                return
-        except:
-            import traceback
-            traceback.print_exc()
+        if len(self.actions):
+            action = self.actions.pop()
+            action.undo()
+            self.redoActions.append(action)
+            self.parent.updateMenubar()
 
 
     def redoLastAction(self):
-        try:
-            if len(self.redoActions):
-                action = self.redoActions.pop()
-                action.do()
-                self.actions.append(action)
-                self.parent.updateMenubar()
-                return
-        except:
-            import traceback
-            traceback.print_exc()
+        if len(self.redoActions):
+            action = self.redoActions.pop()
+            action.do()
+            self.actions.append(action)
+            self.parent.updateMenubar()
+            return
 
     def cloneRow(self, position):
         self.runAction(CloneRowAction, position)
