@@ -339,6 +339,13 @@ class TableExplorer(QDialog):
 
     @protect_signal_handler
     def dataChanged(self, ix1, ix2, src):
+        minr, maxr = sorted((ix1.row(), ix2.row()))
+        minc, maxc = sorted((ix1.column(), ix2.column()))
+        for r in range(minr, maxr+1):
+            for c in range(minc, maxc+1):
+                idx = self.model.createIndex(r, c)
+                self.tableView.update(idx)
+
         if self.hasFeatures:
             minr, maxr = sorted((ix1.row(), ix2.row()))
             if minr <= self.currentRowIdx <= maxr:
