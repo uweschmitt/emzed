@@ -130,10 +130,12 @@ def mergeTables(tables, reference_table=None, force_merge=False):
     extended_tables = []
     for table in tables:
         missing_names = [c for c in final_colnames if c not in table._colNames]
-        for name in missing_names:
-            type_ = start_with.getType(name)
-            format_ = start_with.getFormat(name)
-            table.addColumn(name, None, type_, format_)
+        if missing_names:
+            table = table.copy()
+            for name in missing_names:
+                type_ = start_with.getType(name)
+                format_ = start_with.getFormat(name)
+                table.addColumn(name, None, type_, format_)
         table = table.extractColumns(*final_colnames)
         extended_tables.append(table)
 
