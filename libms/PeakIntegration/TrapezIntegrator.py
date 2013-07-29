@@ -12,7 +12,7 @@ class TrapezIntegrator(PeakIntegrator):
             return area, 0.0, (rts, chromatogram)
 
         if len(rts) == 1:
-            return 0, 0.0, (rts, chromatogram)
+            return 0.0, 0.0, (rts, chromatogram)
 
         area = self.trapez(rts, chromatogram)
         return area, 0.0, (rts, chromatogram)

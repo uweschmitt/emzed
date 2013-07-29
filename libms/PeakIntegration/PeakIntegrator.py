@@ -29,7 +29,7 @@ class PeakIntegrator(object):
                                                       rtmax,
                                                       msLevel)
         if len(rts)==0:
-            return dict(area=0, rmse=0, params=None)
+            return dict(area=0.0, rmse=0.0, params=None)
 
         allrts, fullchrom = self.peakMap.chromatogram(mzmin,
                                                       mzmax,

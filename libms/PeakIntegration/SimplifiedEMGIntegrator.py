@@ -24,7 +24,8 @@ class SimplifiedEMGIntegrator(PeakIntegrator):
         inner[inner>200] = 200
         nominator = np.exp(inner)
         # avoid zero division
-        if w==0: w=1e-6
+        if w==0:
+            w=1e-6
         denominator = 1 + np.exp(-2.4055/math.sqrt(2.0) * ((rts-z)/w - w/s))
         return h*w/s * math.sqrt(2*math.pi) * nominator / denominator
 
