@@ -407,7 +407,7 @@ class BaseExpression(object):
         Example: ``tab.area.mean``
         """
         return AggregateExpression(self, lambda v: np.mean(v).tolist(),\
-                                   "mean(%s)", None)
+                                   "mean(%s)", float)
 
     @property
     def std(self):
@@ -418,7 +418,7 @@ class BaseExpression(object):
         Example: ``tab.area.std``
         """
         return AggregateExpression(self, lambda v: np.std(v).tolist(),\
-                                   "stddev(%s)", None)
+                                   "stddev(%s)", float)
     @property
     def len(self):
         """
@@ -427,7 +427,7 @@ class BaseExpression(object):
         instead.
         """
         return AggregateExpression(self, lambda v: len(v), "len(%s)",\
-                                   int, ignoreNone=False)
+                                   int, ignoreNone=False, default_empty=0)
 
     @property
     def count(self):
@@ -438,7 +438,7 @@ class BaseExpression(object):
         Example:: ``tab.id.len``
         """
         return AggregateExpression(self, lambda v: len(v), "count(%s)",\
-                                   int, ignoreNone=False)
+                                   int, ignoreNone=False, default_empty=0)
 
     @property
     def countNone(self):
@@ -448,7 +448,8 @@ class BaseExpression(object):
         """
         return AggregateExpression(self,\
                                    lambda v: sum(1 for vi in v if vi is None),\
-                                   "countNone(%s)", int, ignoreNone=False)
+                                   "countNone(%s)", int, ignoreNone=False,
+                                   default_empty=0)
     @property
     def countNotNone(self):
         """
@@ -457,7 +458,8 @@ class BaseExpression(object):
         """
         return AggregateExpression(self,\
                                lambda v: sum(1 for vi in v if vi is not None),\
-                               "countNotNone(%s)", int, ignoreNone=False)
+                               "countNotNone(%s)", int, ignoreNone=False,
+                               default_empty=0)
 
     @property
     def hasNone(self):
@@ -467,7 +469,8 @@ class BaseExpression(object):
         value.
         """
         return AggregateExpression(self, lambda v: int(None in v) ,
-                                   "hasNone(%s)", bool, ignoreNone=False)
+                                   "hasNone(%s)", bool, ignoreNone=False,
+                                   default_empty=0)
 
     @property
     def uniqueNotNone(self):
@@ -767,7 +770,9 @@ class BinaryExpression(BaseExpression):
 
 class AggregateExpression(BaseExpression):
 
-    def __init__(self, left, efun, funname, restype, ignoreNone=True):
+    def __init__(self,
+                 left, efun, funname, restype,
+                 ignoreNone=True, default_empty=None):
         if not isinstance(left, BaseExpression):
             left = Value(left)
         self.left = left
@@ -775,11 +780,12 @@ class AggregateExpression(BaseExpression):
         self.funname = funname
         self.restype = restype
         self.ignoreNone = ignoreNone
+        self.default_empty = default_empty
 
     def _eval(self, ctx=None):
         vals, _, type_ = saveeval(self.left, ctx)
         if len(vals) == 0:
-            return [], None, type_
+            return [], self.default_empty, type_
 
         if type_ in _basic_num_types:
             vals = vals.tolist()
@@ -789,11 +795,11 @@ class AggregateExpression(BaseExpression):
             result = [self.efun(vals)]
             result = container(type(result[0]))(result)
             type_ = cleanup(type(result[0]))
-            return result, None, type_
+            return result, self.default_empty, type_
         # only nones !
         if type_ in _basic_num_types:
-            return np.array((None,),), None, type_
-        return [None], None, type_
+            return np.array((self.default_empty,),), None, type_
+        return [self.default_empty], None, type_
 
     def __str__(self):
         return self.funname % self.left
@@ -801,8 +807,11 @@ class AggregateExpression(BaseExpression):
     def __call__(self):
         values = self.values
         if len(values):
-            return values[0]
-        return None
+            v = values[0]
+            if v is not None and self.restype is not None:
+                return self.restype(v)
+            return v
+        return self.default_empty
 
     def _evalsize(self):
         return 1

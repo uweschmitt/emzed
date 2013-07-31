@@ -808,12 +808,20 @@ def testSplitBy():
     assert res.b.values == t.b.values
     assert res.c.values == t.c.values
 
+    # check if input tables are not altered
+    for subt in subts:
+        assert subt.getColNames() == [ "a", "b", "c"]
+
     subts = t.splitBy("a", "c")
     assert len(subts) == 4
     res = ms.mergeTables(subts)
     assert res.a.values == t.a.values
     assert res.b.values == t.b.values
     assert res.c.values == t.c.values
+
+    # check if input tables are not altered
+    for subt in subts:
+        assert subt.getColNames() == [ "a", "b", "c"]
 
 def testConstantColumn():
     t = ms.toTable("a",[1,2,3])
@@ -843,6 +851,10 @@ def testMerge():
     assert tn.b.values == [2, None, None]
     assert tn.c.values == [3, 1, 3]
     assert tn.d.values == [None, 1, 4]
+
+    # check if input tables are not altered
+    assert t1.getColNames() == [ "a", "b", "c"]
+    assert t2.getColNames() == [ "a", "c", "d"]
 
 
 def testApply():
